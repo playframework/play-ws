@@ -6,11 +6,10 @@ package play.libs.ws.ahc;
 
 import akka.stream.Materializer;
 import org.asynchttpclient.AsyncHttpClient;
-import org.asynchttpclient.AsyncHttpClientConfig;
-import org.asynchttpclient.DefaultAsyncHttpClient;
 import play.libs.ws.WSClient;
 import play.libs.ws.WSRequest;
 
+import javax.inject.Inject;
 import java.io.IOException;
 
 /**
@@ -20,26 +19,31 @@ import java.io.IOException;
  */
 public class AhcWSClient implements WSClient {
 
-    private final AsyncHttpClient asyncHttpClient;
-    private final Materializer materializer;
+    private final StandaloneAhcWSClient client;
 
-    public AhcWSClient(AsyncHttpClientConfig config, Materializer materializer) {
-        this.asyncHttpClient = new DefaultAsyncHttpClient(config);
-        this.materializer = materializer;
+    @Inject
+    public AhcWSClient(AsyncHttpClient asyncHttpClient, Materializer materializer) {
+        this.client = new StandaloneAhcWSClient(asyncHttpClient, materializer);
+    }
+
+    @Inject
+    public AhcWSClient(StandaloneAhcWSClient client) {
+        this.client = client;
     }
 
     @Override
     public Object getUnderlying() {
-        return asyncHttpClient;
+        return client.getUnderlying();
     }
 
     @Override
     public WSRequest url(String url) {
-        return new AhcWSRequest(this, url, materializer);
+        final StandaloneAhcWSRequest plainWSRequest = (StandaloneAhcWSRequest) client.url(url);
+        return new AhcWSRequest(this, plainWSRequest);
     }
 
     @Override
     public void close() throws IOException {
-        asyncHttpClient.close();
+        client.close();
     }
 }

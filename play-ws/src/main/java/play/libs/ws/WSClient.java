@@ -12,6 +12,7 @@ public interface WSClient extends java.io.Closeable {
 
     /**
      * The underlying implementation of the client, if any.  You must cast the returned value to the type you want.
+     *
      * @return the backing class.
      */
     Object getUnderlying();
@@ -28,7 +29,7 @@ public interface WSClient extends java.io.Closeable {
 
     /**
      * Closes this client, and releases underlying resources.
-     *
+     * <p>
      * Use this for manually instantiated clients.
      */
     void close() throws IOException;

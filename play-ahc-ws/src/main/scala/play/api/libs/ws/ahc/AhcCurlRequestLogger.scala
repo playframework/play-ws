@@ -20,7 +20,7 @@ class AhcCurlRequestLogger(logger: org.slf4j.Logger) extends WSRequestFilter wit
   def apply(executor: WSRequestExecutor): WSRequestExecutor = {
     new WSRequestExecutor {
       override def execute(request: WSRequest): Future[WSResponse] = {
-        val ningRequest = request.asInstanceOf[AhcWSRequest]
+        val ningRequest = request.asInstanceOf[StandaloneAhcWSRequest]
         logger.info(toCurl(ningRequest))
         executor.execute(request)
       }
@@ -42,7 +42,7 @@ object AhcCurlRequestLogger {
 }
 
 trait CurlFormat {
-  def toCurl(request: AhcWSRequest): String = {
+  def toCurl(request: StandaloneAhcWSRequest): String = {
     val b = new StringBuilder("curl \\\n")
 
     // verbose, since it's a fair bet this is for debugging
@@ -52,6 +52,17 @@ trait CurlFormat {
     // method
     b.append(s"  --request ${request.method}")
     b.append(" \\\n")
+
+    //authentication
+    request.auth match {
+      case Some((userName, password, WSAuthScheme.BASIC)) => {
+        val encodedPassword = java.util.Base64.getEncoder
+          .encodeToString(s"$userName:$password".getBytes(StandardCharsets.US_ASCII))
+        b.append(s"""  --header "Authorization: Basic ${quote(encodedPassword)}""")
+        b.append(" \\\n")
+      }
+      case _ => Unit
+    }
 
     // headers
     request.headers.foreach {
@@ -87,7 +98,7 @@ trait CurlFormat {
     curlOptions
   }
 
-  protected def findCharset(request: AhcWSRequest): String = {
+  protected def findCharset(request: StandaloneAhcWSRequest): String = {
     request.contentType.map { ct =>
       Option(HttpUtils.parseCharset(ct)).getOrElse {
         StandardCharsets.UTF_8
