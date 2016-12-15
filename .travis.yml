@@ -13,3 +13,6 @@ cache:
   - "$HOME/.sbt/boot/"
 before_cache:
 - find $HOME/.ivy2/cache -name "ivydata-*.properties" | xargs rm
+notifications:
+  slack:
+    secure: gEa3XQiBUbMxCy+zzwka1cRcoc/h+lcOYFWiDM7JVxrPJxqAZcrlzSHqMrCEiey39bolMDWdRM9RhrJ/jkjOurHgDWN/oyhV4JRvXQJmipLDErRwuWemo1S15DcVeZ4+3VCmB3KIMKk0AWPjPZb2QEIQfzjNwd9MRXZPyWw9XiNjjUCC4VEjYxYlxIYhha4NaFRy96nTm/Rf6hc55bZeFYYz6Y42pK6sRN+M8ES9KsoW2KQeoxIXHp1bq3WxVPGlUPyhUroh53kehS6iS3tChMVw8fnFUbd8cvtNx/dN847Pwj1E2hLhdD+aTjf8Wjq6V+l+RNWJnWdKIo+4bi0vqLZkUN7XrS9FgwX1cawdC32tNFlKXA4fmvXxtyMh3bGE011NVGtcdE2MBudy6lfYSvxROeDXwd+0xTbvyYd8xQrZv3JL3dTM3Hb+586NeZOTq2BpZJytKh4wIZcHyOeHdq+IbvPviERaem/d/wJ1QLVHspQw7xab8JopMWJ5iyJnCL9nC35hZomvzSyZ8KrVQKyMenbq7Kb8Vp/Lo5kCp1ygK8qfSNVl+sZfoW5D1dlipXDp2EYP399hqGa1kn23cIT1JiAbeQ9SEmhXWj4lPAq2rTAOt90V6OcpTqydJ3k/TVqzraZ3pGDirkrfS4kAvhgeIWIGDUnYXak5tpCoIcY=
