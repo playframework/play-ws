@@ -5,9 +5,6 @@ resolvers ++= DefaultOptions.resolvers(snapshot = true)
 //val PlayVersion = playVersion("2.6.0-2016-12-11-1904442-SNAPSHOT")
 val PlayVersion = playVersion("2.6.0-SNAPSHOT")
 
-// XXX No version of play-iteratees for 2.12 yet
-scalaVersion := "2.11.8"
-
 val specsVersion = "3.8.6"
 val specsBuild = Seq(
   "specs2-core",
@@ -23,7 +20,9 @@ val playJson = Seq(
   "com.typesafe.play" %% "play-functional" % playJsonVersion
 )
 
-val playIterateesVersion = "2.6.0"
+// Build this from source until 2.12 is published.
+// See https://github.com/playframework/play-iteratees/pull/6
+val playIterateesVersion = "2.6.1-SNAPSHOT"
 val playIteratees = Seq("com.typesafe.play" %% "play-iteratees" % playIterateesVersion)
 
 val guiceVersion = "4.0"
