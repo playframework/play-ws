@@ -20,8 +20,6 @@ case class AhcWSRequest(underlying: StandaloneAhcWSRequest) extends WSRequest {
   override type Self = WSRequest
   override type Response = WSResponse
 
-  import scala.concurrent.ExecutionContext.Implicits._
-
   /**
    * The URI for this request
    */
@@ -229,6 +227,7 @@ case class AhcWSRequest(underlying: StandaloneAhcWSRequest) extends WSRequest {
   }
 
   override def execute(): Future[Response] = {
+    implicit val ec = underlying.client.executionContext
     underlying.execute().map { f =>
       AhcWSResponse(f.asInstanceOf[StandaloneAhcWSResponse])
     }

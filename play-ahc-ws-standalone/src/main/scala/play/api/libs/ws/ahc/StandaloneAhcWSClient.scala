@@ -7,6 +7,7 @@ import org.asynchttpclient._
 import play.api.libs.ws.{EmptyBody, StandaloneWSClient, StandaloneWSRequest}
 
 import scala.collection.immutable.TreeMap
+import scala.concurrent.ExecutionContext
 
 
 /**
@@ -19,6 +20,8 @@ import scala.collection.immutable.TreeMap
 case class StandaloneAhcWSClient(asyncHttpClient: AsyncHttpClient)(implicit val materializer: Materializer) extends StandaloneWSClient {
 
   def underlying[T]: T = asyncHttpClient.asInstanceOf[T]
+
+  private[libs] def executionContext: ExecutionContext = materializer.executionContext
 
   private[libs] def executeRequest[T](request: Request, handler: AsyncHandler[T]): ListenableFuture[T] = asyncHttpClient.executeRequest(request, handler)
 
