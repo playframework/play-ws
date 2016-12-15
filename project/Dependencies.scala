@@ -36,6 +36,9 @@ object Dependencies {
   val signpostVersion = "1.2.1.2"
   val oauth = Seq("oauth.signpost" % "signpost-core" % signpostVersion)
 
+  val cachecontrolVersion = "1.1.0"
+  val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % cachecontrolVersion)
+
   val asyncHttpClientVersion = "2.0.11"
   val asyncHttpClient = Seq(
     "org.asynchttpclient" % "async-http-client" % asyncHttpClientVersion excludeAll ExclusionRule(organization = "org.slf4j")
@@ -52,6 +55,6 @@ object Dependencies {
       playJson ++
       specsBuild
 
-  val standaloneAhcWSDependencies = slf4j ++ slf4jtest.map(_ % Test) ++ specsBuild
+  val standaloneAhcWSDependencies = cachecontrol ++ slf4j ++ slf4jtest.map(_ % Test) ++ specsBuild
 
 }
