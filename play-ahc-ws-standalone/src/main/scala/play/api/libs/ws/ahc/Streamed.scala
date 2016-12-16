@@ -5,9 +5,9 @@ package play.api.libs.ws.ahc
 
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import org.asynchttpclient.AsyncHandler.State
-import org.asynchttpclient._
-import org.asynchttpclient.handler.StreamedAsyncHandler
+import play.shaded.ahc.org.asynchttpclient.AsyncHandler.State
+import play.shaded.ahc.org.asynchttpclient._
+import play.shaded.ahc.org.asynchttpclient.handler.StreamedAsyncHandler
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
 import play.api.libs.ws.{DefaultWSResponseHeaders, StreamedResponse, WSResponseHeaders}
 

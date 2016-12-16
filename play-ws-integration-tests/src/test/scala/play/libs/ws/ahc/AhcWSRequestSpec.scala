@@ -3,7 +3,7 @@
  */
 package play.libs.ws.ahc
 
-import org.asynchttpclient.{Request, RequestBuilderBase, SignatureCalculator}
+import play.shaded.ahc.org.asynchttpclient.{Request, RequestBuilderBase, SignatureCalculator}
 import org.specs2.mock.Mockito
 import org.specs2.mutable._
 import play.libs.ws.{WSAuthScheme, WSSignatureCalculator}
@@ -63,7 +63,7 @@ class AhcWSRequestSpec extends Specification with Mockito {
         .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
       // Note we use getFormParams instead of getByteData here.
-      req.getFormParams.asScala must containTheSameElementsAs(List(new org.asynchttpclient.Param("param1", "value1")))
+      req.getFormParams.asScala must containTheSameElementsAs(List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1")))
     }
 
     "Remove a user defined content length header if we are parsing body explicitly when signed" in {
@@ -82,7 +82,7 @@ class AhcWSRequestSpec extends Specification with Mockito {
         .buildRequest()
 
       val headers = signedReq.getHeaders
-      signedReq.getFormParams.asScala must containTheSameElementsAs(List(new org.asynchttpclient.Param("param1", "value1")))
+      signedReq.getFormParams.asScala must containTheSameElementsAs(List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1")))
       headers.get("Content-Length") must beNull // no content length!
     }
 

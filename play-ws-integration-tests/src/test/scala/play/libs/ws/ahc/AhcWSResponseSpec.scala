@@ -5,12 +5,12 @@ package play.libs.ws.ahc
 
 import java.nio.charset.StandardCharsets
 
-import io.netty.handler.codec.http.DefaultHttpHeaders
+import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
 
 import scala.collection.JavaConverters._
 import org.specs2.mock.Mockito
 import org.specs2.mutable._
-import org.asynchttpclient.Response
+import play.shaded.ahc.org.asynchttpclient.Response
 
 class AhcWSResponseSpec extends Specification with Mockito {
 

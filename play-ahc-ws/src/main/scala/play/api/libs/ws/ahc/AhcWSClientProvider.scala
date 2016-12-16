@@ -3,7 +3,7 @@ package play.api.libs.ws.ahc
 import javax.inject.{Inject, Provider, Singleton}
 
 import akka.stream.Materializer
-import org.asynchttpclient.{AsyncHttpClient, DefaultAsyncHttpClient}
+import play.shaded.ahc.org.asynchttpclient.{AsyncHttpClient, DefaultAsyncHttpClient}
 import play.api.inject.ApplicationLifecycle
 import play.api.libs.ws.{WSClient, WSClientConfig, WSConfigParser}
 import play.api.{Configuration, Environment}

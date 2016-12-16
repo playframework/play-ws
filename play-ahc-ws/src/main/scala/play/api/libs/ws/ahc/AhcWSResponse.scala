@@ -3,8 +3,8 @@ package play.api.libs.ws.ahc
 import java.nio.charset.StandardCharsets
 
 import akka.util.ByteString
-import org.asynchttpclient.util.HttpUtils
-import org.asynchttpclient.{Response => AHCResponse}
+import play.shaded.ahc.org.asynchttpclient.util.HttpUtils
+import play.shaded.ahc.org.asynchttpclient.{Response => AHCResponse}
 import play.api.Play
 import play.api.libs.json.JsValue
 import play.api.libs.ws._

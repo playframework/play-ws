@@ -11,9 +11,9 @@ import play.libs.ws.WSCookie;
  */
 public class AhcWSCookie implements WSCookie {
 
-    private final org.asynchttpclient.cookie.Cookie ahcCookie;
+    private final play.shaded.ahc.org.asynchttpclient.cookie.Cookie ahcCookie;
 
-    public AhcWSCookie(org.asynchttpclient.cookie.Cookie ahcCookie) {
+    public AhcWSCookie(play.shaded.ahc.org.asynchttpclient.cookie.Cookie ahcCookie) {
         this.ahcCookie = ahcCookie;
     }
 

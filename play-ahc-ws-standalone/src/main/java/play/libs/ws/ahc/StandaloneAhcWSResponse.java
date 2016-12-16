@@ -6,8 +6,8 @@ package play.libs.ws.ahc;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.netty.handler.codec.http.HttpHeaders;
-import org.asynchttpclient.util.HttpUtils;
+import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders;
+import play.shaded.ahc.org.asynchttpclient.util.HttpUtils;
 import org.w3c.dom.Document;
 import play.libs.Json;
 import play.libs.ws.StandaloneWSResponse;
@@ -29,9 +29,9 @@ import static java.util.stream.Collectors.toList;
  */
 public class StandaloneAhcWSResponse implements StandaloneWSResponse {
 
-    private final org.asynchttpclient.Response ahcResponse;
+    private final play.shaded.ahc.org.asynchttpclient.Response ahcResponse;
 
-    public StandaloneAhcWSResponse(org.asynchttpclient.Response ahcResponse) {
+    public StandaloneAhcWSResponse(play.shaded.ahc.org.asynchttpclient.Response ahcResponse) {
         this.ahcResponse = ahcResponse;
     }
 
@@ -91,7 +91,7 @@ public class StandaloneAhcWSResponse implements StandaloneWSResponse {
      */
     @Override
     public WSCookie getCookie(String name) {
-        for (org.asynchttpclient.cookie.Cookie ahcCookie : ahcResponse.getCookies()) {
+        for (play.shaded.ahc.org.asynchttpclient.cookie.Cookie ahcCookie : ahcResponse.getCookies()) {
             // safe -- cookie.getName() will never return null
             if (ahcCookie.getName().equals(name)) {
                 return new AhcWSCookie(ahcCookie);

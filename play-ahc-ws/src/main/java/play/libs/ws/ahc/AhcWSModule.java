@@ -4,7 +4,7 @@
 package play.libs.ws.ahc;
 
 import akka.stream.Materializer;
-import org.asynchttpclient.AsyncHttpClient;
+import play.shaded.ahc.org.asynchttpclient.AsyncHttpClient;
 import play.api.Configuration;
 import play.api.Environment;
 import play.api.inject.Binding;
