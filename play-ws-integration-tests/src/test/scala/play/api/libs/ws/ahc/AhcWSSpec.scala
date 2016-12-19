@@ -8,18 +8,16 @@ import java.util
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.util.{ByteString, Timeout}
-import io.netty.handler.codec.http.DefaultHttpHeaders
-import org.asynchttpclient.Realm.AuthScheme
-import org.asynchttpclient.cookie.{Cookie => AHCCookie}
-import org.asynchttpclient.{Param, Request => AHCRequest, Response => AHCResponse}
+import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
+import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
+import play.shaded.ahc.org.asynchttpclient.cookie.{Cookie => AHCCookie}
+import play.shaded.ahc.org.asynchttpclient.{Param, Request => AHCRequest, Response => AHCResponse}
 import org.specs2.mock.Mockito
 import org.specs2.mutable.After
 import org.specs2.specification.Scope
-import play.api.Play
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.oauth.{ConsumerKey, OAuthCalculator, RequestToken}
 import play.api.libs.ws._
-import play.api.libs.ws.ahc._
 import play.api.mvc._
 import play.api.routing.sird._
 import play.api.test._
@@ -140,10 +138,10 @@ class AhcWSSpec extends PlaySpecification with Mockito {
 
     "support a custom signature calculator" in new WithWSClient {
       var called = false
-      val calc = new org.asynchttpclient.SignatureCalculator with WSSignatureCalculator {
+      val calc = new play.shaded.ahc.org.asynchttpclient.SignatureCalculator with WSSignatureCalculator {
         override def calculateAndAddSignature(
-          request: org.asynchttpclient.Request,
-          requestBuilder: org.asynchttpclient.RequestBuilderBase[_]): Unit = {
+          request: play.shaded.ahc.org.asynchttpclient.Request,
+          requestBuilder: play.shaded.ahc.org.asynchttpclient.RequestBuilderBase[_]): Unit = {
           called = true
         }
       }
@@ -163,7 +161,7 @@ class AhcWSSpec extends PlaySpecification with Mockito {
           .asInstanceOf[AhcWSRequest].underlying
           .buildRequest()
         // Note we use getFormParams instead of getByteData here.
-        req.getFormParams.asScala must containTheSameElementsAs(List(new org.asynchttpclient.Param("param1", "value1")))
+        req.getFormParams.asScala must containTheSameElementsAs(List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1")))
         req.getByteData must beNull // should NOT result in byte data.
 
         val headers = req.getHeaders
@@ -199,7 +197,7 @@ class AhcWSSpec extends PlaySpecification with Mockito {
 
     val headers = req.getHeaders
     req.getByteData must beNull // should NOT result in byte data.
-    req.getFormParams.asScala must containTheSameElementsAs(List(new org.asynchttpclient.Param("param1", "value1")))
+    req.getFormParams.asScala must containTheSameElementsAs(List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1")))
     headers.get("Content-Length") must beNull // no content length!
   }
 

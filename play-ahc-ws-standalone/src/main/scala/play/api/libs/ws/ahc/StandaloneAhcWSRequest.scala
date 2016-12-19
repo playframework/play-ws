@@ -7,12 +7,12 @@ import java.nio.charset.{Charset, StandardCharsets}
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
-import io.netty.handler.codec.http.HttpHeaders
-import org.asynchttpclient.Realm.AuthScheme
-import org.asynchttpclient.cookie.{Cookie => AHCCookie}
-import org.asynchttpclient.proxy.{ProxyServer => AHCProxyServer}
-import org.asynchttpclient.util.HttpUtils
-import org.asynchttpclient.{Realm, Response => AHCResponse, _}
+import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
+import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
+import play.shaded.ahc.org.asynchttpclient.cookie.{Cookie => AHCCookie}
+import play.shaded.ahc.org.asynchttpclient.proxy.{ProxyServer => AHCProxyServer}
+import play.shaded.ahc.org.asynchttpclient.util.HttpUtils
+import play.shaded.ahc.org.asynchttpclient.{Realm, Response => AHCResponse, _}
 import play.api.libs.ws._
 
 import scala.collection.JavaConverters._
@@ -31,7 +31,7 @@ case object StandaloneAhcWSRequest {
   }
 
   private[libs] def execute(request: Request, client: StandaloneAhcWSClient): Future[StandaloneAhcWSResponse] = {
-    import org.asynchttpclient.AsyncCompletionHandler
+    import play.shaded.ahc.org.asynchttpclient.AsyncCompletionHandler
     val result = Promise[StandaloneAhcWSResponse]()
 
     client.executeRequest(request, new AsyncCompletionHandler[AHCResponse]() {
@@ -230,7 +230,7 @@ case class StandaloneAhcWSRequest(client: StandaloneAhcWSClient,
   /**
    * Creates and returns an AHC request, running all operations on it.
    */
-  def buildRequest(): org.asynchttpclient.Request = {
+  def buildRequest(): play.shaded.ahc.org.asynchttpclient.Request = {
     // The builder has a bunch of mutable state and is VERY fiddly, so
     // should not be exposed to the outside world.
 
@@ -264,7 +264,7 @@ case class StandaloneAhcWSRequest(client: StandaloneAhcWSClient,
     val (builderWithBody, updatedHeaders) = body match {
       case EmptyBody => (builder, this.headers)
       case FileBody(file) =>
-        import org.asynchttpclient.request.body.generator.FileBodyGenerator
+        import play.shaded.ahc.org.asynchttpclient.request.body.generator.FileBodyGenerator
         val bodyGenerator = new FileBodyGenerator(file)
         builder.setBody(bodyGenerator)
         (builder, this.headers)
@@ -324,7 +324,7 @@ case class StandaloneAhcWSRequest(client: StandaloneAhcWSClient,
 
     // Set the signature calculator.
     calc.map {
-      case signatureCalculator: org.asynchttpclient.SignatureCalculator =>
+      case signatureCalculator: play.shaded.ahc.org.asynchttpclient.SignatureCalculator =>
         builderWithBody.setSignatureCalculator(signatureCalculator)
       case _ =>
         throw new IllegalStateException("Unknown signature calculator found: use a class that implements SignatureCalculator")

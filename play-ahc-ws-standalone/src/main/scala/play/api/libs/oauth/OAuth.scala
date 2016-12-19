@@ -3,12 +3,13 @@
  */
 package play.api.libs.oauth
 
-import _root_.oauth.signpost.basic.DefaultOAuthConsumer
-import _root_.oauth.signpost.commonshttp.CommonsHttpOAuthProvider
-import _root_.oauth.signpost.exception.OAuthException
-import org.asynchttpclient.oauth.OAuthSignatureCalculator
-import org.asynchttpclient.{Request, RequestBuilderBase, SignatureCalculator}
+import play.shaded.oauth.oauth.signpost.basic.DefaultOAuthConsumer
+import play.shaded.oauth.oauth.signpost.commonshttp.CommonsHttpOAuthProvider
+import play.shaded.oauth.oauth.signpost.exception.OAuthException
+import play.shaded.ahc.org.asynchttpclient.oauth.OAuthSignatureCalculator
+import play.shaded.ahc.org.asynchttpclient.{Request, RequestBuilderBase, SignatureCalculator}
 import play.api.libs.ws.WSSignatureCalculator
+import play.shaded.ahc.org.asynchttpclient.oauth.{ConsumerKey => AHCConsumerKey, RequestToken => AHCRequestToken}
 
 /**
  * Library to access resources protected by OAuth 1.0a.
@@ -65,9 +66,10 @@ case class OAuth(info: ServiceInfo, use10a: Boolean = true) {
    * @param token request token
    */
   def redirectUrl(token: String): String = {
-    _root_.oauth.signpost.OAuth.addQueryParameters(
+    import play.shaded.oauth.oauth.signpost.{OAuth => O}
+    O.addQueryParameters(
       provider.getAuthorizationWebsiteUrl(),
-      _root_.oauth.signpost.OAuth.OAUTH_TOKEN,
+      O.OAUTH_TOKEN,
       token
     )
   }
@@ -93,8 +95,6 @@ case class ServiceInfo(requestTokenURL: String, accessTokenURL: String, authoriz
  * The public AsyncHttpClient implementation of WSSignatureCalculator.
  */
 class OAuthCalculator(consumerKey: ConsumerKey, requestToken: RequestToken) extends WSSignatureCalculator with SignatureCalculator {
-
-  import org.asynchttpclient.oauth.{ConsumerKey => AHCConsumerKey, RequestToken => AHCRequestToken}
 
   private val ahcConsumerKey = new AHCConsumerKey(consumerKey.key, consumerKey.secret)
   private val ahcRequestToken = new AHCRequestToken(requestToken.token, requestToken.secret)

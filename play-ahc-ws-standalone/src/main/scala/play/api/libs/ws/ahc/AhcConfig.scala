@@ -8,13 +8,13 @@ package play.api.libs.ws.ahc
 import java.security.KeyStore
 import java.security.cert.CertPathValidatorException
 import javax.net.ssl._
+import org.slf4j.LoggerFactory
 
 import com.typesafe.sslconfig.ssl._
-import io.netty.handler.ssl.SslContextBuilder
-import io.netty.handler.ssl.util.InsecureTrustManagerFactory
-import org.asynchttpclient.netty.ssl.JsseSslEngineFactory
-import org.asynchttpclient.{AsyncHttpClientConfig, DefaultAsyncHttpClientConfig}
-import org.slf4j.LoggerFactory
+import play.shaded.ahc.io.netty.handler.ssl.SslContextBuilder
+import play.shaded.ahc.io.netty.handler.ssl.util.InsecureTrustManagerFactory
+import play.shaded.ahc.org.asynchttpclient.netty.ssl.JsseSslEngineFactory
+import play.shaded.ahc.org.asynchttpclient.{AsyncHttpClientConfig, DefaultAsyncHttpClientConfig}
 import play.api.libs.ws.WSClientConfig
 
 import scala.concurrent.duration._

@@ -1,6 +1,6 @@
 package play.api.libs.ws.ahc
 
-import org.asynchttpclient.AsyncHttpClient
+import play.shaded.ahc.org.asynchttpclient.AsyncHttpClient
 import play.api.inject.SimpleModule
 import play.api.inject.bind
 import play.api.libs.ws._

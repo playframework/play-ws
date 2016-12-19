@@ -11,8 +11,8 @@ import org.specs2.mock._
 import play.api.Environment
 import play.api.libs.ws.WSClientConfig
 import com.typesafe.sslconfig.ssl.{Ciphers, Protocols, SSLConfigFactory, SSLConfigSettings}
-import org.asynchttpclient.proxy.ProxyServerSelector
-import org.asynchttpclient.util.ProxyUtils
+import play.shaded.ahc.org.asynchttpclient.proxy.ProxyServerSelector
+import play.shaded.ahc.org.asynchttpclient.util.ProxyUtils
 import org.slf4j.LoggerFactory
 import org.specs2.specification.Scope
 import play.api.test.WithApplication

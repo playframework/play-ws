@@ -5,7 +5,7 @@ package play.api.libs.ws.ahc
 
 import java.nio.charset.StandardCharsets
 
-import org.asynchttpclient.util.HttpUtils
+import play.shaded.ahc.org.asynchttpclient.util.HttpUtils
 import org.slf4j.LoggerFactory
 import play.api.libs.ws._
 

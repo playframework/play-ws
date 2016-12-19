@@ -3,13 +3,12 @@
  */
 package play.libs.oauth;
 
-
-import oauth.signpost.OAuthConsumer;
-import oauth.signpost.OAuthProvider;
-import oauth.signpost.basic.DefaultOAuthConsumer;
-import oauth.signpost.commonshttp.CommonsHttpOAuthProvider;
-import oauth.signpost.exception.OAuthException;
-import org.asynchttpclient.oauth.OAuthSignatureCalculator;
+import play.shaded.oauth.oauth.signpost.OAuthConsumer;
+import play.shaded.oauth.oauth.signpost.OAuthProvider;
+import play.shaded.oauth.oauth.signpost.basic.DefaultOAuthConsumer;
+import play.shaded.oauth.oauth.signpost.commonshttp.CommonsHttpOAuthProvider;
+import play.shaded.oauth.oauth.signpost.exception.OAuthException;
+import play.shaded.ahc.org.asynchttpclient.oauth.OAuthSignatureCalculator;
 import play.libs.ws.WSSignatureCalculator;
 
 public class OAuth {
@@ -76,9 +75,9 @@ public class OAuth {
      * @return the url
      */
     public String redirectUrl(String token) {
-        return oauth.signpost.OAuth.addQueryParameters(
+        return play.shaded.oauth.oauth.signpost.OAuth.addQueryParameters(
                 provider.getAuthorizationWebsiteUrl(),
-                oauth.signpost.OAuth.OAUTH_TOKEN,
+                play.shaded.oauth.oauth.signpost.OAuth.OAUTH_TOKEN,
                 token
         );
     }
@@ -139,8 +138,8 @@ public class OAuth {
         private OAuthSignatureCalculator calculator;
 
         public OAuthCalculator(ConsumerKey consumerKey, RequestToken token) {
-            org.asynchttpclient.oauth.ConsumerKey ahcConsumerKey = new org.asynchttpclient.oauth.ConsumerKey(consumerKey.key, consumerKey.secret);
-            org.asynchttpclient.oauth.RequestToken ahcRequestToken = new org.asynchttpclient.oauth.RequestToken(token.token, token.secret);
+            play.shaded.ahc.org.asynchttpclient.oauth.ConsumerKey ahcConsumerKey = new play.shaded.ahc.org.asynchttpclient.oauth.ConsumerKey(consumerKey.key, consumerKey.secret);
+            play.shaded.ahc.org.asynchttpclient.oauth.RequestToken ahcRequestToken = new play.shaded.ahc.org.asynchttpclient.oauth.RequestToken(token.token, token.secret);
             calculator = new OAuthSignatureCalculator(ahcConsumerKey, ahcRequestToken);
         }
 

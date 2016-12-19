@@ -3,7 +3,7 @@
  */
 package play.api.libs.ws.ahc
 
-import org.asynchttpclient.cookie.{Cookie => AHCCookie}
+import play.shaded.ahc.org.asynchttpclient.cookie.{Cookie => AHCCookie}
 import play.api.libs.ws._
 
 /**

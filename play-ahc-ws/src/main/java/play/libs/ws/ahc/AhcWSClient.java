@@ -5,7 +5,7 @@
 package play.libs.ws.ahc;
 
 import akka.stream.Materializer;
-import org.asynchttpclient.AsyncHttpClient;
+import play.shaded.ahc.org.asynchttpclient.AsyncHttpClient;
 import play.libs.ws.WSClient;
 import play.libs.ws.WSRequest;
 
