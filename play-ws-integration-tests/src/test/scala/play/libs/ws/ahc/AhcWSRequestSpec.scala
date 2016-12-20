@@ -6,7 +6,7 @@ package play.libs.ws.ahc
 import play.shaded.ahc.org.asynchttpclient.{Request, RequestBuilderBase, SignatureCalculator}
 import org.specs2.mock.Mockito
 import org.specs2.mutable._
-import play.libs.ws.{WSAuthScheme, WSSignatureCalculator}
+import play.libs.ws.{StandaloneWSRequest, WSAuthScheme, WSSignatureCalculator}
 import play.libs.oauth.OAuth
 
 class AhcWSRequestSpec extends Specification with Mockito {
@@ -71,11 +71,11 @@ class AhcWSRequestSpec extends Specification with Mockito {
       val client = mock[StandaloneAhcWSClient]
       val consumerKey = new OAuth.ConsumerKey("key", "secret")
       val token = new OAuth.RequestToken("token", "secret")
-      val calc = new OAuth.OAuthCalculator(consumerKey, token)
+      val calc: WSSignatureCalculator = new OAuth.OAuthCalculator(consumerKey, token)
       val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
         .setHeader("Content-Type", "application/x-www-form-urlencoded") // set content type by hand
-        .setBody("param1=value1")
-        .setHeader("Content-Length", "9001") // add a meaningless content length here...
+
+      val withBody: StandaloneWSRequest[_, _] = req.setBody("param1=value1").setHeader("Content-Length", "9001") // add a meaningless content length here...
 
       val signedReq = req.sign(calc)
         .asInstanceOf[StandaloneAhcWSRequest]

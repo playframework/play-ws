@@ -68,8 +68,8 @@ lazy val shadeAssemblySettings = commonSettings ++ Seq(
   },
   assemblyJarName in assembly := {
     CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, scalaMajor)) =>
-        s"${name.value}_$scalaMajor-${version.value}.jar"
+      case Some((epoch, major)) =>
+        s"${name.value}_$epoch.$major-${version.value}.jar"
       case _ =>
         sys.error("Cannot find valid scala version!")
     }
@@ -116,10 +116,6 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
         MergeStrategy.first
       case "ahc-default.properties" =>
         ahcMerge
-      case "ahc-mime.types" =>
-        MergeStrategy.first
-      case "ahc-version.properties" =>
-        MergeStrategy.first
       case x =>
         val oldStrategy = (assemblyMergeStrategy in assembly).value
         oldStrategy(x)
@@ -132,8 +128,8 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
       ShadeRule.rename("com.typesafe.netty.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.zap("org.reactivestreams.**").inAll // somehow gets dragged in
     ),
-    artifact in(Compile, assembly) ~= (_.copy(classifier = Some("assembly"))),
-    addArtifact(Artifact("shaded-asynchttpclient"), assembly)
+    assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeBin = false, includeScala = false),
+    packageBin in Compile := assembly.value
   )
 
 lazy val `shaded-oauth` = project.in(file("shaded/oauth"))
@@ -151,9 +147,18 @@ lazy val `shaded-oauth` = project.in(file("shaded/oauth"))
       ShadeRule.rename("com.google.gdata.**" -> "play.shaded.oauth.@0").inAll,
       ShadeRule.rename("org.apache.commons.**" -> "play.shaded.oauth.@0").inAll
     ),
-    artifact in(Compile, assembly) ~= (_.copy(classifier = Some("assembly"))),
-    addArtifact(Artifact("shaded-oauth"), assembly)
+    assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeBin = false, includeScala = false),
+    packageBin in Compile := assembly.value
   )
+
+// Make the shaded version of AHC available downstream
+val shadedAhcSettings = Seq(
+  unmanagedJars in Compile += (packageBin in (`shaded-asynchttpclient`, Compile)).value
+)
+
+val shadedOAuthSettings = Seq(
+  unmanagedJars in Compile += (packageBin in (`shaded-oauth`, Compile)).value
+)
 
 lazy val shaded = Project(id = "shaded", base = file("shaded") )
   .settings(disableDocs)
@@ -161,55 +166,14 @@ lazy val shaded = Project(id = "shaded", base = file("shaded") )
   .aggregate(`shaded-asynchttpclient`, `shaded-oauth`)
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
-def getShadedJarFile(name: String, version: String, scalaVer: String): File = {
-  CrossVersion.partialVersion(scalaVer) match {
-    case Some((epoch, major)) =>
-      shaded.base / "target" / s"$epoch.$major" /
-        s"${name}_$epoch.$major-$version.jar"
-    case _ =>
-      sys.error("Cannot find valid scala version!")
-  }
-}
-
-// Make the shaded version of AHC available downstream
-val shadedAhcSettings = Seq(
-  unmanagedJars in Compile ++= Seq(
-    getShadedJarFile("shaded-asynchttpclient", version.value, scalaVersion.value)
-  )
-)
-
-val shadedOAuthSettings = Seq(
-  unmanagedJars in Compile ++= Seq(
-    getShadedJarFile("shaded-oauth", version.value, scalaVersion.value)
-  )
-)
-
-def changeShadedDeps(toExclude: Set[String], toInclude: List[xml.Node],
-                             node: xml.Node): xml.Node = {
-  node match {
-    case elem: xml.Elem =>
-      val child =
-        if (elem.label == "dependencies") {
-          elem.child.filterNot { dep =>
-            dep.child.find(_.label == "groupId").exists(gid => toExclude.contains(gid.text))
-          } ++ toInclude
-        } else {
-          elem.child.map(changeShadedDeps(toExclude, toInclude, _))
-        }
-      xml.Elem(elem.prefix, elem.label, elem.attributes, elem.scope, false, child: _*)
-    case _ =>
-      node
-  }
-}
-
 // Standalone implementation using AsyncHttpClient
 lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
   .enablePlugins(PlayLibrary)
+  .dependsOn(`play-ws-standalone`, `shaded-oauth`, `shaded-asynchttpclient`)
   .settings(commonSettings)
   .settings(shadedAhcSettings)
   .settings(shadedOAuthSettings)
-  .dependsOn(`play-ws-standalone`)
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
 // Play implementation using AsyncHttpClient
@@ -230,18 +194,6 @@ lazy val root = project
   .in(file("."))
   .settings(commonSettings)
   .enablePlugins(PlayRootProject)
-  .settings(
-    name := "play-ws-root",
-    pomPostProcess := {
-      (node: xml.Node) => changeShadedDeps(
-        Set(
-          "shaded-asynchttpclient",
-          "shaded-oauth"
-        ),
-        List.empty[xml.Node],
-        node)
-    }
-  )
   .aggregate(
     `shaded`,
     `play-ws-standalone`,
