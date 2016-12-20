@@ -6,11 +6,17 @@ import sbtassembly.MergeStrategy
 
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
 
-lazy val scalaVersionMajor = "2.11"
-
 lazy val commonSettings = Seq(
   organization := "com.typesafe.play",
-  scalaVersion := "2.11.8"
+  scalacOptions in (Compile, doc) ++= {
+    // Work around 2.12 bug which prevents javadoc in nested java classes from compiling.
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, v)) if v <= 11 =>
+        Nil
+      case _ =>
+        Seq("-no-java-comments")
+    }
+  }
 )
 //---------------------------------------------------------------
 // WS API
@@ -61,9 +67,21 @@ lazy val shadeAssemblySettings = commonSettings ++ Seq(
     _.copy(includeScala = false)
   },
   assemblyJarName in assembly := {
-    s"${name.value}_$scalaVersionMajor-${version.value}.jar"
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, scalaMajor)) =>
+        s"${name.value}_$scalaMajor-${version.value}.jar"
+      case _ =>
+        sys.error("Cannot find valid scala version!")
+    }
   },
-  target in assembly := baseDirectory.value.getParentFile / "target" / scalaVersionMajor
+  target in assembly := {
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, scalaMajor)) =>
+        baseDirectory.value.getParentFile / "target" / scalaMajor.toString
+      case _ =>
+        sys.error("Cannot find valid scala version!")
+    }
+  }
 )
 
 val ahcMerge: MergeStrategy = new MergeStrategy {
@@ -143,21 +161,26 @@ lazy val shaded = Project(id = "shaded", base = file("shaded") )
   .aggregate(`shaded-asynchttpclient`, `shaded-oauth`)
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
-def getShadedJarFile(name: String, version: String): File = {
-  shaded.base / "target" / scalaVersionMajor /
-    s"${name}_$scalaVersionMajor-$version.jar"
+def getShadedJarFile(name: String, version: String, scalaVer: String): File = {
+  CrossVersion.partialVersion(scalaVer) match {
+    case Some((2, scalaVersionMajor)) =>
+      shaded.base / "target" / scalaVersionMajor.toString /
+        s"${name}_$scalaVersionMajor-$version.jar"
+    case _ =>
+      sys.error("Cannot find valid scala version!")
+  }
 }
 
 // Make the shaded version of AHC available downstream
 val shadedAhcSettings = Seq(
   unmanagedJars in Compile ++= Seq(
-    getShadedJarFile("shaded-asynchttpclient", version.value)
+    getShadedJarFile("shaded-asynchttpclient", version.value, scalaVersion.value)
   )
 )
 
 val shadedOAuthSettings = Seq(
   unmanagedJars in Compile ++= Seq(
-    getShadedJarFile("shaded-oauth", version.value)
+    getShadedJarFile("shaded-oauth", version.value, scalaVersion.value)
   )
 )
 
