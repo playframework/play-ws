@@ -37,10 +37,6 @@ lazy val `play-ws` = project
 // WS with shaded AsyncHttpClient implementation
 //---------------------------------------------------------------
 
-// Shading implementation from:
-// https://manuzhang.github.io/2016/10/15/shading.html
-// https://github.com/huafengw/incubator-gearpump/blob/4474618c4fdd42b152d26a6915704a4f763d14c1/project/BuildShaded.scala
-
 lazy val shadeAssemblySettings = commonSettings ++ Seq(
   assemblyOption in assembly ~= (_.copy(includeScala = false)),
   test in assembly := {},
