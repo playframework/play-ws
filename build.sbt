@@ -6,8 +6,6 @@ import sbtassembly.MergeStrategy
 
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
 
-lazy val scalaVersionMajor = "2.11"
-
 lazy val commonSettings = Seq(
   scalaVersion := "2.11.8"
 )
@@ -48,7 +46,7 @@ lazy val shadeAssemblySettings = commonSettings ++ Seq(
     _.copy(includeScala = false)
   },
   assemblyJarName in assembly := {
-    s"${name.value}_$scalaVersionMajor-${version.value}.jar"
+    s"${name.value}_${scalaBinaryVersion.value}-${version.value}.jar"
   },
   target in assembly := baseDirectory.value.getParentFile / "target" / scalaVersionMajor
 )
