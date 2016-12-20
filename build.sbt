@@ -76,8 +76,8 @@ lazy val shadeAssemblySettings = commonSettings ++ Seq(
   },
   target in assembly := {
     CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, scalaMajor)) =>
-        baseDirectory.value.getParentFile / "target" / scalaMajor.toString
+      case Some((epoch, major)) =>
+        baseDirectory.value.getParentFile / "target" / s"$epoch.$major"
       case _ =>
         sys.error("Cannot find valid scala version!")
     }
@@ -163,9 +163,9 @@ lazy val shaded = Project(id = "shaded", base = file("shaded") )
 
 def getShadedJarFile(name: String, version: String, scalaVer: String): File = {
   CrossVersion.partialVersion(scalaVer) match {
-    case Some((2, scalaVersionMajor)) =>
-      shaded.base / "target" / scalaVersionMajor.toString /
-        s"${name}_$scalaVersionMajor-$version.jar"
+    case Some((epoch, major)) =>
+      shaded.base / "target" / s"$epoch.$major" /
+        s"${name}_$epoch.$major-$version.jar"
     case _ =>
       sys.error("Cannot find valid scala version!")
   }
