@@ -9,6 +9,7 @@ resolvers ++= DefaultOptions.resolvers(snapshot = true)
 lazy val scalaVersionMajor = "2.11"
 
 lazy val commonSettings = Seq(
+  organization := "com.typesafe.play",
   scalaVersion := "2.11.8"
 )
 //---------------------------------------------------------------
@@ -36,6 +37,18 @@ lazy val `play-ws` = project
 //---------------------------------------------------------------
 // WS with shaded AsyncHttpClient implementation
 //---------------------------------------------------------------
+
+val disableDocs = Seq[Setting[_]](
+  sources in (Compile, doc) := Seq.empty,
+  publishArtifact in (Compile, packageDoc) := false
+)
+
+val disablePublishing = Seq[Setting[_]](
+  publishArtifact := false,
+  // The above is enough for Maven repos but it doesn't prevent publishing of ivy.xml files
+  publish := {},
+  publishLocal := {}
+)
 
 // Shading implementation from:
 // https://manuzhang.github.io/2016/10/15/shading.html
@@ -73,6 +86,7 @@ val ahcMerge: MergeStrategy = new MergeStrategy {
 
 lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
   .settings(commonSettings)
+  .settings(disableDocs)
   .settings(shadeAssemblySettings)
   .settings(
     libraryDependencies ++= asyncHttpClient,
@@ -81,17 +95,13 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
   .settings(
     assemblyMergeStrategy in assembly := {
       case "META-INF/io.netty.versions.properties" =>
-        // MergeStrategy.first
-        ahcMerge
+        MergeStrategy.first
       case "ahc-default.properties" =>
-        //MergeStrategy.first
         ahcMerge
       case "ahc-mime.types" =>
-        // MergeStrategy.first
-        ahcMerge
+        MergeStrategy.first
       case "ahc-version.properties" =>
-        //MergeStrategy.first
-        ahcMerge
+        MergeStrategy.first
       case x =>
         val oldStrategy = (assemblyMergeStrategy in assembly).value
         oldStrategy(x)
@@ -110,6 +120,7 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
 
 lazy val `shaded-oauth` = project.in(file("shaded/oauth"))
   .settings(commonSettings)
+  .settings(disableDocs)
   .settings(shadeAssemblySettings)
   .settings(
     libraryDependencies ++= oauth,
@@ -126,10 +137,10 @@ lazy val `shaded-oauth` = project.in(file("shaded/oauth"))
     addArtifact(Artifact("shaded-oauth"), assembly)
   )
 
-lazy val shaded = Project(
-  id = "shaded",
-  base = file("shaded")
-).aggregate(`shaded-asynchttpclient`, `shaded-oauth`)
+lazy val shaded = Project(id = "shaded", base = file("shaded") )
+  .settings(disableDocs)
+  .settings(disablePublishing)
+  .aggregate(`shaded-asynchttpclient`, `shaded-oauth`)
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
 def getShadedJarFile(name: String, version: String): File = {
@@ -149,6 +160,24 @@ val shadedOAuthSettings = Seq(
     getShadedJarFile("shaded-oauth", version.value)
   )
 )
+
+def changeShadedDeps(toExclude: Set[String], toInclude: List[xml.Node],
+                             node: xml.Node): xml.Node = {
+  node match {
+    case elem: xml.Elem =>
+      val child =
+        if (elem.label == "dependencies") {
+          elem.child.filterNot { dep =>
+            dep.child.find(_.label == "groupId").exists(gid => toExclude.contains(gid.text))
+          } ++ toInclude
+        } else {
+          elem.child.map(changeShadedDeps(toExclude, toInclude, _))
+        }
+      xml.Elem(elem.prefix, elem.label, elem.attributes, elem.scope, false, child: _*)
+    case _ =>
+      node
+  }
+}
 
 // Standalone implementation using AsyncHttpClient
 lazy val `play-ahc-ws-standalone` = project
@@ -170,10 +199,26 @@ lazy val `play-ahc-ws` = project
   .dependsOn(`play-ws`, `play-ahc-ws-standalone`)
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
+//---------------------------------------------------------------
+// Root Project
+//---------------------------------------------------------------
+
 lazy val root = project
   .in(file("."))
   .settings(commonSettings)
   .enablePlugins(PlayRootProject)
+  .settings(
+    name := "play-ws-root",
+    pomPostProcess := {
+      (node: xml.Node) => changeShadedDeps(
+        Set(
+          "shaded-asynchttpclient",
+          "shaded-oauth"
+        ),
+        List.empty[xml.Node],
+        node)
+    }
+  )
   .aggregate(
     `shaded`,
     `play-ws-standalone`,
@@ -190,6 +235,8 @@ lazy val root = project
 lazy val `play-ws-integration-tests` = project
   .in(file("play-ws-integration-tests"))
   .enablePlugins(PlayLibrary)
+  .settings(disableDocs)
+  .settings(disablePublishing)
   .settings(commonSettings)
   .settings(libraryDependencies ++= playDeps)
   .settings(libraryDependencies ++= specsBuild.map(_ % Test) ++ playTest)
