@@ -43,12 +43,4 @@ public interface WSRequest extends StandaloneWSRequest<WSRequest, WSResponse> {
      */
     WSRequest setMultipartBody(Source<? super Http.MultipartFormData.Part<Source<ByteString, ?>>, ?> body);
 
-    /**
-     * Adds a request filter.
-     *
-     * @param filter a transforming filter.
-     * @return the modified request.
-     */
-    WSRequest withRequestFilter(WSRequestFilter filter);
-
 }
