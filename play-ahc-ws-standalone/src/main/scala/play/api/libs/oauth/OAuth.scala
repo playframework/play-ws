@@ -4,7 +4,7 @@
 package play.api.libs.oauth
 
 import play.shaded.oauth.oauth.signpost.basic.DefaultOAuthConsumer
-import play.shaded.oauth.oauth.signpost.commonshttp.CommonsHttpOAuthProvider
+import play.shaded.oauth.oauth.signpost.basic.DefaultOAuthProvider
 import play.shaded.oauth.oauth.signpost.exception.OAuthException
 import play.shaded.ahc.org.asynchttpclient.oauth.OAuthSignatureCalculator
 import play.shaded.ahc.org.asynchttpclient.{Request, RequestBuilderBase, SignatureCalculator}
@@ -21,7 +21,7 @@ import play.shaded.ahc.org.asynchttpclient.oauth.{ConsumerKey => AHCConsumerKey,
 case class OAuth(info: ServiceInfo, use10a: Boolean = true) {
 
   private val provider = {
-    val p = new CommonsHttpOAuthProvider(info.requestTokenURL, info.accessTokenURL, info.authorizationURL)
+    val p = new DefaultOAuthProvider(info.requestTokenURL, info.accessTokenURL, info.authorizationURL)
     p.setOAuth10a(use10a)
     p
   }
