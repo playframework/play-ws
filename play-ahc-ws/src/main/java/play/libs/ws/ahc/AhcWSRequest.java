@@ -25,7 +25,6 @@ public class AhcWSRequest implements WSRequest {
     private final AhcWSClient client;
     private final StandaloneAhcWSRequest request;
     private Function<StandaloneWSResponse, WSResponse> responseFunction;
-    private final ArrayList<WSRequestFilter> filters = new ArrayList<>();
 
     private Function<StandaloneWSRequest, WSRequest> converter = new Function<StandaloneWSRequest, WSRequest>() {
         public WSRequest apply(StandaloneWSRequest standaloneWSRequest) {
@@ -141,12 +140,6 @@ public class AhcWSRequest implements WSRequest {
     @Override
     public CompletionStage<StreamedResponse> stream() {
         return request.stream();
-    }
-
-    @Override
-    public WSRequest withRequestFilter(WSRequestFilter filter) {
-        filters.add(filter);
-        return this;
     }
 
     @Override
