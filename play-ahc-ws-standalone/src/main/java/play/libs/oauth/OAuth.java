@@ -6,7 +6,7 @@ package play.libs.oauth;
 import play.shaded.oauth.oauth.signpost.OAuthConsumer;
 import play.shaded.oauth.oauth.signpost.OAuthProvider;
 import play.shaded.oauth.oauth.signpost.basic.DefaultOAuthConsumer;
-import play.shaded.oauth.oauth.signpost.commonshttp.CommonsHttpOAuthProvider;
+import play.shaded.oauth.oauth.signpost.basic.DefaultOAuthProvider;
 import play.shaded.oauth.oauth.signpost.exception.OAuthException;
 import play.shaded.ahc.org.asynchttpclient.oauth.OAuthSignatureCalculator;
 import play.libs.ws.WSSignatureCalculator;
@@ -22,7 +22,7 @@ public class OAuth {
 
     public OAuth(ServiceInfo info, boolean use10a) {
         this.info = info;
-        this.provider = new CommonsHttpOAuthProvider(info.requestTokenURL, info.accessTokenURL, info.authorizationURL);
+        this.provider = new DefaultOAuthProvider(info.requestTokenURL, info.accessTokenURL, info.authorizationURL);
         this.provider.setOAuth10a(use10a);
     }
 

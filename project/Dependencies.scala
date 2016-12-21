@@ -43,7 +43,7 @@ object Dependencies {
   val scalaXml = Seq("org.scala-lang.modules" %% "scala-xml" % scalaXmlVersion)
 
   val oauth = Seq(
-    "signpost-core", "signpost-commonshttp4").map("oauth.signpost" % _ % "1.2.1.2"
+    "oauth.signpost" % "signpost-core" % "1.2.1.2"
   )
 
   // https://mvnrepository.com/artifact/org.reactivestreams/reactive-streams
