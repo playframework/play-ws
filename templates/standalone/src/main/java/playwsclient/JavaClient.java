@@ -1,16 +1,17 @@
-package com.example;
+package playwsclient;
 
 import akka.actor.ActorSystem;
 import akka.stream.ActorMaterializer;
 import akka.stream.ActorMaterializerSettings;
 import play.shaded.ahc.org.asynchttpclient.AsyncHttpClientConfig;
+import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClient;
 import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClientConfig;
 import play.libs.ws.*;
 import play.libs.ws.ahc.*;
 
-import java.util.Optional;
+import java.util.concurrent.CompletionStage;
 
-public class Standalone {
+public class JavaClient {
 
     public static void main(String[] args) {
         AsyncHttpClientConfig config = new DefaultAsyncHttpClientConfig.Builder()
@@ -24,12 +25,12 @@ public class Standalone {
         ActorMaterializer materializer = ActorMaterializer.create(settings, system, name);
 
         DefaultAsyncHttpClient ahcClient = new DefaultAsyncHttpClient(config);
-        WSClient client = new AhcWSClient(ahcClient, materializer);
-        client.url("http://www.google.com").get().whenComplete((r, e) -> {
-            Optional.ofNullable(r).ifPresent(response -> {
-                String statusText = response.getStatusText();
-                System.out.println("Got a response " + statusText);
-            });
+        StandaloneWSClient client = new StandaloneAhcWSClient(ahcClient, materializer);
+        CompletionStage<StandaloneWSResponse> completionStage = client.url("http://www.google.com").get();
+
+        completionStage.whenComplete((response, throwable) -> {
+            String statusText = response.getStatusText();
+            System.out.println("Got a response " + statusText);
         }).thenRun(() -> {
             try {
                 client.close();

@@ -1,14 +1,13 @@
-package com.example.playwsclient
-
-import play.api.libs.ws.ahc._
-import play.api.libs.ws._
+package playwsclient
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
+import play.api.libs.ws.StandaloneWSClient
+import play.api.libs.ws.ahc.StandaloneAhcWSClient
 
 import scala.concurrent.Future
 
-object Main {
+object ScalaClient {
   import scala.concurrent.ExecutionContext.Implicits._
 
   def main(args: Array[String]): Unit = {
@@ -17,8 +16,8 @@ object Main {
     val wsClient = StandaloneAhcWSClient()
 
     call(wsClient)
-      .andThen { case _ ⇒ wsClient.close() }
-      .andThen { case _ ⇒ system.terminate() }
+      .andThen { case _ => wsClient.close() }
+      .andThen { case _ => system.terminate() }
   }
 
   def call(wsClient: StandaloneWSClient): Future[Unit] = {
