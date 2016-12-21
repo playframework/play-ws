@@ -8,13 +8,28 @@ resolvers ++= DefaultOptions.resolvers(snapshot = true)
 
 lazy val commonSettings = Seq(
   organization := "com.typesafe.play",
+  scalaVersion := "2.12.1",
+  crossScalaVersions := Seq("2.12.1", "2.11.8"),
+  scalacOptions in (Compile, doc) ++= Seq(
+    "-target:jvm-1.8",
+    "-deprecation",
+    "-encoding", "UTF-8",
+    "-feature",
+    "-unchecked",
+    //"-Ywarn-unused-import",
+    "-Ywarn-nullary-unit",
+    "-Xfatal-warnings",
+    "-Xlint",
+    //"-Yinline-warnings",
+    "-Ywarn-dead-code"
+   ),
   scalacOptions in (Compile, doc) ++= {
     // Work around 2.12 bug which prevents javadoc in nested java classes from compiling.
     CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, v)) if v <= 11 =>
-        Nil
-      case _ =>
+      case Some((2, v)) if v == 12 =>
         Seq("-no-java-comments")
+      case _ =>
+        Nil
     }
   }
 )
