@@ -45,15 +45,85 @@ The standalone client needs Akka to handle streaming data internally:
 In Scala, the way to call out to a web service and close down the client:
 
 ```scala
-TODO
+package playwsclient
+
+import akka.actor.ActorSystem
+import akka.stream.ActorMaterializer
+import play.api.libs.ws.StandaloneWSClient
+import play.api.libs.ws.ahc.StandaloneAhcWSClient
+
+import scala.concurrent.Future
+
+object ScalaClient {
+  import scala.concurrent.ExecutionContext.Implicits._
+
+  def main(args: Array[String]): Unit = {
+    implicit val system = ActorSystem()
+    implicit val materializer = ActorMaterializer()
+    val wsClient = StandaloneAhcWSClient()
+
+    call(wsClient)
+      .andThen { case _ => wsClient.close() }
+      .andThen { case _ => system.terminate() }
+  }
+
+  def call(wsClient: StandaloneWSClient): Future[Unit] = {
+    wsClient.url("http://www.google.com").get().map { response ⇒
+      val statusText: String = response.statusText
+      println(s"Got a response $statusText")
+    }
+  }
+}
 ```
 
 ### Java
 
-In Java the API is much the same:
+In Java the API is much the same, except that an instance of AsyncHttpClient has to be passed in explicitly:
 
 ```java
-TODO
+package playwsclient;
+
+import akka.actor.ActorSystem;
+import akka.stream.ActorMaterializer;
+import akka.stream.ActorMaterializerSettings;
+import play.shaded.ahc.org.asynchttpclient.AsyncHttpClientConfig;
+import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClient;
+import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClientConfig;
+import play.libs.ws.*;
+import play.libs.ws.ahc.*;
+
+import java.util.concurrent.CompletionStage;
+
+public class JavaClient {
+
+    public static void main(String[] args) {
+        AsyncHttpClientConfig config = new DefaultAsyncHttpClientConfig.Builder()
+                .setMaxRequestRetry(0)
+                .setShutdownQuietPeriod(0)
+                .setShutdownTimeout(0).build();
+
+        String name = "wsclient";
+        ActorSystem system = ActorSystem.create(name);
+        ActorMaterializerSettings settings = ActorMaterializerSettings.create(system);
+        ActorMaterializer materializer = ActorMaterializer.create(settings, system, name);
+
+        DefaultAsyncHttpClient ahcClient = new DefaultAsyncHttpClient(config);
+        StandaloneWSClient client = new StandaloneAhcWSClient(ahcClient, materializer);
+        CompletionStage<StandaloneWSResponse> completionStage = client.url("http://www.google.com").get();
+
+        completionStage.whenComplete((response, throwable) -> {
+            String statusText = response.getStatusText();
+            System.out.println("Got a response " + statusText);
+        }).thenRun(() -> {
+            try {
+                client.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).thenRun(system::terminate);
+
+    }
+}
 ```
 
 ## Missing Features
