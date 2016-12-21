@@ -57,7 +57,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest<StandaloneAhc
     private final Materializer materializer;
 
     private int timeout = 0;
-    private Boolean followRedirects = null;
+    private boolean followRedirects;
     private String virtualHost = null;
 
     public StandaloneAhcWSRequest(StandaloneAhcWSClient client, String url, Materializer materializer) {
@@ -175,7 +175,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest<StandaloneAhc
     }
 
     @Override
-    public StandaloneAhcWSRequest setFollowRedirects(Boolean followRedirects) {
+    public StandaloneAhcWSRequest setFollowRedirects(boolean followRedirects) {
         this.followRedirects = followRedirects;
         return this;
     }
@@ -277,7 +277,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest<StandaloneAhc
     }
 
     @Override
-    public Boolean getFollowRedirects() {
+    public boolean getFollowRedirects() {
         return this.followRedirects;
     }
 
@@ -509,9 +509,8 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest<StandaloneAhc
             builder.setRequestTimeout(this.timeout);
         }
 
-        if (this.followRedirects != null) {
-            builder.setFollowRedirect(this.followRedirects);
-        }
+        builder.setFollowRedirect(this.followRedirects);
+
         if (this.virtualHost != null) {
             builder.setVirtualHost(this.virtualHost);
         }

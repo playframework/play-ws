@@ -208,7 +208,7 @@ public class AhcWSRequest implements WSRequest {
     }
 
     @Override
-    public WSRequest setFollowRedirects(Boolean followRedirects) {
+    public WSRequest setFollowRedirects(boolean followRedirects) {
         return converter.apply(request.setFollowRedirects(followRedirects));
     }
 
@@ -268,7 +268,7 @@ public class AhcWSRequest implements WSRequest {
     }
 
     @Override
-    public Boolean getFollowRedirects() {
+    public boolean getFollowRedirects() {
         return request.getFollowRedirects();
     }
 
