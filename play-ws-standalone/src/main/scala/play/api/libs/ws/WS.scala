@@ -38,10 +38,7 @@ case class FileBody(file: File) extends WSBody
  */
 case object EmptyBody extends WSBody
 
-/**
- * A streamed response containing a response header and a streamable body.
- */
-case class StreamedResponse(headers: WSResponseHeaders, body: Source[ByteString, _])
+
 
 
 /**

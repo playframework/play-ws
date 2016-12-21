@@ -24,7 +24,6 @@ import play.api.libs.ws.ahc.Streamed;
 import play.libs.Json;
 import play.libs.oauth.OAuth;
 import play.libs.ws.*;
-import play.libs.ws.StandaloneWSResponse;
 import scala.compat.java8.FutureConverters;
 
 import java.io.File;
