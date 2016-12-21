@@ -40,7 +40,7 @@ import java.util.concurrent.CompletionStage;
 /**
  * provides the User facing API for building WS request.
  */
-public class StandaloneAhcWSRequest implements StandaloneWSRequest<StandaloneWSRequest, StandaloneWSResponse> {
+public class StandaloneAhcWSRequest implements StandaloneWSRequest<StandaloneAhcWSRequest, StandaloneAhcWSResponse> {
 
     private Object body = null;
 
@@ -106,7 +106,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest<StandaloneWSR
      * @param query the query string
      */
     @Override
-    public StandaloneWSRequest setQueryString(String query) {
+    public StandaloneAhcWSRequest setQueryString(String query) {
         String[] params = query.split("&");
         for (String param : params) {
             String[] keyValue = param.split("=");
@@ -124,13 +124,13 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest<StandaloneWSR
     }
 
     @Override
-    public StandaloneWSRequest setQueryParameter(String name, String value) {
+    public StandaloneAhcWSRequest setQueryParameter(String name, String value) {
         addValueTo(queryParameters, name, value);
         return this;
     }
 
     @Override
-    public StandaloneWSRequest setAuth(String userInfo) {
+    public StandaloneAhcWSRequest setAuth(String userInfo) {
         this.scheme = WSAuthScheme.BASIC;
 
         if (userInfo.equals("")) {
@@ -154,7 +154,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest<StandaloneWSR
     }
 
     @Override
-    public StandaloneWSRequest setAuth(String username, String password) {
+    public StandaloneAhcWSRequest setAuth(String username, String password) {
         this.username = username;
         this.password = password;
         this.scheme = WSAuthScheme.BASIC;
@@ -162,7 +162,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest<StandaloneWSR
     }
 
     @Override
-    public StandaloneWSRequest setAuth(String username, String password, WSAuthScheme scheme) {
+    public StandaloneAhcWSRequest setAuth(String username, String password, WSAuthScheme scheme) {
         this.username = username;
         this.password = password;
         this.scheme = scheme;
@@ -170,25 +170,25 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest<StandaloneWSR
     }
 
     @Override
-    public StandaloneWSRequest sign(WSSignatureCalculator calculator) {
+    public StandaloneAhcWSRequest sign(WSSignatureCalculator calculator) {
         this.calculator = calculator;
         return this;
     }
 
     @Override
-    public StandaloneWSRequest setFollowRedirects(Boolean followRedirects) {
+    public StandaloneAhcWSRequest setFollowRedirects(Boolean followRedirects) {
         this.followRedirects = followRedirects;
         return this;
     }
 
     @Override
-    public StandaloneWSRequest setVirtualHost(String virtualHost) {
+    public StandaloneAhcWSRequest setVirtualHost(String virtualHost) {
         this.virtualHost = virtualHost;
         return this;
     }
 
     @Override
-    public StandaloneWSRequest setRequestTimeout(long timeout) {
+    public StandaloneAhcWSRequest setRequestTimeout(long timeout) {
         if (timeout < -1 || timeout > Integer.MAX_VALUE) {
             throw new IllegalArgumentException("Timeout must be between -1 and " + Integer.MAX_VALUE + " inclusive");
         }
@@ -197,42 +197,42 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest<StandaloneWSR
     }
 
     @Override
-    public StandaloneWSRequest setContentType(String contentType) {
+    public StandaloneAhcWSRequest setContentType(String contentType) {
         return setHeader(HttpHeaders.Names.CONTENT_TYPE, contentType);
     }
 
     @Override
-    public StandaloneWSRequest setMethod(String method) {
+    public StandaloneAhcWSRequest setMethod(String method) {
         this.method = method;
         return this;
     }
 
     @Override
-    public StandaloneWSRequest setBody(String body) {
+    public StandaloneAhcWSRequest setBody(String body) {
         this.body = body;
         return this;
     }
 
     @Override
-    public StandaloneWSRequest setBody(JsonNode body) {
+    public StandaloneAhcWSRequest setBody(JsonNode body) {
         this.body = body;
         return this;
     }
 
     @Override
-    public StandaloneWSRequest setBody(InputStream body) {
+    public StandaloneAhcWSRequest setBody(InputStream body) {
         this.body = body;
         return this;
     }
 
     @Override
-    public StandaloneWSRequest setBody(File body) {
+    public StandaloneAhcWSRequest setBody(File body) {
         this.body = body;
         return this;
     }
 
     @Override
-    public StandaloneWSRequest setBody(Source<ByteString, ?> body) {
+    public StandaloneAhcWSRequest setBody(Source<ByteString, ?> body) {
         this.body = body;
         return this;
     }
@@ -288,7 +288,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest<StandaloneWSR
     }
 
     @Override
-    public CompletionStage<StandaloneWSResponse> get() {
+    public CompletionStage<StandaloneAhcWSResponse> get() {
         return execute("GET");
     }
 
@@ -297,28 +297,28 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest<StandaloneWSR
     //-------------------------------------------------------------------------
 
     @Override
-    public CompletionStage<StandaloneWSResponse> patch(String body) {
+    public CompletionStage<StandaloneAhcWSResponse> patch(String body) {
         setMethod("PATCH");
         setBody(body);
         return execute();
     }
 
     @Override
-    public CompletionStage<StandaloneWSResponse> patch(JsonNode body) {
+    public CompletionStage<StandaloneAhcWSResponse> patch(JsonNode body) {
         setMethod("PATCH");
         setBody(body);
         return execute();
     }
 
     @Override
-    public CompletionStage<StandaloneWSResponse> patch(InputStream body) {
+    public CompletionStage<StandaloneAhcWSResponse> patch(InputStream body) {
         setMethod("PATCH");
         setBody(body);
         return execute();
     }
 
     @Override
-    public CompletionStage<StandaloneWSResponse> patch(File body) {
+    public CompletionStage<StandaloneAhcWSResponse> patch(File body) {
         setMethod("PATCH");
         setBody(body);
         return execute();
@@ -329,28 +329,28 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest<StandaloneWSR
     //-------------------------------------------------------------------------
 
     @Override
-    public CompletionStage<StandaloneWSResponse> post(String body) {
+    public CompletionStage<StandaloneAhcWSResponse> post(String body) {
         setMethod("POST");
         setBody(body);
         return execute();
     }
 
     @Override
-    public CompletionStage<StandaloneWSResponse> post(JsonNode body) {
+    public CompletionStage<StandaloneAhcWSResponse> post(JsonNode body) {
         setMethod("POST");
         setBody(body);
         return execute();
     }
 
     @Override
-    public CompletionStage<StandaloneWSResponse> post(InputStream body) {
+    public CompletionStage<StandaloneAhcWSResponse> post(InputStream body) {
         setMethod("POST");
         setBody(body);
         return execute();
     }
 
     @Override
-    public CompletionStage<StandaloneWSResponse> post(File body) {
+    public CompletionStage<StandaloneAhcWSResponse> post(File body) {
         setMethod("POST");
         setBody(body);
         return execute();
@@ -361,56 +361,56 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest<StandaloneWSR
     //-------------------------------------------------------------------------
 
     @Override
-    public CompletionStage<StandaloneWSResponse> put(String body) {
+    public CompletionStage<StandaloneAhcWSResponse> put(String body) {
         setMethod("PUT");
         setBody(body);
         return execute();
     }
 
     @Override
-    public CompletionStage<StandaloneWSResponse> put(JsonNode body) {
+    public CompletionStage<StandaloneAhcWSResponse> put(JsonNode body) {
         setMethod("PUT");
         setBody(body);
         return execute();
     }
 
     @Override
-    public CompletionStage<StandaloneWSResponse> put(InputStream body) {
+    public CompletionStage<StandaloneAhcWSResponse> put(InputStream body) {
         setMethod("PUT");
         setBody(body);
         return execute();
     }
 
     @Override
-    public CompletionStage<StandaloneWSResponse> put(File body) {
+    public CompletionStage<StandaloneAhcWSResponse> put(File body) {
         setMethod("PUT");
         setBody(body);
         return execute();
     }
 
     @Override
-    public CompletionStage<StandaloneWSResponse> delete() {
+    public CompletionStage<StandaloneAhcWSResponse> delete() {
         return execute("DELETE");
     }
 
     @Override
-    public CompletionStage<StandaloneWSResponse> head() {
+    public CompletionStage<StandaloneAhcWSResponse> head() {
         return execute("HEAD");
     }
 
     @Override
-    public CompletionStage<StandaloneWSResponse> options() {
+    public CompletionStage<StandaloneAhcWSResponse> options() {
         return execute("OPTIONS");
     }
 
     @Override
-    public CompletionStage<StandaloneWSResponse> execute(String method) {
+    public CompletionStage<StandaloneAhcWSResponse> execute(String method) {
         setMethod(method);
         return execute();
     }
 
     @Override
-    public CompletionStage<StandaloneWSResponse> execute() {
+    public CompletionStage<StandaloneAhcWSResponse> execute() {
         return this.execute(this.buildRequest());
     }
 
@@ -547,9 +547,9 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest<StandaloneWSR
         }
     }
 
-    private CompletionStage<StandaloneWSResponse> execute(Request request) {
+    private CompletionStage<StandaloneAhcWSResponse> execute(Request request) {
 
-        final scala.concurrent.Promise<StandaloneWSResponse> scalaPromise = scala.concurrent.Promise$.MODULE$.apply();
+        final scala.concurrent.Promise<StandaloneAhcWSResponse> scalaPromise = scala.concurrent.Promise$.MODULE$.apply();
         try {
             AsyncHttpClient asyncHttpClient = (AsyncHttpClient) client.getUnderlying();
             asyncHttpClient.executeRequest(request, new AsyncCompletionHandler<Response>() {

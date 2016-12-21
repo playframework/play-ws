@@ -5,8 +5,9 @@ object Dependencies {
 
   // Latest snapshot is in
   // https://oss.sonatype.org/content/repositories/snapshots/com/typesafe/play/play_2.11/maven-metadata.xml
-  val PlayVersion = playVersion("2.6.0-2016-12-11-1904442-SNAPSHOT")
-  //val PlayVersion = playVersion("2.5.10")
+  //val PlayVersion = playVersion("2.6.0-2016-12-11-1904442-SNAPSHOT")
+  // val PlayVersion = playVersion("2.5.10")
+  val PlayVersion = playVersion("2.6.0-SNAPSHOT")
 
   val specsVersion = "3.8.6"
   val specsBuild = Seq(
@@ -17,15 +18,13 @@ object Dependencies {
 
   val logback = "ch.qos.logback" % "logback-classic" % "1.1.7"
 
-  val playJsonVersion = PlayVersion
+  val playJsonVersion = "2.6.0-SNAPSHOT"
   val playJson = Seq(
     "com.typesafe.play" %% "play-json" % playJsonVersion,
     "com.typesafe.play" %% "play-functional" % playJsonVersion
   )
 
-  // Build this from source until 2.12 is published.
-  // See https://github.com/playframework/play-iteratees/pull/6
-  val playIterateesVersion = "2.6.0"
+  val playIterateesVersion = "2.6.1"
   val playIteratees = Seq("com.typesafe.play" %% "play-iteratees" % playIterateesVersion)
 
   val guiceVersion = "4.0"
