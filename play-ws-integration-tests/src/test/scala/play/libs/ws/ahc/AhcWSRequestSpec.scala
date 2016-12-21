@@ -75,7 +75,7 @@ class AhcWSRequestSpec extends Specification with Mockito {
       val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
         .setHeader("Content-Type", "application/x-www-form-urlencoded") // set content type by hand
 
-      val withBody: StandaloneWSRequest[_, _] = req.setBody("param1=value1").setHeader("Content-Length", "9001") // add a meaningless content length here...
+      val withBody: StandaloneWSRequest[_, _, _] = req.setBody("param1=value1").setHeader("Content-Length", "9001") // add a meaningless content length here...
 
       val signedReq = req.sign(calc)
         .asInstanceOf[StandaloneAhcWSRequest]
