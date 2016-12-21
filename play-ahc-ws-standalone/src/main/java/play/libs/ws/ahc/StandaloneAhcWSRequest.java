@@ -39,7 +39,7 @@ import java.util.concurrent.CompletionStage;
 /**
  * provides the User facing API for building WS request.
  */
-public class StandaloneAhcWSRequest implements StandaloneWSRequest<StandaloneAhcWSRequest, StandaloneAhcWSResponse> {
+public class StandaloneAhcWSRequest implements StandaloneWSRequest<StandaloneAhcWSRequest, StandaloneAhcWSResponse, StreamedResponse> {
 
     private Object body = null;
 

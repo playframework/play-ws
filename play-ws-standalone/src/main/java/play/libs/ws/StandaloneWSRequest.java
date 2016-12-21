@@ -21,7 +21,7 @@ import java.util.concurrent.CompletionStage;
  * after building the request: notably, the URL, headers and query parameters
  * are shown before an OAuth signature is calculated.
  */
-public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends StandaloneWSResponse> {
+public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends StandaloneWSResponse, S extends StreamedResponse> {
 
     //-------------------------------------------------------------------------
     // "GET"
@@ -187,7 +187,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      *
      * @return a promise to the streaming response
      */
-    CompletionStage<StreamedResponse> stream();
+    CompletionStage<S> stream();
 
     //-------------------------------------------------------------------------
     // Setters

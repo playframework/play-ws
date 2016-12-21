@@ -9,7 +9,7 @@ import java.util.concurrent.CompletionStage;
 /**
  *
  */
-public interface WSRequest extends StandaloneWSRequest<WSRequest, WSResponse> {
+public interface WSRequest extends StandaloneWSRequest<WSRequest, WSResponse, StreamedResponse> {
 
     /**
      * Perform a PATCH on the request asynchronously.
