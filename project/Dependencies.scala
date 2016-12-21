@@ -1,6 +1,7 @@
 import sbt._
 
 object Dependencies {
+
   import interplay.PlayBuildBase.autoImport.playVersion
 
   // Latest snapshot is in
@@ -16,7 +17,6 @@ object Dependencies {
     "specs2-mock"
   ).map("org.specs2" %% _ % specsVersion)
 
-  val logback = "ch.qos.logback" % "logback-classic" % "1.1.7"
 
   val playJsonVersion = "2.6.0-SNAPSHOT"
   val playJson = Seq(
@@ -24,16 +24,8 @@ object Dependencies {
     "com.typesafe.play" %% "play-functional" % playJsonVersion
   )
 
-  val playIterateesVersion = "2.6.1"
-  val playIteratees = Seq("com.typesafe.play" %% "play-iteratees" % playIterateesVersion)
+  def slf4j = Seq("org.slf4j" % "slf4j-api" % "1.7.16")
 
-  val guiceVersion = "4.0"
-  val guiceDeps = Seq(
-    "com.google.inject" % "guice" % guiceVersion,
-    "com.google.inject.extensions" % "guice-assistedinject" % guiceVersion
-  )
-
-  // https://mvnrepository.com/artifact/javax.inject/javax.inject
   val javaxInject = Seq("javax.inject" % "javax.inject" % "1")
 
   val sslConfigVersion = "0.2.1"
@@ -42,49 +34,34 @@ object Dependencies {
   val scalaXmlVersion = "1.0.6"
   val scalaXml = Seq("org.scala-lang.modules" %% "scala-xml" % scalaXmlVersion)
 
-  val oauth = Seq(
-    "oauth.signpost" % "signpost-core" % "1.2.1.2"
-  )
-
-  // https://mvnrepository.com/artifact/org.reactivestreams/reactive-streams
-  val reactiveStreams = Seq(
-    "org.reactivestreams" % "reactive-streams" % "1.0.0"
-  )
+  val signpostVersion = "1.2.1.2"
+  val oauth = Seq("oauth.signpost" % "signpost-core" % signpostVersion)
 
   val asyncHttpClientVersion = "2.0.11"
   val asyncHttpClient = Seq(
-    "org.asynchttpclient" % "async-http-client" % asyncHttpClientVersion excludeAll(
-      ExclusionRule(organization = "org.slf4j"),
-      ExclusionRule(organization = "org.apache.http")
-    )
+    "org.asynchttpclient" % "async-http-client" % asyncHttpClientVersion excludeAll ExclusionRule(organization = "org.slf4j")
   )
 
   val akkaVersion = "2.4.14"
-  val akka = Seq(
-    "akka-stream", "akka-slf4j").map("com.typesafe.akka" %% _ % akkaVersion
-  )
+  val akka = Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion)
 
   val playTest = Seq(
-    logback % Test,
+    "ch.qos.logback" % "logback-classic" % "1.1.7" % Test,
     "com.typesafe.play" %% "play-test" % PlayVersion % Test,
     "com.typesafe.play" %% "play-specs2" % PlayVersion % Test
   ) ++ specsBuild.map(_ % Test)
 
-  def wsDependencies(scalaVersion: String) =
-    javaxInject ++
+  val standaloneApiWSDependencies = javaxInject ++
       sslConfigCore ++
       akka ++
       scalaXml ++
-      playJson ++
-      playIteratees ++
-      reactiveStreams ++
-      playTest
+      playJson
 
-  val playDeps = Seq(
+  val standaloneAhcWSDependencies = slf4j
+
+  val playDependencies = Seq(
     "com.typesafe.play" %% "play" % PlayVersion,
-    "com.typesafe.play" %% "play-java" % PlayVersion)
-
-  def excludeNetty(module: ModuleID): ModuleID =
-    module.excludeAll(ExclusionRule(organization = "io.netty"))
+    "com.typesafe.play" %% "play-java" % PlayVersion
+  ) ++ playTest
 
 }
