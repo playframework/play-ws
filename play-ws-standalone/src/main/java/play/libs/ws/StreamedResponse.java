@@ -5,7 +5,6 @@ package play.libs.ws;
 
 import akka.stream.javadsl.Source;
 import akka.util.ByteString;
-import play.api.libs.ws.CollectionUtil;
 import scala.compat.java8.FutureConverters;
 import scala.concurrent.Future;
 
@@ -14,35 +13,17 @@ import java.util.concurrent.CompletionStage;
 /**
  * A streamed response containing a response header and a streamable body.
  */
-public class StreamedResponse {
+public interface StreamedResponse {
 
-    private final WSResponseHeaders headers;
-    private final Source<ByteString, ?> body;
+    public WSResponseHeaders getHeaders();
 
-    private StreamedResponse(WSResponseHeaders headers, Source<ByteString, ?> body) {
-        this.headers = headers;
-        this.body = body;
-    }
-
-    public WSResponseHeaders getHeaders() {
-        return headers;
-    }
-
-    public Source<ByteString, ?> getBody() {
-        return body;
-    }
+    public Source<ByteString, ?> getBody();
 
     public static CompletionStage<StreamedResponse> from(Future<play.api.libs.ws.StreamedResponse> from) {
         CompletionStage<play.api.libs.ws.StreamedResponse> res = FutureConverters.toJava(from);
-        java.util.function.Function<play.api.libs.ws.StreamedResponse, StreamedResponse> mapper = response -> {
-            WSResponseHeaders headers = toJavaHeaders(response.headers());
-            Source<ByteString, ?> source = response.body().asJava();
-            return new StreamedResponse(headers, source);
-        };
+        java.util.function.Function<play.api.libs.ws.StreamedResponse, StreamedResponse> mapper = response ->
+                play.api.libs.ws.StreamedResponse.apply(response.headers(), response.body());
         return res.thenApply(mapper);
     }
 
-    private static WSResponseHeaders toJavaHeaders(play.api.libs.ws.WSResponseHeaders from) {
-        return new DefaultWSResponseHeaders(from.status(), CollectionUtil.convert(from.headers()));
-    }
 }
