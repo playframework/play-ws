@@ -42,17 +42,16 @@ lazy val `play-ws-standalone` = project
   .in(file("play-ws-standalone"))
   .enablePlugins(PlayLibrary)
   .settings(commonSettings)
-  .settings(libraryDependencies ++= wsDependencies(scalaVersion.value))
+  .settings(libraryDependencies ++= standaloneApiWSDependencies)
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
 // WS API with Play dependencies
 lazy val `play-ws` = project
   .in(file("play-ws"))
   .enablePlugins(PlayLibrary)
-  .settings(commonSettings)
-  .settings(libraryDependencies ++= playDeps)
-  .settings(libraryDependencies ++= specsBuild.map(_ % Test))
   .dependsOn(`play-ws-standalone`)
+  .settings(commonSettings)
+  .settings(libraryDependencies ++= playDependencies)
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
@@ -140,8 +139,7 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
       ShadeRule.rename("org.asynchttpclient.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.rename("io.netty.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.rename("javassist.**" -> "play.shaded.ahc.@0").inAll,
-      ShadeRule.rename("com.typesafe.netty.**" -> "play.shaded.ahc.@0").inAll,
-      ShadeRule.zap("org.reactivestreams.**").inAll // somehow gets dragged in
+      ShadeRule.rename("com.typesafe.netty.**" -> "play.shaded.ahc.@0").inAll
     ),
     assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeBin = false, includeScala = false),
     packageBin in Compile := assembly.value
@@ -158,8 +156,6 @@ lazy val `shaded-oauth` = project.in(file("shaded/oauth"))
   .settings(
     assemblyShadeRules in assembly := Seq(
       ShadeRule.rename("oauth.**" -> "play.shaded.oauth.@0").inAll,
-      ShadeRule.rename("org.apache.http.**" -> "play.shaded.oauth.@0").inAll,
-      ShadeRule.rename("com.google.gdata.**" -> "play.shaded.oauth.@0").inAll,
       ShadeRule.rename("org.apache.commons.**" -> "play.shaded.oauth.@0").inAll
     ),
     assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeBin = false, includeScala = false),
@@ -187,6 +183,7 @@ lazy val `play-ahc-ws-standalone` = project
   .enablePlugins(PlayLibrary)
   .dependsOn(`play-ws-standalone`, `shaded-oauth`, `shaded-asynchttpclient`)
   .settings(commonSettings)
+  .settings(libraryDependencies ++= standaloneAhcWSDependencies)
   .settings(shadedAhcSettings)
   .settings(shadedOAuthSettings)
   .disablePlugins(sbtassembly.AssemblyPlugin)
@@ -195,10 +192,8 @@ lazy val `play-ahc-ws-standalone` = project
 lazy val `play-ahc-ws` = project
   .in(file("play-ahc-ws"))
   .enablePlugins(PlayLibrary)
-  .settings(commonSettings)
-  .settings(libraryDependencies ++= playDeps)
-  .settings(libraryDependencies ++= specsBuild.map(_ % Test))
   .dependsOn(`play-ws`, `play-ahc-ws-standalone`)
+  .settings(commonSettings)
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
@@ -225,12 +220,11 @@ lazy val root = project
 lazy val `play-ws-integration-tests` = project
   .in(file("play-ws-integration-tests"))
   .enablePlugins(PlayLibrary)
+  .dependsOn(`play-ahc-ws`)
   .settings(disableDocs)
   .settings(disablePublishing)
   .settings(commonSettings)
-  .settings(libraryDependencies ++= playDeps)
-  .settings(libraryDependencies ++= specsBuild.map(_ % Test) ++ playTest)
-  .dependsOn(`play-ahc-ws`)
+  .settings(libraryDependencies ++= playTest)
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
 playBuildRepoName in ThisBuild := "play-ws"
