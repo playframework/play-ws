@@ -7,7 +7,6 @@ object Dependencies {
   // Latest snapshot is in
   // https://oss.sonatype.org/content/repositories/snapshots/com/typesafe/play/play_2.11/maven-metadata.xml
   val PlayVersion = playVersion("2.6.0-2016-12-11-1904442-SNAPSHOT")
-  // val PlayVersion = playVersion("2.5.10")
   //val PlayVersion = playVersion("2.6.0-SNAPSHOT")
 
   val specsVersion = "3.8.6"
@@ -17,8 +16,8 @@ object Dependencies {
     "specs2-mock"
   ).map("org.specs2" %% _ % specsVersion)
 
-
-  val playJsonVersion = "2.6.0-SNAPSHOT"
+  // Use the published milestone
+  val playJsonVersion = "2.6.0-M1"
   val playJson = Seq(
     "com.typesafe.play" %% "play-json" % playJsonVersion,
     "com.typesafe.play" %% "play-functional" % playJsonVersion
