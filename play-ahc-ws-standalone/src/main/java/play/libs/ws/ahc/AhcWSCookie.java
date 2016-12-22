@@ -40,11 +40,11 @@ public class AhcWSCookie implements WSCookie {
         return ahcCookie.getPath();
     }
 
-    public Long getMaxAge() {
+    public long getMaxAge() {
         return ahcCookie.getMaxAge();
     }
 
-    public Boolean isSecure() {
+    public boolean isSecure() {
         return ahcCookie.isSecure();
     }
 }

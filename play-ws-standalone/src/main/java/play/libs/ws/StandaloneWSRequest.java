@@ -312,7 +312,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param followRedirects true if the request should follow redirects
      * @return the modified WSRequest
      */
-    T setFollowRedirects(Boolean followRedirects);
+    T setFollowRedirects(boolean followRedirects);
 
     /**
      * Sets the virtual host as a "hostname:port" string.
@@ -389,6 +389,6 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
     /**
      * @return true if the request is configure to follow redirect, false if it is configure not to, null if nothing is configured and the global client preference should be used instead.
      */
-    Boolean getFollowRedirects();
+    boolean getFollowRedirects();
 
 }

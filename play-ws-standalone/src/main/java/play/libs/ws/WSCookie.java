@@ -25,9 +25,9 @@ public interface WSCookie {
 
     public String getPath();
 
-    public Long getMaxAge();
+    public long getMaxAge();
 
-    public Boolean isSecure();
+    public boolean isSecure();
 
     // Cookie ports should not be used; cookies for a given host are shared across
     // all the ports on that host.
