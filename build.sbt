@@ -16,9 +16,9 @@ lazy val commonSettings = Seq(
     "-encoding", "UTF-8",
     "-feature",
     "-unchecked",
-    //"-Ywarn-unused-import",
+    "-Ywarn-unused-import",
     "-Ywarn-nullary-unit",
-    "-Xfatal-warnings",
+    //"-Xfatal-warnings",
     "-Xlint",
     //"-Yinline-warnings",
     "-Ywarn-dead-code"
@@ -31,7 +31,12 @@ lazy val commonSettings = Seq(
       case _ =>
         Nil
     }
-  }
+  },
+  javacOptions in (Compile, doc) ++= Seq(
+    "-source", "1.8",
+    "-target", "1.8",
+    "-Xlint:deprecation"
+  )
 )
 //---------------------------------------------------------------
 // WS API
@@ -226,6 +231,10 @@ lazy val `play-ws-integration-tests` = project
   .settings(commonSettings)
   .settings(libraryDependencies ++= playTest)
   .disablePlugins(sbtassembly.AssemblyPlugin)
+
+//---------------------------------------------------------------
+// Release
+//---------------------------------------------------------------
 
 playBuildRepoName in ThisBuild := "play-ws"
 
