@@ -2,13 +2,6 @@ import sbt._
 
 object Dependencies {
 
-  import interplay.PlayBuildBase.autoImport.playVersion
-
-  // Latest snapshot is in
-  // https://oss.sonatype.org/content/repositories/snapshots/com/typesafe/play/play_2.11/maven-metadata.xml
-  val PlayVersion = playVersion("2.6.0-2016-12-11-1904442-SNAPSHOT")
-  //val PlayVersion = playVersion("2.6.0-SNAPSHOT")
-
   val specsVersion = "3.8.6"
   val specsBuild = Seq(
     "specs2-core",
@@ -44,12 +37,6 @@ object Dependencies {
   val akkaVersion = "2.4.14"
   val akka = Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion)
 
-  val playTest = Seq(
-    "ch.qos.logback" % "logback-classic" % "1.1.7" % Test,
-    "com.typesafe.play" %% "play-test" % PlayVersion % Test,
-    "com.typesafe.play" %% "play-specs2" % PlayVersion % Test
-  ) ++ specsBuild.map(_ % Test)
-
   val standaloneApiWSDependencies = javaxInject ++
       sslConfigCore ++
       akka ++
@@ -57,10 +44,5 @@ object Dependencies {
       playJson
 
   val standaloneAhcWSDependencies = slf4j
-
-  val playDependencies = Seq(
-    "com.typesafe.play" %% "play" % PlayVersion,
-    "com.typesafe.play" %% "play-java" % PlayVersion
-  ) ++ playTest
 
 }
