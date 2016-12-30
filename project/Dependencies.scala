@@ -7,7 +7,7 @@ object Dependencies {
     "specs2-core",
     "specs2-junit",
     "specs2-mock"
-  ).map("org.specs2" %% _ % specsVersion)
+  ).map("org.specs2" %% _ % specsVersion % Test)
 
   // Use the published milestone
   val playJsonVersion = "2.6.0-M1"
@@ -41,8 +41,9 @@ object Dependencies {
       sslConfigCore ++
       akka ++
       scalaXml ++
-      playJson
+      playJson ++
+      specsBuild
 
-  val standaloneAhcWSDependencies = slf4j
+  val standaloneAhcWSDependencies = slf4j ++ specsBuild
 
 }

@@ -4,6 +4,10 @@ import Dependencies._
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
 
+//---------------------------------------------------------------
+// Shading and Project Settings
+//---------------------------------------------------------------
+
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
 
 lazy val commonSettings = Seq(
@@ -163,7 +167,10 @@ val shadedOAuthSettings = Seq(
 lazy val shaded = Project(id = "shaded", base = file("shaded") )
   .settings(disableDocs)
   .settings(disablePublishing)
-  .aggregate(`shaded-asynchttpclient`, `shaded-oauth`)
+  .aggregate(
+    `shaded-asynchttpclient`,
+    `shaded-oauth`
+  )
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
@@ -184,11 +191,15 @@ lazy val `play-ws-standalone` = project
 // Standalone implementation using AsyncHttpClient
 lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))  
-  .dependsOn(`play-ws-standalone`, `shaded-oauth`, `shaded-asynchttpclient`)
   .settings(commonSettings)
   .settings(libraryDependencies ++= standaloneAhcWSDependencies)
   .settings(shadedAhcSettings)
   .settings(shadedOAuthSettings)
+  .dependsOn(
+    `play-ws-standalone`,
+    `shaded-oauth`,
+    `shaded-asynchttpclient`
+  )
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
@@ -201,7 +212,8 @@ lazy val root = project
   .aggregate(
     `shaded`,
     `play-ws-standalone`,    
-    `play-ahc-ws-standalone`)
+    `play-ahc-ws-standalone`
+  )
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
