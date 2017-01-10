@@ -53,17 +53,17 @@ case object StandaloneAhcWSRequest {
  */
 case class StandaloneAhcWSRequest(client: StandaloneAhcWSClient,
                                   url: String,
-                                  method: String,
-                                  body: WSBody,
-                                  headers: Map[String, Seq[String]],
-                                  queryString: Map[String, Seq[String]],
-                                  calc: Option[WSSignatureCalculator],
-                                  auth: Option[(String, String, WSAuthScheme)],
-                                  followRedirects: Option[Boolean],
-                                  requestTimeout: Option[Int],
-                                  virtualHost: Option[String],
-                                  proxyServer: Option[WSProxyServer],
-                                  disableUrlEncoding: Option[Boolean])(implicit materializer: Materializer) extends StandaloneWSRequest {
+                                  method: String = "GET",
+                                  body: WSBody = EmptyBody,
+                                  headers: Map[String, Seq[String]] = Map.empty,
+                                  queryString: Map[String, Seq[String]] = Map.empty,
+                                  calc: Option[WSSignatureCalculator] = None,
+                                  auth: Option[(String, String, WSAuthScheme)] = None,
+                                  followRedirects: Option[Boolean] = None,
+                                  requestTimeout: Option[Int] = None,
+                                  virtualHost: Option[String] = None,
+                                  proxyServer: Option[WSProxyServer] = None,
+                                  disableUrlEncoding: Option[Boolean] = None)(implicit materializer: Materializer) extends StandaloneWSRequest {
   override type Self = StandaloneWSRequest
   override type Response = StandaloneWSResponse
 

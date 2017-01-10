@@ -1,8 +1,12 @@
 import sbt._
 import Dependencies._
-import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
+
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
+
+//---------------------------------------------------------------
+// Shading and Project Settings
+//---------------------------------------------------------------
 
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
 
@@ -38,30 +42,6 @@ lazy val commonSettings = Seq(
     "-Xlint:deprecation"
   )
 )
-//---------------------------------------------------------------
-// WS API
-//---------------------------------------------------------------
-
-// WS API, no play dependencies
-lazy val `play-ws-standalone` = project
-  .in(file("play-ws-standalone"))
-  .enablePlugins(PlayLibrary)
-  .settings(commonSettings)
-  .settings(libraryDependencies ++= standaloneApiWSDependencies)
-  .disablePlugins(sbtassembly.AssemblyPlugin)
-
-// WS API with Play dependencies
-lazy val `play-ws` = project
-  .in(file("play-ws"))
-  .enablePlugins(PlayLibrary)
-  .dependsOn(`play-ws-standalone`)
-  .settings(commonSettings)
-  .settings(libraryDependencies ++= playDependencies)
-  .disablePlugins(sbtassembly.AssemblyPlugin)
-
-//---------------------------------------------------------------
-// WS with shaded AsyncHttpClient implementation
-//---------------------------------------------------------------
 
 val disableDocs = Seq[Setting[_]](
   sources in (Compile, doc) := Seq.empty,
@@ -74,10 +54,6 @@ val disablePublishing = Seq[Setting[_]](
   publish := {},
   publishLocal := {}
 )
-
-// Shading implementation from:
-// https://manuzhang.github.io/2016/10/15/shading.html
-// https://github.com/huafengw/incubator-gearpump/blob/4474618c4fdd42b152d26a6915704a4f763d14c1/project/BuildShaded.scala
 
 lazy val shadeAssemblySettings = commonSettings ++ Seq(
   assemblyOption in assembly ~= (_.copy(includeScala = false)),
@@ -121,6 +97,10 @@ val ahcMerge: MergeStrategy = new MergeStrategy {
   override val name: String = "ahcMerge"
 }
 
+//---------------------------------------------------------------
+// Shaded AsyncHttpClient implementation
+//---------------------------------------------------------------
+
 lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
   .settings(commonSettings)
   .settings(disableDocs)
@@ -150,6 +130,10 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
     packageBin in Compile := assembly.value
   )
 
+//---------------------------------------------------------------
+// Shaded oauth
+//---------------------------------------------------------------
+
 lazy val `shaded-oauth` = project.in(file("shaded/oauth"))
   .settings(commonSettings)
   .settings(disableDocs)
@@ -176,29 +160,46 @@ val shadedOAuthSettings = Seq(
   unmanagedJars in Compile += (packageBin in (`shaded-oauth`, Compile)).value
 )
 
+//---------------------------------------------------------------
+// Shaded aggregate project
+//---------------------------------------------------------------
+
 lazy val shaded = Project(id = "shaded", base = file("shaded") )
   .settings(disableDocs)
   .settings(disablePublishing)
-  .aggregate(`shaded-asynchttpclient`, `shaded-oauth`)
+  .aggregate(
+    `shaded-asynchttpclient`,
+    `shaded-oauth`
+  )
   .disablePlugins(sbtassembly.AssemblyPlugin)
+
+//---------------------------------------------------------------
+// WS API
+//---------------------------------------------------------------
+
+// WS API, no play dependencies
+lazy val `play-ws-standalone` = project
+  .in(file("play-ws-standalone"))  
+  .settings(commonSettings)
+  .settings(libraryDependencies ++= standaloneApiWSDependencies)
+  .disablePlugins(sbtassembly.AssemblyPlugin)
+
+//---------------------------------------------------------------
+// Shaded AsyncHttpClient implementation of WS
+//---------------------------------------------------------------
 
 // Standalone implementation using AsyncHttpClient
 lazy val `play-ahc-ws-standalone` = project
-  .in(file("play-ahc-ws-standalone"))
-  .enablePlugins(PlayLibrary)
-  .dependsOn(`play-ws-standalone`, `shaded-oauth`, `shaded-asynchttpclient`)
+  .in(file("play-ahc-ws-standalone"))  
   .settings(commonSettings)
   .settings(libraryDependencies ++= standaloneAhcWSDependencies)
   .settings(shadedAhcSettings)
   .settings(shadedOAuthSettings)
-  .disablePlugins(sbtassembly.AssemblyPlugin)
-
-// Play implementation using AsyncHttpClient
-lazy val `play-ahc-ws` = project
-  .in(file("play-ahc-ws"))
-  .enablePlugins(PlayLibrary)
-  .dependsOn(`play-ws`, `play-ahc-ws-standalone`)
-  .settings(commonSettings)
+  .dependsOn(
+    `play-ws-standalone`,
+    `shaded-oauth`,
+    `shaded-asynchttpclient`
+  )
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
@@ -208,35 +209,17 @@ lazy val `play-ahc-ws` = project
 lazy val root = project
   .in(file("."))
   .settings(commonSettings)
-  .enablePlugins(PlayRootProject)
   .aggregate(
     `shaded`,
-    `play-ws-standalone`,
-    `play-ws`,
-    `play-ahc-ws-standalone`,
-    `play-ahc-ws`,
-    `play-ws-integration-tests`)
-  .disablePlugins(sbtassembly.AssemblyPlugin)
-
-//---------------------------------------------------------------
-// Integration tests
-//---------------------------------------------------------------
-
-lazy val `play-ws-integration-tests` = project
-  .in(file("play-ws-integration-tests"))
-  .enablePlugins(PlayLibrary)
-  .dependsOn(`play-ahc-ws`)
-  .settings(disableDocs)
-  .settings(disablePublishing)
-  .settings(commonSettings)
-  .settings(libraryDependencies ++= playTest)
+    `play-ws-standalone`,    
+    `play-ahc-ws-standalone`
+  )
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
 // Release
 //---------------------------------------------------------------
-
-playBuildRepoName in ThisBuild := "play-ws"
+import ReleaseTransformations._
 
 releaseProcess := Seq[ReleaseStep](
   checkSnapshotDependencies,
