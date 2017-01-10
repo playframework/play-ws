@@ -1,0 +1,36 @@
+package playwsclient
+
+import akka.actor.ActorSystem
+import akka.stream.ActorMaterializer
+import org.specs2.concurrent.ExecutionEnv
+import org.specs2.execute.Result
+import org.specs2.mutable.Specification
+import play.api.libs.ws.StandaloneWSClient
+import play.api.libs.ws.ahc.StandaloneAhcWSClient
+
+import scala.concurrent.Future
+
+class ScalaIntegrationSpec(implicit ee: ExecutionEnv) extends Specification {
+
+  "the client" should {
+
+    "call out" in {
+      implicit val system = ActorSystem()
+      implicit val materializer = ActorMaterializer()
+      val wsClient = StandaloneAhcWSClient()
+
+      def call(wsClient: StandaloneWSClient): Future[Result] = {
+        wsClient.url("http://www.google.com").get().map { response ⇒
+          val statusText: String = response.statusText
+          success
+        }
+      }
+
+      call(wsClient)
+        .andThen { case _ => wsClient.close() }
+        .andThen { case _ => system.terminate() }.await
+    }
+
+  }
+
+}

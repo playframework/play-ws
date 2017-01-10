@@ -190,8 +190,18 @@ lazy val `play-ws-standalone` = project
 
 // Standalone implementation using AsyncHttpClient
 lazy val `play-ahc-ws-standalone` = project
-  .in(file("play-ahc-ws-standalone"))  
+  .in(file("play-ahc-ws-standalone"))
+  .configs(IntegrationTest)
   .settings(commonSettings)
+  .settings(Defaults.itSettings: _*)
+  .settings(
+    libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % "it,test",
+    libraryDependencies ++= Seq(
+      "specs2-core",
+      "specs2-junit",
+      "specs2-mock"
+    ).map("org.specs2" %% _ % specsVersion % "it,test")
+  )
   .settings(libraryDependencies ++= standaloneAhcWSDependencies)
   .settings(shadedAhcSettings)
   .settings(shadedOAuthSettings)

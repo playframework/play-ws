@@ -3,17 +3,23 @@ package playwsclient;
 import akka.actor.ActorSystem;
 import akka.stream.ActorMaterializer;
 import akka.stream.ActorMaterializerSettings;
+import org.junit.Test;
+import play.libs.ws.StandaloneWSClient;
+import play.libs.ws.StandaloneWSResponse;
+import play.libs.ws.ahc.StandaloneAhcWSClient;
 import play.shaded.ahc.org.asynchttpclient.AsyncHttpClientConfig;
 import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClient;
 import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClientConfig;
-import play.libs.ws.*;
-import play.libs.ws.ahc.*;
 
 import java.util.concurrent.CompletionStage;
 
-public class JavaClient {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
-    public static void main(String[] args) {
+public class JavaIntegrationTest {
+
+    @Test
+    public void testClient() {
         AsyncHttpClientConfig config = new DefaultAsyncHttpClientConfig.Builder()
                 .setMaxRequestRetry(0)
                 .setShutdownQuietPeriod(0)
@@ -28,16 +34,19 @@ public class JavaClient {
         StandaloneWSClient client = new StandaloneAhcWSClient(ahcClient, materializer);
         CompletionStage<StandaloneWSResponse> completionStage = client.url("http://www.google.com").get();
 
-        completionStage.whenComplete((response, throwable) -> {
-            String statusText = response.getStatusText();
-            System.out.println("Got a response " + statusText);
-        }).thenRun(() -> {
+        try {
+            final StandaloneWSResponse response = completionStage.toCompletableFuture().get();
+            int status = response.getStatus();
+            assertEquals(status, 200);
+        } catch (Exception e) {
+            fail(e.toString());
+        } finally {
             try {
                 client.close();
+                system.terminate();
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }).thenRun(system::terminate);
-
+        }
     }
 }
