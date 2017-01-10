@@ -9,8 +9,8 @@ import java.nio.charset.StandardCharsets
 import akka.util.ByteString
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils
-import play.shaded.ahc.org.asynchttpclient.{Response => AHCResponse}
-import play.api.libs.ws.{StandaloneWSResponse, WSCookie}
+import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse }
+import play.api.libs.ws.{ StandaloneWSResponse, WSCookie }
 
 import scala.xml.Elem
 

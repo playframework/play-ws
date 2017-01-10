@@ -3,17 +3,16 @@
  */
 package play.api.libs.ws
 
-import akka.stream.{javadsl, scaladsl}
+import akka.stream.{ javadsl, scaladsl }
 import akka.util.ByteString
 
-import java.{util => ju}
+import java.{ util => ju }
 
 /**
  * A streamed response containing a response header and a streamable body.
  */
 case class StreamedResponse(headers: WSResponseHeaders, body: scaladsl.Source[ByteString, _])
-  extends play.libs.ws.StreamedResponse {
-
+    extends play.libs.ws.StreamedResponse {
 
   override def getHeaders: play.libs.ws.WSResponseHeaders = {
     new play.libs.ws.DefaultWSResponseHeaders(headers.status, convert(headers.headers))
@@ -25,7 +24,7 @@ case class StreamedResponse(headers: WSResponseHeaders, body: scaladsl.Source[By
    * This utility class is used by `play.libs.ws.StreamedResponse`.
    */
   private def convert(headers: Map[String, Seq[String]]): ju.Map[String, ju.List[String]] = {
-    import scala.collection.convert.WrapAsJava.{mapAsJavaMap, seqAsJavaList}
+    import scala.collection.convert.WrapAsJava.{ mapAsJavaMap, seqAsJavaList }
     mapAsJavaMap(headers.map { case (k, v) => k -> seqAsJavaList(v) })
   }
 

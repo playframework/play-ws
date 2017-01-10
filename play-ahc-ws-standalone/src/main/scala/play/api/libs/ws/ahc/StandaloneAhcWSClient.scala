@@ -7,11 +7,10 @@ import akka.stream.Materializer
 import com.typesafe.sslconfig.ssl.SystemConfiguration
 import com.typesafe.sslconfig.ssl.debug.DebugConfiguration
 import play.shaded.ahc.org.asynchttpclient._
-import play.api.libs.ws.{EmptyBody, StandaloneWSClient, StandaloneWSRequest}
+import play.api.libs.ws.{ EmptyBody, StandaloneWSClient, StandaloneWSRequest }
 
 import scala.collection.immutable.TreeMap
 import scala.concurrent.ExecutionContext
-
 
 /**
  * A WS client backed by an AsyncHttpClient.

@@ -3,7 +3,7 @@
  */
 package play.api.libs.ws
 
-import java.io.{Closeable, IOException}
+import java.io.{ Closeable, IOException }
 
 /**
  * The WSClient holds the configuration information needed to build a request, and provides a way to get a request holder.

@@ -3,26 +3,25 @@
  */
 package play.api.libs.ws.ahc
 
-import java.io.{File, UnsupportedEncodingException}
+import java.io.{ File, UnsupportedEncodingException }
 import java.net.URI
-import java.nio.charset.{Charset, StandardCharsets}
+import java.nio.charset.{ Charset, StandardCharsets }
 
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
-import play.shaded.ahc.org.asynchttpclient.cookie.{Cookie => AHCCookie}
-import play.shaded.ahc.org.asynchttpclient.proxy.{ProxyServer => AHCProxyServer}
+import play.shaded.ahc.org.asynchttpclient.cookie.{ Cookie => AHCCookie }
+import play.shaded.ahc.org.asynchttpclient.proxy.{ ProxyServer => AHCProxyServer }
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils
-import play.shaded.ahc.org.asynchttpclient.{Realm, Response => AHCResponse, _}
+import play.shaded.ahc.org.asynchttpclient.{ Realm, Response => AHCResponse, _ }
 import play.api.libs.ws._
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.TreeMap
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Future, Promise}
-
+import scala.concurrent.{ Future, Promise }
 
 case object StandaloneAhcWSRequest {
   private[libs] def ahcHeadersToMap(headers: HttpHeaders): TreeMap[String, Seq[String]] = {
@@ -54,19 +53,21 @@ case object StandaloneAhcWSRequest {
 /**
  * A Ahc WS Request.
  */
-case class StandaloneAhcWSRequest(client: StandaloneAhcWSClient,
-                                  url: String,
-                                  method: String = "GET",
-                                  body: WSBody = EmptyBody,
-                                  headers: Map[String, Seq[String]] = Map.empty,
-                                  queryString: Map[String, Seq[String]] = Map.empty,
-                                  calc: Option[WSSignatureCalculator] = None,
-                                  auth: Option[(String, String, WSAuthScheme)] = None,
-                                  followRedirects: Option[Boolean] = None,
-                                  requestTimeout: Option[Int] = None,
-                                  virtualHost: Option[String] = None,
-                                  proxyServer: Option[WSProxyServer] = None,
-                                  disableUrlEncoding: Option[Boolean] = None)(implicit materializer: Materializer) extends StandaloneWSRequest {
+case class StandaloneAhcWSRequest(
+    client: StandaloneAhcWSClient,
+    url: String,
+    method: String = "GET",
+    body: WSBody = EmptyBody,
+    headers: Map[String, Seq[String]] = Map.empty,
+    queryString: Map[String, Seq[String]] = Map.empty,
+    calc: Option[WSSignatureCalculator] = None,
+    auth: Option[(String, String, WSAuthScheme)] = None,
+    followRedirects: Option[Boolean] = None,
+    requestTimeout: Option[Int] = None,
+    virtualHost: Option[String] = None,
+    proxyServer: Option[WSProxyServer] = None,
+    disableUrlEncoding: Option[Boolean] = None
+)(implicit materializer: Materializer) extends StandaloneWSRequest {
   override type Self = StandaloneWSRequest
   override type Response = StandaloneWSResponse
 
@@ -89,8 +90,7 @@ case class StandaloneAhcWSRequest(client: StandaloneAhcWSClient,
   def withHeaders(hdrs: (String, String)*): Self = {
     val headers = hdrs.foldLeft(this.headers)((m, hdr) =>
       if (m.contains(hdr._1)) m.updated(hdr._1, m(hdr._1) :+ hdr._2)
-      else m + (hdr._1 -> Seq(hdr._2))
-    )
+      else m + (hdr._1 -> Seq(hdr._2)))
     copy(headers = headers)
   }
 
@@ -111,7 +111,6 @@ case class StandaloneAhcWSRequest(client: StandaloneAhcWSClient,
         copy(requestTimeout = Some(millis.toInt))
     }
   }
-
 
   /**
    * performs a get

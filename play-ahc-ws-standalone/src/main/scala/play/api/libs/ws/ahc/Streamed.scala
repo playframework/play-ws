@@ -8,10 +8,10 @@ import akka.util.ByteString
 import play.shaded.ahc.org.asynchttpclient.AsyncHandler.State
 import play.shaded.ahc.org.asynchttpclient._
 import play.shaded.ahc.org.asynchttpclient.handler.StreamedAsyncHandler
-import org.reactivestreams.{Publisher, Subscriber, Subscription}
-import play.api.libs.ws.{DefaultWSResponseHeaders, StreamedResponse, WSResponseHeaders}
+import org.reactivestreams.{ Publisher, Subscriber, Subscription }
+import play.api.libs.ws.{ DefaultWSResponseHeaders, StreamedResponse, WSResponseHeaders }
 
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.{ Future, Promise }
 
 private[play] object Streamed {
 

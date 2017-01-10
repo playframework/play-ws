@@ -3,10 +3,10 @@
  */
 package play.libs.ws.ahc
 
-import play.shaded.ahc.org.asynchttpclient.{Request, RequestBuilderBase, SignatureCalculator}
+import play.shaded.ahc.org.asynchttpclient.{ Request, RequestBuilderBase, SignatureCalculator }
 import org.specs2.mock.Mockito
 import org.specs2.mutable._
-import play.libs.ws.{WSAuthScheme, WSSignatureCalculator}
+import play.libs.ws.{ WSAuthScheme, WSSignatureCalculator }
 import play.libs.oauth.OAuth
 
 class AhcWSRequestSpec extends Specification with Mockito {

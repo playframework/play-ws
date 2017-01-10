@@ -7,9 +7,9 @@ import play.shaded.oauth.oauth.signpost.basic.DefaultOAuthConsumer
 import play.shaded.oauth.oauth.signpost.basic.DefaultOAuthProvider
 import play.shaded.oauth.oauth.signpost.exception.OAuthException
 import play.shaded.ahc.org.asynchttpclient.oauth.OAuthSignatureCalculator
-import play.shaded.ahc.org.asynchttpclient.{Request, RequestBuilderBase, SignatureCalculator}
+import play.shaded.ahc.org.asynchttpclient.{ Request, RequestBuilderBase, SignatureCalculator }
 import play.api.libs.ws.WSSignatureCalculator
-import play.shaded.ahc.org.asynchttpclient.oauth.{ConsumerKey => AHCConsumerKey, RequestToken => AHCRequestToken}
+import play.shaded.ahc.org.asynchttpclient.oauth.{ ConsumerKey => AHCConsumerKey, RequestToken => AHCRequestToken }
 
 /**
  * Library to access resources protected by OAuth 1.0a.
@@ -66,7 +66,7 @@ case class OAuth(info: ServiceInfo, use10a: Boolean = true) {
    * @param token request token
    */
   def redirectUrl(token: String): String = {
-    import play.shaded.oauth.oauth.signpost.{OAuth => O}
+    import play.shaded.oauth.oauth.signpost.{ OAuth => O }
     O.addQueryParameters(
       provider.getAuthorizationWebsiteUrl(),
       O.OAUTH_TOKEN,

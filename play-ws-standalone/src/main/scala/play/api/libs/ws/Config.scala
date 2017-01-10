@@ -11,13 +11,13 @@ import scala.concurrent.duration._
  * WS client config
  */
 case class WSClientConfig(
-                           connectionTimeout: Duration = 2.minutes,
-                           idleTimeout: Duration = 2.minutes,
-                           requestTimeout: Duration = 2.minutes,
-                           followRedirects: Boolean = true,
-                           useProxyProperties: Boolean = true,
-                           userAgent: Option[String] = None,
-                           compressionEnabled: Boolean = false,
-                           ssl: SSLConfigSettings = SSLConfigSettings())
-
+  connectionTimeout: Duration = 2.minutes,
+  idleTimeout: Duration = 2.minutes,
+  requestTimeout: Duration = 2.minutes,
+  followRedirects: Boolean = true,
+  useProxyProperties: Boolean = true,
+  userAgent: Option[String] = None,
+  compressionEnabled: Boolean = false,
+  ssl: SSLConfigSettings = SSLConfigSettings()
+)
 

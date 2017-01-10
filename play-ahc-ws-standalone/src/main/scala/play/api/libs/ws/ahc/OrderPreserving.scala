@@ -3,8 +3,6 @@
  */
 package play.api.libs.ws.ahc
 
-
-
 import scala.collection.immutable.ListMap
 import scala.collection.mutable
 
@@ -29,5 +27,4 @@ private[ahc] object OrderPreserving {
     b.result
   }
 }
-
 

@@ -3,7 +3,7 @@
  */
 package play.api.libs.ws.ahc
 
-import play.shaded.ahc.org.asynchttpclient.cookie.{Cookie => AHCCookie}
+import play.shaded.ahc.org.asynchttpclient.cookie.{ Cookie => AHCCookie }
 import play.api.libs.ws._
 
 /**
@@ -57,6 +57,4 @@ private class AhcWSCookie(ahcCookie: AHCCookie) extends WSCookie {
 
   override def toString: String = ahcCookie.toString
 }
-
-
 
