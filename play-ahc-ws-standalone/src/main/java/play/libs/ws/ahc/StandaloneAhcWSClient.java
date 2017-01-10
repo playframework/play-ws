@@ -5,9 +5,12 @@
 package play.libs.ws.ahc;
 
 import akka.stream.Materializer;
-import play.shaded.ahc.org.asynchttpclient.AsyncHttpClient;
+import play.libs.ws.StandaloneWSResponse;
+import play.libs.ws.StreamedResponse;
 import play.libs.ws.StandaloneWSClient;
 import play.libs.ws.StandaloneWSRequest;
+
+import play.shaded.ahc.org.asynchttpclient.AsyncHttpClient;
 
 import java.io.IOException;
 
@@ -32,8 +35,9 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
     }
 
     @Override
-    public StandaloneWSRequest url(String url) {
-        return new StandaloneAhcWSRequest(this, url, materializer);
+    @SuppressWarnings("unchecked")
+    public <T extends StandaloneWSRequest, R extends StandaloneWSResponse, S extends StreamedResponse> StandaloneWSRequest<T, R, S> url(String url) {
+        return (StandaloneWSRequest<T, R, S>) new StandaloneAhcWSRequest<T, R, S>(this, url, materializer);
     }
 
     @Override

@@ -20,12 +20,12 @@ public interface StandaloneWSClient extends java.io.Closeable {
     /**
      * Returns a StandaloneWSRequest object representing the URL.  You can append additional
      * properties on the StandaloneWSRequest by chaining calls, and execute the request to
-     * return an asynchronous {@code Promise<StandaloneWSResponse>}.
+     * return an asynchronous {@code CompletionStage<StandaloneWSResponse>}.
      *
      * @param url the URL to request
      * @return the request
      */
-    StandaloneWSRequest url(String url);
+    <T extends StandaloneWSRequest, R extends StandaloneWSResponse, S extends StreamedResponse> StandaloneWSRequest<T, R, S> url(String url);
 
     /**
      * Closes this client, and releases underlying resources.

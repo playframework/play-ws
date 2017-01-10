@@ -10,16 +10,16 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import play.libs.ws.StandaloneWSClient;
-import play.libs.ws.StandaloneWSResponse;
 import play.libs.ws.ahc.StandaloneAhcWSClient;
 import play.shaded.ahc.org.asynchttpclient.AsyncHttpClientConfig;
 import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClient;
 import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClientConfig;
 
-import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 public class JavaIntegrationTest {
 
@@ -55,16 +55,14 @@ public class JavaIntegrationTest {
     }
 
     @Test
-    public void testClient() {
+    public void testClientStatus() throws InterruptedException, ExecutionException, TimeoutException {
         client = new StandaloneAhcWSClient(ahcClient, materializer);
-        CompletionStage<StandaloneWSResponse> completionStage = client.url("http://www.google.com").get();
 
-        try {
-            final StandaloneWSResponse response = completionStage.toCompletableFuture().get();
+        // Make the call, but block until we can get a response back out (and throw a failure
+        // back to the test thread)
+        client.url("http://www.google.com").get().thenAccept(response -> {
             int status = response.getStatus();
             assertEquals(status, 200);
-        } catch (Exception e) {
-            fail(e.toString());
-        }
+        }).toCompletableFuture().get(5, TimeUnit.SECONDS);
     }
 }

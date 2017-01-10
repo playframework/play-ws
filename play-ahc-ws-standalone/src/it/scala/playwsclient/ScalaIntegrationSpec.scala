@@ -18,15 +18,14 @@ class ScalaIntegrationSpec(implicit ee: ExecutionEnv) extends Specification {
 
   "the client" should {
 
-    "call out" in {
+    "call out to a remote system and get a correct status" in {
       implicit val system = ActorSystem()
       implicit val materializer = ActorMaterializer()
       val wsClient = StandaloneAhcWSClient()
 
       def call(wsClient: StandaloneWSClient): Future[Result] = {
         wsClient.url("http://www.google.com").get().map { response ⇒
-          val statusText: String = response.statusText
-          success
+          response.status must be_==(200)
         }
       }
 
