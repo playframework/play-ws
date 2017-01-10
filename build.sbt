@@ -4,6 +4,10 @@ import Dependencies._
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
 
+import scalariform.formatter.preferences._
+import com.typesafe.sbt.SbtScalariform.scalariformSettings
+import com.typesafe.sbt.SbtScalariform.ScalariformKeys
+
 //---------------------------------------------------------------
 // Shading and Project Settings
 //---------------------------------------------------------------
@@ -46,6 +50,15 @@ lazy val commonSettings = Seq(
   javacOptions in (Compile, doc) ++= javacSettings,
   javacOptions in Test ++= javacSettings,
   javacOptions in IntegrationTest ++= javacSettings
+)
+
+val formattingSettings = Seq(
+  ScalariformKeys.preferences := ScalariformKeys.preferences.value
+    .setPreference(SpacesAroundMultiImports, true)
+    .setPreference(SpaceInsideParentheses, false)
+    .setPreference(DanglingCloseParenthesis, Preserve)
+    .setPreference(PreserveSpaceBeforeArguments, true)
+    .setPreference(DoubleIndentClassDeclaration, true)
 )
 
 val disableDocs = Seq[Setting[_]](
@@ -202,7 +215,9 @@ lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
   .configs(IntegrationTest)
   .settings(commonSettings)
+  .settings(formattingSettings)
   .settings(Defaults.itSettings: _*)
+  .settings(SbtScalariform.scalariformSettingsWithIt)
   .settings(
     testOptions in IntegrationTest := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
     libraryDependencies ++= logback.map(_ % "it,test"),
@@ -232,6 +247,7 @@ lazy val `play-ahc-ws-standalone` = project
 lazy val root = project
   .in(file("."))
   .settings(commonSettings)
+  .settings(formattingSettings)
   .aggregate(
     `shaded`,
     `play-ws-standalone`,    

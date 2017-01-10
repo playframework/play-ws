@@ -12,7 +12,7 @@ import com.typesafe.sslconfig.ssl._
 import play.shaded.ahc.io.netty.handler.ssl.SslContextBuilder
 import play.shaded.ahc.io.netty.handler.ssl.util.InsecureTrustManagerFactory
 import play.shaded.ahc.org.asynchttpclient.netty.ssl.JsseSslEngineFactory
-import play.shaded.ahc.org.asynchttpclient.{AsyncHttpClientConfig, DefaultAsyncHttpClientConfig}
+import play.shaded.ahc.org.asynchttpclient.{ AsyncHttpClientConfig, DefaultAsyncHttpClientConfig }
 import play.api.libs.ws.WSClientConfig
 
 import scala.concurrent.duration._
@@ -31,15 +31,16 @@ import scala.concurrent.duration._
  * @param keepAlive keeps thread pool active, replaces allowPoolingConnection and allowSslConnectionPool
  */
 case class AhcWSClientConfig(
-                              wsClientConfig: WSClientConfig = WSClientConfig(),
-                              maxConnectionsPerHost: Int = -1,
-                              maxConnectionsTotal: Int = -1,
-                              maxConnectionLifetime: Duration = Duration.Inf,
-                              idleConnectionInPoolTimeout: Duration = 1.minute,
-                              maxNumberOfRedirects: Int = 5,
-                              maxRequestRetry: Int = 5,
-                              disableUrlEncoding: Boolean = false,
-                              keepAlive: Boolean = true)
+  wsClientConfig: WSClientConfig = WSClientConfig(),
+  maxConnectionsPerHost: Int = -1,
+  maxConnectionsTotal: Int = -1,
+  maxConnectionLifetime: Duration = Duration.Inf,
+  idleConnectionInPoolTimeout: Duration = 1.minute,
+  maxNumberOfRedirects: Int = 5,
+  maxRequestRetry: Int = 5,
+  disableUrlEncoding: Boolean = false,
+  keepAlive: Boolean = true
+)
 
 /**
  * Factory for creating AhcWSClientConfig, for use from Java.
@@ -99,7 +100,8 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
    * @return the new builder
    */
   def modifyUnderlying(
-    modify: DefaultAsyncHttpClientConfig.Builder => DefaultAsyncHttpClientConfig.Builder): AhcConfigBuilder = {
+    modify: DefaultAsyncHttpClientConfig.Builder => DefaultAsyncHttpClientConfig.Builder
+  ): AhcConfigBuilder = {
     new AhcConfigBuilder(ahcConfig) {
       override val addCustomSettings = modify compose AhcConfigBuilder.this.addCustomSettings
       override val builder = AhcConfigBuilder.this.builder

@@ -8,7 +8,7 @@ import javax.xml.parsers.SAXParserFactory
 
 import play.libs.ws.ahc.XML.Constants
 
-private [ahc] object XML {
+private[ahc] object XML {
 
   /*
    * We want control over the sax parser used so we specify the factory required explicitly. We know that

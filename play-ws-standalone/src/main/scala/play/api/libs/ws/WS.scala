@@ -8,7 +8,6 @@ import java.io.File
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 
-
 /**
  * A body for the request
  */
@@ -37,9 +36,6 @@ case class FileBody(file: File) extends WSBody
  * An empty body
  */
 case object EmptyBody extends WSBody
-
-
-
 
 /**
  *
@@ -134,27 +130,28 @@ trait WSProxyServer {
  * A WS proxy.
  */
 case class DefaultWSProxyServer(
-                                 /** The hostname of the proxy server. */
-                                 host: String,
+  /** The hostname of the proxy server. */
+  host: String,
 
-                                 /** The port of the proxy server. */
-                                 port: Int,
+  /** The port of the proxy server. */
+  port: Int,
 
-                                 /** The protocol of the proxy server.  Use "http" or "https".  Defaults to "http" if not specified. */
-                                 protocol: Option[String] = None,
+  /** The protocol of the proxy server.  Use "http" or "https".  Defaults to "http" if not specified. */
+  protocol: Option[String] = None,
 
-                                 /** The principal (aka username) of the credentials for the proxy server. */
-                                 principal: Option[String] = None,
+  /** The principal (aka username) of the credentials for the proxy server. */
+  principal: Option[String] = None,
 
-                                 /** The password for the credentials for the proxy server. */
-                                 password: Option[String] = None,
+  /** The password for the credentials for the proxy server. */
+  password: Option[String] = None,
 
-                                 ntlmDomain: Option[String] = None,
+  ntlmDomain: Option[String] = None,
 
-                                 /** The realm's charset. */
-                                 encoding: Option[String] = None,
+  /** The realm's charset. */
+  encoding: Option[String] = None,
 
-                                 nonProxyHosts: Option[Seq[String]] = None) extends WSProxyServer
+  nonProxyHosts: Option[Seq[String]] = None
+) extends WSProxyServer
 
 /**
  * An HTTP response header (the body has not been retrieved yet)
