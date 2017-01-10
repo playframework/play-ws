@@ -13,7 +13,8 @@ resolvers ++= DefaultOptions.resolvers(snapshot = true)
 val javacSettings = Seq(
   "-source", "1.8",
   "-target", "1.8",
-  "-Xlint"
+  "-Xlint:deprecation",
+  "-Xlint:unchecked"
 )
 
 lazy val commonSettings = Seq(
@@ -43,7 +44,8 @@ lazy val commonSettings = Seq(
     }
   },
   javacOptions in (Compile, doc) ++= javacSettings,
-  javacOptions in IntegrationTest ++= javacSettings // not the same as Compile / Test
+  javacOptions in Test ++= javacSettings,
+  javacOptions in IntegrationTest ++= javacSettings
 )
 
 val disableDocs = Seq[Setting[_]](
@@ -113,6 +115,7 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
     name := "shaded-asynchttpclient"
   )
   .settings(
+    logLevel in assembly := Level.Error,
     assemblyMergeStrategy in assembly := {
       case "META-INF/io.netty.versions.properties" =>
         MergeStrategy.first
@@ -146,6 +149,7 @@ lazy val `shaded-oauth` = project.in(file("shaded/oauth"))
     name := "shaded-oauth"
   )
   .settings(
+    logLevel in assembly := Level.Error,
     assemblyShadeRules in assembly := Seq(
       ShadeRule.rename("oauth.**" -> "play.shaded.oauth.@0").inAll,
       ShadeRule.rename("org.apache.commons.**" -> "play.shaded.oauth.@0").inAll
