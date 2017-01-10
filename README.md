@@ -1,4 +1,4 @@
-# Play WS
+# Play WS Standalone
 
 Play WS is a powerful HTTP Client library, originally developed by the Play team for use with Play Framework. It uses AsyncHttpClient for HTTP client functionality and has no Play dependencies.
 
@@ -9,18 +9,10 @@ We've provided some documentation here on how to use Play WS in your app (withou
 To get started, you can add `play-ahc-ws-standalone` as a dependency in SBT:
 
 ```scala
-libraryDependencies += "com.typesafe.play" %% "play-ahc-ws-standalone" % "2.6.0-M1"
+libraryDependencies += "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.0.0-M1"
 ```
 
 This adds the standalone version of Play WS, backed by AsyncHttpClient.  This library contains both the Scala and Java APIs, under `play.api.libs.ws` and `play.libs.ws`.
-
-You can also add the Play WS library that depends on Play directly:
-
-```scala
-libraryDependencies += "com.typesafe.play" %% "play-ahc-ws" % "2.6.0-M1"
-```
-
-The `play-ahc-ws` library has a richer API than the standalone version, since it has access to Play's `Writable` and `MultipartFormData` classes.  However, `play-ahc-ws` does have a dependency on Play's core library as a result, which adds roughly 4 megabytes of JAR file to the application. 
 
 ## Shading
 
