@@ -11,6 +11,8 @@ cache:
   directories:
   - "$HOME/.ivy2/cache"
   - "$HOME/.sbt/boot/"
+script:
+- sbt ++$TRAVIS_SCALA_VERSION test it:test
 before_cache:
 - find $HOME/.ivy2/cache -name "ivydata-*.properties" | xargs rm
 notifications:
