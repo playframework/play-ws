@@ -10,6 +10,12 @@ import sbtassembly.MergeStrategy
 
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
 
+val javacSettings = Seq(
+  "-source", "1.8",
+  "-target", "1.8",
+  "-Xlint"
+)
+
 lazy val commonSettings = Seq(
   organization := "com.typesafe.play",
   scalaVersion := "2.12.1",
@@ -36,12 +42,8 @@ lazy val commonSettings = Seq(
         Nil
     }
   },
-  javacOptions in (Compile, doc) ++= Seq(
-    "-source", "1.8",
-    "-target", "1.8",
-    "-Xlint:deprecation",
-    "-Xlint:unchecked"
-  )
+  javacOptions in (Compile, doc) ++= javacSettings,
+  javacOptions in IntegrationTest ++= javacSettings // not the same as Compile / Test
 )
 
 val disableDocs = Seq[Setting[_]](
