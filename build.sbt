@@ -39,7 +39,8 @@ lazy val commonSettings = Seq(
   javacOptions in (Compile, doc) ++= Seq(
     "-source", "1.8",
     "-target", "1.8",
-    "-Xlint:deprecation"
+    "-Xlint:deprecation",
+    "-Xlint:unchecked"
   )
 )
 
@@ -189,16 +190,17 @@ lazy val `play-ws-standalone` = project
 //---------------------------------------------------------------
 
 // Standalone implementation using AsyncHttpClient
+// Note that this uses integration tests in the suite, so has
+// some extra bells and whistles.
 lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
   .configs(IntegrationTest)
   .settings(commonSettings)
   .settings(Defaults.itSettings: _*)
   .settings(
-    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a")),
-    crossPaths := false,
+    testOptions in IntegrationTest := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
+    libraryDependencies ++= logback.map(_ % "it,test"),
     libraryDependencies ++= Seq(
-      "junit" % "junit" % "4.11" % "it,test",
       "com.novocode" % "junit-interface" % "0.11" % "it,test"
     ),
     libraryDependencies ++= Seq(

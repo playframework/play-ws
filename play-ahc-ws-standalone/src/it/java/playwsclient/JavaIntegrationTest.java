@@ -3,9 +3,9 @@ package playwsclient;
 import akka.actor.ActorSystem;
 import akka.stream.ActorMaterializer;
 import akka.stream.ActorMaterializerSettings;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 import play.libs.ws.StandaloneWSClient;
 import play.libs.ws.StandaloneWSResponse;
 import play.libs.ws.ahc.StandaloneAhcWSClient;
@@ -20,20 +20,40 @@ import static org.junit.Assert.fail;
 
 public class JavaIntegrationTest {
 
-    @Test
-    public void testClient() {
+    private ActorSystem system;
+    private ActorMaterializer materializer;
+    private DefaultAsyncHttpClient ahcClient;
+    private StandaloneWSClient client;
+
+    @Before
+    public void before() {
         AsyncHttpClientConfig config = new DefaultAsyncHttpClientConfig.Builder()
                 .setMaxRequestRetry(0)
                 .setShutdownQuietPeriod(0)
                 .setShutdownTimeout(0).build();
 
         String name = "wsclient";
-        ActorSystem system = ActorSystem.create(name);
+        system = ActorSystem.create(name);
         ActorMaterializerSettings settings = ActorMaterializerSettings.create(system);
-        ActorMaterializer materializer = ActorMaterializer.create(settings, system, name);
 
-        DefaultAsyncHttpClient ahcClient = new DefaultAsyncHttpClient(config);
-        StandaloneWSClient client = new StandaloneAhcWSClient(ahcClient, materializer);
+        materializer = ActorMaterializer.create(settings, system, name);
+        ahcClient = new DefaultAsyncHttpClient(config);
+    }
+
+    @After
+    public void after() {
+        try {
+            client.close();
+            system.terminate();
+            ahcClient.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testClient() {
+        client = new StandaloneAhcWSClient(ahcClient, materializer);
         CompletionStage<StandaloneWSResponse> completionStage = client.url("http://www.google.com").get();
 
         try {
@@ -42,13 +62,6 @@ public class JavaIntegrationTest {
             assertEquals(status, 200);
         } catch (Exception e) {
             fail(e.toString());
-        } finally {
-            try {
-                client.close();
-                system.terminate();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
         }
     }
 }

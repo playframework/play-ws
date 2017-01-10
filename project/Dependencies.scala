@@ -18,6 +18,8 @@ object Dependencies {
 
   def slf4j = Seq("org.slf4j" % "slf4j-api" % "1.7.16")
 
+  def logback = Seq("ch.qos.logback" % "logback-classic" % "1.1.8")
+
   val javaxInject = Seq("javax.inject" % "javax.inject" % "1")
 
   val sslConfigVersion = "0.2.1"
