@@ -4,6 +4,8 @@ import akka.actor.ActorSystem;
 import akka.stream.ActorMaterializer;
 import akka.stream.ActorMaterializerSettings;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 import play.libs.ws.StandaloneWSClient;
 import play.libs.ws.StandaloneWSResponse;
 import play.libs.ws.ahc.StandaloneAhcWSClient;

@@ -195,7 +195,12 @@ lazy val `play-ahc-ws-standalone` = project
   .settings(commonSettings)
   .settings(Defaults.itSettings: _*)
   .settings(
-    libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % "it,test",
+    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a")),
+    crossPaths := false,
+    libraryDependencies ++= Seq(
+      "junit" % "junit" % "4.11" % "it,test",
+      "com.novocode" % "junit-interface" % "0.11" % "it,test"
+    ),
     libraryDependencies ++= Seq(
       "specs2-core",
       "specs2-junit",
