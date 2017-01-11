@@ -7,12 +7,11 @@ package playwsclient
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import org.specs2.concurrent.ExecutionEnv
-import org.specs2.execute.Result
 import org.specs2.mutable.Specification
-import play.api.libs.ws.StandaloneWSClient
-import play.api.libs.ws.ahc.StandaloneAhcWSClient
+import play.api.libs.ws.ahc.{AhcConfigBuilder, StandaloneAhcWSClient}
+import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClient
 
-import scala.concurrent.Future
+import scala.concurrent.duration._
 
 class ScalaIntegrationSpec(implicit ee: ExecutionEnv) extends Specification {
 
@@ -21,17 +20,18 @@ class ScalaIntegrationSpec(implicit ee: ExecutionEnv) extends Specification {
     "call out to a remote system and get a correct status" in {
       implicit val system = ActorSystem()
       implicit val materializer = ActorMaterializer()
-      val wsClient = StandaloneAhcWSClient()
 
-      def call(wsClient: StandaloneWSClient): Future[Result] = {
-        wsClient.url("http://www.google.com").get().map { response ⇒
-          response.status must be_==(200)
-        }
-      }
+      val builder = new AhcConfigBuilder()
+      val ahcClient = new DefaultAsyncHttpClient(builder.configure().build())
+      val wsClient = new StandaloneAhcWSClient(ahcClient)
 
-      call(wsClient)
-        .andThen { case _ => wsClient.close() }
-        .andThen { case _ => system.terminate() }.await
+      wsClient.url("http://www.google.com").get().map { response ⇒
+        response.status must be_==(200)
+      }.andThen {
+        case _ => wsClient.close()
+      }.andThen {
+        case _ => system.terminate()
+      }.await(retries = 0, timeout = 5.seconds)
     }
 
   }
