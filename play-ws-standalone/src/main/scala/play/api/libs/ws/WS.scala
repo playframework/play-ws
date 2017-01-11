@@ -130,24 +130,24 @@ trait WSProxyServer {
  * A WS proxy.
  */
 case class DefaultWSProxyServer(
-  /** The hostname of the proxy server. */
+  /* The hostname of the proxy server. */
   host: String,
 
-  /** The port of the proxy server. */
+  /* The port of the proxy server. */
   port: Int,
 
-  /** The protocol of the proxy server.  Use "http" or "https".  Defaults to "http" if not specified. */
+  /* The protocol of the proxy server.  Use "http" or "https".  Defaults to "http" if not specified. */
   protocol: Option[String] = None,
 
-  /** The principal (aka username) of the credentials for the proxy server. */
+  /* The principal (aka username) of the credentials for the proxy server. */
   principal: Option[String] = None,
 
-  /** The password for the credentials for the proxy server. */
+  /* The password for the credentials for the proxy server. */
   password: Option[String] = None,
 
   ntlmDomain: Option[String] = None,
 
-  /** The realm's charset. */
+  /* The realm's charset. */
   encoding: Option[String] = None,
 
   nonProxyHosts: Option[Seq[String]] = None

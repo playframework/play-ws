@@ -3,7 +3,6 @@
  */
 package play.api.libs.ws
 
-import java.net.URLEncoder
 import java.net.URLEncoder.encode
 
 import akka.util.ByteString
