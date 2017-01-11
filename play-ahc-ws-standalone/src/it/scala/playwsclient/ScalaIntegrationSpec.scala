@@ -10,7 +10,8 @@ import org.specs2.concurrent.ExecutionEnv
 import org.specs2.execute.Result
 import org.specs2.mutable.Specification
 import play.api.libs.ws.StandaloneWSClient
-import play.api.libs.ws.ahc.StandaloneAhcWSClient
+import play.api.libs.ws.ahc.{ AhcConfigBuilder, StandaloneAhcWSClient }
+import play.shaded.ahc.org.asynchttpclient.{ DefaultAsyncHttpClient, DefaultAsyncHttpClientConfig }
 
 import scala.concurrent.Future
 
@@ -21,7 +22,10 @@ class ScalaIntegrationSpec(implicit ee: ExecutionEnv) extends Specification {
     "call out to a remote system and get a correct status" in {
       implicit val system = ActorSystem()
       implicit val materializer = ActorMaterializer()
-      val wsClient = StandaloneAhcWSClient()
+
+      val builder = new AhcConfigBuilder()
+      val ahcClient = new DefaultAsyncHttpClient(builder.configure().build())
+      val wsClient = new StandaloneAhcWSClient(ahcClient)
 
       def call(wsClient: StandaloneWSClient): Future[Result] = {
         wsClient.url("http://www.google.com").get().map { response ⇒
