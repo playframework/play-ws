@@ -5,7 +5,6 @@ import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
 
 import scalariform.formatter.preferences._
-import com.typesafe.sbt.SbtScalariform.scalariformSettings
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 
 //---------------------------------------------------------------
