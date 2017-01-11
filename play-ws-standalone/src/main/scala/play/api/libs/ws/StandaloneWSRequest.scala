@@ -12,8 +12,15 @@ import scala.concurrent.duration.Duration
 /**
  * A WS Request builder.
  */
-trait StandaloneWSRequest {
-  type Self <: StandaloneWSRequest
+trait StandaloneWSRequest extends WithBody {
+  // There is an issue with type members, because when you stack `Self` references,
+  // they don't have a connection to each other that ties them back to the parent
+  // `Self` reference.  The way around this is to do F-bounded polymorphism directly
+  // on the type member, which roots it to the parent and doesn't mess up the type
+  // signature the way that a self-recursive type parameter would.  The implementation
+  // will always bind this to a relevant type, so we only have to make the compiler
+  // happy here.
+  type Self <: StandaloneWSRequest { type Self <: StandaloneWSRequest.this.Self }
   type Response <: StandaloneWSResponse
 
   /**
