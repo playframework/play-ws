@@ -6,7 +6,6 @@ package play.api.libs.ws
 import java.io.File
 import java.net.URI
 
-import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import play.api.libs.json.JsValue
 
