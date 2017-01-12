@@ -1,18 +1,22 @@
 /*
- * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ *
+ *  * Copyright (C) 2009-2016 Lightbend Inc. <https://www.lightbend.com>
+ *
  */
 package play.api.libs.ws.ahc
 
 import java.security.KeyStore
 import java.security.cert.CertPathValidatorException
+import javax.inject.{ Inject, Provider, Singleton }
 import javax.net.ssl._
-import org.slf4j.LoggerFactory
 
+import com.typesafe.config.{ Config, ConfigException }
 import com.typesafe.sslconfig.ssl._
 import play.shaded.ahc.io.netty.handler.ssl.SslContextBuilder
 import play.shaded.ahc.io.netty.handler.ssl.util.InsecureTrustManagerFactory
 import play.shaded.ahc.org.asynchttpclient.netty.ssl.JsseSslEngineFactory
 import play.shaded.ahc.org.asynchttpclient.{ AsyncHttpClientConfig, DefaultAsyncHttpClientConfig }
+import org.slf4j.LoggerFactory
 import play.api.libs.ws.WSClientConfig
 
 import scala.concurrent.duration._
@@ -39,8 +43,7 @@ case class AhcWSClientConfig(
   maxNumberOfRedirects: Int = 5,
   maxRequestRetry: Int = 5,
   disableUrlEncoding: Boolean = false,
-  keepAlive: Boolean = true
-)
+  keepAlive: Boolean = true)
 
 /**
  * Factory for creating AhcWSClientConfig, for use from Java.
@@ -49,6 +52,51 @@ object AhcWSClientConfigFactory {
 
   def forClientConfig(config: WSClientConfig) = {
     AhcWSClientConfig(wsClientConfig = config)
+  }
+}
+
+/**
+ * This class creates a WSClientConfig object from configuration.
+ */
+@Singleton
+class AhcWSClientConfigParser @Inject() (
+    wsClientConfig: WSClientConfig,
+    configuration: Config,
+    classLoader: ClassLoader) extends Provider[AhcWSClientConfig] {
+
+  def get = parse()
+
+  def parse(): AhcWSClientConfig = {
+
+    def getDuration(key: String, default: Duration) = {
+      try {
+        Duration(configuration.getString(key))
+      } catch {
+        case e: ConfigException.Null =>
+          default
+      }
+    }
+
+    val maximumConnectionsPerHost = configuration.getInt("play.ws.ahc.maxConnectionsPerHost")
+    val maximumConnectionsTotal = configuration.getInt("play.ws.ahc.maxConnectionsTotal")
+    val maxConnectionLifetime = getDuration("play.ws.ahc.maxConnectionLifetime", Duration.Inf)
+    val idleConnectionInPoolTimeout = getDuration("play.ws.ahc.idleConnectionInPoolTimeout", 1.minute)
+    val maximumNumberOfRedirects = configuration.getInt("play.ws.ahc.maxNumberOfRedirects")
+    val maxRequestRetry = configuration.getInt("play.ws.ahc.maxRequestRetry")
+    val disableUrlEncoding = configuration.getBoolean("play.ws.ahc.disableUrlEncoding")
+    val keepAlive = configuration.getBoolean("play.ws.ahc.keepAlive")
+
+    AhcWSClientConfig(
+      wsClientConfig = wsClientConfig,
+      maxConnectionsPerHost = maximumConnectionsPerHost,
+      maxConnectionsTotal = maximumConnectionsTotal,
+      maxConnectionLifetime = maxConnectionLifetime,
+      idleConnectionInPoolTimeout = idleConnectionInPoolTimeout,
+      maxNumberOfRedirects = maximumNumberOfRedirects,
+      maxRequestRetry = maxRequestRetry,
+      disableUrlEncoding = disableUrlEncoding,
+      keepAlive = keepAlive
+    )
   }
 }
 
@@ -100,8 +148,7 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
    * @return the new builder
    */
   def modifyUnderlying(
-    modify: DefaultAsyncHttpClientConfig.Builder => DefaultAsyncHttpClientConfig.Builder
-  ): AhcConfigBuilder = {
+    modify: DefaultAsyncHttpClientConfig.Builder => DefaultAsyncHttpClientConfig.Builder): AhcConfigBuilder = {
     new AhcConfigBuilder(ahcConfig) {
       override val addCustomSettings = modify compose AhcConfigBuilder.this.addCustomSettings
       override val builder = AhcConfigBuilder.this.builder
