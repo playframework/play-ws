@@ -5,11 +5,13 @@ package play.api.libs.ws.ahc
 
 import java.io.{ File, UnsupportedEncodingException }
 import java.net.URI
+import java.net.URLEncoder.encode
 import java.nio.charset.{ Charset, StandardCharsets }
 
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
+import play.api.libs.json.{ JsValue, Json }
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
 import play.shaded.ahc.org.asynchttpclient.proxy.{ ProxyServer => AHCProxyServer }
@@ -21,6 +23,7 @@ import scala.collection.JavaConverters._
 import scala.collection.immutable.TreeMap
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ Future, Promise }
+import scala.xml.NodeSeq
 
 case object StandaloneAhcWSRequest {
   private[libs] def ahcHeadersToMap(headers: HttpHeaders): TreeMap[String, Seq[String]] = {
@@ -36,12 +39,12 @@ case object StandaloneAhcWSRequest {
     val result = Promise[StandaloneAhcWSResponse]()
 
     client.executeRequest(request, new AsyncCompletionHandler[AHCResponse]() {
-      override def onCompleted(response: AHCResponse) = {
+      override def onCompleted(response: AHCResponse): AHCResponse = {
         result.success(StandaloneAhcWSResponse(response))
         response
       }
 
-      override def onThrowable(t: Throwable) = {
+      override def onThrowable(t: Throwable): Unit = {
         result.failure(t)
       }
     })
@@ -81,26 +84,26 @@ case class StandaloneAhcWSRequest(
     })
   }
 
-  def sign(calc: WSSignatureCalculator): Self = copy(calc = Some(calc))
+  override def sign(calc: WSSignatureCalculator): Self = copy(calc = Some(calc))
 
-  def withAuth(username: String, password: String, scheme: WSAuthScheme): Self =
+  override def withAuth(username: String, password: String, scheme: WSAuthScheme): Self =
     copy(auth = Some((username, password, scheme)))
 
-  def withHeaders(hdrs: (String, String)*): Self = {
+  override def withHeaders(hdrs: (String, String)*): Self = {
     val headers = hdrs.foldLeft(this.headers)((m, hdr) =>
       if (m.contains(hdr._1)) m.updated(hdr._1, m(hdr._1) :+ hdr._2)
       else m + (hdr._1 -> Seq(hdr._2)))
     copy(headers = headers)
   }
 
-  def withQueryString(parameters: (String, String)*): Self =
+  override def withQueryString(parameters: (String, String)*): Self =
     copy(queryString = parameters.foldLeft(this.queryString) {
       case (m, (k, v)) => m + (k -> (v +: m.getOrElse(k, Nil)))
     })
 
-  def withFollowRedirects(follow: Boolean): Self = copy(followRedirects = Some(follow))
+  override def withFollowRedirects(follow: Boolean): Self = copy(followRedirects = Some(follow))
 
-  def withRequestTimeout(timeout: Duration): Self = {
+  override def withRequestTimeout(timeout: Duration): Self = {
     timeout match {
       case Duration.Inf =>
         copy(requestTimeout = Some(-1))
@@ -111,71 +114,238 @@ case class StandaloneAhcWSRequest(
     }
   }
 
+  override def withVirtualHost(vh: String): Self = copy(virtualHost = Some(vh))
+
+  override def withProxyServer(proxyServer: WSProxyServer): Self = copy(proxyServer = Some(proxyServer))
+
+  override def withBody(body: WSBody): Self = copy(body = body)
+
+  override def withMethod(method: String): Self = copy(method = method)
+
+  /**
+   * Returns a request using an bytestring body, conditionally setting a content type of "application/octet-stream" if content type is not already set.
+   *
+   * @param byteString the byte string
+   * @return the modified WSRequest.
+   */
+  override def withBody(byteString: ByteString): Self = {
+    withBodyAndContentType(InMemoryBody(byteString), "application/octet-stream")
+  }
+
+  override def withBody(s: String): Self = {
+    withBodyAndContentType(InMemoryBody(ByteString.fromString(s)), "text/plain")
+  }
+
+  override def withBody(nodeSeq: NodeSeq): Self = {
+    // text/xml is fine to use as of RFC 7231 as there is no default charset any more.
+    withBodyAndContentType(InMemoryBody(ByteString.fromString(nodeSeq.toString())), "text/xml")
+  }
+
+  override def withBody(js: JsValue): Self = {
+    withBodyAndContentType(InMemoryBody(ByteString.fromString(Json.stringify(js))), "application/json")
+  }
+
+  override def withBody(formData: Map[String, Seq[String]]): Self = {
+    val string = formData.flatMap(i => i._2.map(c => s"${i._1}=${encode(c, "UTF-8")}")).mkString("&")
+    withBodyAndContentType(InMemoryBody(ByteString.fromString(string)), "application/x-www-form-urlencoded")
+  }
+
+  override def withBody(file: File): Self = {
+    withBody(FileBody(file))
+  }
+
+  private def withBodyAndContentType(wsBody: WSBody, contentType: String): Self = {
+    if (headers.contains("Content-Type")) {
+      withBody(wsBody)
+    } else {
+      withBody(wsBody).withHeaders("Content-Type" -> contentType)
+    }
+  }
+
   /**
    * performs a get
    */
-  def get(): Future[Response] = withMethod("GET").execute()
+  override def get(): Future[Response] = {
+    execute("GET")
+  }
+
+  /**
+   *
+   */
+  override def patch(byteString: ByteString): Future[Response] = {
+    withBody(byteString).execute("PATCH")
+  }
+
+  /**
+   *
+   */
+  override def patch(s: String): Future[Response] = {
+    withBody(s).execute("PATCH")
+  }
+
+  /**
+   *
+   */
+  override def patch(nodeSeq: NodeSeq): Future[Response] = {
+    withBody(nodeSeq).execute("PATCH")
+  }
+
+  /**
+   *
+   */
+  override def patch(js: JsValue): Future[Response] = {
+    withBody(js).execute("PATCH")
+  }
+
+  /**
+   *
+   */
+  override def patch(formData: Map[String, Seq[String]]): Future[Response] = {
+    withBody(formData).execute("PATCH")
+  }
 
   /**
    * Perform a PATCH on the request asynchronously.
    * Request body won't be chunked
    */
-  def patch(body: File): Future[Response] = withMethod("PATCH").withBody(FileBody(body)).execute()
+  override def patch(body: File): Future[Response] = {
+    withBody(FileBody(body)).execute("PATCH")
+  }
+
+  /**
+   *
+   */
+  override def post(byteString: ByteString): Future[Response] = {
+    withBody(byteString).execute("POST")
+  }
+
+  /**
+   *
+   */
+  override def post(s: String): Future[Response] = {
+    withBody(s).execute("POST")
+  }
+
+  /**
+   *
+   */
+  override def post(nodeSeq: NodeSeq): Future[Response] = {
+    withBody(nodeSeq).execute("POST")
+  }
+
+  /**
+   *
+   */
+  override def post(js: JsValue): Future[Response] = {
+    withBody(js).execute("POST")
+  }
+
+  /**
+   *
+   */
+  override def post(formData: Map[String, Seq[String]]): Future[Response] = {
+    withBody(formData).execute("POST")
+  }
 
   /**
    * Perform a POST on the request asynchronously.
    * Request body won't be chunked
    */
-  def post(body: File): Future[Response] = withMethod("POST").withBody(FileBody(body)).execute()
+  override def post(body: File): Future[Response] = {
+    withBody(FileBody(body)).execute("POST")
+  }
+
+  /**
+   *
+   */
+  override def put(byteString: ByteString): Future[Response] = {
+    withBody(byteString).execute("PUT")
+  }
+
+  /**
+   *
+   */
+  override def put(s: String): Future[Response] = {
+    withBody(s).execute("PUT")
+  }
+
+  /**
+   *
+   */
+  override def put(nodeSeq: NodeSeq): Future[Response] = {
+    withBody(nodeSeq).execute("PUT")
+  }
+
+  /**
+   *
+   */
+  override def put(js: JsValue): Future[Response] = {
+    withBody(js).execute("PUT")
+  }
+
+  /**
+   *
+   */
+  override def put(formData: Map[String, Seq[String]]): Future[Response] = {
+    withBody(formData).execute("PUT")
+  }
 
   /**
    * Perform a PUT on the request asynchronously.
    * Request body won't be chunked
    */
-  def put(body: File): Future[Response] = withMethod("PUT").withBody(FileBody(body)).execute()
+  override def put(body: File): Future[Response] = {
+    withBody(FileBody(body)).execute("PUT")
+  }
 
   /**
    * Perform a DELETE on the request asynchronously.
    */
-  def delete(): Future[Response] = withMethod("DELETE").execute()
+  override def delete(): Future[Response] = {
+    execute("DELETE")
+  }
 
   /**
    * Perform a HEAD on the request asynchronously.
    */
-  def head(): Future[Response] = withMethod("HEAD").execute()
+  override def head(): Future[Response] = {
+    execute("HEAD")
+  }
 
   /**
    * Perform a OPTIONS on the request asynchronously.
    */
-  def options(): Future[Response] = withMethod("OPTIONS").execute()
+  override def options(): Future[Response] = {
+    execute("OPTIONS")
+  }
 
-  def execute(method: String): Future[Response] = withMethod(method).execute()
+  override def execute(method: String): Future[Response] = {
+    withMethod(method).execute()
+  }
 
-  def withVirtualHost(vh: String): Self = copy(virtualHost = Some(vh))
-
-  def withProxyServer(proxyServer: WSProxyServer): Self = copy(proxyServer = Some(proxyServer))
-
-  def withBody(body: WSBody): Self = copy(body = body)
-
-  def withMethod(method: String): Self = copy(method = method)
-
-  def execute(): Future[Response] = {
+  override def execute(): Future[Response] = {
     StandaloneAhcWSRequest.execute(this.buildRequest(), client)
   }
 
-  def stream(): Future[StreamedResponse] = Streamed.execute(client.underlying, buildRequest())
+  override def stream(): Future[StreamedResponse] = {
+    Streamed.execute(client.underlying[AsyncHttpClient], buildRequest())
+  }
 
   /**
    * Returns the current headers of the request, using the request builder.  This may be signed,
    * so may return extra headers that were not directly input.
    */
-  def requestHeaders: Map[String, Seq[String]] = StandaloneAhcWSRequest.ahcHeadersToMap(buildRequest().getHeaders)
+  def requestHeaders: Map[String, Seq[String]] = {
+    StandaloneAhcWSRequest.ahcHeadersToMap(buildRequest().getHeaders)
+  }
 
   /**
    * Returns the HTTP header given by name, using the request builder.  This may be signed,
    * so may return extra headers that were not directly input.
    */
-  def requestHeader(name: String): Option[String] = requestHeaders.get(name).flatMap(_.headOption)
+  def requestHeader(name: String): Option[String] = {
+    requestHeaders.get(name).flatMap(_.headOption)
+  }
 
   /**
    * Returns the current query string parameters, using the request builder.  This may be signed,
@@ -190,7 +360,9 @@ case class StandaloneAhcWSRequest(
    * Returns the current URL, using the request builder.  This may be signed by OAuth, as opposed
    * to request.url.
    */
-  def requestUrl: String = buildRequest().getUrl
+  def requestUrl: String = {
+    buildRequest().getUrl
+  }
 
   /**
    * Returns the body as an array of bytes.

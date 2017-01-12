@@ -6,13 +6,18 @@ package play.api.libs.ws
 import java.io.File
 import java.net.URI
 
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
+import play.api.libs.json.JsValue
+
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
+import scala.xml.NodeSeq
 
 /**
  * A WS Request builder.
  */
-trait StandaloneWSRequest extends WithBody {
+trait StandaloneWSRequest {
   // There is an issue with type members, because when you stack `Self` references,
   // they don't have a connection to each other that ties them back to the parent
   // `Self` reference.  The way around this is to do F-bounded polymorphism directly
@@ -26,62 +31,62 @@ trait StandaloneWSRequest extends WithBody {
   /**
    * The base URL for this request
    */
-  val url: String
+  def url: String
 
   /**
    * The URI for this request
    */
-  val uri: URI
+  def uri: URI
 
   /**
    * The method for this request
    */
-  val method: String
+  def method: String
 
   /**
    * The body of this request
    */
-  val body: WSBody
+  def body: WSBody
 
   /**
    * The headers for this request
    */
-  val headers: Map[String, Seq[String]]
+  def headers: Map[String, Seq[String]]
 
   /**
    * The query string for this request
    */
-  val queryString: Map[String, Seq[String]]
+  def queryString: Map[String, Seq[String]]
 
   /**
    * A calculator of the signature for this request
    */
-  val calc: Option[WSSignatureCalculator]
+  def calc: Option[WSSignatureCalculator]
 
   /**
    * The authentication this request should use
    */
-  val auth: Option[(String, String, WSAuthScheme)]
+  def auth: Option[(String, String, WSAuthScheme)]
 
   /**
    * Whether this request should follow redirects
    */
-  val followRedirects: Option[Boolean]
+  def followRedirects: Option[Boolean]
 
   /**
    * The timeout for the request
    */
-  val requestTimeout: Option[Int]
+  def requestTimeout: Option[Int]
 
   /**
    * The virtual host this request will use
    */
-  val virtualHost: Option[String]
+  def virtualHost: Option[String]
 
   /**
    * The proxy server this request will use
    */
-  val proxyServer: Option[WSProxyServer]
+  def proxyServer: Option[WSProxyServer]
 
   /**
    * sets the signature calculator for the request
@@ -128,19 +133,98 @@ trait StandaloneWSRequest extends WithBody {
   def withProxyServer(proxyServer: WSProxyServer): Self
 
   /**
-   * Sets the body for this request
-   */
-  def withBody(body: WSBody): Self
-
-  /**
    * Sets the method for this request
    */
   def withMethod(method: String): Self
 
   /**
-   * performs a get
+   * Sets the body for this request
+   */
+  def withBody(body: WSBody): Self
+
+  /**
+   * Returns a request using an bytestring body, conditionally setting a content type of "application/octet-stream" if content type is not already set.
+   *
+   * @param byteString the byte string
+   * @return the modified WSRequest.
+   */
+  def withBody(byteString: ByteString): Self
+
+  /**
+   * Returns a request using an string body, optionally setting a content type of "text/plain" if content type is not already set.
+   *
+   * @param s the string body.
+   * @return the modified WSRequest.
+   */
+  def withBody(s: String): Self
+
+  /**
+   * Returns a request using an XML body, optionally setting a content type of "text/xml"  if content type is not already set.
+   *
+   * @param nodeSeq the XML nodes to set.
+   * @return the modified WSRequest.
+   */
+  def withBody(nodeSeq: NodeSeq): Self
+
+  /**
+   * Returns a request using a JsValue body, optionally setting a content type of "application/json"  if content type is not already set.
+   *
+   * @param js the JsValue to set.
+   * @return the modified WSRequest.
+   */
+  def withBody(js: JsValue): Self
+
+  /**
+   * Returns a request using a map body, optionally setting a content type of "application/x-www-form-urlencoded"  if content type is not already set.
+   *
+   * @param formData the form data to set.
+   * @return the modified WSRequest.
+   */
+  def withBody(formData: Map[String, Seq[String]]): Self
+
+  /**
+   * Returns a request using a file body, optionally setting a content type of "application/octet-stream"  if content type is not already set.
+   *
+   * @param file the file data to set.
+   * @return the modified WSRequest.
+   */
+  def withBody(file: File): Self
+
+  // FIXME Java API defines InputStream as a possible body input, but the Scala API does not.
+  //def withBody(body: java.io.InputStream): Self
+
+  // FIXME Java API defines Source as a possible body input, but the Scala API does not.
+  //def withBody(body: Source[ByteString, Any]): Self
+
+  /**
+   * Performs a GET.
    */
   def get(): Future[Response]
+
+  /**
+   *
+   */
+  def patch(byteString: ByteString): Future[Response]
+
+  /**
+   *
+   */
+  def patch(s: String): Future[Response]
+
+  /**
+   *
+   */
+  def patch(nodeSeq: NodeSeq): Future[Response]
+
+  /**
+   *
+   */
+  def patch(js: JsValue): Future[Response]
+
+  /**
+   *
+   */
+  def patch(formData: Map[String, Seq[String]]): Future[Response]
 
   /**
    * Perform a PATCH on the request asynchronously.
@@ -149,10 +233,60 @@ trait StandaloneWSRequest extends WithBody {
   def patch(body: File): Future[Response]
 
   /**
+   *
+   */
+  def post(byteString: ByteString): Future[Response]
+
+  /**
+   *
+   */
+  def post(s: String): Future[Response]
+
+  /**
+   *
+   */
+  def post(nodeSeq: NodeSeq): Future[Response]
+
+  /**
+   *
+   */
+  def post(js: JsValue): Future[Response]
+
+  /**
+   *
+   */
+  def post(formData: Map[String, Seq[String]]): Future[Response]
+
+  /**
    * Perform a POST on the request asynchronously.
    * Request body won't be chunked
    */
   def post(body: File): Future[Response]
+
+  /**
+   *
+   */
+  def put(byteString: ByteString): Future[Response]
+
+  /**
+   *
+   */
+  def put(s: String): Future[Response]
+
+  /**
+   *
+   */
+  def put(nodeSeq: NodeSeq): Future[Response]
+
+  /**
+   *
+   */
+  def put(js: JsValue): Future[Response]
+
+  /**
+   *
+   */
+  def put(formData: Map[String, Seq[String]]): Future[Response]
 
   /**
    * Perform a PUT on the request asynchronously.
