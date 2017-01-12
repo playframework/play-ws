@@ -8,7 +8,7 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mutable.Specification
-import play.api.libs.ws.ahc.{AhcConfigBuilder, StandaloneAhcWSClient}
+import play.api.libs.ws.ahc.{ AhcConfigBuilder, StandaloneAhcWSClient }
 import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClient
 
 import scala.concurrent.duration._
