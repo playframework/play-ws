@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
  */
+import Dependencies.slf4jtest
 import sbt._
 
 object Dependencies {
@@ -19,9 +20,10 @@ object Dependencies {
     "com.typesafe.play" %% "play-functional" % playJsonVersion
   )
 
-  def slf4j = Seq("org.slf4j" % "slf4j-api" % "1.7.16")
+  val slf4j = Seq("org.slf4j" % "slf4j-api" % "1.7.16")
 
-  def logback = Seq("ch.qos.logback" % "logback-classic" % "1.1.8")
+  //
+  val slf4jtest = Seq("uk.org.lidalia" % "slf4j-test" % "1.1.0")
 
   val javaxInject = Seq("javax.inject" % "javax.inject" % "1")
 
@@ -49,6 +51,6 @@ object Dependencies {
       playJson ++
       specsBuild
 
-  val standaloneAhcWSDependencies = slf4j ++ specsBuild
+  val standaloneAhcWSDependencies = slf4j ++ slf4jtest.map(_ % Test) ++ specsBuild
 
 }

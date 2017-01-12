@@ -219,7 +219,7 @@ lazy val `play-ahc-ws-standalone` = project
   .settings(SbtScalariform.scalariformSettingsWithIt)
   .settings(
     testOptions in IntegrationTest := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
-    libraryDependencies ++= logback.map(_ % "it,test"),
+    libraryDependencies ++= slf4jtest.map(_ % "it,test"),
     libraryDependencies ++= Seq(
       "com.novocode" % "junit-interface" % "0.11" % "it,test"
     ),

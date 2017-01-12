@@ -16,7 +16,7 @@ import play.shaded.ahc.io.netty.handler.ssl.SslContextBuilder
 import play.shaded.ahc.io.netty.handler.ssl.util.InsecureTrustManagerFactory
 import play.shaded.ahc.org.asynchttpclient.netty.ssl.JsseSslEngineFactory
 import play.shaded.ahc.org.asynchttpclient.{ AsyncHttpClientConfig, DefaultAsyncHttpClientConfig }
-import org.slf4j.LoggerFactory
+import org.slf4j.{ ILoggerFactory, LoggerFactory }
 import play.api.libs.ws.WSClientConfig
 
 import scala.concurrent.duration._
@@ -104,8 +104,9 @@ class AhcWSClientConfigParser @Inject() (
  * Builds a valid AsyncHttpClientConfig object from config.
  *
  * @param ahcConfig the ahc client configuration.
+ * @param lf the logger factory, defaults to SLF4J's logger factory.
  */
-class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
+class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig(), lf: ILoggerFactory = LoggerFactory.getILoggerFactory) {
 
   protected val addCustomSettings: DefaultAsyncHttpClientConfig.Builder => DefaultAsyncHttpClientConfig.Builder = identity
 
@@ -114,8 +115,8 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
    */
   val builder: DefaultAsyncHttpClientConfig.Builder = new DefaultAsyncHttpClientConfig.Builder()
 
-  private[ahc] val logger = LoggerFactory.getLogger(this.getClass)
-  private[ahc] val loggerFacotry = new AhcLoggerFactory
+  private[ahc] val logger = LoggerFactory.getLogger(this.getClass.getName)
+  private[ahc] val loggerFactory = new AhcLoggerFactory(lf)
 
   /**
    * Configure the underlying builder with values specified by the `config`, and add any custom settings.
@@ -245,14 +246,14 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
 
     // context!
     val sslContext = if (sslConfig.default) {
-      logger.info("buildSSLContext: ws.ssl.default is true, using default SSLContext")
+      logger.info("buildSSLContext: play.ws.ssl.default is true, using default SSLContext")
       validateDefaultTrustManager(sslConfig)
       SSLContext.getDefault
     } else {
       // break out the static methods as much as we can...
       val keyManagerFactory = buildKeyManagerFactory(sslConfig)
       val trustManagerFactory = buildTrustManagerFactory(sslConfig)
-      new ConfigSSLContextBuilder(loggerFacotry, sslConfig, keyManagerFactory, trustManagerFactory).build()
+      new ConfigSSLContextBuilder(loggerFactory, sslConfig, keyManagerFactory, trustManagerFactory).build()
     }
 
     // protocols!
@@ -305,13 +306,13 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
     val trustManager: X509TrustManager = tmf.getTrustManagers()(0).asInstanceOf[X509TrustManager]
 
     val constraints = sslConfig.disabledKeyAlgorithms.map(a => AlgorithmConstraintsParser.parseAll(AlgorithmConstraintsParser.expression, a).get).toSet
-    val algorithmChecker = new AlgorithmChecker(loggerFacotry, Set(), constraints)
+    val algorithmChecker = new AlgorithmChecker(loggerFactory, Set(), constraints)
     for (cert <- trustManager.getAcceptedIssuers) {
       try {
         algorithmChecker.checkKeyAlgorithms(cert)
       } catch {
         case e: CertPathValidatorException =>
-          logger.warn("You are using ws.ssl.default=true and have a weak certificate in your default trust store!  (You can modify ws.ssl.disabledKeyAlgorithms to remove this message.)", e)
+          logger.warn("You are using play.ws.ssl.default=true and have a weak certificate in your default trust store!  (You can modify play.ws.ssl.disabledKeyAlgorithms to remove this message.)", e)
       }
     }
   }

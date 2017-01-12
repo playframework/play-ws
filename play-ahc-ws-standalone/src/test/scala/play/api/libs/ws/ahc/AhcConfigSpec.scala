@@ -5,15 +5,18 @@
  */
 package play.api.libs.ws.ahc
 
+import javax.net.ssl.SSLContext
+
 import com.typesafe.config.{ Config, ConfigFactory }
 import com.typesafe.sslconfig.ssl.{ Ciphers, Protocols, SSLConfigFactory, SSLConfigSettings }
 import play.shaded.ahc.org.asynchttpclient.proxy.ProxyServerSelector
 import play.shaded.ahc.org.asynchttpclient.util.ProxyUtils
-import org.slf4j.LoggerFactory
 import org.specs2.mock._
 import org.specs2.mutable._
 import org.specs2.specification.Scope
 import play.api.libs.ws.WSClientConfig
+import uk.org.lidalia.slf4jtest.TestLogger
+import uk.org.lidalia.slf4jtest.TestLoggerFactory
 
 import scala.concurrent.duration._
 
@@ -246,32 +249,29 @@ class AhcConfigSpec extends Specification with Mockito {
         }
 
         "log a warning if sslConfig.default is passed in with an weak certificate" in {
-          import ch.qos.logback.classic._
-          import ch.qos.logback.classic.spi._
-
+          import scala.collection.JavaConverters._
           // Pass in a configuration which is guaranteed to fail, by banning RSA, DSA and EC certificates
           val underlyingConfig = parseSSLConfig(
             """
               |play.ws.ssl.default=true
               |play.ws.ssl.disabledKeyAlgorithms=["RSA", "DSA", "EC"]
             """.stripMargin)
-          val wsConfig = defaultWsConfig.copy(ssl = SSLConfigFactory.parse(underlyingConfig))
+          val sslConfigSettings = SSLConfigFactory.parse(underlyingConfig)
+
+          val wsConfig = defaultWsConfig.copy(ssl = sslConfigSettings)
           val config = defaultConfig.copy(wsClientConfig = wsConfig)
-          val builder = new AhcConfigBuilder(config)
-          // this only works with test:test, has a different type in test:testQuick and test:testOnly!
-          // LoggerFactory.getLogger()
-          val logger = builder.logger.asInstanceOf[ch.qos.logback.classic.Logger]
-          val appender = new ch.qos.logback.core.read.ListAppender[ILoggingEvent]()
-          val lc = LoggerFactory.getILoggerFactory.asInstanceOf[LoggerContext]
-          appender.setContext(lc)
-          appender.start()
-          logger.addAppender(appender)
-          logger.setLevel(Level.WARN)
 
-          builder.build()
+          // clear the logger of any messages...
+          TestLoggerFactory.clear()
+          val loggerFactory = TestLoggerFactory.getInstance()
+          val builder = new AhcConfigBuilder(config, loggerFactory)
 
-          val warahcs = appender.list
-          warahcs.size must beGreaterThan(0)
+          // Run method that will trigger the logger warning
+          builder.configureSSL(sslConfig = sslConfigSettings)
+
+          val logger = loggerFactory.getLogger(builder.getClass)
+          val messages = logger.getLoggingEvents.asList().asScala.map(_.getMessage)
+          messages must contain("You are using play.ws.ssl.default=true and have a weak certificate in your default trust store!  (You can modify play.ws.ssl.disabledKeyAlgorithms to remove this message.)")
         }
 
         "should validate certificates" in {
