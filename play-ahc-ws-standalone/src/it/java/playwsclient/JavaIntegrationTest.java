@@ -6,14 +6,19 @@ package playwsclient;
 import akka.actor.ActorSystem;
 import akka.stream.ActorMaterializer;
 import akka.stream.ActorMaterializerSettings;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import com.typesafe.sslconfig.ssl.SSLConfigFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.LoggerFactory;
 import play.api.libs.ws.WSClientConfig;
+import play.api.libs.ws.WSConfigParser;
 import play.api.libs.ws.ahc.AhcConfigBuilder;
 import play.api.libs.ws.ahc.AhcWSClientConfig;
 import play.api.libs.ws.ahc.AhcWSClientConfigFactory;
+import play.api.libs.ws.ahc.AhcWSClientConfigParser;
 import play.libs.ws.StandaloneWSClient;
 import play.libs.ws.ahc.StandaloneAhcWSClient;
 import play.shaded.ahc.org.asynchttpclient.AsyncHttpClient;
@@ -37,27 +42,27 @@ public class JavaIntegrationTest {
 
     @Before
     public void before() {
-        String name = "wsclient";
+        // Create a config from the application.conf file
+        final Config config = ConfigFactory.load();
+        final ClassLoader classLoader = this.getClass().getClassLoader();
+        final WSClientConfig wsClientConfig = new WSConfigParser(config, classLoader).parse();
+        final AhcWSClientConfig ahcWSClientConfig = new AhcWSClientConfigParser(wsClientConfig, config, classLoader).parse();
+
+        // Configure the AsyncHttpClientConfig.Builder from the application.conf file...
+        final AhcConfigBuilder builder = new AhcConfigBuilder(ahcWSClientConfig, LoggerFactory.getILoggerFactory());
+        final DefaultAsyncHttpClientConfig.Builder ahcBuilder = builder.configure();
+
+        // Create the AHC client
+        DefaultAsyncHttpClientConfig asyncHttpClientConfig = ahcBuilder.build();
+        ahcClient = new DefaultAsyncHttpClient(asyncHttpClientConfig);
+
+        // Set up Akka materializer to handle streaming
+        final String name = "wsclient";
         system = ActorSystem.create(name);
-        ActorMaterializerSettings settings = ActorMaterializerSettings.create(system);
+        final ActorMaterializerSettings settings = ActorMaterializerSettings.create(system);
         materializer = ActorMaterializer.create(settings, system, name);
 
-        scala.Option<String> noneString = scala.None$.empty();
-        WSClientConfig wsClientConfig = new WSClientConfig(
-                Duration.apply(120, TimeUnit.SECONDS), // connectionTimeout
-                Duration.apply(120, TimeUnit.SECONDS), // idleTimeout
-                Duration.apply(120, TimeUnit.SECONDS), // requestTimeout
-                true, // followRedirects
-                true, // useProxyProperties
-                noneString, // userAgent
-                true, // compressionEnabled / enforced
-                SSLConfigFactory.defaultConfig());
-
-        AhcWSClientConfig clientConfig = AhcWSClientConfigFactory.forClientConfig(wsClientConfig);
-        AhcConfigBuilder builder = new AhcConfigBuilder(clientConfig);
-        DefaultAsyncHttpClientConfig.Builder ahcBuilder = builder.configure();
-        ahcClient = new DefaultAsyncHttpClient(ahcBuilder.build());
-
+        // Create the WS client
         client = new StandaloneAhcWSClient(ahcClient, materializer);
     }
 

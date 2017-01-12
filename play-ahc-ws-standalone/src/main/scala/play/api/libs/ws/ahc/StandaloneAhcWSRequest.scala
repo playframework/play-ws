@@ -60,7 +60,7 @@ case class StandaloneAhcWSRequest(
     url: String,
     method: String = "GET",
     body: WSBody = EmptyBody,
-    headers: Map[String, Seq[String]] = Map.empty,
+    headers: Map[String, Seq[String]] = TreeMap()(CaseInsensitiveOrdered),
     queryString: Map[String, Seq[String]] = Map.empty,
     calc: Option[WSSignatureCalculator] = None,
     auth: Option[(String, String, WSAuthScheme)] = None,

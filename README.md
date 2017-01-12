@@ -41,8 +41,12 @@ package playwsclient
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import play.api.libs.ws.StandaloneWSClient
-import play.api.libs.ws.ahc.StandaloneAhcWSClient
+import com.typesafe.config.ConfigFactory
+import org.specs2.concurrent.ExecutionEnv
+import org.specs2.mutable.Specification
+import play.api.libs.ws.WSConfigParser
+import play.api.libs.ws.ahc.{ AhcConfigBuilder, AhcWSClientConfigParser, StandaloneAhcWSClient }
+import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClient
 
 import scala.concurrent.Future
 
@@ -50,9 +54,26 @@ object ScalaClient {
   import scala.concurrent.ExecutionContext.Implicits._
 
   def main(args: Array[String]): Unit = {
-    implicit val system = ActorSystem()
-    implicit val materializer = ActorMaterializer()
-    val wsClient = StandaloneAhcWSClient()
+      // Create a config from the application.conf file
+      val config = ConfigFactory.load
+      val classLoader = this.getClass.getClassLoader
+      val wsClientConfig = new WSConfigParser(config, classLoader).parse
+      val ahcWSClientConfig = new AhcWSClientConfigParser(wsClientConfig, config, classLoader).parse
+
+      // Map the WS config to the AHC config class.
+      val builder = new AhcConfigBuilder(ahcWSClientConfig)
+      val asyncHttpClientConfigBuilder = builder.configure()
+      val asyncHttpClientConfig = asyncHttpClientConfigBuilder.build()
+
+      // Create the AHC client
+      val ahcClient = new DefaultAsyncHttpClient(asyncHttpClientConfig)
+
+      // Create Akka system for thread and streaming management
+      implicit val system = ActorSystem()
+      implicit val materializer = ActorMaterializer()
+
+      // Create the standalone WS client
+      val wsClient = new StandaloneAhcWSClient(ahcClient)
 
     call(wsClient)
       .andThen { case _ => wsClient.close() }
@@ -89,18 +110,29 @@ import java.util.concurrent.CompletionStage;
 public class JavaClient {
 
     public static void main(String[] args) {
-        AsyncHttpClientConfig config = new DefaultAsyncHttpClientConfig.Builder()
-                .setMaxRequestRetry(0)
-                .setShutdownQuietPeriod(0)
-                .setShutdownTimeout(0).build();
+        // Create a config from the application.conf file
+        final Config config = ConfigFactory.load();
+        final ClassLoader classLoader = this.getClass().getClassLoader();
+        final WSClientConfig wsClientConfig = new WSConfigParser(config, classLoader).parse();
+        final AhcWSClientConfig ahcWSClientConfig = new AhcWSClientConfigParser(wsClientConfig, config, classLoader).parse();
 
-        String name = "wsclient";
-        ActorSystem system = ActorSystem.create(name);
-        ActorMaterializerSettings settings = ActorMaterializerSettings.create(system);
-        ActorMaterializer materializer = ActorMaterializer.create(settings, system, name);
+        // Configure the AsyncHttpClientConfig.Builder from the application.conf file...
+        final AhcConfigBuilder builder = new AhcConfigBuilder(ahcWSClientConfig, LoggerFactory.getILoggerFactory());
+        final DefaultAsyncHttpClientConfig.Builder ahcBuilder = builder.configure();
 
-        DefaultAsyncHttpClient ahcClient = new DefaultAsyncHttpClient(config);
-        StandaloneWSClient client = new StandaloneAhcWSClient(ahcClient, materializer);
+        // Create the AHC client
+        final DefaultAsyncHttpClientConfig asyncHttpClientConfig = ahcBuilder.build();
+        final DefaultAsyncHttpClient ahcClient = new DefaultAsyncHttpClient(asyncHttpClientConfig);
+
+        // Set up Akka materializer to handle streaming
+        final String name = "wsclient";
+        final ActorSystem system = ActorSystem.create(name);
+        final ActorMaterializerSettings settings = ActorMaterializerSettings.create(system);
+        final ActorMaterializer materializer = ActorMaterializer.create(settings, system, name);
+
+        // Create the WS client
+        final WSClient client = new StandaloneAhcWSClient(ahcClient, materializer);
+        
         CompletionStage<StandaloneWSResponse> completionStage = client.url("http://www.google.com").get();
 
         completionStage.whenComplete((response, throwable) -> {

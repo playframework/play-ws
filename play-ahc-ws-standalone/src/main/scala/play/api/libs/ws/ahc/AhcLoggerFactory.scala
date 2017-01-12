@@ -4,13 +4,13 @@
 package play.api.libs.ws.ahc
 
 import com.typesafe.sslconfig.util.{ LoggerFactory, NoDepsLogger }
-import org.slf4j.{ LoggerFactory => SLF4JLoggerFactory }
+import org.slf4j.{ ILoggerFactory => SLF4JLoggerFactory }
 
-class AhcLoggerFactory extends LoggerFactory {
+class AhcLoggerFactory(lf: SLF4JLoggerFactory) extends LoggerFactory {
 
   private[ahc] def createLogger(name: String) = {
     new NoDepsLogger {
-      private[ahc] val logger = SLF4JLoggerFactory.getLogger(this.getClass)
+      private[ahc] val logger = lf.getLogger(this.getClass.getName)
 
       def warn(msg: String): Unit = logger.warn(msg)
       def isDebugEnabled: Boolean = logger.isDebugEnabled

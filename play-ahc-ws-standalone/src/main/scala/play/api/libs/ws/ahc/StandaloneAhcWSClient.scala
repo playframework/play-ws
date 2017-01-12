@@ -34,7 +34,7 @@ case class StandaloneAhcWSClient(asyncHttpClient: AsyncHttpClient)(implicit val 
 
 object StandaloneAhcWSClient {
 
-  private[ahc] val loggerFactory = new AhcLoggerFactory
+  private[ahc] val loggerFactory = new AhcLoggerFactory(org.slf4j.LoggerFactory.getILoggerFactory)
 
   /**
    * Convenient factory method that uses a play.api.libs.ws.WSClientConfig value for configuration instead of
