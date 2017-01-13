@@ -24,7 +24,7 @@ case class StreamedResponse(headers: WSResponseHeaders, body: scaladsl.Source[By
    * This utility class is used by `play.libs.ws.StreamedResponse`.
    */
   private def convert(headers: Map[String, Seq[String]]): ju.Map[String, ju.List[String]] = {
-    import scala.collection.convert.WrapAsJava.{ mapAsJavaMap, seqAsJavaList }
+    import scala.collection.JavaConverters._
     mapAsJavaMap(headers.map { case (k, v) => k -> seqAsJavaList(v) })
   }
 
