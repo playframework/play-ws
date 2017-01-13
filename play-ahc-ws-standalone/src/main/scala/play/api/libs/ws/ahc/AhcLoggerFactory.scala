@@ -4,9 +4,9 @@
 package play.api.libs.ws.ahc
 
 import com.typesafe.sslconfig.util.{ LoggerFactory, NoDepsLogger }
-import org.slf4j.{ ILoggerFactory => SLF4JLoggerFactory }
+import org.slf4j.{ ILoggerFactory, LoggerFactory => SLF4JLoggerFactory }
 
-class AhcLoggerFactory(lf: SLF4JLoggerFactory) extends LoggerFactory {
+class AhcLoggerFactory(lf: ILoggerFactory = SLF4JLoggerFactory.getILoggerFactory) extends LoggerFactory {
 
   private[ahc] def createLogger(name: String) = {
     new NoDepsLogger {

@@ -263,12 +263,12 @@ class AhcConfigSpec extends Specification with Mockito {
 
           // clear the logger of any messages...
           TestLoggerFactory.clear()
-          val loggerFactory = TestLoggerFactory.getInstance()
-          val builder = new AhcConfigBuilder(config, loggerFactory)
+          val builder = new AhcConfigBuilder(config)
 
           // Run method that will trigger the logger warning
           builder.configureSSL(sslConfig = sslConfigSettings)
 
+          val loggerFactory = TestLoggerFactory.getInstance()
           val logger = loggerFactory.getLogger(builder.getClass)
           val messages = logger.getLoggingEvents.asList().asScala.map(_.getMessage)
           messages must contain("You are using play.ws.ssl.default=true and have a weak certificate in your default trust store!  (You can modify play.ws.ssl.disabledKeyAlgorithms to remove this message.)")

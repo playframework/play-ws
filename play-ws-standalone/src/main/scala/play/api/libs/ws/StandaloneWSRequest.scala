@@ -6,12 +6,8 @@ package play.api.libs.ws
 import java.io.File
 import java.net.URI
 
-import akka.util.ByteString
-import play.api.libs.json.JsValue
-
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
-import scala.xml.NodeSeq
 
 /**
  * A WS Request builder.
@@ -142,58 +138,14 @@ trait StandaloneWSRequest {
   def withBody(body: WSBody): Self
 
   /**
-   * Returns a request using an bytestring body, conditionally setting a content type of "application/octet-stream" if content type is not already set.
-   *
-   * @param byteString the byte string
-   * @return the modified WSRequest.
-   */
-  def withBody(byteString: ByteString): Self
-
-  /**
-   * Returns a request using an string body, optionally setting a content type of "text/plain" if content type is not already set.
-   *
-   * @param s the string body.
-   * @return the modified WSRequest.
-   */
-  def withBody(s: String): Self
-
-  /**
-   * Returns a request using an XML body, optionally setting a content type of "text/xml"  if content type is not already set.
-   *
-   * @param nodeSeq the XML nodes to set.
-   * @return the modified WSRequest.
-   */
-  def withBody(nodeSeq: NodeSeq): Self
-
-  /**
-   * Returns a request using a JsValue body, optionally setting a content type of "application/json"  if content type is not already set.
-   *
-   * @param js the JsValue to set.
-   * @return the modified WSRequest.
-   */
-  def withBody(js: JsValue): Self
-
-  /**
-   * Returns a request using a map body, optionally setting a content type of "application/x-www-form-urlencoded"  if content type is not already set.
-   *
-   * @param formData the form data to set.
-   * @return the modified WSRequest.
-   */
-  def withBody(formData: Map[String, Seq[String]]): Self
-
-  /**
-   * Returns a request using a file body, optionally setting a content type of "application/octet-stream"  if content type is not already set.
-   *
-   * @param file the file data to set.
-   * @return the modified WSRequest.
+   * Sets the body for this request
    */
   def withBody(file: File): Self
 
-  // FIXME Java API defines InputStream as a possible body input, but the Scala API does not.
-  //def withBody(body: java.io.InputStream): Self
-
-  // FIXME Java API defines Source as a possible body input, but the Scala API does not.
-  //def withBody(body: Source[ByteString, Any]): Self
+  /**
+   * Sets the body for this request.
+   */
+  def withBody[T: BodyWritable](body: T): Self
 
   /**
    * Performs a GET.
@@ -203,94 +155,22 @@ trait StandaloneWSRequest {
   /**
    *
    */
-  def patch(byteString: ByteString): Future[Response]
+  def patch[T: BodyWritable](body: T): Future[Response]
 
-  /**
-   *
-   */
-  def patch(s: String): Future[Response]
-
-  /**
-   *
-   */
-  def patch(nodeSeq: NodeSeq): Future[Response]
-
-  /**
-   *
-   */
-  def patch(js: JsValue): Future[Response]
-
-  /**
-   *
-   */
-  def patch(formData: Map[String, Seq[String]]): Future[Response]
-
-  /**
-   * Perform a PATCH on the request asynchronously.
-   * Request body won't be chunked
-   */
   def patch(body: File): Future[Response]
 
   /**
    *
    */
-  def post(byteString: ByteString): Future[Response]
+  def post[T: BodyWritable](body: T): Future[Response]
 
-  /**
-   *
-   */
-  def post(s: String): Future[Response]
-
-  /**
-   *
-   */
-  def post(nodeSeq: NodeSeq): Future[Response]
-
-  /**
-   *
-   */
-  def post(js: JsValue): Future[Response]
-
-  /**
-   *
-   */
-  def post(formData: Map[String, Seq[String]]): Future[Response]
-
-  /**
-   * Perform a POST on the request asynchronously.
-   * Request body won't be chunked
-   */
   def post(body: File): Future[Response]
 
   /**
    *
    */
-  def put(byteString: ByteString): Future[Response]
+  def put[T: BodyWritable](body: T): Future[Response]
 
-  /**
-   *
-   */
-  def put(s: String): Future[Response]
-
-  /**
-   *
-   */
-  def put(nodeSeq: NodeSeq): Future[Response]
-
-  /**
-   *
-   */
-  def put(js: JsValue): Future[Response]
-
-  /**
-   *
-   */
-  def put(formData: Map[String, Seq[String]]): Future[Response]
-
-  /**
-   * Perform a PUT on the request asynchronously.
-   * Request body won't be chunked
-   */
   def put(body: File): Future[Response]
 
   /**
