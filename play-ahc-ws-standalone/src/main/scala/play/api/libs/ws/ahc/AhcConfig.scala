@@ -12,12 +12,12 @@ import javax.net.ssl._
 
 import com.typesafe.config.{ Config, ConfigException }
 import com.typesafe.sslconfig.ssl._
+import org.slf4j.LoggerFactory
+import play.api.libs.ws.WSClientConfig
 import play.shaded.ahc.io.netty.handler.ssl.SslContextBuilder
 import play.shaded.ahc.io.netty.handler.ssl.util.InsecureTrustManagerFactory
 import play.shaded.ahc.org.asynchttpclient.netty.ssl.JsseSslEngineFactory
 import play.shaded.ahc.org.asynchttpclient.{ AsyncHttpClientConfig, DefaultAsyncHttpClientConfig }
-import org.slf4j.{ ILoggerFactory, LoggerFactory }
-import play.api.libs.ws.WSClientConfig
 
 import scala.concurrent.duration._
 
@@ -104,9 +104,8 @@ class AhcWSClientConfigParser @Inject() (
  * Builds a valid AsyncHttpClientConfig object from config.
  *
  * @param ahcConfig the ahc client configuration.
- * @param lf the logger factory, defaults to SLF4J's logger factory.
  */
-class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig(), lf: ILoggerFactory = LoggerFactory.getILoggerFactory) {
+class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
 
   protected val addCustomSettings: DefaultAsyncHttpClientConfig.Builder => DefaultAsyncHttpClientConfig.Builder = identity
 
@@ -116,7 +115,7 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig(), lf: I
   val builder: DefaultAsyncHttpClientConfig.Builder = new DefaultAsyncHttpClientConfig.Builder()
 
   private[ahc] val logger = LoggerFactory.getLogger(this.getClass.getName)
-  private[ahc] val loggerFactory = new AhcLoggerFactory(lf)
+  private[ahc] val loggerFactory = new AhcLoggerFactory(LoggerFactory.getILoggerFactory)
 
   /**
    * Configure the underlying builder with values specified by the `config`, and add any custom settings.

@@ -49,7 +49,7 @@ public class JavaIntegrationTest {
         final AhcWSClientConfig ahcWSClientConfig = new AhcWSClientConfigParser(wsClientConfig, config, classLoader).parse();
 
         // Configure the AsyncHttpClientConfig.Builder from the application.conf file...
-        final AhcConfigBuilder builder = new AhcConfigBuilder(ahcWSClientConfig, LoggerFactory.getILoggerFactory());
+        final AhcConfigBuilder builder = new AhcConfigBuilder(ahcWSClientConfig);
         final DefaultAsyncHttpClientConfig.Builder ahcBuilder = builder.configure();
 
         // Create the AHC client

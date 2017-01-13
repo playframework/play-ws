@@ -5,25 +5,22 @@ package play.api.libs.ws.ahc
 
 import java.io.{ File, UnsupportedEncodingException }
 import java.net.URI
-import java.net.URLEncoder.encode
 import java.nio.charset.{ Charset, StandardCharsets }
 
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
-import play.api.libs.json.{ JsValue, Json }
+import play.api.libs.ws._
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
 import play.shaded.ahc.org.asynchttpclient.proxy.{ ProxyServer => AHCProxyServer }
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils
 import play.shaded.ahc.org.asynchttpclient.{ Realm, Response => AHCResponse, _ }
-import play.api.libs.ws._
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.TreeMap
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ Future, Promise }
-import scala.xml.NodeSeq
 
 case object StandaloneAhcWSRequest {
   private[libs] def ahcHeadersToMap(headers: HttpHeaders): TreeMap[String, Seq[String]] = {
@@ -73,6 +70,9 @@ case class StandaloneAhcWSRequest(
   override type Self = StandaloneWSRequest
   override type Response = StandaloneWSResponse
 
+  require(client != null, "Null client!")
+  require(url != null, "Null url!")
+
   override lazy val uri: URI = {
     val enc = (p: String) => java.net.URLEncoder.encode(p, "utf-8")
     new java.net.URI(if (queryString.isEmpty) url else {
@@ -118,40 +118,19 @@ case class StandaloneAhcWSRequest(
 
   override def withProxyServer(proxyServer: WSProxyServer): Self = copy(proxyServer = Some(proxyServer))
 
-  override def withBody(body: WSBody): Self = copy(body = body)
-
   override def withMethod(method: String): Self = copy(method = method)
 
+  override def withBody(body: WSBody): Self = copy(body = body)
+
+  override def withBody(body: File): Self = copy(body = FileBody(body))
+
   /**
-   * Returns a request using an bytestring body, conditionally setting a content type of "application/octet-stream" if content type is not already set.
-   *
-   * @param byteString the byte string
-   * @return the modified WSRequest.
+   * Sets the body for this request.
    */
-  override def withBody(byteString: ByteString): Self = {
-    withBodyAndContentType(InMemoryBody(byteString), "application/octet-stream")
-  }
-
-  override def withBody(s: String): Self = {
-    withBodyAndContentType(InMemoryBody(ByteString.fromString(s)), "text/plain")
-  }
-
-  override def withBody(nodeSeq: NodeSeq): Self = {
-    // text/xml is fine to use as of RFC 7231 as there is no default charset any more.
-    withBodyAndContentType(InMemoryBody(ByteString.fromString(nodeSeq.toString())), "text/xml")
-  }
-
-  override def withBody(js: JsValue): Self = {
-    withBodyAndContentType(InMemoryBody(ByteString.fromString(Json.stringify(js))), "application/json")
-  }
-
-  override def withBody(formData: Map[String, Seq[String]]): Self = {
-    val string = formData.flatMap(i => i._2.map(c => s"${i._1}=${encode(c, "UTF-8")}")).mkString("&")
-    withBodyAndContentType(InMemoryBody(ByteString.fromString(string)), "application/x-www-form-urlencoded")
-  }
-
-  override def withBody(file: File): Self = {
-    withBody(FileBody(file))
+  def withBody[T: BodyWritable](body: T): Self = {
+    val writable = implicitly[BodyWritable[T]]
+    val byteString = writable.transform(body)
+    withBodyAndContentType(InMemoryBody(byteString), writable.contentType)
   }
 
   private def withBodyAndContentType(wsBody: WSBody, contentType: String): Self = {
@@ -172,36 +151,8 @@ case class StandaloneAhcWSRequest(
   /**
    *
    */
-  override def patch(byteString: ByteString): Future[Response] = {
-    withBody(byteString).execute("PATCH")
-  }
-
-  /**
-   *
-   */
-  override def patch(s: String): Future[Response] = {
-    withBody(s).execute("PATCH")
-  }
-
-  /**
-   *
-   */
-  override def patch(nodeSeq: NodeSeq): Future[Response] = {
-    withBody(nodeSeq).execute("PATCH")
-  }
-
-  /**
-   *
-   */
-  override def patch(js: JsValue): Future[Response] = {
-    withBody(js).execute("PATCH")
-  }
-
-  /**
-   *
-   */
-  override def patch(formData: Map[String, Seq[String]]): Future[Response] = {
-    withBody(formData).execute("PATCH")
+  override def patch[T: BodyWritable](body: T): Future[Response] = {
+    withBody(body).execute("PATCH")
   }
 
   /**
@@ -215,36 +166,8 @@ case class StandaloneAhcWSRequest(
   /**
    *
    */
-  override def post(byteString: ByteString): Future[Response] = {
-    withBody(byteString).execute("POST")
-  }
-
-  /**
-   *
-   */
-  override def post(s: String): Future[Response] = {
-    withBody(s).execute("POST")
-  }
-
-  /**
-   *
-   */
-  override def post(nodeSeq: NodeSeq): Future[Response] = {
-    withBody(nodeSeq).execute("POST")
-  }
-
-  /**
-   *
-   */
-  override def post(js: JsValue): Future[Response] = {
-    withBody(js).execute("POST")
-  }
-
-  /**
-   *
-   */
-  override def post(formData: Map[String, Seq[String]]): Future[Response] = {
-    withBody(formData).execute("POST")
+  override def post[T: BodyWritable](body: T): Future[Response] = {
+    withBody(body).execute("POST")
   }
 
   /**
@@ -258,36 +181,8 @@ case class StandaloneAhcWSRequest(
   /**
    *
    */
-  override def put(byteString: ByteString): Future[Response] = {
-    withBody(byteString).execute("PUT")
-  }
-
-  /**
-   *
-   */
-  override def put(s: String): Future[Response] = {
-    withBody(s).execute("PUT")
-  }
-
-  /**
-   *
-   */
-  override def put(nodeSeq: NodeSeq): Future[Response] = {
-    withBody(nodeSeq).execute("PUT")
-  }
-
-  /**
-   *
-   */
-  override def put(js: JsValue): Future[Response] = {
-    withBody(js).execute("PUT")
-  }
-
-  /**
-   *
-   */
-  override def put(formData: Map[String, Seq[String]]): Future[Response] = {
-    withBody(formData).execute("PUT")
+  override def put[T: BodyWritable](body: T): Future[Response] = {
+    withBody(body).execute("PUT")
   }
 
   /**
