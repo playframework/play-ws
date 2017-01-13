@@ -1,93 +1,42 @@
 /*
- *
- *  * Copyright (C) 2009-2016 Lightbend Inc. <https://www.lightbend.com>
- *
+ * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
  */
 package play.api.libs.ws.ahc
 
-import javax.net.ssl.SSLContext
-
 import com.typesafe.config.{ Config, ConfigFactory }
 import com.typesafe.sslconfig.ssl.{ Ciphers, Protocols, SSLConfigFactory, SSLConfigSettings }
+import org.specs2.mock.Mockito
+import org.specs2.mutable.Specification
+import play.api.libs.ws.WSClientConfig
 import play.shaded.ahc.org.asynchttpclient.proxy.ProxyServerSelector
 import play.shaded.ahc.org.asynchttpclient.util.ProxyUtils
-import org.specs2.mock._
-import org.specs2.mutable._
-import org.specs2.specification.Scope
-import play.api.libs.ws.WSClientConfig
-import uk.org.lidalia.slf4jtest.TestLogger
 import uk.org.lidalia.slf4jtest.TestLoggerFactory
 
 import scala.concurrent.duration._
 
-class AhcConfigSpec extends Specification with Mockito {
+/**
+ *
+ */
+class AhcConfigBuilderSpec extends Specification with Mockito {
 
   val defaultWsConfig = WSClientConfig()
   val defaultConfig = AhcWSClientConfig(defaultWsConfig)
 
-  class WithApplication extends Scope {
-
+  def parseSSLConfig(input: String): Config = {
+    ConfigFactory.parseString(input).withFallback(ConfigFactory.defaultReference()).getConfig("play.ws.ssl")
   }
 
-  "AhcConfigSpec" should {
-
-    def parseThis(input: String) = {
-      val classLoader = this.getClass.getClassLoader
-      val config = ConfigFactory.parseString(input).withFallback(ConfigFactory.defaultReference())
-      val parser = new AhcWSClientConfigParser(defaultWsConfig, config, classLoader)
-      parser.parse()
-    }
-
-    def parseSSLConfig(input: String): Config = {
-      ConfigFactory.parseString(input).withFallback(ConfigFactory.defaultReference()).getConfig("play.ws.ssl")
-    }
-
-    "case class defaults must match reference.conf defaults" in new WithApplication {
-      val s1 = parseThis("")
-      val s2 = AhcWSClientConfig()
-
-      // since we use typesafe ssl-config we can't match the objects directly since they aren't case classes,
-      // and also AhcWSClientConfig has a duration which will be parsed into nanocseconds while the case class uses minutes
-      s1.wsClientConfig.toString must_== s2.wsClientConfig.toString
-      s1.maxConnectionsPerHost must_== s2.maxConnectionsPerHost
-      s1.maxConnectionsTotal must_== s2.maxConnectionsTotal
-      s1.maxConnectionLifetime must_== s2.maxConnectionLifetime
-      s1.idleConnectionInPoolTimeout must_== s2.idleConnectionInPoolTimeout
-      s1.maxNumberOfRedirects must_== s2.maxNumberOfRedirects
-      s1.maxRequestRetry must_== s2.maxRequestRetry
-      s1.disableUrlEncoding must_== s2.disableUrlEncoding
-      s1.keepAlive must_== s2.keepAlive
-    }
-
-    "parse ws ahc section" in new WithApplication {
-      val actual = parseThis(
-        """
-          |play.ws.ahc.maxConnectionsPerHost = 3
-          |play.ws.ahc.maxConnectionsTotal = 6
-          |play.ws.ahc.maxConnectionLifetime = 1 minute
-          |play.ws.ahc.idleConnectionInPoolTimeout = 30 seconds
-          |play.ws.ahc.maxNumberOfRedirects = 0
-          |play.ws.ahc.maxRequestRetry = 99
-          |play.ws.ahc.disableUrlEncoding = true
-          |play.ws.ahc.keepAlive = false
-        """.stripMargin)
-
-      actual.maxConnectionsPerHost must_== 3
-      actual.maxConnectionsTotal must_== 6
-      actual.maxConnectionLifetime must_== 1.minute
-      actual.idleConnectionInPoolTimeout must_== 30.seconds
-      actual.maxNumberOfRedirects must_== 0
-      actual.maxRequestRetry must_== 99
-      actual.disableUrlEncoding must beTrue
-      actual.keepAlive must beFalse
-    }
-
-    "with keepAlive" should {
-      "parse keepAlive default as true" in new WithApplication {
-        val actual = parseThis("""""".stripMargin)
-
-        actual.keepAlive must beTrue
-      }
+  "AhcConfigBuilder" should {
+    "support overriding secure default values" in {
+      val ahcConfig = new AhcConfigBuilder().modifyUnderlying { builder =>
+        builder.setCompressionEnforced(false)
+        builder.setFollowRedirect(false)
+      }.build()
+      ahcConfig.isCompressionEnforced must beFalse
+      ahcConfig.isFollowRedirect must beFalse
+      ahcConfig.getConnectTimeout must_== 120000
+      ahcConfig.getRequestTimeout must_== 120000
+      ahcConfig.getReadTimeout must_== 120000
     }
 
     "with basic options" should {
