@@ -13,7 +13,7 @@ import javax.net.ssl._
 import com.typesafe.config.{ Config, ConfigException }
 import com.typesafe.sslconfig.ssl._
 import org.slf4j.LoggerFactory
-import play.api.libs.ws.WSClientConfig
+import play.api.libs.ws.{ WSClientConfig, WSConfigParser }
 import play.shaded.ahc.io.netty.handler.ssl.SslContextBuilder
 import play.shaded.ahc.io.netty.handler.ssl.util.InsecureTrustManagerFactory
 import play.shaded.ahc.org.asynchttpclient.netty.ssl.JsseSslEngineFactory
@@ -50,7 +50,21 @@ case class AhcWSClientConfig(
  */
 object AhcWSClientConfigFactory {
 
-  def forClientConfig(config: WSClientConfig) = {
+  /**
+   * Creates a AhcWSClientConfig from a Typesafe Config object.
+   *
+   * This is intended to be called from Java API.
+   *
+   * @param config the config file containing settings for WSConfigParser
+   * @param classLoader the classloader
+   * @return a AhcWSClientConfig configuration object.
+   */
+  def forConfig(config: Config, classLoader: ClassLoader): AhcWSClientConfig = {
+    val wsClientConfig = new WSConfigParser(config, classLoader).parse
+    new AhcWSClientConfigParser(wsClientConfig, config, classLoader).parse
+  }
+
+  def forClientConfig(config: WSClientConfig): AhcWSClientConfig = {
     AhcWSClientConfig(wsClientConfig = config)
   }
 }

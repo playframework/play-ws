@@ -7,7 +7,7 @@ package play.libs.ws.ahc;
 import play.libs.ws.WSCookie;
 
 /**
- * The Ning implementation of a WS cookie.
+ * The AHC implementation of a WS cookie.
  */
 public class AhcWSCookie implements WSCookie {
 

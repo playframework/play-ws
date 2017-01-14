@@ -32,7 +32,7 @@ public class XML {
      * Parses an XML string as DOM.
      *
      * @param xml the input XML string
-     * @return the parsed XML DOM root.
+     * @returxn the parsed XML DOM root.
      */
     public static Document fromString(String xml) {
         try {

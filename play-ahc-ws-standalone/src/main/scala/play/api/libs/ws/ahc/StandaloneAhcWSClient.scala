@@ -3,7 +3,7 @@
  */
 package play.api.libs.ws.ahc
 
-import akka.stream.Materializer
+import akka.stream.{ ActorMaterializer, Materializer }
 import com.typesafe.sslconfig.ssl.SystemConfiguration
 import com.typesafe.sslconfig.ssl.debug.DebugConfiguration
 import play.shaded.ahc.org.asynchttpclient._
@@ -43,7 +43,7 @@ object StandaloneAhcWSClient {
    * Typical usage:
    *
    * {{{
-   *   val client = AhcWSClient()
+   *   val client = StandaloneAhcWSClient()
    *   val request = client.url(someUrl).get()
    *   request.foreach { response =>
    *     doSomething(response)
