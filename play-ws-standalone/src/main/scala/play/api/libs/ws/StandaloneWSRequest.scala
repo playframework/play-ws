@@ -213,6 +213,6 @@ trait WSRequestExecutor[-Request, +Response] {
   def execute(request: Request): Future[Response]
 }
 
-trait WSRequestFilter[Request, Response] {
+trait WSRequestFilter[Request <: StandaloneWSRequest, Response <: StandaloneWSResponse] {
   def apply(next: WSRequestExecutor[Request, Response]): WSRequestExecutor[Request, Response]
 }
