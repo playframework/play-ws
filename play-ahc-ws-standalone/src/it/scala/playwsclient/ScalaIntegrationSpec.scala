@@ -9,8 +9,10 @@ import akka.stream.ActorMaterializer
 import com.typesafe.config.ConfigFactory
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mutable.Specification
-import play.api.libs.ws.ahc.{ AhcWSClientConfigFactory, StandaloneAhcWSClient }
+import play.api.libs.ws.{ WSRequestExecutor, WSRequestFilter }
+import play.api.libs.ws.ahc.{ AhcWSClientConfigFactory, StandaloneAhcWSClient, StandaloneAhcWSRequest, StandaloneAhcWSResponse }
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
 
 class ScalaIntegrationSpec(implicit ee: ExecutionEnv) extends Specification {
@@ -38,4 +40,64 @@ class ScalaIntegrationSpec(implicit ee: ExecutionEnv) extends Specification {
 
   }
 
+  class CallbackRequestFilter(callList: scala.collection.mutable.Buffer[Int], value: Int) extends WSRequestFilter[StandaloneAhcWSRequest, StandaloneAhcWSResponse] {
+    override def apply(executor: WSRequestExecutor[StandaloneAhcWSRequest, StandaloneAhcWSResponse]): WSRequestExecutor[StandaloneAhcWSRequest, StandaloneAhcWSResponse] = {
+      callList.append(value)
+      executor
+    }
+  }
+
+  class HeaderAppendingFilter(key: String, value: String) extends WSRequestFilter[StandaloneAhcWSRequest, StandaloneAhcWSResponse] {
+    override def apply(next: WSRequestExecutor[StandaloneAhcWSRequest, StandaloneAhcWSResponse]): WSRequestExecutor[StandaloneAhcWSRequest, StandaloneAhcWSResponse] = {
+      new WSRequestExecutor[StandaloneAhcWSRequest, StandaloneAhcWSResponse] {
+        override def execute(request: StandaloneAhcWSRequest): Future[StandaloneAhcWSResponse] = {
+          next.execute(request.withHeaders((key, value)).asInstanceOf[StandaloneAhcWSRequest])
+        }
+      }
+    }
+  }
+  //
+  //  "work with one request filter" in new WithServer() {
+  //    val client = app.injector.instanceOf(classOf[WSClient])
+  //    val callList = scala.collection.mutable.ArrayBuffer[Int]()
+  //    val responseFuture = client.url(s"http://example.com:$testServerPort")
+  //      .withRequestFilter(new CallbackRequestFilter(callList, 1))
+  //      .get()
+  //    callList must contain(1)
+  //  }
+  //
+  //  "work with three request filter" in new WithServer() {
+  //    val client = app.injector.instanceOf(classOf[WSClient])
+  //    val callList = scala.collection.mutable.ArrayBuffer[Int]()
+  //    val responseFuture = client.url(s"http://localhost:${testServerPort}")
+  //      .withRequestFilter(new CallbackRequestFilter(callList, 1))
+  //      .withRequestFilter(new CallbackRequestFilter(callList, 2))
+  //      .withRequestFilter(new CallbackRequestFilter(callList, 3))
+  //      .get()
+  //    callList must containTheSameElementsAs(Seq(1, 2, 3))
+  //  }
+  //
+  //  "should allow filters to modify the request" in {
+  //    val appendedHeader = "key"
+  //    val appendedHeaderValue = "value"
+  //
+  //    Server.withRouter() {
+  //      case play.api.routing.sird.GET(p"/") => Action {
+  //        request =>
+  //          request.headers.get(appendedHeader) match {
+  //            case Some(appendedHeaderValue) => Results.Ok
+  //            case _ => Results.Forbidden
+  //          }
+  //      }
+  //    } { implicit port =>
+  //      implicit val materializer = Play.current.materializer
+  //      WsTestClient.withClient { client =>
+  //        val response = Await.result(
+  //          client.url("/")
+  //            .withRequestFilter(new HeaderAppendingFilter(appendedHeader, appendedHeaderValue))
+  //            .get(), 5.seconds)
+  //        response.status must beEqualTo(200)
+  //      }
+  //    }
+  //  }
 }

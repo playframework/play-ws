@@ -11,11 +11,12 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
 import play.api.libs.oauth.{ ConsumerKey, OAuthCalculator, RequestToken }
-import play.api.libs.ws.{ DefaultWSProxyServer, StandaloneWSClient, WSAuthScheme, WSSignatureCalculator }
+import play.api.libs.ws.{ StandaloneWSRequest, StandaloneWSResponse, _ }
 import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
 import play.shaded.ahc.org.asynchttpclient.cookie.{ Cookie => AHCCookie }
 import play.shaded.ahc.org.asynchttpclient.{ Param, Request => AHCRequest, Response => AHCResponse }
 
+import scala.concurrent.Future
 import scala.concurrent.duration.{ Duration, _ }
 import scala.language.implicitConversions
 
@@ -330,4 +331,5 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
     actual.getPort must be equalTo 8080
     actual.getRealm must beNull
   }
+
 }

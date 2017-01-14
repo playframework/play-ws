@@ -6,6 +6,8 @@ package play.api.libs.ws
 import java.io.File
 import java.net.URI
 
+import play.api.libs.ws
+
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 
@@ -118,6 +120,11 @@ trait StandaloneWSRequest {
   def withRequestTimeout(timeout: Duration): Self
 
   /**
+   * Adds a filter to the request that can transform the request for subsequent filters.
+   */
+  def withRequestFilter(filter: WSRequestFilter[Self, Response]): Self
+
+  /**
    * Sets the virtual host to use in this request
    */
   def withVirtualHost(vh: String): Self
@@ -200,4 +207,12 @@ trait StandaloneWSRequest {
    */
   def stream(): Future[StreamedResponse]
 
+}
+
+trait WSRequestExecutor[-Request, +Response] {
+  def execute(request: Request): Future[Response]
+}
+
+trait WSRequestFilter[Request, Response] {
+  def apply(next: WSRequestExecutor[Request, Response]): WSRequestExecutor[Request, Response]
 }
