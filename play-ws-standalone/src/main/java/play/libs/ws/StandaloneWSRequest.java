@@ -21,7 +21,7 @@ import java.util.concurrent.CompletionStage;
  * after building the request: notably, the URL, headers and query parameters
  * are shown before an OAuth signature is calculated.
  */
-public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends StandaloneWSResponse, S extends StreamedResponse> {
+public interface StandaloneWSRequest {
 
     //-------------------------------------------------------------------------
     // "GET"
@@ -32,7 +32,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      *
      * @return a promise to the response
      */
-    CompletionStage<R> get();
+    CompletionStage<StandaloneWSResponse> get();
 
     //-------------------------------------------------------------------------
     // "PATCH"
@@ -44,7 +44,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param body represented as String
      * @return a promise to the response
      */
-    CompletionStage<R> patch(String body);
+    CompletionStage<StandaloneWSResponse> patch(String body);
 
     /**
      * Perform a PATCH on the request asynchronously.
@@ -52,7 +52,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param body represented as JSON
      * @return a promise to the response
      */
-    CompletionStage<R> patch(JsonNode body);
+    CompletionStage<StandaloneWSResponse> patch(JsonNode body);
 
     /**
      * Perform a PATCH on the request asynchronously.
@@ -60,7 +60,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param body represented as an InputStream
      * @return a promise to the response
      */
-    CompletionStage<R> patch(InputStream body);
+    CompletionStage<StandaloneWSResponse> patch(InputStream body);
 
     /**
      * Perform a PATCH on the request asynchronously.
@@ -68,7 +68,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param body represented as a File
      * @return a promise to the response
      */
-    CompletionStage<R> patch(File body);
+    CompletionStage<StandaloneWSResponse> patch(File body);
 
     //-------------------------------------------------------------------------
     // "POST"
@@ -80,7 +80,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param body represented as String
      * @return a promise to the response
      */
-    CompletionStage<R> post(String body);
+    CompletionStage<StandaloneWSResponse> post(String body);
 
     /**
      * Perform a POST on the request asynchronously.
@@ -88,7 +88,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param body represented as JSON
      * @return a promise to the response
      */
-    CompletionStage<R> post(JsonNode body);
+    CompletionStage<StandaloneWSResponse> post(JsonNode body);
 
     /**
      * Perform a POST on the request asynchronously.
@@ -96,7 +96,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param body represented as an InputStream
      * @return a promise to the response
      */
-    CompletionStage<R> post(InputStream body);
+    CompletionStage<StandaloneWSResponse> post(InputStream body);
 
     /**
      * Perform a POST on the request asynchronously.
@@ -104,7 +104,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param body represented as a File
      * @return a promise to the response
      */
-    CompletionStage<R> post(File body);
+    CompletionStage<StandaloneWSResponse> post(File body);
 
     //-------------------------------------------------------------------------
     // "PUT"
@@ -116,7 +116,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param body represented as String
      * @return a promise to the response
      */
-    CompletionStage<R> put(String body);
+    CompletionStage<StandaloneWSResponse> put(String body);
 
     /**
      * Perform a PUT on the request asynchronously.
@@ -124,7 +124,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param body represented as JSON
      * @return a promise to the response
      */
-    CompletionStage<R> put(JsonNode body);
+    CompletionStage<StandaloneWSResponse> put(JsonNode body);
 
     /**
      * Perform a PUT on the request asynchronously.
@@ -132,7 +132,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param body represented as an InputStream
      * @return a promise to the response
      */
-    CompletionStage<R> put(InputStream body);
+    CompletionStage<StandaloneWSResponse> put(InputStream body);
 
     /**
      * Perform a PUT on the request asynchronously.
@@ -140,7 +140,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param body represented as a File
      * @return a promise to the response
      */
-    CompletionStage<R> put(File body);
+    CompletionStage<StandaloneWSResponse> put(File body);
 
     //-------------------------------------------------------------------------
     // Miscellaneous execution methods
@@ -151,21 +151,21 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      *
      * @return a promise to the response
      */
-    CompletionStage<R> delete();
+    CompletionStage<StandaloneWSResponse> delete();
 
     /**
      * Perform a HEAD on the request asynchronously.
      *
      * @return a promise to the response
      */
-    CompletionStage<R> head();
+    CompletionStage<StandaloneWSResponse> head();
 
     /**
      * Perform an OPTIONS on the request asynchronously.
      *
      * @return a promise to the response
      */
-    CompletionStage<R> options();
+    CompletionStage<StandaloneWSResponse> options();
 
     /**
      * Execute an arbitrary method on the request asynchronously.
@@ -173,21 +173,21 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param method The method to execute
      * @return a promise to the response
      */
-    CompletionStage<R> execute(String method);
+    CompletionStage<StandaloneWSResponse> execute(String method);
 
     /**
      * Execute an arbitrary method on the request asynchronously.  Should be used with setMethod().
      *
      * @return a promise to the response
      */
-    CompletionStage<R> execute();
+    CompletionStage<StandaloneWSResponse> execute();
 
     /**
      * Execute this request and stream the response body.
      *
      * @return a promise to the streaming response
      */
-    CompletionStage<S> stream();
+    CompletionStage<StreamedResponse> stream();
 
     //-------------------------------------------------------------------------
     // Setters
@@ -199,7 +199,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param method the HTTP method.
      * @return the modified WSRequest.
      */
-    T setMethod(String method);
+    StandaloneWSRequest setMethod(String method);
 
     /**
      * Set the body this request should use.
@@ -207,7 +207,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param body the body of the request.
      * @return the modified WSRequest.
      */
-    T setBody(String body);
+    StandaloneWSRequest setBody(String body);
 
     /**
      * Set the body this request should use.
@@ -215,7 +215,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param body the body of the request.
      * @return the modified WSRequest.
      */
-    T setBody(JsonNode body);
+    StandaloneWSRequest setBody(JsonNode body);
 
     /**
      * Set the body this request should use.
@@ -225,7 +225,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @deprecated use {@link #setBody(Source)} instead.
      */
     @Deprecated
-    T setBody(InputStream body);
+    StandaloneWSRequest setBody(InputStream body);
 
     /**
      * Set the body this request should use.
@@ -233,7 +233,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param body the body of the request.
      * @return the modified WSRequest.
      */
-    T setBody(File body);
+    StandaloneWSRequest setBody(File body);
 
     /**
      * Set the body this request should use.
@@ -241,7 +241,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param body the body of the request.
      * @return the modified WSRequest.
      */
-    T setBody(Source<ByteString, ?> body);
+    <U> StandaloneWSRequest setBody(Source<ByteString, U> body);
 
     /**
      * Adds a header to the request.  Note that duplicate headers are allowed
@@ -252,7 +252,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param value the header value
      * @return the modified WSRequest.
      */
-    T setHeader(String name, String value);
+    StandaloneWSRequest setHeader(String name, String value);
 
     /**
      * Sets the query string to query.
@@ -260,7 +260,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param query the fully formed query string
      * @return the modified WSRequest.
      */
-    T setQueryString(String query);
+    StandaloneWSRequest setQueryString(String query);
 
     /**
      * Sets a query parameter with the given name, this can be called repeatedly.  Duplicate query parameters are allowed.
@@ -269,7 +269,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param value the query parameter value
      * @return the modified WSRequest.
      */
-    T setQueryParameter(String name, String value);
+    StandaloneWSRequest setQueryParameter(String name, String value);
 
     /**
      * Sets the authentication header for the current request using BASIC authentication.
@@ -277,7 +277,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param userInfo a string formed as "username:password".
      * @return the modified WSRequest.
      */
-    T setAuth(String userInfo);
+    StandaloneWSRequest setAuth(String userInfo);
 
     /**
      * Sets the authentication header for the current request using BASIC authentication.
@@ -286,7 +286,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param password the basic auth password
      * @return the modified WSRequest.
      */
-    T setAuth(String username, String password);
+    StandaloneWSRequest setAuth(String username, String password);
 
     /**
      * Sets the authentication header for the current request.
@@ -296,7 +296,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param scheme   authentication scheme
      * @return the modified WSRequest.
      */
-    T setAuth(String username, String password, WSAuthScheme scheme);
+    StandaloneWSRequest setAuth(String username, String password, WSAuthScheme scheme);
 
     /**
      * Sets an (OAuth) signature calculator.
@@ -304,7 +304,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param calculator the signature calculator
      * @return the modified WSRequest
      */
-    T sign(WSSignatureCalculator calculator);
+    StandaloneWSRequest sign(WSSignatureCalculator calculator);
 
     /**
      * Sets whether redirects (301, 302) should be followed automatically.
@@ -312,7 +312,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param followRedirects true if the request should follow redirects
      * @return the modified WSRequest
      */
-    T setFollowRedirects(boolean followRedirects);
+    StandaloneWSRequest setFollowRedirects(boolean followRedirects);
 
     /**
      * Sets the virtual host as a "hostname:port" string.
@@ -320,7 +320,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param virtualHost the virtual host
      * @return the modified WSRequest
      */
-    T setVirtualHost(String virtualHost);
+    StandaloneWSRequest setVirtualHost(String virtualHost);
 
     /**
      * Sets the request timeout in milliseconds.
@@ -328,7 +328,15 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param timeout the request timeout in milliseconds. A value of -1 indicates an infinite request timeout.
      * @return the modified WSRequest.
      */
-    T setRequestTimeout(long timeout);
+    StandaloneWSRequest setRequestTimeout(long timeout);
+
+    /**
+     * Adds a request filter.
+     *
+     * @param filter a transforming filter.
+     * @return the modified request.
+     */
+    StandaloneWSRequest setRequestFilter(WSRequestFilter filter);
 
     /**
      * Set the content type.  If the request body is a String, and no charset parameter is included, then it will
@@ -337,7 +345,7 @@ public interface StandaloneWSRequest<T extends StandaloneWSRequest, R extends St
      * @param contentType The content type
      * @return the modified WSRequest
      */
-    T setContentType(String contentType);
+    StandaloneWSRequest setContentType(String contentType);
 
     //-------------------------------------------------------------------------
     // Getters

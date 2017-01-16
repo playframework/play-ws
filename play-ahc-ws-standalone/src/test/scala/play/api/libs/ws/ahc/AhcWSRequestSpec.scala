@@ -93,7 +93,7 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
 
   "support several query string values for a parameter" in new WithApplication {
     val req = WS.url("http://playframework.com/")
-      .withQueryString("foo" -> "foo1", "foo" -> "foo2").asInstanceOf[StandaloneAhcWSRequestHolder]
+      .setQueryString("foo" -> "foo1", "foo" -> "foo2").asInstanceOf[StandaloneAhcWSRequestHolder]
       .prepare().build
     req.getQueryParams.get("foo").contains("foo1") must beTrue
     req.getQueryParams.get("foo").contains("foo2") must beTrue

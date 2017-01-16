@@ -122,40 +122,6 @@ public class JavaClient {
 }
 ```
 
-## Modified Features
-
-### Request Filters
-
-Request Filters now take the type of the request into account, and so require type parameters.  The easiest thing to do is to always specify a bound on StandaloneWSRequest and StandaloneWSResponse.
-
-```scala
-class HeaderAppendingFilter[Req <: StandaloneWSRequest, Res <: StandaloneWSResponse](key: String, value: String) extends WSRequestFilter[Req, Res] {
-  override def apply(next: WSRequestExecutor[Req, Res]): WSRequestExecutor[Req, Res] = {
-    new WSRequestExecutor[Req, Res] {
-      override def execute(request: Req): Future[Res] = {
-        next.execute(request.withHeaders((key, value)).asInstanceOf[Req])
-      }
-    }
-  }
-}
-```
-
-and then you can specify your own request filters inline to the spec:
-
-```scala
-"should allow filters to modify the request" in new WithServer() {
-  val appendedHeader = "X-Request-Id"
-  val appendedHeaderValue = "someid"
-  client.url(s"http://localhost:8080")
-    .withRequestFilter(new HeaderAppendingFilter(appendedHeader, appendedHeaderValue))
-    .get().map { response =>
-      response.allHeaders("X-Request-Id").head must be_==("someid")
-    }.await(retries = 0, timeout = 5.seconds)
-}
-```
-
-
-
 ## License
 
 Play WS is licensed under the Apache license, version 2. See the LICENSE file for more information.

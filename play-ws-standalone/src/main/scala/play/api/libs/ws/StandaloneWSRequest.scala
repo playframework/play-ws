@@ -6,8 +6,6 @@ package play.api.libs.ws
 import java.io.File
 import java.net.URI
 
-import play.api.libs.ws
-
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 
@@ -207,12 +205,4 @@ trait StandaloneWSRequest {
    */
   def stream(): Future[StreamedResponse]
 
-}
-
-trait WSRequestExecutor[-Request, +Response] {
-  def execute(request: Request): Future[Response]
-}
-
-trait WSRequestFilter[Request <: StandaloneWSRequest, Response <: StandaloneWSResponse] {
-  def apply(next: WSRequestExecutor[Request, Response]): WSRequestExecutor[Request, Response]
 }

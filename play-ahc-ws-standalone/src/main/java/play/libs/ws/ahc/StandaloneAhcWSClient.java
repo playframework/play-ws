@@ -44,9 +44,8 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public <T extends StandaloneWSRequest, R extends StandaloneWSResponse, S extends StreamedResponse> StandaloneWSRequest<T, R, S> url(String url) {
-        return (StandaloneWSRequest<T, R, S>) new StandaloneAhcWSRequest<T, R, S>(this, url, materializer);
+    public StandaloneAhcWSRequest url(String url) {
+        return new StandaloneAhcWSRequest(this, url, materializer);
     }
 
     @Override
