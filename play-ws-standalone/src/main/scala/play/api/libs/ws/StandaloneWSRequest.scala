@@ -118,6 +118,11 @@ trait StandaloneWSRequest {
   def withRequestTimeout(timeout: Duration): Self
 
   /**
+   * Adds a filter to the request that can transform the request for subsequent filters.
+   */
+  def withRequestFilter(filter: WSRequestFilter[Self, Response]): Self
+
+  /**
    * Sets the virtual host to use in this request
    */
   def withVirtualHost(vh: String): Self

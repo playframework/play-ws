@@ -84,31 +84,26 @@ package playwsclient;
 import akka.actor.ActorSystem;
 import akka.stream.ActorMaterializer;
 import akka.stream.ActorMaterializerSettings;
-import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import play.api.libs.ws.ahc.AhcWSClientConfigFactory;
-import play.api.libs.ws.ahc.AhcWSClientConfig;
 
 import play.libs.ws.*;
+import play.libs.ws.ahc.*;
 
 import java.util.concurrent.CompletionStage;
 
 public class JavaClient {
 
     public static void main(String[] args) {
-        // Create a config from the application.conf file
-        final Config config = ConfigFactory.load();
-        final ClassLoader classLoader = this.getClass().getClassLoader();
-        AhcWSClientConfig ahcWSClientConfig = AhcWSClientConfigFactory.forConfig(config, classLoader);
-
         // Set up Akka materializer to handle streaming
         final String name = "wsclient";
-        system = ActorSystem.create(name);
+        ActorSystem system = ActorSystem.create(name);
         final ActorMaterializerSettings settings = ActorMaterializerSettings.create(system);
         final ActorMaterializer materializer = ActorMaterializer.create(settings, system, name);
 
-        // Create the WS client
-        StandaloneAhcWSClient client = StandaloneAhcWSClient.create(ahcWSClientConfig, materializer);
+        // Create the WS client from the `application.conf` file, the current classloader and materializer.
+        StandaloneAhcWSClient client = StandaloneAhcWSClient.create(
+                AhcWSClientConfigFactory.forConfig(ConfigFactory.load(), system.getClass().getClassLoader()),
+                materializer);
 
         CompletionStage<StandaloneWSResponse> completionStage = client.url("http://www.google.com").get();
 
@@ -126,10 +121,6 @@ public class JavaClient {
     }
 }
 ```
-
-## Missing Features
-
-This version of Play WS does not include Request Filters.  AsyncHttpClient request filter can still be added directly.
 
 ## License
 

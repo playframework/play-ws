@@ -10,7 +10,7 @@ import java.nio.charset.{ Charset, StandardCharsets }
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
-import play.api.libs.ws._
+import play.api.libs.ws.{ StandaloneWSRequest, _ }
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
 import play.shaded.ahc.org.asynchttpclient.proxy.{ ProxyServer => AHCProxyServer }
@@ -65,7 +65,8 @@ case class StandaloneAhcWSRequest(
     requestTimeout: Option[Int] = None,
     virtualHost: Option[String] = None,
     proxyServer: Option[WSProxyServer] = None,
-    disableUrlEncoding: Option[Boolean] = None
+    disableUrlEncoding: Option[Boolean] = None,
+    filters: Seq[WSRequestFilter[StandaloneWSRequest, StandaloneWSResponse]] = Nil
 )(implicit materializer: Materializer) extends StandaloneWSRequest {
   override type Self = StandaloneWSRequest
   override type Response = StandaloneWSResponse
@@ -114,32 +115,18 @@ case class StandaloneAhcWSRequest(
     }
   }
 
+  /**
+   * Adds a filter to the request that can transform the request for subsequent filters.
+   */
+  override def withRequestFilter(filter: WSRequestFilter[Self, Response]): Self = {
+    copy(filters = filters :+ filter)
+  }
+
   override def withVirtualHost(vh: String): Self = copy(virtualHost = Some(vh))
 
   override def withProxyServer(proxyServer: WSProxyServer): Self = copy(proxyServer = Some(proxyServer))
 
-  override def withMethod(method: String): Self = copy(method = method)
-
-  override def withBody(body: WSBody): Self = copy(body = body)
-
   override def withBody(body: File): Self = copy(body = FileBody(body))
-
-  /**
-   * Sets the body for this request.
-   */
-  def withBody[T: BodyWritable](body: T): Self = {
-    val writable = implicitly[BodyWritable[T]]
-    val byteString = writable.transform(body)
-    withBodyAndContentType(InMemoryBody(byteString), writable.contentType)
-  }
-
-  private def withBodyAndContentType(wsBody: WSBody, contentType: String): Self = {
-    if (headers.contains("Content-Type")) {
-      withBody(wsBody)
-    } else {
-      withBody(wsBody).withHeaders("Content-Type" -> contentType)
-    }
-  }
 
   /**
    * performs a get
@@ -178,11 +165,30 @@ case class StandaloneAhcWSRequest(
     withBody(FileBody(body)).execute("POST")
   }
 
+  override def withBody(body: WSBody): Self = copy(body = body)
+
   /**
    *
    */
   override def put[T: BodyWritable](body: T): Future[Response] = {
     withBody(body).execute("PUT")
+  }
+
+  /**
+   * Sets the body for this request.
+   */
+  def withBody[T: BodyWritable](body: T): Self = {
+    val writable = implicitly[BodyWritable[T]]
+    val byteString = writable.transform(body)
+    withBodyAndContentType(InMemoryBody(byteString), writable.contentType)
+  }
+
+  private def withBodyAndContentType(wsBody: WSBody, contentType: String): Self = {
+    if (headers.contains("Content-Type")) {
+      withBody(wsBody)
+    } else {
+      withBody(wsBody).withHeaders("Content-Type" -> contentType)
+    }
   }
 
   /**
@@ -218,20 +224,21 @@ case class StandaloneAhcWSRequest(
     withMethod(method).execute()
   }
 
+  override def withMethod(method: String): Self = copy(method = method)
+
   override def execute(): Future[Response] = {
-    StandaloneAhcWSRequest.execute(this.buildRequest(), client)
+    val executor = filterWSRequestExecutor(new WSRequestExecutor[Self, Response] {
+      override def execute(request: Self): Future[Response] = StandaloneAhcWSRequest.execute(request.asInstanceOf[StandaloneAhcWSRequest].buildRequest(), client)
+    })
+    executor.execute(this)
+  }
+
+  protected def filterWSRequestExecutor(next: WSRequestExecutor[Self, Response]): WSRequestExecutor[Self, Response] = {
+    filters.foldRight(next)(_.apply(_))
   }
 
   override def stream(): Future[StreamedResponse] = {
     Streamed.execute(client.underlying[AsyncHttpClient], buildRequest())
-  }
-
-  /**
-   * Returns the current headers of the request, using the request builder.  This may be signed,
-   * so may return extra headers that were not directly input.
-   */
-  def requestHeaders: Map[String, Seq[String]] = {
-    StandaloneAhcWSRequest.ahcHeadersToMap(buildRequest().getHeaders)
   }
 
   /**
@@ -243,6 +250,14 @@ case class StandaloneAhcWSRequest(
   }
 
   /**
+   * Returns the current headers of the request, using the request builder.  This may be signed,
+   * so may return extra headers that were not directly input.
+   */
+  def requestHeaders: Map[String, Seq[String]] = {
+    StandaloneAhcWSRequest.ahcHeadersToMap(buildRequest().getHeaders)
+  }
+
+  /**
    * Returns the current query string parameters, using the request builder.  This may be signed,
    * so may not return the same parameters that were input.
    */
@@ -250,50 +265,6 @@ case class StandaloneAhcWSRequest(
     val params: java.util.List[Param] = buildRequest().getQueryParams
     params.asScala.toSeq.groupBy(_.getName).mapValues(_.map(_.getValue))
   }
-
-  /**
-   * Returns the current URL, using the request builder.  This may be signed by OAuth, as opposed
-   * to request.url.
-   */
-  def requestUrl: String = {
-    buildRequest().getUrl
-  }
-
-  /**
-   * Returns the body as an array of bytes.
-   */
-  def getBody: Option[ByteString] = {
-    body match {
-      case InMemoryBody(bytes) => Some(bytes)
-      case _ => None
-    }
-  }
-
-  private[libs] def authScheme(scheme: WSAuthScheme): Realm.AuthScheme = scheme match {
-    case WSAuthScheme.DIGEST => Realm.AuthScheme.DIGEST
-    case WSAuthScheme.BASIC => Realm.AuthScheme.BASIC
-    case WSAuthScheme.NTLM => Realm.AuthScheme.NTLM
-    case WSAuthScheme.SPNEGO => Realm.AuthScheme.SPNEGO
-    case WSAuthScheme.KERBEROS => Realm.AuthScheme.KERBEROS
-    case _ => throw new RuntimeException("Unknown scheme " + scheme)
-  }
-
-  /**
-   * Add http auth headers. Defaults to HTTP Basic.
-   */
-  private[libs] def auth(username: String, password: String, scheme: Realm.AuthScheme = Realm.AuthScheme.BASIC): Realm = {
-    val usePreemptiveAuth = scheme match {
-      case AuthScheme.DIGEST => false
-      case _ => true
-    }
-
-    new Realm.Builder(username, password)
-      .setScheme(scheme)
-      .setUsePreemptiveAuth(usePreemptiveAuth)
-      .build()
-  }
-
-  def contentType: Option[String] = this.headers.get(HttpHeaders.Names.CONTENT_TYPE).map(_.head)
 
   /**
    * Creates and returns an AHC request, running all operations on it.
@@ -401,6 +372,32 @@ case class StandaloneAhcWSRequest(
     builderWithBody.build()
   }
 
+  private[libs] def authScheme(scheme: WSAuthScheme): Realm.AuthScheme = scheme match {
+    case WSAuthScheme.DIGEST => Realm.AuthScheme.DIGEST
+    case WSAuthScheme.BASIC => Realm.AuthScheme.BASIC
+    case WSAuthScheme.NTLM => Realm.AuthScheme.NTLM
+    case WSAuthScheme.SPNEGO => Realm.AuthScheme.SPNEGO
+    case WSAuthScheme.KERBEROS => Realm.AuthScheme.KERBEROS
+    case _ => throw new RuntimeException("Unknown scheme " + scheme)
+  }
+
+  /**
+   * Add http auth headers. Defaults to HTTP Basic.
+   */
+  private[libs] def auth(username: String, password: String, scheme: Realm.AuthScheme = Realm.AuthScheme.BASIC): Realm = {
+    val usePreemptiveAuth = scheme match {
+      case AuthScheme.DIGEST => false
+      case _ => true
+    }
+
+    new Realm.Builder(username, password)
+      .setScheme(scheme)
+      .setUsePreemptiveAuth(usePreemptiveAuth)
+      .build()
+  }
+
+  def contentType: Option[String] = this.headers.get(HttpHeaders.Names.CONTENT_TYPE).map(_.head)
+
   private[libs] def createProxy(wsProxyServer: WSProxyServer): AHCProxyServer = {
     val proxyBuilder = new AHCProxyServer.Builder(wsProxyServer.host, wsProxyServer.port)
     if (wsProxyServer.principal.isDefined) {
@@ -423,6 +420,24 @@ case class StandaloneAhcWSRequest(
       proxyBuilder.setNonProxyHosts(nonProxyHosts.asJava)
     }
     proxyBuilder.build()
+  }
+
+  /**
+   * Returns the current URL, using the request builder.  This may be signed by OAuth, as opposed
+   * to request.url.
+   */
+  def requestUrl: String = {
+    buildRequest().getUrl
+  }
+
+  /**
+   * Returns the body as an array of bytes.
+   */
+  def getBody: Option[ByteString] = {
+    body match {
+      case InMemoryBody(bytes) => Some(bytes)
+      case _ => None
+    }
   }
 
 }

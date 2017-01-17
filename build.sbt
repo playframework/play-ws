@@ -223,6 +223,7 @@ lazy val `play-ahc-ws-standalone` = project
     libraryDependencies ++= Seq(
       "com.novocode" % "junit-interface" % "0.11" % "it,test"
     ),
+    libraryDependencies ++= akkaHttp.map(_ % "it,test"),
     libraryDependencies ++= Seq(
       "specs2-core",
       "specs2-junit",

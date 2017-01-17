@@ -43,6 +43,7 @@ object Dependencies {
 
   val akkaVersion = "2.4.14"
   val akka = Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion)
+  val akkaHttp = Seq("com.typesafe.akka" %% "akka-http" % "10.0.1")
 
   val standaloneApiWSDependencies = javaxInject ++
       sslConfigCore ++

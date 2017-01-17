@@ -25,7 +25,7 @@ public interface StandaloneWSClient extends java.io.Closeable {
      * @param url the URL to request
      * @return the request
      */
-    <T extends StandaloneWSRequest, R extends StandaloneWSResponse, S extends StreamedResponse> StandaloneWSRequest<T, R, S> url(String url);
+    StandaloneWSRequest url(String url);
 
     /**
      * Closes this client, and releases underlying resources.

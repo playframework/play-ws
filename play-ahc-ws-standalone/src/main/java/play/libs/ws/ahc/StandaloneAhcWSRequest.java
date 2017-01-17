@@ -41,7 +41,7 @@ import java.util.concurrent.CompletionStage;
 /**
  * Provides the User facing API for building a WS request.
  */
-public class StandaloneAhcWSRequest<T extends StandaloneWSRequest, R extends StandaloneWSResponse, S extends StreamedResponse> implements StandaloneWSRequest<StandaloneAhcWSRequest<T,R,S>,R,S> {
+public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
     private Object body = null;
 
@@ -62,6 +62,8 @@ public class StandaloneAhcWSRequest<T extends StandaloneWSRequest, R extends Sta
     private boolean followRedirects;
     private String virtualHost = null;
 
+    private final ArrayList<WSRequestFilter> filters = new ArrayList<>();
+
     public StandaloneAhcWSRequest(StandaloneAhcWSClient client, String url, Materializer materializer) {
         this.client = client;
         URI reference = URI.create(url);
@@ -77,6 +79,12 @@ public class StandaloneAhcWSRequest<T extends StandaloneWSRequest, R extends Sta
         }
     }
 
+    @Override
+    public StandaloneAhcWSRequest setRequestFilter(WSRequestFilter filter) {
+        filters.add(filter);
+        return this;
+    }
+
     /**
      * Sets a header with the given name, this can be called repeatedly.
      *
@@ -85,19 +93,8 @@ public class StandaloneAhcWSRequest<T extends StandaloneWSRequest, R extends Sta
      * @return the receiving WSRequest, with the new header set.
      */
     @Override
-    public StandaloneAhcWSRequest<T, R, S> setHeader(String name, String value) {
+    public StandaloneAhcWSRequest setHeader(String name, String value) {
         addValueTo(headers, name, value);
-        return this;
-    }
-
-    /**
-     * Sets a body directly.
-     *
-     * @param body the body as an unbound object.
-     * @return the body directly
-     */
-    public StandaloneAhcWSRequest<T, R, S> setBody(Object body) {
-        this.body = body;
         return this;
     }
 
@@ -107,7 +104,7 @@ public class StandaloneAhcWSRequest<T extends StandaloneWSRequest, R extends Sta
      * @param query the query string
      */
     @Override
-    public StandaloneAhcWSRequest<T, R, S> setQueryString(String query) {
+    public StandaloneAhcWSRequest setQueryString(String query) {
         String[] params = query.split("&");
         for (String param : params) {
             String[] keyValue = param.split("=");
@@ -125,13 +122,13 @@ public class StandaloneAhcWSRequest<T extends StandaloneWSRequest, R extends Sta
     }
 
     @Override
-    public StandaloneAhcWSRequest<T, R, S> setQueryParameter(String name, String value) {
+    public StandaloneAhcWSRequest setQueryParameter(String name, String value) {
         addValueTo(queryParameters, name, value);
         return this;
     }
 
     @Override
-    public StandaloneAhcWSRequest<T, R, S> setAuth(String userInfo) {
+    public StandaloneAhcWSRequest setAuth(String userInfo) {
         this.scheme = WSAuthScheme.BASIC;
 
         if (userInfo.equals("")) {
@@ -155,7 +152,7 @@ public class StandaloneAhcWSRequest<T extends StandaloneWSRequest, R extends Sta
     }
 
     @Override
-    public StandaloneAhcWSRequest<T, R, S> setAuth(String username, String password) {
+    public StandaloneAhcWSRequest setAuth(String username, String password) {
         this.username = username;
         this.password = password;
         this.scheme = WSAuthScheme.BASIC;
@@ -163,7 +160,7 @@ public class StandaloneAhcWSRequest<T extends StandaloneWSRequest, R extends Sta
     }
 
     @Override
-    public StandaloneAhcWSRequest<T, R, S> setAuth(String username, String password, WSAuthScheme scheme) {
+    public StandaloneAhcWSRequest setAuth(String username, String password, WSAuthScheme scheme) {
         this.username = username;
         this.password = password;
         this.scheme = scheme;
@@ -171,25 +168,25 @@ public class StandaloneAhcWSRequest<T extends StandaloneWSRequest, R extends Sta
     }
 
     @Override
-    public StandaloneAhcWSRequest<T, R, S> sign(WSSignatureCalculator calculator) {
+    public StandaloneAhcWSRequest sign(WSSignatureCalculator calculator) {
         this.calculator = calculator;
         return this;
     }
 
     @Override
-    public StandaloneAhcWSRequest<T, R, S> setFollowRedirects(boolean followRedirects) {
+    public StandaloneAhcWSRequest setFollowRedirects(boolean followRedirects) {
         this.followRedirects = followRedirects;
         return this;
     }
 
     @Override
-    public StandaloneAhcWSRequest<T, R, S> setVirtualHost(String virtualHost) {
+    public StandaloneAhcWSRequest setVirtualHost(String virtualHost) {
         this.virtualHost = virtualHost;
         return this;
     }
 
     @Override
-    public StandaloneAhcWSRequest<T, R, S> setRequestTimeout(long timeout) {
+    public StandaloneAhcWSRequest setRequestTimeout(long timeout) {
         if (timeout < -1 || timeout > Integer.MAX_VALUE) {
             throw new IllegalArgumentException("Timeout must be between -1 and " + Integer.MAX_VALUE + " inclusive");
         }
@@ -198,42 +195,53 @@ public class StandaloneAhcWSRequest<T extends StandaloneWSRequest, R extends Sta
     }
 
     @Override
-    public StandaloneAhcWSRequest<T, R, S> setContentType(String contentType) {
+    public StandaloneAhcWSRequest setContentType(String contentType) {
         return setHeader(HttpHeaders.Names.CONTENT_TYPE, contentType);
     }
 
     @Override
-    public StandaloneAhcWSRequest<T, R, S> setMethod(String method) {
+    public StandaloneAhcWSRequest setMethod(String method) {
         this.method = method;
         return this;
     }
 
-    @Override
-    public StandaloneAhcWSRequest<T, R, S> setBody(String body) {
+    /**
+     * Sets a body directly.
+     *
+     * @param body the body as an unbound object.
+     * @return the body directly
+     */
+    public StandaloneAhcWSRequest setBody(Object body) {
         this.body = body;
         return this;
     }
 
     @Override
-    public StandaloneAhcWSRequest<T, R, S> setBody(JsonNode body) {
+    public StandaloneAhcWSRequest setBody(String body) {
         this.body = body;
         return this;
     }
 
     @Override
-    public StandaloneAhcWSRequest<T, R, S> setBody(InputStream body) {
+    public StandaloneAhcWSRequest setBody(JsonNode body) {
         this.body = body;
         return this;
     }
 
     @Override
-    public StandaloneAhcWSRequest<T, R, S> setBody(File body) {
+    public StandaloneAhcWSRequest setBody(InputStream body) {
         this.body = body;
         return this;
     }
 
     @Override
-    public StandaloneAhcWSRequest<T, R, S> setBody(Source<ByteString, ?> body) {
+    public StandaloneAhcWSRequest setBody(File body) {
+        this.body = body;
+        return this;
+    }
+
+    @Override
+    public <U> StandaloneAhcWSRequest setBody(Source<ByteString, U> body) {
         this.body = body;
         return this;
     }
@@ -289,7 +297,7 @@ public class StandaloneAhcWSRequest<T extends StandaloneWSRequest, R extends Sta
     }
 
     @Override
-    public CompletionStage<R> get() {
+    public CompletionStage<StandaloneWSResponse> get() {
         return execute("GET");
     }
 
@@ -298,28 +306,28 @@ public class StandaloneAhcWSRequest<T extends StandaloneWSRequest, R extends Sta
     //-------------------------------------------------------------------------
 
     @Override
-    public CompletionStage<R> patch(String body) {
+    public CompletionStage<StandaloneWSResponse> patch(String body) {
         setMethod("PATCH");
         setBody(body);
         return execute();
     }
 
     @Override
-    public CompletionStage<R> patch(JsonNode body) {
+    public CompletionStage<StandaloneWSResponse> patch(JsonNode body) {
         setMethod("PATCH");
         setBody(body);
         return execute();
     }
 
     @Override
-    public CompletionStage<R> patch(InputStream body) {
+    public CompletionStage<StandaloneWSResponse> patch(InputStream body) {
         setMethod("PATCH");
         setBody(body);
         return execute();
     }
 
     @Override
-    public CompletionStage<R> patch(File body) {
+    public CompletionStage<StandaloneWSResponse> patch(File body) {
         setMethod("PATCH");
         setBody(body);
         return execute();
@@ -330,28 +338,28 @@ public class StandaloneAhcWSRequest<T extends StandaloneWSRequest, R extends Sta
     //-------------------------------------------------------------------------
 
     @Override
-    public CompletionStage<R> post(String body) {
+    public CompletionStage<StandaloneWSResponse> post(String body) {
         setMethod("POST");
         setBody(body);
         return execute();
     }
 
     @Override
-    public CompletionStage<R> post(JsonNode body) {
+    public CompletionStage<StandaloneWSResponse> post(JsonNode body) {
         setMethod("POST");
         setBody(body);
         return execute();
     }
 
     @Override
-    public CompletionStage<R> post(InputStream body) {
+    public CompletionStage<StandaloneWSResponse> post(InputStream body) {
         setMethod("POST");
         setBody(body);
         return execute();
     }
 
     @Override
-    public CompletionStage<R> post(File body) {
+    public CompletionStage<StandaloneWSResponse> post(File body) {
         setMethod("POST");
         setBody(body);
         return execute();
@@ -362,66 +370,79 @@ public class StandaloneAhcWSRequest<T extends StandaloneWSRequest, R extends Sta
     //-------------------------------------------------------------------------
 
     @Override
-    public CompletionStage<R> put(String body) {
+    public CompletionStage<StandaloneWSResponse> put(String body) {
         setMethod("PUT");
         setBody(body);
         return execute();
     }
 
     @Override
-    public CompletionStage<R> put(JsonNode body) {
+    public CompletionStage<StandaloneWSResponse> put(JsonNode body) {
         setMethod("PUT");
         setBody(body);
         return execute();
     }
 
     @Override
-    public CompletionStage<R> put(InputStream body) {
+    public CompletionStage<StandaloneWSResponse> put(InputStream body) {
         setMethod("PUT");
         setBody(body);
         return execute();
     }
 
     @Override
-    public CompletionStage<R> put(File body) {
+    public CompletionStage<StandaloneWSResponse> put(File body) {
         setMethod("PUT");
         setBody(body);
         return execute();
     }
 
     @Override
-    public CompletionStage<R> delete() {
+    public CompletionStage<StandaloneWSResponse> delete() {
         return execute("DELETE");
     }
 
     @Override
-    public CompletionStage<R> head() {
+    public CompletionStage<StandaloneWSResponse> head() {
         return execute("HEAD");
     }
 
     @Override
-    public CompletionStage<R> options() {
+    public CompletionStage<StandaloneWSResponse> options() {
         return execute("OPTIONS");
     }
 
     @Override
-    public CompletionStage<R> execute(String method) {
+    public CompletionStage<StandaloneWSResponse> execute(String method) {
         setMethod(method);
         return execute();
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public CompletionStage<R> execute() {
-        return (CompletionStage<R>) this.execute(this.buildRequest());
+    public CompletionStage<StandaloneWSResponse> execute() {
+        WSRequestExecutor executor = foldRight(r -> {
+            StandaloneAhcWSRequest ahcWsRequest = (StandaloneAhcWSRequest) r;
+            Request ahcRequest = ahcWsRequest.buildRequest();
+            return ahcWsRequest.execute(ahcRequest);
+        }, filters.iterator());
+        return executor.execute(this);
     }
 
-    @SuppressWarnings("unchecked")
+    private WSRequestExecutor foldRight(WSRequestExecutor executor, Iterator<WSRequestFilter> iterator) {
+        if (! iterator.hasNext()) {
+            return executor;
+        }
+
+        WSRequestFilter next = iterator.next();
+        return foldRight(next.apply(executor), iterator);
+    }
+
     @Override
-    public CompletionStage<S> stream() {
+    public CompletionStage<StreamedResponse> stream() {
         AsyncHttpClient asyncClient = (AsyncHttpClient) client.getUnderlying();
         Request request = buildRequest();
-        return (CompletionStage<S>) StreamedResponse.from(Streamed.execute(asyncClient, request));
+        return StreamedResponse.from(Streamed.execute(asyncClient, request));
     }
 
     Request buildRequest() {
@@ -549,9 +570,9 @@ public class StandaloneAhcWSRequest<T extends StandaloneWSRequest, R extends Sta
         }
     }
 
-    private CompletionStage<? extends StandaloneWSResponse> execute(Request request) {
+    private CompletionStage<StandaloneWSResponse> execute(Request request) {
 
-        final Promise<StandaloneAhcWSResponse> scalaPromise = scala.concurrent.Promise$.MODULE$.apply();
+        final Promise<StandaloneWSResponse> scalaPromise = scala.concurrent.Promise$.MODULE$.apply();
         try {
             AsyncHttpClient asyncHttpClient = (AsyncHttpClient) client.getUnderlying();
             asyncHttpClient.executeRequest(request, new AsyncCompletionHandler<Response>() {
@@ -570,7 +591,7 @@ public class StandaloneAhcWSRequest<T extends StandaloneWSRequest, R extends Sta
         } catch (RuntimeException exception) {
             scalaPromise.failure(exception);
         }
-        Future<? extends StandaloneWSResponse> future = scalaPromise.future();
+        Future<StandaloneWSResponse> future = scalaPromise.future();
         return FutureConverters.toJava(future);
     }
 
