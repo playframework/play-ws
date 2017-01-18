@@ -32,7 +32,7 @@ public interface StandaloneWSRequest {
      *
      * @return a promise to the response
      */
-    CompletionStage<StandaloneWSResponse> get();
+    CompletionStage<? extends StandaloneWSResponse> get();
 
     //-------------------------------------------------------------------------
     // "PATCH"
@@ -44,7 +44,7 @@ public interface StandaloneWSRequest {
      * @param body represented as String
      * @return a promise to the response
      */
-    CompletionStage<StandaloneWSResponse> patch(String body);
+    CompletionStage<? extends StandaloneWSResponse> patch(String body);
 
     /**
      * Perform a PATCH on the request asynchronously.
@@ -52,7 +52,7 @@ public interface StandaloneWSRequest {
      * @param body represented as JSON
      * @return a promise to the response
      */
-    CompletionStage<StandaloneWSResponse> patch(JsonNode body);
+    CompletionStage<? extends StandaloneWSResponse> patch(JsonNode body);
 
     /**
      * Perform a PATCH on the request asynchronously.
@@ -60,7 +60,7 @@ public interface StandaloneWSRequest {
      * @param body represented as an InputStream
      * @return a promise to the response
      */
-    CompletionStage<StandaloneWSResponse> patch(InputStream body);
+    CompletionStage<? extends StandaloneWSResponse> patch(InputStream body);
 
     /**
      * Perform a PATCH on the request asynchronously.
@@ -68,7 +68,7 @@ public interface StandaloneWSRequest {
      * @param body represented as a File
      * @return a promise to the response
      */
-    CompletionStage<StandaloneWSResponse> patch(File body);
+    CompletionStage<? extends StandaloneWSResponse> patch(File body);
 
     //-------------------------------------------------------------------------
     // "POST"
@@ -80,7 +80,7 @@ public interface StandaloneWSRequest {
      * @param body represented as String
      * @return a promise to the response
      */
-    CompletionStage<StandaloneWSResponse> post(String body);
+    CompletionStage<? extends StandaloneWSResponse> post(String body);
 
     /**
      * Perform a POST on the request asynchronously.
@@ -88,7 +88,7 @@ public interface StandaloneWSRequest {
      * @param body represented as JSON
      * @return a promise to the response
      */
-    CompletionStage<StandaloneWSResponse> post(JsonNode body);
+    CompletionStage<? extends StandaloneWSResponse> post(JsonNode body);
 
     /**
      * Perform a POST on the request asynchronously.
@@ -96,7 +96,7 @@ public interface StandaloneWSRequest {
      * @param body represented as an InputStream
      * @return a promise to the response
      */
-    CompletionStage<StandaloneWSResponse> post(InputStream body);
+    CompletionStage<? extends StandaloneWSResponse> post(InputStream body);
 
     /**
      * Perform a POST on the request asynchronously.
@@ -104,7 +104,7 @@ public interface StandaloneWSRequest {
      * @param body represented as a File
      * @return a promise to the response
      */
-    CompletionStage<StandaloneWSResponse> post(File body);
+    CompletionStage<? extends StandaloneWSResponse> post(File body);
 
     //-------------------------------------------------------------------------
     // "PUT"
@@ -116,7 +116,7 @@ public interface StandaloneWSRequest {
      * @param body represented as String
      * @return a promise to the response
      */
-    CompletionStage<StandaloneWSResponse> put(String body);
+    CompletionStage<? extends StandaloneWSResponse> put(String body);
 
     /**
      * Perform a PUT on the request asynchronously.
@@ -124,7 +124,7 @@ public interface StandaloneWSRequest {
      * @param body represented as JSON
      * @return a promise to the response
      */
-    CompletionStage<StandaloneWSResponse> put(JsonNode body);
+    CompletionStage<? extends StandaloneWSResponse> put(JsonNode body);
 
     /**
      * Perform a PUT on the request asynchronously.
@@ -132,7 +132,7 @@ public interface StandaloneWSRequest {
      * @param body represented as an InputStream
      * @return a promise to the response
      */
-    CompletionStage<StandaloneWSResponse> put(InputStream body);
+    CompletionStage<? extends StandaloneWSResponse> put(InputStream body);
 
     /**
      * Perform a PUT on the request asynchronously.
@@ -140,7 +140,7 @@ public interface StandaloneWSRequest {
      * @param body represented as a File
      * @return a promise to the response
      */
-    CompletionStage<StandaloneWSResponse> put(File body);
+    CompletionStage<? extends StandaloneWSResponse> put(File body);
 
     //-------------------------------------------------------------------------
     // Miscellaneous execution methods
@@ -151,21 +151,21 @@ public interface StandaloneWSRequest {
      *
      * @return a promise to the response
      */
-    CompletionStage<StandaloneWSResponse> delete();
+    CompletionStage<? extends StandaloneWSResponse> delete();
 
     /**
      * Perform a HEAD on the request asynchronously.
      *
      * @return a promise to the response
      */
-    CompletionStage<StandaloneWSResponse> head();
+    CompletionStage<? extends StandaloneWSResponse> head();
 
     /**
      * Perform an OPTIONS on the request asynchronously.
      *
      * @return a promise to the response
      */
-    CompletionStage<StandaloneWSResponse> options();
+    CompletionStage<? extends StandaloneWSResponse> options();
 
     /**
      * Execute an arbitrary method on the request asynchronously.
@@ -173,21 +173,21 @@ public interface StandaloneWSRequest {
      * @param method The method to execute
      * @return a promise to the response
      */
-    CompletionStage<StandaloneWSResponse> execute(String method);
+    CompletionStage<? extends StandaloneWSResponse> execute(String method);
 
     /**
      * Execute an arbitrary method on the request asynchronously.  Should be used with setMethod().
      *
      * @return a promise to the response
      */
-    CompletionStage<StandaloneWSResponse> execute();
+    CompletionStage<? extends StandaloneWSResponse> execute();
 
     /**
      * Execute this request and stream the response body.
      *
      * @return a promise to the streaming response
      */
-    CompletionStage<StreamedResponse> stream();
+    CompletionStage<? extends StreamedResponse> stream();
 
     //-------------------------------------------------------------------------
     // Setters

@@ -56,9 +56,9 @@ object ScalaClient {
     implicit val materializer = ActorMaterializer()
 
     // Create the standalone WS client
-    val wsClient = StandaloneAhcWSClient(
-      AhcWSClientConfigFactory.forConfig(ConfigFactory.load, this.getClass.getClassLoader)
-    )
+    // no argument defaults to a AhcWSClientConfig created from
+    // "AhcWSClientConfigFactory.forConfig(ConfigFactory.load, this.getClass.getClassLoader)"
+    val wsClient = StandaloneAhcWSClient()
 
     call(wsClient)
       .andThen { case _ => wsClient.close() }
