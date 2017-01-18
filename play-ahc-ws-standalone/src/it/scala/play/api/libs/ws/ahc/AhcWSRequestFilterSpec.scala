@@ -7,9 +7,8 @@ package play.api.libs.ws.ahc
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.headers.RawHeader
-import akka.http.scaladsl.model.{ ContentTypes, HttpEntity }
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.stream.ActorMaterializer
-import com.typesafe.config.ConfigFactory
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.matcher.FutureMatchers
 import org.specs2.mutable.Specification
@@ -31,9 +30,7 @@ class AhcWSRequestFilterSpec(implicit ee: ExecutionEnv) extends Specification wi
   implicit val materializer = ActorMaterializer()
 
   // Create the standalone WS client
-  val client = StandaloneAhcWSClient(
-    AhcWSClientConfigFactory.forConfig(ConfigFactory.load, this.getClass.getClassLoader)
-  )
+  val client = StandaloneAhcWSClient()
 
   private val route = {
     import akka.http.scaladsl.server.Directives._
@@ -60,9 +57,7 @@ class AhcWSRequestFilterSpec(implicit ee: ExecutionEnv) extends Specification wi
 
   "with request filters" should {
 
-    class CallbackRequestFilter[Req <: StandaloneWSRequest, Res <: StandaloneWSResponse](
-        callList: mutable.Buffer[Int],
-        value: Int) extends WSRequestFilter[Req, Res] {
+    class CallbackRequestFilter[Req <: StandaloneWSRequest, Res <: StandaloneWSResponse](callList: mutable.Buffer[Int], value: Int) extends WSRequestFilter[Req, Res] {
       override def apply(executor: WSRequestExecutor[Req, Res]): WSRequestExecutor[Req, Res] = {
         callList.append(value)
         executor
@@ -84,8 +79,8 @@ class AhcWSRequestFilterSpec(implicit ee: ExecutionEnv) extends Specification wi
       client.url(s"http://localhost:$testServerPort")
         .withRequestFilter(new CallbackRequestFilter(callList, 1))
         .get().map { _ =>
-          callList must contain(1)
-        }
+        callList must contain(1)
+      }
         .await(retries = 0, timeout = 5.seconds)
     }
 
@@ -96,8 +91,8 @@ class AhcWSRequestFilterSpec(implicit ee: ExecutionEnv) extends Specification wi
         .withRequestFilter(new CallbackRequestFilter(callList, 2))
         .withRequestFilter(new CallbackRequestFilter(callList, 3))
         .get().map { _ =>
-          callList must containTheSameElementsAs(Seq(1, 2, 3))
-        }
+        callList must containTheSameElementsAs(Seq(1, 2, 3))
+      }
         .await(retries = 0, timeout = 5.seconds)
     }
 
@@ -107,8 +102,8 @@ class AhcWSRequestFilterSpec(implicit ee: ExecutionEnv) extends Specification wi
       client.url(s"http://localhost:$testServerPort")
         .withRequestFilter(new HeaderAppendingFilter(appendedHeader, appendedHeaderValue))
         .get().map { response ⇒
-          response.allHeaders("X-Request-Id").head must be_==("someid")
-        }
+        response.allHeaders("X-Request-Id").head must be_==("someid")
+      }
         .await(retries = 0, timeout = 5.seconds)
     }
   }

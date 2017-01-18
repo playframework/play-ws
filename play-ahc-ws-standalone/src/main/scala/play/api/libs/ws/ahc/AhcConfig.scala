@@ -10,7 +10,7 @@ import java.security.cert.CertPathValidatorException
 import javax.inject.{ Inject, Provider, Singleton }
 import javax.net.ssl._
 
-import com.typesafe.config.{ Config, ConfigException }
+import com.typesafe.config.{ Config, ConfigException, ConfigFactory }
 import com.typesafe.sslconfig.ssl._
 import org.slf4j.LoggerFactory
 import play.api.libs.ws.{ WSClientConfig, WSConfigParser }
@@ -53,15 +53,13 @@ object AhcWSClientConfigFactory {
   /**
    * Creates a AhcWSClientConfig from a Typesafe Config object.
    *
-   * This is intended to be called from Java API.
-   *
    * @param config the config file containing settings for WSConfigParser
    * @param classLoader the classloader
    * @return a AhcWSClientConfig configuration object.
    */
-  def forConfig(config: Config, classLoader: ClassLoader): AhcWSClientConfig = {
-    val wsClientConfig = new WSConfigParser(config, classLoader).parse
-    new AhcWSClientConfigParser(wsClientConfig, config, classLoader).parse
+  def forConfig(config: Config = ConfigFactory.load(), classLoader: ClassLoader = this.getClass.getClassLoader): AhcWSClientConfig = {
+    val wsClientConfig = new WSConfigParser(config, classLoader).parse()
+    new AhcWSClientConfigParser(wsClientConfig, config, classLoader).parse()
   }
 
   def forClientConfig(config: WSClientConfig): AhcWSClientConfig = {

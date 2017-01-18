@@ -228,6 +228,14 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
         return this;
     }
 
+    /**
+     * Set the body this request should use.
+     *
+     * @param body Deprecated
+     * @return Deprecated
+     * @deprecated use {@link #setBody(Source)} instead.
+     */
+    @Deprecated
     @Override
     public StandaloneAhcWSRequest setBody(InputStream body) {
         this.body = body;
@@ -520,7 +528,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
                     .map(Long::valueOf).orElse(-1L);
             possiblyModifiedHeaders.remove(HttpHeaders.Names.CONTENT_LENGTH);
 
-            Source<ByteString, ?> sourceBody = (Source<ByteString, ?>) body;
+            @SuppressWarnings("unchecked") Source<ByteString, ?> sourceBody = (Source<ByteString, ?>) body;
             Publisher<ByteBuffer> publisher = sourceBody.map(ByteString::toByteBuffer)
                     .runWith(Sink.asPublisher(AsPublisher.WITHOUT_FANOUT), materializer);
             builder.setBody(publisher, contentLength);

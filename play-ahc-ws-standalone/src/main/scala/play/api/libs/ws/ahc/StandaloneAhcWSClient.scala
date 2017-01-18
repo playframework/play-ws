@@ -3,11 +3,11 @@
  */
 package play.api.libs.ws.ahc
 
-import akka.stream.{ ActorMaterializer, Materializer }
+import akka.stream.Materializer
 import com.typesafe.sslconfig.ssl.SystemConfiguration
 import com.typesafe.sslconfig.ssl.debug.DebugConfiguration
-import play.shaded.ahc.org.asynchttpclient._
 import play.api.libs.ws.{ EmptyBody, StandaloneWSClient, StandaloneWSRequest }
+import play.shaded.ahc.org.asynchttpclient._
 
 import scala.collection.immutable.TreeMap
 import scala.concurrent.ExecutionContext
@@ -53,7 +53,7 @@ object StandaloneAhcWSClient {
    *
    * @param config configuration settings
    */
-  def apply(config: AhcWSClientConfig = AhcWSClientConfig())(implicit materializer: Materializer): StandaloneAhcWSClient = {
+  def apply(config: AhcWSClientConfig = AhcWSClientConfigFactory.forConfig())(implicit materializer: Materializer): StandaloneAhcWSClient = {
     if (config.wsClientConfig.ssl.debug.enabled) {
       new DebugConfiguration(StandaloneAhcWSClient.loggerFactory).configure(config.wsClientConfig.ssl.debug)
     }

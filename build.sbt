@@ -32,9 +32,8 @@ lazy val commonSettings = Seq(
     "-unchecked",
     "-Ywarn-unused-import",
     "-Ywarn-nullary-unit",
-    //"-Xfatal-warnings",
+    "-Xfatal-warnings",
     "-Xlint",
-    //"-Yinline-warnings",
     "-Ywarn-dead-code"
    ),
   scalacOptions in (Compile, doc) ++= {
