@@ -247,6 +247,7 @@ lazy val root = project
   .in(file("."))
   .settings(commonSettings)
   .settings(formattingSettings)
+  .settings(disablePublishing)
   .aggregate(
     `shaded`,
     `play-ws-standalone`,    
