@@ -1,11 +1,11 @@
 import sbt._
 import Dependencies._
-
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
 
 import scalariform.formatter.preferences._
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
+import sbt.Keys.homepage
 
 //---------------------------------------------------------------
 // Shading and Project Settings
@@ -35,7 +35,7 @@ lazy val commonSettings = Seq(
     "-Xfatal-warnings",
     "-Xlint",
     "-Ywarn-dead-code"
-   ),
+  ),
   scalacOptions in (Compile, doc) ++= {
     // Work around 2.12 bug which prevents javadoc in nested java classes from compiling.
     CrossVersion.partialVersion(scalaVersion.value) match {
@@ -45,6 +45,26 @@ lazy val commonSettings = Seq(
         Nil
     }
   },
+  pomExtra := (
+    <url>https://github.com/playframework/play-ws</url>
+      <licenses>
+        <license>
+          <name>Apache License, Version 2.0</name>
+          <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+          <distribution>repo</distribution>
+        </license>
+      </licenses>
+      <scm>
+        <url>git@github.com/playframework/play-ws.git</url>
+        <connection>scm:git:git@github.com/playframework/play-ws.git</connection>
+      </scm>
+      <developers>
+        <developer>
+          <id>playframework</id>
+          <name>Play Team</name>
+          <url>http://playframework.com/</url>
+        </developer>
+      </developers>),
   javacOptions in (Compile, doc) ++= javacSettings,
   javacOptions in Test ++= javacSettings,
   javacOptions in IntegrationTest ++= javacSettings
@@ -119,7 +139,6 @@ val ahcMerge: MergeStrategy = new MergeStrategy {
 
 lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
   .settings(commonSettings)
-  .settings(disableDocs)
   .settings(shadeAssemblySettings)
   .settings(
     libraryDependencies ++= asyncHttpClient,
@@ -153,7 +172,6 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
 
 lazy val `shaded-oauth` = project.in(file("shaded/oauth"))
   .settings(commonSettings)
-  .settings(disableDocs)
   .settings(shadeAssemblySettings)
   .settings(
     libraryDependencies ++= oauth,
@@ -197,7 +215,7 @@ lazy val shaded = Project(id = "shaded", base = file("shaded") )
 
 // WS API, no play dependencies
 lazy val `play-ws-standalone` = project
-  .in(file("play-ws-standalone"))  
+  .in(file("play-ws-standalone"))
   .settings(commonSettings)
   .settings(libraryDependencies ++= standaloneApiWSDependencies)
   .disablePlugins(sbtassembly.AssemblyPlugin)
@@ -247,10 +265,11 @@ lazy val root = project
   .in(file("."))
   .settings(commonSettings)
   .settings(formattingSettings)
+  .settings(disableDocs)
   .settings(disablePublishing)
   .aggregate(
     `shaded`,
-    `play-ws-standalone`,    
+    `play-ws-standalone`,
     `play-ahc-ws-standalone`
   )
   .disablePlugins(sbtassembly.AssemblyPlugin)
