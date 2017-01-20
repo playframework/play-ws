@@ -62,7 +62,7 @@ object AhcWSClientConfigFactory {
     new AhcWSClientConfigParser(wsClientConfig, config, classLoader).parse()
   }
 
-  def forClientConfig(config: WSClientConfig): AhcWSClientConfig = {
+  def forClientConfig(config: WSClientConfig = WSClientConfig()): AhcWSClientConfig = {
     AhcWSClientConfig(wsClientConfig = config)
   }
 }

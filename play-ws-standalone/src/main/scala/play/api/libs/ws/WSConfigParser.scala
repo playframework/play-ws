@@ -9,7 +9,7 @@ import com.typesafe.sslconfig.util.EnrichedConfig
 import scala.concurrent.duration.Duration
 
 /**
- * This class creates a WSClientConfig object from a Config object.
+ * This class creates a WSClientConfig object from a Typesafe Config object.
  *
  * You can create a client config from an application.conf file by running
  *

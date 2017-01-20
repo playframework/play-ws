@@ -7,13 +7,13 @@ package play.api.libs.ws.ahc
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.headers.RawHeader
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
+import akka.http.scaladsl.model.{ ContentTypes, HttpEntity }
 import akka.stream.ActorMaterializer
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.matcher.FutureMatchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
-import play.api.libs.ws._
+import play.api.libs.ws.{ StandaloneWSRequest, StandaloneWSResponse, _ }
 
 import scala.collection.mutable
 import scala.concurrent.Future
@@ -57,18 +57,18 @@ class AhcWSRequestFilterSpec(implicit ee: ExecutionEnv) extends Specification wi
 
   "with request filters" should {
 
-    class CallbackRequestFilter[Req <: StandaloneWSRequest, Res <: StandaloneWSResponse](callList: mutable.Buffer[Int], value: Int) extends WSRequestFilter[Req, Res] {
-      override def apply(executor: WSRequestExecutor[Req, Res]): WSRequestExecutor[Req, Res] = {
+    class CallbackRequestFilter(callList: mutable.Buffer[Int], value: Int) extends WSRequestFilter {
+      override def apply(executor: WSRequestExecutor): WSRequestExecutor = {
         callList.append(value)
         executor
       }
     }
 
-    class HeaderAppendingFilter[Req <: StandaloneWSRequest, Res <: StandaloneWSResponse](key: String, value: String) extends WSRequestFilter[Req, Res] {
-      override def apply(next: WSRequestExecutor[Req, Res]): WSRequestExecutor[Req, Res] = {
-        new WSRequestExecutor[Req, Res] {
-          override def execute(request: Req): Future[Res] = {
-            next.execute(request.withHeaders((key, value)).asInstanceOf[Req])
+    class HeaderAppendingFilter(key: String, value: String) extends WSRequestFilter {
+      override def apply(executor: WSRequestExecutor): WSRequestExecutor = {
+        new WSRequestExecutor() {
+          override def execute(request: StandaloneWSRequest): Future[StandaloneWSResponse] = {
+            executor.execute(request.withHeaders((key, value)))
           }
         }
       }
@@ -79,8 +79,8 @@ class AhcWSRequestFilterSpec(implicit ee: ExecutionEnv) extends Specification wi
       client.url(s"http://localhost:$testServerPort")
         .withRequestFilter(new CallbackRequestFilter(callList, 1))
         .get().map { _ =>
-        callList must contain(1)
-      }
+          callList must contain(1)
+        }
         .await(retries = 0, timeout = 5.seconds)
     }
 
@@ -91,8 +91,8 @@ class AhcWSRequestFilterSpec(implicit ee: ExecutionEnv) extends Specification wi
         .withRequestFilter(new CallbackRequestFilter(callList, 2))
         .withRequestFilter(new CallbackRequestFilter(callList, 3))
         .get().map { _ =>
-        callList must containTheSameElementsAs(Seq(1, 2, 3))
-      }
+          callList must containTheSameElementsAs(Seq(1, 2, 3))
+        }
         .await(retries = 0, timeout = 5.seconds)
     }
 
@@ -102,8 +102,8 @@ class AhcWSRequestFilterSpec(implicit ee: ExecutionEnv) extends Specification wi
       client.url(s"http://localhost:$testServerPort")
         .withRequestFilter(new HeaderAppendingFilter(appendedHeader, appendedHeaderValue))
         .get().map { response ⇒
-        response.allHeaders("X-Request-Id").head must be_==("someid")
-      }
+          response.allHeaders("X-Request-Id").head must be_==("someid")
+        }
         .await(retries = 0, timeout = 5.seconds)
     }
   }

@@ -399,4 +399,8 @@ public interface StandaloneWSRequest {
      */
     boolean getFollowRedirects();
 
+    /**
+     * @return the content type, if any, or null.
+     */
+    String getContentType();
 }

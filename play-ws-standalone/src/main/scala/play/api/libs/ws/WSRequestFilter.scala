@@ -5,10 +5,10 @@ package play.api.libs.ws
 
 import scala.concurrent.Future
 
-trait WSRequestExecutor[-Request, +Response] {
-  def execute(request: Request): Future[Response]
+trait WSRequestExecutor {
+  def execute(request: StandaloneWSRequest): Future[StandaloneWSResponse]
 }
 
-trait WSRequestFilter[Request <: StandaloneWSRequest, Response <: StandaloneWSResponse] {
-  def apply(next: WSRequestExecutor[Request, Response]): WSRequestExecutor[Request, Response]
+trait WSRequestFilter {
+  def apply(next: WSRequestExecutor): WSRequestExecutor
 }

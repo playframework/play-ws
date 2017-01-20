@@ -66,13 +66,15 @@ case class StandaloneAhcWSRequest(
     virtualHost: Option[String] = None,
     proxyServer: Option[WSProxyServer] = None,
     disableUrlEncoding: Option[Boolean] = None,
-    filters: Seq[WSRequestFilter[StandaloneWSRequest, StandaloneWSResponse]] = Nil
+    filters: Seq[WSRequestFilter] = Nil
 )(implicit materializer: Materializer) extends StandaloneWSRequest {
   override type Self = StandaloneWSRequest
   override type Response = StandaloneWSResponse
 
   require(client != null, "Null client!")
   require(url != null, "Null url!")
+
+  override def contentType: Option[String] = this.headers.get(HttpHeaders.Names.CONTENT_TYPE).map(_.head)
 
   override lazy val uri: URI = {
     val enc = (p: String) => java.net.URLEncoder.encode(p, "utf-8")
@@ -118,7 +120,7 @@ case class StandaloneAhcWSRequest(
   /**
    * Adds a filter to the request that can transform the request for subsequent filters.
    */
-  override def withRequestFilter(filter: WSRequestFilter[Self, Response]): Self = {
+  override def withRequestFilter(filter: WSRequestFilter): Self = {
     copy(filters = filters :+ filter)
   }
 
@@ -227,13 +229,13 @@ case class StandaloneAhcWSRequest(
   override def withMethod(method: String): Self = copy(method = method)
 
   override def execute(): Future[Response] = {
-    val executor = filterWSRequestExecutor(new WSRequestExecutor[Self, Response] {
-      override def execute(request: Self): Future[Response] = StandaloneAhcWSRequest.execute(request.asInstanceOf[StandaloneAhcWSRequest].buildRequest(), client)
+    val executor = filterWSRequestExecutor(new WSRequestExecutor {
+      override def execute(request: StandaloneWSRequest): Future[StandaloneWSResponse] = StandaloneAhcWSRequest.execute(request.asInstanceOf[StandaloneAhcWSRequest].buildRequest(), client)
     })
     executor.execute(this)
   }
 
-  protected def filterWSRequestExecutor(next: WSRequestExecutor[Self, Response]): WSRequestExecutor[Self, Response] = {
+  protected def filterWSRequestExecutor(next: WSRequestExecutor): WSRequestExecutor = {
     filters.foldRight(next)(_.apply(_))
   }
 
@@ -396,8 +398,6 @@ case class StandaloneAhcWSRequest(
       .build()
   }
 
-  def contentType: Option[String] = this.headers.get(HttpHeaders.Names.CONTENT_TYPE).map(_.head)
-
   private[libs] def createProxy(wsProxyServer: WSProxyServer): AHCProxyServer = {
     val proxyBuilder = new AHCProxyServer.Builder(wsProxyServer.host, wsProxyServer.port)
     if (wsProxyServer.principal.isDefined) {
@@ -424,14 +424,14 @@ case class StandaloneAhcWSRequest(
 
   /**
    * Returns the current URL, using the request builder.  This may be signed by OAuth, as opposed
-   * to request.url.
+   * to request.url.  This is an AHC specific method.
    */
   def requestUrl: String = {
     buildRequest().getUrl
   }
 
   /**
-   * Returns the body as an array of bytes.
+   * Returns the body as an array of bytes.  This is an AHC specific method.
    */
   def getBody: Option[ByteString] = {
     body match {
