@@ -66,11 +66,7 @@ class AhcWSRequestFilterSpec(implicit ee: ExecutionEnv) extends Specification wi
 
     class HeaderAppendingFilter(key: String, value: String) extends WSRequestFilter {
       override def apply(executor: WSRequestExecutor): WSRequestExecutor = {
-        new WSRequestExecutor() {
-          override def execute(request: StandaloneWSRequest): Future[StandaloneWSResponse] = {
-            executor.execute(request.withHeaders((key, value)))
-          }
-        }
+        WSRequestExecutor(r => executor(r.withHeaders((key, value))))
       }
     }
 
