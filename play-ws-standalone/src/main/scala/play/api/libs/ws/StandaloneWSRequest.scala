@@ -34,6 +34,11 @@ trait StandaloneWSRequest {
   def uri: URI
 
   /**
+   * The content type for this request, if any is defined.
+   */
+  def contentType: Option[String]
+
+  /**
    * The method for this request
    */
   def method: String
@@ -120,7 +125,7 @@ trait StandaloneWSRequest {
   /**
    * Adds a filter to the request that can transform the request for subsequent filters.
    */
-  def withRequestFilter(filter: WSRequestFilter[Self, Response]): Self
+  def withRequestFilter(filter: WSRequestFilter): Self
 
   /**
    * Sets the virtual host to use in this request

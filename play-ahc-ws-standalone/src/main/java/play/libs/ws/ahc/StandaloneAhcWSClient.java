@@ -11,11 +11,7 @@ import org.slf4j.LoggerFactory;
 import play.api.libs.ws.ahc.AhcConfigBuilder;
 import play.api.libs.ws.ahc.AhcLoggerFactory;
 import play.api.libs.ws.ahc.AhcWSClientConfig;
-import play.libs.ws.StandaloneWSResponse;
-import play.libs.ws.StreamedResponse;
 import play.libs.ws.StandaloneWSClient;
-import play.libs.ws.StandaloneWSRequest;
-
 import play.shaded.ahc.org.asynchttpclient.AsyncHttpClient;
 import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClient;
 import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClientConfig;
@@ -24,9 +20,6 @@ import java.io.IOException;
 
 /**
  * A WS client backed by an AsyncHttpClient instance.
- *
- * <p>
- * If you need to debug AHC, set org.asynchttpclient=DEBUG in your logging framework.
  */
 public class StandaloneAhcWSClient implements StandaloneWSClient {
 

@@ -15,6 +15,7 @@ import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
 import play.libs.ws._
 
+import scala.concurrent.duration._
 import scala.compat.java8.FutureConverters
 
 class AhcWSRequestFilterSpec(implicit executionEnv: ExecutionEnv) extends Specification with AfterAll with FutureMatchers {
@@ -71,7 +72,7 @@ class AhcWSRequestFilterSpec(implicit executionEnv: ExecutionEnv) extends Specif
         .get())
       responseFuture.map { _ =>
         callList must contain(1)
-      }.await
+      }.await(retries = 0, timeout = 5.seconds)
     }
 
     "work with three request filter" in {
@@ -83,7 +84,7 @@ class AhcWSRequestFilterSpec(implicit executionEnv: ExecutionEnv) extends Specif
         .get())
       responseFuture.map { _ =>
         callList must containTheSameElementsAs(Seq(1, 2, 3))
-      }.await
+      }.await(retries = 0, timeout = 5.seconds)
     }
 
     "should allow filters to modify the request" in {
@@ -95,7 +96,7 @@ class AhcWSRequestFilterSpec(implicit executionEnv: ExecutionEnv) extends Specif
 
       responseFuture.map { response =>
         response.getAllHeaders.get("X-Request-Id").get(0) must be_==("someid")
-      }.await
+      }.await(retries = 0, timeout = 5.seconds)
     }
   }
 

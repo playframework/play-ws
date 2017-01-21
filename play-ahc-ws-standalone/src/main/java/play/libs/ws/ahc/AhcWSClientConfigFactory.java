@@ -8,8 +8,6 @@ import play.api.libs.ws.ahc.AhcWSClientConfig;
  * This is a factory that provides AhcWSClientConfig
  * configuration objects without having to go through individual parsers
  * and so forth individually.
- *
- * This is the Java API, which delegates to the Scala API under the hood.
  */
 public final class AhcWSClientConfigFactory {
 
