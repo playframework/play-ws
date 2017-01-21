@@ -62,7 +62,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     private boolean followRedirects;
     private String virtualHost = null;
 
-    private final ArrayList<WSRequestFilter> filters = new ArrayList<>();
+    private final List<WSRequestFilter> filters = new ArrayList<>();
 
     public StandaloneAhcWSRequest(StandaloneAhcWSClient client, String url, Materializer materializer) {
         this.client = client;

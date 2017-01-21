@@ -66,7 +66,7 @@ case class StandaloneAhcWSRequest(
     virtualHost: Option[String] = None,
     proxyServer: Option[WSProxyServer] = None,
     disableUrlEncoding: Option[Boolean] = None,
-    filters: Seq[WSRequestFilter] = Nil
+    private val filters: Seq[WSRequestFilter] = Nil
 )(implicit materializer: Materializer) extends StandaloneWSRequest {
   override type Self = StandaloneWSRequest
   override type Response = StandaloneWSResponse
@@ -229,14 +229,15 @@ case class StandaloneAhcWSRequest(
   override def withMethod(method: String): Self = copy(method = method)
 
   override def execute(): Future[Response] = {
-    val executor = filterWSRequestExecutor(new WSRequestExecutor {
-      override def execute(request: StandaloneWSRequest): Future[StandaloneWSResponse] = StandaloneAhcWSRequest.execute(request.asInstanceOf[StandaloneAhcWSRequest].buildRequest(), client)
+    val executor = filterWSRequestExecutor(WSRequestExecutor { request =>
+      StandaloneAhcWSRequest.execute(request.asInstanceOf[StandaloneAhcWSRequest].buildRequest(), client)
     })
-    executor.execute(this)
+
+    executor(this)
   }
 
   protected def filterWSRequestExecutor(next: WSRequestExecutor): WSRequestExecutor = {
-    filters.foldRight(next)(_.apply(_))
+    filters.foldRight(next)((filter, executor) => filter.apply(executor))
   }
 
   override def stream(): Future[StreamedResponse] = {

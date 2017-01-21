@@ -13,7 +13,6 @@ import org.specs2.concurrent.ExecutionEnv
 import org.specs2.matcher.FutureMatchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
-import play.libs.ws._
 
 import scala.concurrent.duration._
 import scala.compat.java8.FutureConverters
@@ -58,32 +57,27 @@ class AhcWSRequestFilterSpec(implicit executionEnv: ExecutionEnv) extends Specif
 
   "setRequestFilter" should {
 
-    class CallbackRequestFilter(callList: scala.collection.mutable.Buffer[Int], value: Int) extends WSRequestFilter {
-      override def apply(executor: WSRequestExecutor): WSRequestExecutor = {
-        callList.append(value)
-        executor
-      }
-    }
-
     "work with one request filter" in {
-      val callList = scala.collection.mutable.ArrayBuffer[Int]()
+      import scala.collection.JavaConverters._
+      val callList = new java.util.ArrayList[Integer]()
       val responseFuture = FutureConverters.toScala(client.url(s"http://localhost:$testServerPort")
         .setRequestFilter(new CallbackRequestFilter(callList, 1))
         .get())
       responseFuture.map { _ =>
-        callList must contain(1)
+        callList.asScala must contain(1)
       }.await(retries = 0, timeout = 5.seconds)
     }
 
     "work with three request filter" in {
-      val callList = scala.collection.mutable.ArrayBuffer[Int]()
+      import scala.collection.JavaConverters._
+      val callList = new java.util.ArrayList[Integer]()
       val responseFuture = FutureConverters.toScala(client.url(s"http://localhost:$testServerPort")
         .setRequestFilter(new CallbackRequestFilter(callList, 1))
         .setRequestFilter(new CallbackRequestFilter(callList, 2))
         .setRequestFilter(new CallbackRequestFilter(callList, 3))
         .get())
       responseFuture.map { _ =>
-        callList must containTheSameElementsAs(Seq(1, 2, 3))
+        callList.asScala must containTheSameElementsAs(Seq(1, 2, 3))
       }.await(retries = 0, timeout = 5.seconds)
     }
 

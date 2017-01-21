@@ -4,7 +4,9 @@
 package play.libs.ws;
 
 import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 
-public interface WSRequestExecutor {
-   CompletionStage<? extends StandaloneWSResponse> apply(StandaloneWSRequest request);
+
+public interface WSRequestExecutor extends Function<StandaloneWSRequest, CompletionStage<StandaloneWSResponse>> {
+
 }
