@@ -16,9 +16,7 @@ import scala.concurrent.Future
  * }
  * }}}
  */
-trait WSRequestFilter {
-  def apply(next: WSRequestExecutor): WSRequestExecutor
-}
+trait WSRequestFilter extends (WSRequestExecutor => WSRequestExecutor)
 
 trait WSRequestExecutor extends (StandaloneWSRequest => Future[StandaloneWSResponse])
 
