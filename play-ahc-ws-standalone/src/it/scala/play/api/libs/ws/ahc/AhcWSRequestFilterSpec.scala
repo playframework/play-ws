@@ -40,8 +40,12 @@ class AhcWSRequestFilterSpec(implicit ee: ExecutionEnv) extends Specification wi
         complete(httpEntity)
       }
     } ~ {
-      val httpEntity = HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to akka-http</h1>")
-      complete(httpEntity)
+      get {
+        parameters('key.as[String]) { (key) =>
+          val httpEntity = HttpEntity(ContentTypes.`text/html(UTF-8)`, s"<h1>Say hello to akka-http, key = $key</h1>")
+          complete(httpEntity)
+        }
+      }
     }
   }
 
@@ -68,6 +72,14 @@ class AhcWSRequestFilterSpec(implicit ee: ExecutionEnv) extends Specification wi
       override def apply(executor: WSRequestExecutor): WSRequestExecutor = {
         WSRequestExecutor(r => executor(r.withHeaders((key, value))))
       }
+    }
+
+    "work with adhoc request filter" in {
+      client.url(s"http://localhost:$testServerPort").withRequestFilter(WSRequestFilter { e =>
+        WSRequestExecutor(r => e.apply(r.withQueryString("key" -> "some string")))
+      }).get().map { response =>
+        response.body must contain("some string")
+      }.await(retries = 0, timeout = 5.seconds)
     }
 
     "work with one request filter" in {

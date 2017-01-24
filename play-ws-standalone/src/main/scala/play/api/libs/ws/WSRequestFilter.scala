@@ -18,6 +18,27 @@ import scala.concurrent.Future
  */
 trait WSRequestFilter extends (WSRequestExecutor => WSRequestExecutor)
 
+object WSRequestFilter {
+
+  /**
+   * Creates an adhoc filter from a function:
+   *
+   * {{{
+   * val filter: WSRequestFilter = WSRequestFilter { e =>
+   *   WSRequestExecutor(r => e.apply(r.withQueryString("bed" -> "1")))
+   * }
+   * }}}
+   *
+   * @param f a function that returns executors
+   * @return a filter that calls the passed in function.
+   */
+  def apply(f: WSRequestExecutor => WSRequestExecutor): WSRequestFilter = {
+    new WSRequestFilter() {
+      override def apply(v1: WSRequestExecutor): WSRequestExecutor = f(v1)
+    }
+  }
+}
+
 trait WSRequestExecutor extends (StandaloneWSRequest => Future[StandaloneWSResponse])
 
 object WSRequestExecutor {
