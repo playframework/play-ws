@@ -6,10 +6,17 @@ import sbtassembly.MergeStrategy
 import scalariform.formatter.preferences._
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import sbt.Keys.homepage
+import com.typesafe.tools.mima.core._, ProblemFilters._
+import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
+import com.typesafe.tools.mima.plugin.MimaKeys.{
+  mimaBinaryIssueFilters, mimaPreviousArtifacts
+}
 
 //---------------------------------------------------------------
 // Shading and Project Settings
 //---------------------------------------------------------------
+
+val previousVersion = None
 
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
 
@@ -20,7 +27,7 @@ val javacSettings = Seq(
   "-Xlint:unchecked"
 )
 
-lazy val commonSettings = Seq(
+lazy val commonSettings = mimaDefaultSettings ++ Seq(
   organization := "com.typesafe.play",
   scalaVersion := "2.12.1",
   crossScalaVersions := Seq("2.12.1", "2.11.8"),
