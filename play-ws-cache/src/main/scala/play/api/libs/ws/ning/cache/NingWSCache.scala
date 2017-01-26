@@ -6,10 +6,11 @@ package play.api.libs.ws.ning.cache
 import java.net.URI
 
 import com.google.common.cache.{ Cache => GCache, CacheBuilder => GCacheBuilder }
-import com.ning.http.client._
+import play.shaded.ahc.org.asynchttpclient._
 import com.typesafe.play.cachecontrol._
 import org.joda.time.{ DateTime, Seconds }
 import org.slf4j.{ Logger, LoggerFactory }
+import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
 
 import scala.concurrent.Future
 
@@ -26,7 +27,7 @@ The primary cache key consists of the request method and target URI.
  * A cache entry with an optional expiry time
  */
 case class CacheEntry(
-  response: CacheableResponse,
+    response: CacheableResponse,
     requestMethod: String,
     nominatedHeaders: Map[HeaderName, Seq[String]],
     expiresAt: Option[DateTime]) {
@@ -328,7 +329,7 @@ class NingWSCache(val config: AsyncHttpClientConfig, underlying: GCache[CacheKey
   /**
    *
    */
-  def freshenResponse(newHeaders: FluentCaseInsensitiveStringsMap, response: CacheableResponse): CacheableResponse = {
+  def freshenResponse(newHeaders: HttpHeader, response: CacheableResponse): CacheableResponse = {
     if (logger.isTraceEnabled) {
       logger.trace(s"freshenResponse: newHeaders = $newHeaders, storedResponse = $response")
     }
@@ -344,7 +345,7 @@ class NingWSCache(val config: AsyncHttpClientConfig, underlying: GCache[CacheKey
     //o  retain any Warning header fields in the stored response with
     //warn-code 2xx; and,
     val headers = response.headers
-    val headersMap = new FluentCaseInsensitiveStringsMap(headers.getHeaders)
+    val headersMap = new DefaultHttpHeaders().add(headers.getHeaders)
     val filteredWarnings = headersMap.get("Warning").asScala.filter { line =>
       val warning = WarningParser.parse(line)
       warning.code < 200
@@ -397,8 +398,8 @@ class NingWSCache(val config: AsyncHttpClientConfig, underlying: GCache[CacheKey
     }
   }
 
-  def replaceHeaders(response: CacheableResponse)(block: FluentCaseInsensitiveStringsMap => FluentCaseInsensitiveStringsMap): CacheableResponse = {
-    val newHeadersMap = block(new FluentCaseInsensitiveStringsMap(response.getHeaders))
+  def replaceHeaders(response: CacheableResponse)(block: DefaultHttpHeaders => DefaultHttpHeaders): CacheableResponse = {
+    val newHeadersMap = block(new DefaultHttpHeaders().add(response.getHeaders))
 
     val cachedHeaders = response.headers
     val newHeaders = cachedHeaders.copy(headers = newHeadersMap)

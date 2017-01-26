@@ -7,11 +7,12 @@ import java.nio.charset.Charset
 import java.util
 import java.util.concurrent.atomic.AtomicBoolean
 
-import com.ning.http.client._
-import com.ning.http.client.cookie.Cookie
-import com.ning.http.client.uri.Uri
-import com.ning.http.util.AsyncHttpProviderUtils
+import play.shaded.ahc.org.asynchttpclient._
+import play.shaded.ahc.org.asynchttpclient.cookie.Cookie
+import play.shaded.ahc.org.asynchttpclient.uri.Uri
+import play.shaded.ahc.org.asynchttpclient.util.AsyncHttpProviderUtils
 import org.slf4j.LoggerFactory
+import play.shaded.ahc.io.netty.handler.codec.http.{ DefaultHttpHeaders, HttpHeaders }
 
 class CacheableResponseBuilder {
 
@@ -34,7 +35,7 @@ class CacheableResponseBuilder {
   }
 
   def accumulate(responseHeaders: HttpResponseHeaders): Unit = {
-    val trailing = responseHeaders.isTraillingHeadersReceived
+    val trailing = responseHeaders.isTrailling
     val headers = responseHeaders.getHeaders
     val cacheableHeaders = new CacheableHttpResponseHeaders(trailing, headers)
     maybeHeaders = Some(cacheableHeaders)
@@ -58,7 +59,7 @@ class CacheableResponseBuilder {
 }
 
 case class CacheableResponse(
-  status: CacheableHttpResponseStatus,
+    status: CacheableHttpResponseStatus,
     headers: CacheableHttpResponseHeaders,
     bodyParts: util.List[CacheableHttpResponseBodyPart]) extends Response {
 
@@ -83,7 +84,7 @@ case class CacheableResponse(
   def ahcbodyParts: util.List[HttpResponseBodyPart] = bodyParts.asInstanceOf[util.List[HttpResponseBodyPart]]
 
   def withHeaders(tuple: (String, String)*): CacheableResponse = {
-    val headerMap = new FluentCaseInsensitiveStringsMap(this.headers.headers)
+    val headerMap = new DefaultHttpHeaders().add(this.headers.headers)
     tuple.foreach {
       case (k, v) =>
         headerMap.add(k, v)
@@ -160,14 +161,14 @@ case class CacheableResponse(
   }
 
   def getHeader(name: String): String = {
-    headers.getHeaders.getFirstValue(name)
-  }
-
-  def getHeaders(name: String): util.List[String] = {
     headers.getHeaders.get(name)
   }
 
-  def getHeaders: FluentCaseInsensitiveStringsMap = {
+  def getHeaders(name: String): util.List[String] = {
+    headers.getHeaders.getAll(name)
+  }
+
+  def getHeaders: HttpHeaders = {
     headers.getHeaders
   }
 
@@ -201,10 +202,8 @@ case class CacheableResponse(
 
 }
 
-case class CacheableHttpResponseHeaders(trailingHeaders: Boolean, headers: FluentCaseInsensitiveStringsMap)
-    extends HttpResponseHeaders(trailingHeaders) {
-
-  override def getHeaders: FluentCaseInsensitiveStringsMap = headers
+case class CacheableHttpResponseHeaders(trailingHeaders: Boolean, headers: HttpHeaders)
+    extends HttpResponseHeaders(headers, trailingHeaders) {
 
   override def toString: String = {
     s"CacheableHttpResponseHeaders(trailingHeaders = $trailingHeaders, headers = $headers)"
@@ -217,7 +216,7 @@ object CacheableResponse {
   def apply(code: Int, urlString: String)(implicit cache: NingWSCache): CacheableResponse = {
     val uri: Uri = Uri.create(urlString)
     val status = new CacheableHttpResponseStatus(uri, cache.config, code, "", "")
-    val headers = new FluentCaseInsensitiveStringsMap()
+    val headers = new DefaultHttpHeaders()
     val responseHeaders = CacheableHttpResponseHeaders(trailingHeaders = false, headers = headers)
     val bodyParts = util.Collections.emptyList[CacheableHttpResponseBodyPart]
 

@@ -5,9 +5,10 @@ package play.api.libs.ws.ning.cache
 
 import java.io._
 
-import com.ning.http.client._
+import play.shaded.ahc.org.asynchttpclient._
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
+import play.shaded.ahc.io.netty.handler.codec.http.{ DefaultHttpHeaders, HttpHeaders }
 
 import scala.concurrent.Await
 
@@ -16,7 +17,7 @@ trait TimeoutResponse {
   def generateTimeoutResponse(request: Request, config: AsyncHttpClientConfig): CacheableResponse = {
     val uri = request.getUri
     val status = new CacheableHttpResponseStatus(uri, config, 504, "Gateway Timeout", "")
-    val headers = new CacheableHttpResponseHeaders(false, new FluentCaseInsensitiveStringsMap())
+    val headers = new CacheableHttpResponseHeaders(false, new DefaultHttpHeaders())
     val bodyParts = java.util.Collections.emptyList[CacheableHttpResponseBodyPart]()
     CacheableResponse(status, headers, bodyParts)
   }

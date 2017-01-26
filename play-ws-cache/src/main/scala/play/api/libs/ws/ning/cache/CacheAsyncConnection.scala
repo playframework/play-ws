@@ -1,10 +1,11 @@
 package play.api.libs.ws.ning.cache
 
-import java.util.concurrent.{ TimeUnit, Callable }
+import java.util.concurrent.{ Callable, TimeUnit }
 
-import com.ning.http.client.listenable.AbstractListenableFuture
-import com.ning.http.client.{ ProgressAsyncHandler, ListenableFuture, Request, AsyncHandler }
+import play.shaded.ahc.org.asynchttpclient.{ AsyncHandler, ListenableFuture, Request }
 import org.slf4j.LoggerFactory
+import play.shaded.ahc.org.asynchttpclient.future.AbstractListenableFuture
+import play.shaded.ahc.org.asynchttpclient.handler.ProgressAsyncHandler
 
 /**
  * Calls the relevant methods on the async handler, providing it with the cached response.
@@ -29,11 +30,11 @@ class AsyncCacheableConnection[T](
       }
       var state = asyncHandler.onStatusReceived(response.status)
 
-      if (state eq AsyncHandler.STATE.CONTINUE) {
+      if (state eq AsyncHandler.State.CONTINUE) {
         state = asyncHandler.onHeadersReceived(response.headers)
       }
 
-      if (state eq AsyncHandler.STATE.CONTINUE) {
+      if (state eq AsyncHandler.State.CONTINUE) {
         import collection.JavaConverters._
         response.bodyParts.asScala.foreach { bodyPart =>
           asyncHandler.onBodyPartReceived(bodyPart)

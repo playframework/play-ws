@@ -285,7 +285,7 @@ lazy val `play-ws-cache` = project
       "specs2-mock"
     ).map("org.specs2" %% _ % specsVersion % "it,test")
   )
-  .settings(libraryDependencies ++= standaloneAhcWSDependencies)
+  .settings(libraryDependencies ++= standaloneCacheDependencies)
   .settings(shadedAhcSettings)
   .settings(shadedOAuthSettings)
   .dependsOn(

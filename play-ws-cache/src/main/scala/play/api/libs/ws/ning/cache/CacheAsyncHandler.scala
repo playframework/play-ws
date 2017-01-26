@@ -1,6 +1,5 @@
 package play.api.libs.ws.ning.cache
 
-import play.shaded.ahc.org.asynchttpclient.AsyncHandler.STATE
 import play.shaded.ahc.org.asynchttpclient._
 import com.typesafe.play.cachecontrol.ResponseServeAction
 import org.slf4j.{ Logger, LoggerFactory }
@@ -62,7 +61,7 @@ class CacheAsyncHandler[T](
   /**
    * Called when the status line has been processed.
    */
-  override def onStatusReceived(responseStatus: HttpResponseStatus): STATE = {
+  override def onStatusReceived(responseStatus: HttpResponseStatus): AsyncHandler.State = {
     builder.accumulate(responseStatus)
     handler.onStatusReceived(responseStatus)
   }
@@ -70,7 +69,7 @@ class CacheAsyncHandler[T](
   /**
    * Called when all response’s headers has been processed.
    */
-  override def onHeadersReceived(responseHeaders: HttpResponseHeaders): STATE = {
+  override def onHeadersReceived(responseHeaders: HttpResponseHeaders): AsyncHandler.State = {
     if (!responseHeaders.getHeaders.containsKey(DATE)) {
       /*
        A recipient with a clock that receives a response message without a
@@ -90,7 +89,7 @@ class CacheAsyncHandler[T](
   /**
    * Body parts has been received. This method can be invoked many time depending of the response’s bytes body.
    */
-  override def onBodyPartReceived(bodyPart: HttpResponseBodyPart): STATE = {
+  override def onBodyPartReceived(bodyPart: HttpResponseBodyPart): AsyncHandler.State = {
     builder.accumulate(bodyPart)
     handler.onBodyPartReceived(bodyPart)
   }

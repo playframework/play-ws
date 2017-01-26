@@ -14,7 +14,7 @@ trait NingUtilities {
   def ningHeadersToMap(headers: java.util.Map[String, java.util.Collection[String]]): Map[String, Seq[String]] =
     mapAsScalaMapConverter(headers).asScala.map(e => e._1 -> e._2.asScala.toSeq).toMap
 
-  def ningHeadersToMap(headers: FluentCaseInsensitiveStringsMap): Map[String, Seq[String]] = {
+  def ningHeadersToMap(headers: HttpHeader): Map[String, Seq[String]] = {
     val res = mapAsScalaMapConverter(headers).asScala.map(e => e._1 -> e._2.asScala.toSeq).toMap
     //todo: wrap the case insensitive ning map instead of creating a new one (unless perhaps immutabilty is important)
     TreeMap(res.toSeq: _*)(CaseInsensitiveOrdered)
@@ -73,7 +73,7 @@ trait NingDebug extends NingUtilities {
     s"AsyncHandler($handler)"
   }
 
-  def debug[T](ctx: com.ning.http.client.filter.FilterContext[T]): String = {
+  def debug[T](ctx: play.shaded.ahc.org.asynchttpclient.filter.FilterContext[T]): String = {
     s"FilterContext(request = ${debug(ctx.getRequest)}}, responseStatus = ${debug(ctx.getResponseStatus)}}, responseHeaders = ${debug(ctx.getResponseHeaders)}})"
   }
 

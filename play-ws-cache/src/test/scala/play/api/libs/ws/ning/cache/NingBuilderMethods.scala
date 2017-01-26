@@ -1,6 +1,6 @@
 package play.api.libs.ws.ning.cache
 
-import com.ning.http.client.{ RequestBuilder, Request, FluentCaseInsensitiveStringsMap }
+import play.shaded.ahc.org.asynchttpclient.{ RequestBuilder, Request, HttpHeader }
 import play.api.libs.ws.ning.NingAsyncHttpClientConfigBuilder
 
 /**
@@ -13,9 +13,9 @@ trait NingBuilderMethods {
     NingWSCache(builder.build())
   }
 
-  def generateRequest(url: String)(block: FluentCaseInsensitiveStringsMap => FluentCaseInsensitiveStringsMap): Request = {
+  def generateRequest(url: String)(block: HttpHeader => HttpHeader): Request = {
     val requestBuilder = new RequestBuilder()
-    val requestHeaders = block(new FluentCaseInsensitiveStringsMap())
+    val requestHeaders = block(new HttpHeader())
 
     requestBuilder
       .setUrl(url)

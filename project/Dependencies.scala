@@ -39,6 +39,9 @@ object Dependencies {
   val cachecontrolVersion = "1.1.0"
   val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % cachecontrolVersion)
 
+  val guavaVersion = "21.0"
+  val guava = Seq("com.google.guava" % "guava" % guavaVersion)
+
   val asyncHttpClientVersion = "2.0.11"
   val asyncHttpClient = Seq(
     "org.asynchttpclient" % "async-http-client" % asyncHttpClientVersion excludeAll ExclusionRule(organization = "org.slf4j")
@@ -55,6 +58,7 @@ object Dependencies {
       playJson ++
       specsBuild
 
-  val standaloneAhcWSDependencies = cachecontrol ++ slf4j ++ slf4jtest.map(_ % Test) ++ specsBuild
+  val standaloneAhcWSDependencies = slf4j ++ slf4jtest.map(_ % Test) ++ specsBuild
 
+  val standaloneCacheDependencies = cachecontrol ++ guava
 }

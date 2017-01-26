@@ -1,7 +1,6 @@
 package play.api.libs.ws.ning.cache
 
-import com.ning.http.client.AsyncHandler.STATE
-import com.ning.http.client._
+import play.shaded.ahc.org.asynchttpclient._
 import com.typesafe.play.cachecontrol.ResponseCachingActions.{ DoCacheResponse, DoNotCacheResponse }
 import org.slf4j.{ LoggerFactory, Logger }
 
@@ -25,22 +24,22 @@ class BackgroundAsyncHandler[T](request: Request, cache: NingWSCache)
   private var maybeThrowable: Option[Throwable] = None
 
   @throws(classOf[Exception])
-  def onBodyPartReceived(content: HttpResponseBodyPart): AsyncHandler.STATE = {
+  def onBodyPartReceived(content: HttpResponseBodyPart): AsyncHandler.State = {
     builder.accumulate(content)
-    STATE.CONTINUE
+    AsyncHandler.State.CONTINUE
   }
 
   @throws(classOf[Exception])
-  def onStatusReceived(status: HttpResponseStatus): AsyncHandler.STATE = {
+  def onStatusReceived(status: HttpResponseStatus): AsyncHandler.State = {
     builder.reset()
     builder.accumulate(status)
-    STATE.CONTINUE
+    AsyncHandler.State.CONTINUE
   }
 
   @throws(classOf[Exception])
-  def onHeadersReceived(headers: HttpResponseHeaders): AsyncHandler.STATE = {
+  def onHeadersReceived(headers: HttpResponseHeaders): AsyncHandler.State = {
     builder.accumulate(headers)
-    STATE.CONTINUE
+    AsyncHandler.State.CONTINUE
   }
 
   def onThrowable(t: Throwable): Unit = {

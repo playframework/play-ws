@@ -1,5 +1,6 @@
 package play.api.libs.ws.ning.cache
 
+import com.typesafe.sslconfig.ssl.SystemConfiguration
 import play.shaded.ahc.org.asynchttpclient._
 import play.shaded.ahc.org.asynchttpclient.NettyAsyncHttpProvider
 import play.api.libs.ws.ahc._
@@ -8,12 +9,12 @@ import play.api.libs.ws._
 /**
  * A Ning WS Client with built in caching.
  */
-class CachingNingWSClient(config: AsyncHttpClientConfig, c: NingWSCache) extends AhcWSClient(config) {
+class CachingNingWSClient(config: AsyncHttpClientConfig, c: NingWSCache) extends StandaloneWSClient {
 
   private val asyncHttpClient: AsyncHttpClient = {
     val httpProvider = new NettyAsyncHttpProvider(config)
     val cacheProvider = new CacheAsyncHttpProvider(config, httpProvider, c)
-    new AsyncHttpClient(cacheProvider, config)
+    new DefaultAsyncHttpClient()
   }
 
   override def underlying[T] = asyncHttpClient.asInstanceOf[T]
@@ -42,8 +43,8 @@ object CachingNingWSClient {
    *
    * @param config configuration settings
    */
-  def apply(config: NingWSClientConfig = NingWSClientConfig()): CachingNingWSClient = {
-    val asyncClientConfig = new NingAsyncHttpClientConfigBuilder(config).build()
+  def apply(config: AhcWSClientConfig = AhcWSClientConfig()): CachingNingWSClient = {
+    val asyncClientConfig = new AhcConfigBuilder(config).build()
     val ningCache = NingWSCache(asyncClientConfig)
     val client = new CachingNingWSClient(asyncClientConfig, ningCache)
     new SystemConfiguration().configure(config.wsClientConfig)
