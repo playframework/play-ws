@@ -6,12 +6,11 @@ package play.api.libs.ws.ning.cache
 import java.io._
 import java.util.concurrent.Executors
 
-import play.shaded.ahc.org.asynchttpclient._
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
-import play.api.libs.ws.{ StandaloneWSClient, StandaloneWSRequest }
 import play.api.libs.ws.ahc.StandaloneAhcWSClient
 import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
+import play.shaded.ahc.org.asynchttpclient._
 
 import scala.concurrent.Await
 

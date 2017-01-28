@@ -6,11 +6,11 @@ package play.api.libs.ws.ning.cache
 import java.net.URI
 
 import com.google.common.cache.{ Cache => GCache, CacheBuilder => GCacheBuilder }
-import play.shaded.ahc.org.asynchttpclient._
 import com.typesafe.play.cachecontrol._
 import org.joda.time.{ DateTime, Seconds }
-import org.slf4j.{ Logger, LoggerFactory }
+import org.slf4j.LoggerFactory
 import play.shaded.ahc.io.netty.handler.codec.http.{ DefaultHttpHeaders, HttpHeaders }
+import play.shaded.ahc.org.asynchttpclient._
 
 import scala.concurrent.Future
 

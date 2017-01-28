@@ -1,16 +1,11 @@
-import sbt._
 import Dependencies._
+import com.typesafe.sbt.SbtScalariform.ScalariformKeys
+import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
+import sbt._
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
 
 import scalariform.formatter.preferences._
-import com.typesafe.sbt.SbtScalariform.ScalariformKeys
-import sbt.Keys.homepage
-import com.typesafe.tools.mima.core._, ProblemFilters._
-import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
-import com.typesafe.tools.mima.plugin.MimaKeys.{
-  mimaBinaryIssueFilters, mimaPreviousArtifacts
-}
 
 //---------------------------------------------------------------
 // Shading and Project Settings
@@ -19,6 +14,7 @@ import com.typesafe.tools.mima.plugin.MimaKeys.{
 val previousVersion = None
 
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
+resolvers in ThisBuild += Resolver.sonatypeRepo("public")
 
 val javacSettings = Seq(
   "-source", "1.8",
@@ -312,7 +308,7 @@ lazy val root = project
 //---------------------------------------------------------------
 // Release
 //---------------------------------------------------------------
-import ReleaseTransformations._
+import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
 
 releaseProcess := Seq[ReleaseStep](
   checkSnapshotDependencies,

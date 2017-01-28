@@ -1,20 +1,20 @@
 package play.api.libs.ws.ning.cache
 
-import java.io.{ ByteArrayInputStream, IOException, InputStream, OutputStream }
+import java.io.{ ByteArrayInputStream, IOException, InputStream }
 import java.net.{ MalformedURLException, SocketAddress }
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
 import java.util
 import java.util.concurrent.atomic.AtomicBoolean
 
+import org.slf4j.LoggerFactory
+import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders.Names._
+import play.shaded.ahc.io.netty.handler.codec.http.{ DefaultHttpHeaders, HttpHeaders }
+import play.shaded.ahc.org.asynchttpclient.Response.ResponseBuilder
 import play.shaded.ahc.org.asynchttpclient._
 import play.shaded.ahc.org.asynchttpclient.cookie.Cookie
 import play.shaded.ahc.org.asynchttpclient.uri.Uri
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils._
-import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders.Names._
-import org.slf4j.LoggerFactory
-import play.shaded.ahc.io.netty.handler.codec.http.{ DefaultHttpHeaders, HttpHeaders }
-import play.shaded.ahc.org.asynchttpclient.Response.ResponseBuilder
 
 class CacheableResponseBuilder {
 
