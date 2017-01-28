@@ -1,21 +1,19 @@
 package play.api.libs.ws.ning.cache
 
-import play.shaded.ahc.org.asynchttpclient.{ RequestBuilder, Request, HttpHeader }
-import play.api.libs.ws.ning.NingAsyncHttpClientConfigBuilder
+import play.api.libs.ws.ahc.AhcConfigBuilder
+import play.shaded.ahc.io.netty.handler.codec.http.{ DefaultHttpHeaders, HttpHeaders }
+import play.shaded.ahc.org.asynchttpclient.{ Request, RequestBuilder }
 
 /**
  * Utility methods to make building requests and responses easier.
  */
 trait NingBuilderMethods {
 
-  def generateCache: AhcWSCache = {
-    val builder = new NingAsyncHttpClientConfigBuilder()
-    AhcWSCache(builder.build())
-  }
+  def generateCache: AhcWSCache = AhcWSCache()
 
-  def generateRequest(url: String)(block: HttpHeader => HttpHeader): Request = {
+  def generateRequest(url: String)(block: HttpHeaders => HttpHeaders): Request = {
     val requestBuilder = new RequestBuilder()
-    val requestHeaders = block(new HttpHeader())
+    val requestHeaders = block(new DefaultHttpHeaders())
 
     requestBuilder
       .setUrl(url)

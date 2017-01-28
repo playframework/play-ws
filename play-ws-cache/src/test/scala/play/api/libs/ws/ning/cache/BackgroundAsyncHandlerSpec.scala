@@ -1,8 +1,8 @@
 package play.api.libs.ws.ning.cache
 
-import play.api.test.PlaySpecification
+import org.specs2.mutable.Specification
 
-class BackgroundAsyncHandlerSpec extends PlaySpecification {
+class BackgroundAsyncHandlerSpec extends Specification {
 
   "BackgroundAsyncHandler" should {
 

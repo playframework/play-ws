@@ -1,8 +1,8 @@
 package play.api.libs.ws.ning.cache
 
-import play.api.test.PlaySpecification
+import org.specs2.mutable.Specification
 
-class CacheAsyncHandlerSpec extends PlaySpecification with NingBuilderMethods {
+class CacheAsyncHandlerSpec extends Specification with NingBuilderMethods {
 
   "CacheAsyncHandlerSpec" should {
 

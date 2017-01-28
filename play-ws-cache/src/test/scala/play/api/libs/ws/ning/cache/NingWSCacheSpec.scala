@@ -1,9 +1,9 @@
 package play.api.libs.ws.ning.cache
 
 import com.typesafe.play.cachecontrol.HeaderName
-import play.api.test.{ PlaySpecification }
+import org.specs2.mutable.Specification
 
-class NingWSCacheSpec extends PlaySpecification with NingBuilderMethods {
+class NingWSCacheSpec extends Specification with NingBuilderMethods {
 
   "calculateSecondaryKeys" should {
 
