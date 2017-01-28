@@ -2,35 +2,38 @@ package play.api.libs.ws.ning.cache
 
 import play.shaded.ahc.org.asynchttpclient._
 import com.typesafe.play.cachecontrol.ResponseServeAction
+import org.joda.time.DateTime
 import org.slf4j.{ Logger, LoggerFactory }
-import play.api.http.HeaderNames._
 
 import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 
 /**
  * An async handler that accumulates response data to place in cache with the given key.
  */
-class CacheAsyncHandler[T](
+class AsyncCachingHandler[T](
   request: Request,
   handler: AsyncCompletionHandler[T],
-  cache: NingWSCache,
+  cache: AhcWSCache,
   maybeAction: Option[ResponseServeAction])
     extends AsyncHandler[T]
     with TimeoutResponse
     with NingDebug {
 
+  private val DATE = "Date"
+
   import com.typesafe.play.cachecontrol.HttpDate
-  import CacheAsyncHandler._
+  import AsyncCachingHandler._
 
   protected val builder = new CacheableResponseBuilder()
 
-  protected val requestTime = HttpDate.now
+  protected val requestTime: DateTime = HttpDate.now
 
-  protected val key = CacheKey(request)
+  protected val key: CacheKey = CacheKey(request)
 
-  protected val timeout = scala.concurrent.duration.Duration(1, "second")
+  protected val timeout: Duration = scala.concurrent.duration.Duration(1, "second")
 
-  protected lazy val timeoutResponse = generateTimeoutResponse(request, cache.config)
+  protected lazy val timeoutResponse: CacheableResponse = generateTimeoutResponse(request)
 
   /**
    * Invoked if something wrong happened inside the previous methods or when an I/O exception occurs.
@@ -70,7 +73,7 @@ class CacheAsyncHandler[T](
    * Called when all response’s headers has been processed.
    */
   override def onHeadersReceived(responseHeaders: HttpResponseHeaders): AsyncHandler.State = {
-    if (!responseHeaders.getHeaders.containsKey(DATE)) {
+    if (!responseHeaders.getHeaders.contains(DATE)) {
       /*
        A recipient with a clock that receives a response message without a
        Date header field MUST record the time it was received and append a
@@ -224,7 +227,7 @@ class CacheAsyncHandler[T](
 
 }
 
-object CacheAsyncHandler {
+object AsyncCachingHandler {
   private val logger: Logger = LoggerFactory.getLogger("play.api.libs.ws.ning.cache.CacheAsyncHandler")
 }
 

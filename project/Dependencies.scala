@@ -1,7 +1,6 @@
 /*
  * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
  */
-import Dependencies.slf4jtest
 import sbt._
 
 object Dependencies {
@@ -42,7 +41,7 @@ object Dependencies {
   val guavaVersion = "21.0"
   val guava = Seq("com.google.guava" % "guava" % guavaVersion)
 
-  val asyncHttpClientVersion = "2.0.11"
+  val asyncHttpClientVersion = "2.0.27"
   val asyncHttpClient = Seq(
     "org.asynchttpclient" % "async-http-client" % asyncHttpClientVersion excludeAll ExclusionRule(organization = "org.slf4j")
   )

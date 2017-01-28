@@ -288,9 +288,7 @@ lazy val `play-ws-cache` = project
   .settings(libraryDependencies ++= standaloneCacheDependencies)
   .settings(shadedAhcSettings)
   .settings(shadedOAuthSettings)
-  .dependsOn(
-    `play-ahc-ws-standalone`
-  )
+  .dependsOn(`play-ahc-ws-standalone`)
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------

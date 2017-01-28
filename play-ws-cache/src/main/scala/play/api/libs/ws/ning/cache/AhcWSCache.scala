@@ -10,7 +10,7 @@ import play.shaded.ahc.org.asynchttpclient._
 import com.typesafe.play.cachecontrol._
 import org.joda.time.{ DateTime, Seconds }
 import org.slf4j.{ Logger, LoggerFactory }
-import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
+import play.shaded.ahc.io.netty.handler.codec.http.{ DefaultHttpHeaders, HttpHeaders }
 
 import scala.concurrent.Future
 
@@ -41,9 +41,9 @@ case class CacheEntry(
 /**
  * Central cache used in a NingWSClient.
  */
-class NingWSCache(val config: AsyncHttpClientConfig, underlying: GCache[CacheKey, CacheEntry]) extends CacheDefaults with NingDebug {
+class AhcWSCache(underlying: GCache[CacheKey, CacheEntry]) extends CacheDefaults with NingDebug {
 
-  import NingWSCache._
+  import AhcWSCache._
 
   private val responseCachingCalculator = new ResponseCachingCalculator(this)
 
@@ -242,7 +242,7 @@ class NingWSCache(val config: AsyncHttpClientConfig, underlying: GCache[CacheKey
    * @return
    */
   protected def getURI(response: CacheableResponse, headerName: String): Option[URI] = {
-    Option(response.getHeaders.getFirstValue(headerName)).map { value =>
+    Option(response.getHeaders.get(headerName)).map { value =>
       // Gets the base URI, i.e. http://example.com/ so we can resolve relative URIs
       val baseURI = response.getUri.toJavaNetURI
       // So both absolute & relative URI will be resolved with example.com as base...
@@ -329,7 +329,7 @@ class NingWSCache(val config: AsyncHttpClientConfig, underlying: GCache[CacheKey
   /**
    *
    */
-  def freshenResponse(newHeaders: HttpHeader, response: CacheableResponse): CacheableResponse = {
+  def freshenResponse(newHeaders: HttpHeaders, response: CacheableResponse): CacheableResponse = {
     if (logger.isTraceEnabled) {
       logger.trace(s"freshenResponse: newHeaders = $newHeaders, storedResponse = $response")
     }
@@ -345,17 +345,17 @@ class NingWSCache(val config: AsyncHttpClientConfig, underlying: GCache[CacheKey
     //o  retain any Warning header fields in the stored response with
     //warn-code 2xx; and,
     val headers = response.headers
-    val headersMap = new DefaultHttpHeaders().add(headers.getHeaders)
-    val filteredWarnings = headersMap.get("Warning").asScala.filter { line =>
+    val headersMap: HttpHeaders = new DefaultHttpHeaders().add(headers.getHeaders)
+    val filteredWarnings = headersMap.getAll("Warning").asScala.filter { line =>
       val warning = WarningParser.parse(line)
       warning.code < 200
     }.asJava
-    headersMap.put("Warning", filteredWarnings)
+    headersMap.set("Warning", filteredWarnings)
 
     //o  use other header fields provided in the 304 (Not Modified)
     //response to replace all instances of the corresponding header
     //fields in the stored response.
-    headersMap.replaceAll(newHeaders)
+    headersMap.set(newHeaders)
 
     val updatedHeaders = headers.copy(headers = headersMap)
     response.copy(headers = updatedHeaders)
@@ -370,7 +370,7 @@ class NingWSCache(val config: AsyncHttpClientConfig, underlying: GCache[CacheKey
       //    validation, a cache MUST generate an Age header field (Section 5.1),
       //    replacing any present in the response with a value equal to the
       //    stored response's current_age; see Section 4.2.3.
-      headers.replaceWith("Age", currentAge.getSeconds.toString)
+      headers.set("Age", currentAge.getSeconds.toString)
       if (!isFresh) {
         //    A cache SHOULD generate a Warning header field with the 110 warn-code
         //    (see Section 5.5.1) in stale responses.  Likewise, a cache SHOULD
@@ -398,7 +398,7 @@ class NingWSCache(val config: AsyncHttpClientConfig, underlying: GCache[CacheKey
     }
   }
 
-  def replaceHeaders(response: CacheableResponse)(block: DefaultHttpHeaders => DefaultHttpHeaders): CacheableResponse = {
+  def replaceHeaders(response: CacheableResponse)(block: HttpHeaders => HttpHeaders): CacheableResponse = {
     val newHeadersMap = block(new DefaultHttpHeaders().add(response.getHeaders))
 
     val cachedHeaders = response.headers
@@ -453,10 +453,10 @@ class NingWSCache(val config: AsyncHttpClientConfig, underlying: GCache[CacheKey
       import scala.collection.JavaConverters._
       val stripHeaderNames = stripSet.map(_.toString()).asJavaCollection
       logger.debug(s"massageCachedResponse: stripHeaderNames = $stripHeaderNames")
-      val strippedHeaders = httpResponse.getHeaders.deleteAll(stripHeaderNames)
-      logger.debug(s"massageCachedResponse: strippedHeaders = $strippedHeaders")
-      val isTrailing = httpResponse.headers.isTraillingHeadersReceived
-      val newHeaders = new CacheableHttpResponseHeaders(isTrailing, strippedHeaders)
+      stripHeaderNames.asScala.foreach(httpResponse.getHeaders.remove)
+      logger.debug(s"massageCachedResponse: strippedHeaders = ${httpResponse.getHeaders}")
+      val isTrailing = httpResponse.headers.isTrailling
+      val newHeaders = new CacheableHttpResponseHeaders(isTrailing, httpResponse.getHeaders)
       httpResponse.copy(headers = newHeaders)
     } else {
       httpResponse
@@ -469,23 +469,23 @@ class NingWSCache(val config: AsyncHttpClientConfig, underlying: GCache[CacheKey
   }
 }
 
-object NingWSCache {
+object AhcWSCache {
 
   private val logger = LoggerFactory.getLogger("play.api.libs.ws.ning.cache.NingWSCache")
 
   /**
    * Create a new Guava cache
    */
-  def apply(config: AsyncHttpClientConfig): NingWSCache = {
+  def apply(): AhcWSCache = {
     val cacheBuilder = GCacheBuilder.newBuilder()
-    val gcache: GCache[CacheKey, CacheEntry] = cacheBuilder.build()
-    apply(config, gcache)
+    val gcache: GCache[CacheKey, CacheEntry] = cacheBuilder.build[CacheKey, CacheEntry]()
+    apply(gcache)
   }
 
   /**
    * Create a new cache utilizing the given underlying Guava cache.
    * @param underlying a Guava cache
    */
-  def apply(config: AsyncHttpClientConfig, underlying: GCache[CacheKey, CacheEntry]): NingWSCache = new NingWSCache(config, underlying)
+  def apply(underlying: GCache[CacheKey, CacheEntry]): AhcWSCache = new AhcWSCache(underlying)
 
 }

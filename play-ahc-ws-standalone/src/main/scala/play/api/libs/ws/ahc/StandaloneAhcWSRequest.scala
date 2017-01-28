@@ -23,6 +23,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{ Future, Promise }
 
 case object StandaloneAhcWSRequest {
+
   private[libs] def ahcHeadersToMap(headers: HttpHeaders): TreeMap[String, Seq[String]] = {
     val mutableMap = scala.collection.mutable.HashMap[String, Seq[String]]()
     headers.names().asScala.foreach { name =>
@@ -241,7 +242,7 @@ case class StandaloneAhcWSRequest(
   }
 
   override def stream(): Future[StreamedResponse] = {
-    Streamed.execute(client.underlying[AsyncHttpClient], buildRequest())
+    Streamed.execute(client.asyncHttpClient, buildRequest())
   }
 
   /**

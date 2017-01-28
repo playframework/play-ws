@@ -8,9 +8,9 @@ import play.api.libs.ws.ning.NingAsyncHttpClientConfigBuilder
  */
 trait NingBuilderMethods {
 
-  def generateCache: NingWSCache = {
+  def generateCache: AhcWSCache = {
     val builder = new NingAsyncHttpClientConfigBuilder()
-    NingWSCache(builder.build())
+    AhcWSCache(builder.build())
   }
 
   def generateRequest(url: String)(block: HttpHeader => HttpHeader): Request = {

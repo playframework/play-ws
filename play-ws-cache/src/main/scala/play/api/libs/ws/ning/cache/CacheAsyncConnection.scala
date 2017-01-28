@@ -1,10 +1,9 @@
 package play.api.libs.ws.ning.cache
 
-import java.util.concurrent.{ Callable, TimeUnit }
+import java.util.concurrent.{ Callable, CompletableFuture, Executor, TimeUnit }
 
 import play.shaded.ahc.org.asynchttpclient.{ AsyncHandler, ListenableFuture, Request }
 import org.slf4j.LoggerFactory
-import play.shaded.ahc.org.asynchttpclient.future.AbstractListenableFuture
 import play.shaded.ahc.org.asynchttpclient.handler.ProgressAsyncHandler
 
 /**
@@ -43,8 +42,8 @@ class AsyncCacheableConnection[T](
 
       asyncHandler match {
         case progressAsyncHandler: ProgressAsyncHandler[_] =>
-          progressAsyncHandler.onHeaderWriteCompleted
-          progressAsyncHandler.onContentWriteCompleted
+          progressAsyncHandler.onHeadersWritten()
+          progressAsyncHandler.onContentWritten()
         case _ =>
       }
 
@@ -72,24 +71,24 @@ object AsyncCacheableConnection {
 /**
  * A wrapper to return a ListenableFuture.
  */
-class CacheFuture[T](handler: AsyncHandler[T]) extends AbstractListenableFuture[T] {
+class CacheFuture[T](handler: AsyncHandler[T]) extends ListenableFuture[T] {
 
-  private var innerFuture: java.util.concurrent.Future[T] = _
+  private var innerFuture: java.util.concurrent.CompletableFuture[T] = _
 
-  def setInnerFuture(future: java.util.concurrent.Future[T]) = {
+  def setInnerFuture(future: java.util.concurrent.CompletableFuture[T]) = {
     innerFuture = future
   }
 
+  override def isDone: Boolean = innerFuture.isDone
+
   override def done(): Unit = {
-    runListeners()
   }
 
   override def touch(): Unit = {
   }
 
   override def abort(t: Throwable): Unit = {
-    innerFuture.cancel(true)
-    runListeners()
+    innerFuture.completeExceptionally(t)
   }
 
   override def isCancelled: Boolean = {
@@ -105,13 +104,17 @@ class CacheFuture[T](handler: AsyncHandler[T]) extends AbstractListenableFuture[
   }
 
   override def cancel(mayInterruptIfRunning: Boolean): Boolean = {
-    runListeners()
     innerFuture.cancel(mayInterruptIfRunning)
   }
 
-  override def isDone: Boolean = innerFuture.isDone
-
   override def toString: String = {
     s"CacheFuture"
+  }
+
+  override def toCompletableFuture: CompletableFuture[T] = innerFuture
+
+  override def addListener(listener: Runnable, executor: Executor): ListenableFuture[T] = {
+    innerFuture.whenCompleteAsync((r, v) => listener.run(), executor)
+    this
   }
 }

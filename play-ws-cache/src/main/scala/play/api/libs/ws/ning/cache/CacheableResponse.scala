@@ -1,7 +1,7 @@
 package play.api.libs.ws.ning.cache
 
 import java.io.{ ByteArrayInputStream, IOException, InputStream, OutputStream }
-import java.net.MalformedURLException
+import java.net.{ MalformedURLException, SocketAddress }
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
 import java.util
@@ -10,9 +10,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 import play.shaded.ahc.org.asynchttpclient._
 import play.shaded.ahc.org.asynchttpclient.cookie.Cookie
 import play.shaded.ahc.org.asynchttpclient.uri.Uri
-import play.shaded.ahc.org.asynchttpclient.util.AsyncHttpProviderUtils
+import play.shaded.ahc.org.asynchttpclient.util.HttpUtils._
+import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders.Names._
 import org.slf4j.LoggerFactory
 import play.shaded.ahc.io.netty.handler.codec.http.{ DefaultHttpHeaders, HttpHeaders }
+import play.shaded.ahc.org.asynchttpclient.Response.ResponseBuilder
 
 class CacheableResponseBuilder {
 
@@ -22,13 +24,13 @@ class CacheableResponseBuilder {
 
   protected var maybeHeaders: Option[CacheableHttpResponseHeaders] = None
 
-  def accumulate(responseStatus: HttpResponseStatus) = {
-    val config = responseStatus.getConfig
+  def accumulate(responseStatus: HttpResponseStatus): ResponseBuilder = {
+    // https://github.com/AsyncHttpClient/async-http-client/blob/2.0/client/src/main/java/org/asynchttpclient/HttpResponseStatus.java
     val uri = responseStatus.getUri
     val statusCode = responseStatus.getStatusCode
     val statusText = responseStatus.getStatusText
     val protocolText = responseStatus.getProtocolText
-    val cacheableStatus = new CacheableHttpResponseStatus(uri, config, statusCode, statusText, protocolText)
+    val cacheableStatus = new CacheableHttpResponseStatus(uri, statusCode, statusText, protocolText)
 
     maybeStatus = Some(cacheableStatus)
     builder.accumulate(cacheableStatus)
@@ -37,7 +39,7 @@ class CacheableResponseBuilder {
   def accumulate(responseHeaders: HttpResponseHeaders): Unit = {
     val trailing = responseHeaders.isTrailling
     val headers = responseHeaders.getHeaders
-    val cacheableHeaders = new CacheableHttpResponseHeaders(trailing, headers)
+    val cacheableHeaders = CacheableHttpResponseHeaders(trailing, headers)
     maybeHeaders = Some(cacheableHeaders)
     builder.accumulate(cacheableHeaders)
   }
@@ -58,20 +60,13 @@ class CacheableResponseBuilder {
   }
 }
 
+// https://github.com/AsyncHttpClient/async-http-client/blob/2.0/client/src/main/java/org/asynchttpclient/netty/NettyResponse.java
 case class CacheableResponse(
     status: CacheableHttpResponseStatus,
     headers: CacheableHttpResponseHeaders,
     bodyParts: util.List[CacheableHttpResponseBodyPart]) extends Response {
 
   import CacheableResponse._
-
-  /**
-   * The default charset of ISO-8859-1 for text media types has been
-   * removed; the default is now whatever the media type definition says.
-   * Likewise, special treatment of ISO-8859-1 has been removed from the
-   * Accept-Charset header field.  (Section 3.1.1.3 and Section 5.3.3)
-   */
-  private val DEFAULT_CHARSET = "ISO-8859-1"
 
   private val uri: Uri = status.getUri
   private var content: String = null
@@ -93,86 +88,79 @@ case class CacheableResponse(
     this.copy(headers = newHeaders)
   }
 
-  def getStatusCode: Int = {
+  override def getStatusCode: Int = {
     status.getStatusCode
   }
 
-  def getStatusText: String = {
+  override def getStatusText: String = {
     status.getStatusText
   }
 
   @throws(classOf[IOException])
-  def getResponseBody: String = {
+  override def getResponseBodyAsBytes: Array[Byte] = {
+    getResponseBodyAsByteBuffer.array()
+  }
+
+  @throws(classOf[IOException])
+  override def getResponseBodyAsByteBuffer: ByteBuffer = {
+    import scala.collection.JavaConverters._
+    val length = bodyParts.asScala.map(_.length()).sum
+    val target = ByteBuffer.wrap(new Array[Byte](length))
+    bodyParts.asScala.foreach(part => target.put(part.getBodyPartBytes))
+    target.flip()
+    target
+  }
+
+  private def computeCharset(charset: Charset): Charset = {
+    Option(charset).orElse(Option(parseCharset(getContentType))).getOrElse(DEFAULT_CHARSET)
+  }
+
+  @throws(classOf[IOException])
+  override def getResponseBody: String = {
     if (logger.isTraceEnabled) {
-      logger.trace("close: ")
+      logger.trace("getResponseBody: ")
     }
-    getResponseBody(DEFAULT_CHARSET)
+    getResponseBody(null)
   }
 
   @throws(classOf[IOException])
-  def getResponseBodyAsBytes: Array[Byte] = {
-    AsyncHttpProviderUtils.contentToByte(ahcbodyParts)
-  }
-
-  @throws(classOf[IOException])
-  def getResponseBodyAsByteBuffer: ByteBuffer = {
-    ByteBuffer.wrap(getResponseBodyAsBytes)
-  }
-
-  @throws(classOf[IOException])
-  def getResponseBody(charset: String): String = {
+  override def getResponseBody(charset: Charset): String = {
     if (logger.isTraceEnabled) {
-      logger.trace("close: ")
+      logger.trace("getResponseBody: ")
     }
-    if (!contentComputed.get) {
-      content = AsyncHttpProviderUtils.contentToString(ahcbodyParts, Charset.forName(charset))
-    }
-    content
+    new String(getResponseBodyAsBytes, computeCharset(charset))
   }
 
   @throws(classOf[IOException])
-  def getResponseBodyAsStream: InputStream = {
+  override def getResponseBodyAsStream: InputStream = {
     if (logger.isTraceEnabled) {
-      logger.trace("close: ")
+      logger.trace("getResponseBodyAsStream: ")
     }
-    if (contentComputed.get) {
-      return new ByteArrayInputStream(content.getBytes(DEFAULT_CHARSET))
-    }
-    AsyncHttpProviderUtils.contentToInputStream(ahcbodyParts)
-  }
-
-  @throws(classOf[IOException])
-  def getResponseBodyExcerpt(maxLength: Int): String = {
-    getResponseBodyExcerpt(maxLength, DEFAULT_CHARSET)
-  }
-
-  @throws(classOf[IOException])
-  def getResponseBodyExcerpt(maxLength: Int, charset: String): String = {
-    ???
+    new ByteArrayInputStream(getResponseBodyAsBytes)
   }
 
   @throws(classOf[MalformedURLException])
-  def getUri: Uri = {
+  override def getUri: Uri = {
     uri
   }
 
-  def getContentType: String = {
-    getHeader("Content-Type")
+  override def getContentType: String = {
+    getHeader(CONTENT_TYPE)
   }
 
-  def getHeader(name: String): String = {
+  override def getHeader(name: String): String = {
     headers.getHeaders.get(name)
   }
 
-  def getHeaders(name: String): util.List[String] = {
+  override def getHeaders(name: String): util.List[String] = {
     headers.getHeaders.getAll(name)
   }
 
-  def getHeaders: HttpHeaders = {
+  override def getHeaders: HttpHeaders = {
     headers.getHeaders
   }
 
-  def isRedirected: Boolean = {
+  override def isRedirected: Boolean = {
     status.getStatusCode match {
       case 301 | 302 | 303 | 307 | 308 =>
         true
@@ -181,25 +169,30 @@ case class CacheableResponse(
     }
   }
 
-  def getCookies: util.List[Cookie] = {
+  override def getCookies: util.List[Cookie] = {
+    // FIXME https://github.com/AsyncHttpClient/async-http-client/blob/2.0/client/src/main/java/org/asynchttpclient/netty/NettyResponse.java#L138
     ???
   }
 
-  def hasResponseStatus: Boolean = {
+  override def hasResponseStatus: Boolean = {
     status != null
   }
 
-  def hasResponseHeaders: Boolean = {
+  override def hasResponseHeaders: Boolean = {
     headers != null
   }
 
-  def hasResponseBody: Boolean = {
+  override def hasResponseBody: Boolean = {
     !bodyParts.isEmpty
   }
+
   override def toString: String = {
     s"CacheableResponse(status = $status, headers = $headers, bodyParts = $bodyParts)"
   }
 
+  override def getLocalAddress: SocketAddress = status.getLocalAddress
+
+  override def getRemoteAddress: SocketAddress = status.getRemoteAddress
 }
 
 case class CacheableHttpResponseHeaders(trailingHeaders: Boolean, headers: HttpHeaders)
@@ -213,9 +206,9 @@ case class CacheableHttpResponseHeaders(trailingHeaders: Boolean, headers: HttpH
 object CacheableResponse {
   private val logger = LoggerFactory.getLogger("play.api.libs.ws.ning.cache.CacheableResponse")
 
-  def apply(code: Int, urlString: String)(implicit cache: NingWSCache): CacheableResponse = {
+  def apply(code: Int, urlString: String)(implicit cache: AhcWSCache): CacheableResponse = {
     val uri: Uri = Uri.create(urlString)
-    val status = new CacheableHttpResponseStatus(uri, cache.config, code, "", "")
+    val status = new CacheableHttpResponseStatus(uri, code, "", "")
     val headers = new DefaultHttpHeaders()
     val responseHeaders = CacheableHttpResponseHeaders(trailingHeaders = false, headers = headers)
     val bodyParts = util.Collections.emptyList[CacheableHttpResponseBodyPart]
@@ -224,13 +217,13 @@ object CacheableResponse {
   }
 }
 
+// https://github.com/AsyncHttpClient/async-http-client/blob/2.0/client/src/main/java/org/asynchttpclient/netty/NettyResponseStatus.java
 class CacheableHttpResponseStatus(
   uri: Uri,
-  config: AsyncHttpClientConfig,
   statusCode: Int,
   statusText: String,
   protocolText: String)
-    extends HttpResponseStatus(uri, config) {
+    extends HttpResponseStatus(uri, null) {
   override def getStatusCode: Int = statusCode
 
   override def getProtocolText: String = protocolText
@@ -243,25 +236,26 @@ class CacheableHttpResponseStatus(
 
   override def getProtocolName: String = protocolText
 
-  override def prepareResponse(headers: HttpResponseHeaders, bodyParts: util.List[HttpResponseBodyPart]): Response = {
-    new CacheableResponse(this, headers.asInstanceOf[CacheableHttpResponseHeaders], bodyParts.asInstanceOf[util.List[CacheableHttpResponseBodyPart]])
-  }
+  //  override def prepareResponse(headers: HttpResponseHeaders, bodyParts: util.List[HttpResponseBodyPart]): Response = {
+  //    new CacheableResponse(this, headers.asInstanceOf[CacheableHttpResponseHeaders], bodyParts.asInstanceOf[util.List[CacheableHttpResponseBodyPart]])
+  //  }
 
   override def toString = {
     s"CacheableHttpResponseStatus(code = $statusCode, text = $statusText)"
   }
+
+  override def getLocalAddress: SocketAddress = null
+
+  override def getRemoteAddress: SocketAddress = null
 }
 
+// https://github.com/AsyncHttpClient/async-http-client/blob/2.0/client/src/main/java/org/asynchttpclient/HttpResponseBodyPart.java
+// https://github.com/AsyncHttpClient/async-http-client/blob/2.0/client/src/main/java/org/asynchttpclient/netty/LazyResponseBodyPart.java
 class CacheableHttpResponseBodyPart(chunk: Array[Byte], last: Boolean) extends HttpResponseBodyPart(last) {
 
   override def getBodyPartBytes: Array[Byte] = chunk
 
   override def getBodyByteBuffer: ByteBuffer = ByteBuffer.wrap(chunk)
-
-  override def writeTo(outputStream: OutputStream): Int = {
-    outputStream.write(chunk)
-    chunk.length
-  }
 
   override def isLast: Boolean = super.isLast
 

@@ -4,19 +4,22 @@
 package play.api.libs.ws.ning.cache
 
 import java.io._
+import java.util.concurrent.Executors
 
 import play.shaded.ahc.org.asynchttpclient._
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
-import play.shaded.ahc.io.netty.handler.codec.http.{ DefaultHttpHeaders, HttpHeaders }
+import play.api.libs.ws.{ StandaloneWSClient, StandaloneWSRequest }
+import play.api.libs.ws.ahc.StandaloneAhcWSClient
+import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
 
 import scala.concurrent.Await
 
 trait TimeoutResponse {
 
-  def generateTimeoutResponse(request: Request, config: AsyncHttpClientConfig): CacheableResponse = {
+  def generateTimeoutResponse(request: Request): CacheableResponse = {
     val uri = request.getUri
-    val status = new CacheableHttpResponseStatus(uri, config, 504, "Gateway Timeout", "")
+    val status = new CacheableHttpResponseStatus(uri, 504, "Gateway Timeout", "")
     val headers = new CacheableHttpResponseHeaders(false, new DefaultHttpHeaders())
     val bodyParts = java.util.Collections.emptyList[CacheableHttpResponseBodyPart]()
     CacheableResponse(status, headers, bodyParts)
@@ -26,35 +29,34 @@ trait TimeoutResponse {
 /**
  * A provider that pulls a response from the cache.
  */
-class CacheAsyncHttpProvider(
-  config: AsyncHttpClientConfig,
-  httpProvider: AsyncHttpProvider,
-  val cache: NingWSCache)
-    extends AsyncHttpProvider
-    with TimeoutResponse
+class CachingWSClient(client: StandaloneAhcWSClient, val cache: AhcWSCache) extends TimeoutResponse
     with NingDebug {
 
-  import CacheAsyncHttpProvider._
+  private val cacheThreadPool = Executors.newFixedThreadPool(2)
+
+  private val logger = LoggerFactory.getLogger(this.getClass)
+
   import com.typesafe.play.cachecontrol.ResponseSelectionActions._
   import com.typesafe.play.cachecontrol.ResponseServeActions._
   import com.typesafe.play.cachecontrol._
 
   private val cacheTimeout = scala.concurrent.duration.Duration(1, "second")
 
+  def close(): Unit = {
+    if (logger.isTraceEnabled) {
+      logger.trace("close: ")
+    }
+    client.close()
+  }
+
   @throws(classOf[IOException])
-  def execute[T](request: Request, handler: AsyncHandler[T]): ListenableFuture[T] = {
+  protected def executeRequest[T](request: Request, handler: AsyncHandler[T]): ListenableFuture[T] = {
     handler match {
       case asyncCompletionHandler: AsyncCompletionHandler[T] =>
         execute(request, asyncCompletionHandler, null)
 
       case other =>
         throw new IllegalStateException("not implemented!")
-    }
-  }
-
-  def close(): Unit = {
-    if (logger.isTraceEnabled) {
-      logger.trace("close: ")
     }
   }
 
@@ -86,7 +88,7 @@ class CacheAsyncHttpProvider(
 
       case ForwardToOrigin(reason) =>
         logger.debug(s"execute $key: $reason -- forwarding to origin server")
-        httpProvider.execute(request, cacheAsyncHandler(request, handler))
+        client.executeRequest(request, cacheAsyncHandler(request, handler))
     }
   }
 
@@ -126,7 +128,7 @@ class CacheAsyncHttpProvider(
         // Run a validation request in a future (which will update the cache later)...
         val response = entry.response
         val validationRequest = buildValidationRequest(request, response)
-        httpProvider.execute(validationRequest, backgroundAsyncHandler(validationRequest))
+        client.executeRequest(validationRequest, backgroundAsyncHandler(validationRequest))
 
         // ...AND return the response from cache.
         val staleResponse = cache.generateCachedResponse(request, entry, currentAge, isFresh = false)
@@ -140,7 +142,7 @@ class CacheAsyncHttpProvider(
         // so the stale response could still be used... we just need to check.
         val response = entry.response
         val validationRequest = buildValidationRequest(request, response)
-        httpProvider.execute(validationRequest, cacheAsyncHandler(validationRequest, handler, Some(action)))
+        client.executeRequest(validationRequest, cacheAsyncHandler(validationRequest, handler, Some(action)))
 
       case action @ ValidateOrTimeout(reason) =>
         logger.debug(s"serveResponse: $reason -- must revalidate and timeout on disconnect")
@@ -149,22 +151,21 @@ class CacheAsyncHttpProvider(
         // timeout response instead of serving a stale response.
         val response = entry.response
         val validationRequest = buildValidationRequest(request, response)
-        httpProvider.execute(validationRequest, cacheAsyncHandler(request, handler, Some(action)))
+        client.executeRequest(validationRequest, cacheAsyncHandler(request, handler, Some(action)))
     }
   }
 
   protected def serveTimeout[T](request: Request, handler: AsyncHandler[T]): CacheFuture[T] = {
-    val timeoutResponse = generateTimeoutResponse(request, config)
+    val timeoutResponse = generateTimeoutResponse(request)
     executeFromCache(handler, request, timeoutResponse)
   }
 
-  protected def executeFromCache[T](handler: AsyncHandler[T], request: Request, response: CacheableResponse) = {
+  protected def executeFromCache[T](handler: AsyncHandler[T], request: Request, response: CacheableResponse): CacheFuture[T] = {
     logger.trace(s"executeFromCache: handler = ${debug(handler)}, request = ${debug(request)}, response = ${debug(response)}")
 
     val cacheFuture = new CacheFuture[T](handler)
     val callable = new AsyncCacheableConnection[T](handler, request, response, cacheFuture)
-    val f = config.executorService.submit(callable)
-    cacheFuture.setInnerFuture(f)
+    cacheThreadPool.submit(callable)
     cacheFuture
   }
 
@@ -197,11 +198,11 @@ class CacheAsyncHttpProvider(
       val headers = response.getHeaders
 
       // https://tools.ietf.org/html/rfc7232#section-2.2
-      Option(headers.getFirstValue("Last-Modified")).map { lastModifiedDate =>
+      Option(headers.get("Last-Modified")).map { lastModifiedDate =>
         rb.addHeader("If-Modified-Since", lastModifiedDate)
       }
 
-      Option(headers.getFirstValue("ETag")).map { eTag =>
+      Option(headers.get("ETag")).map { eTag =>
         rb.addHeader("If-None-Match", eTag)
       }
 
@@ -215,16 +216,12 @@ class CacheAsyncHttpProvider(
     builder.build()
   }
 
-  protected def cacheAsyncHandler[T](request: Request, handler: AsyncCompletionHandler[T], action: Option[ResponseServeAction] = None) = {
-    new CacheAsyncHandler(request, handler, cache, action)
+  protected def cacheAsyncHandler[T](request: Request, handler: AsyncCompletionHandler[T], action: Option[ResponseServeAction] = None): AsyncCachingHandler[T] = {
+    new AsyncCachingHandler(request, handler, cache, action)
   }
 
   protected def backgroundAsyncHandler[T](request: Request): BackgroundAsyncHandler[T] = {
     new BackgroundAsyncHandler(request, cache)
   }
-
 }
 
-object CacheAsyncHttpProvider {
-  private val logger = LoggerFactory.getLogger("play.api.libs.ws.ning.cache.CacheAsyncHttpProvider")
-}
