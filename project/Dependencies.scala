@@ -19,7 +19,7 @@ object Dependencies {
     "com.typesafe.play" %% "play-functional" % playJsonVersion
   )
 
-  val slf4j = Seq("org.slf4j" % "slf4j-api" % "1.7.16")
+  val slf4j = Seq("org.slf4j" % "slf4j-api" % "1.7.22")
 
   //
   val slf4jtest = Seq("uk.org.lidalia" % "slf4j-test" % "1.1.0")
@@ -57,5 +57,5 @@ object Dependencies {
       playJson ++
       specsBuild
 
-  val standaloneAhcWSDependencies = cachecontrol ++ guava ++ slf4j ++ slf4jtest.map(_ % Test) ++ specsBuild
+  val standaloneAhcWSDependencies = cachecontrol ++ guava ++ slf4j ++ slf4jtest ++ specsBuild
 }

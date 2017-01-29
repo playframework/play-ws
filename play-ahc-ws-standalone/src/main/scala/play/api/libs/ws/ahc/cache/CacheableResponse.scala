@@ -10,7 +10,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import org.slf4j.LoggerFactory
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders.Names._
 import play.shaded.ahc.io.netty.handler.codec.http.{ DefaultHttpHeaders, HttpHeaders }
-import play.shaded.ahc.org.asynchttpclient.Response.ResponseBuilder
 import play.shaded.ahc.org.asynchttpclient._
 import play.shaded.ahc.org.asynchttpclient.cookie.Cookie
 import play.shaded.ahc.org.asynchttpclient.uri.Uri
@@ -18,13 +17,11 @@ import play.shaded.ahc.org.asynchttpclient.util.HttpUtils._
 
 class CacheableResponseBuilder {
 
-  protected val builder = new Response.ResponseBuilder()
+  private var bodyParts: List[CacheableHttpResponseBodyPart] = Nil
+  private var status: Option[CacheableHttpResponseStatus] = None
+  private var headers: Option[CacheableHttpResponseHeaders] = None
 
-  protected var maybeStatus: Option[CacheableHttpResponseStatus] = None
-
-  protected var maybeHeaders: Option[CacheableHttpResponseHeaders] = None
-
-  def accumulate(responseStatus: HttpResponseStatus): ResponseBuilder = {
+  def accumulate(responseStatus: HttpResponseStatus): CacheableResponseBuilder = {
     // https://github.com/AsyncHttpClient/async-http-client/blob/2.0/client/src/main/java/org/asynchttpclient/HttpResponseStatus.java
     val uri = responseStatus.getUri
     val statusCode = responseStatus.getStatusCode
@@ -32,31 +29,31 @@ class CacheableResponseBuilder {
     val protocolText = responseStatus.getProtocolText
     val cacheableStatus = new CacheableHttpResponseStatus(uri, statusCode, statusText, protocolText)
 
-    maybeStatus = Some(cacheableStatus)
-    builder.accumulate(cacheableStatus)
+    status = Some(cacheableStatus)
+    this
   }
 
-  def accumulate(responseHeaders: HttpResponseHeaders): Unit = {
-    val trailing = responseHeaders.isTrailling
-    val headers = responseHeaders.getHeaders
-    val cacheableHeaders = CacheableHttpResponseHeaders(trailing, headers)
-    maybeHeaders = Some(cacheableHeaders)
-    builder.accumulate(cacheableHeaders)
+  def accumulate(responseHeaders: HttpResponseHeaders): CacheableResponseBuilder = {
+    val cacheableHeaders = CacheableHttpResponseHeaders(responseHeaders.isTrailling, responseHeaders.getHeaders)
+    headers = Some(cacheableHeaders)
+    this
   }
 
-  def accumulate(bodyPart: HttpResponseBodyPart) = {
+  def accumulate(bodyPart: HttpResponseBodyPart): CacheableResponseBuilder = {
     val cacheableBodypart = new CacheableHttpResponseBodyPart(bodyPart.getBodyPartBytes, bodyPart.isLast)
-    builder.accumulate(cacheableBodypart)
+    bodyParts = bodyParts :+ cacheableBodypart
+    this
   }
 
   def reset() = {
-    builder.reset()
-    maybeHeaders = None
-    maybeStatus = None
+    headers = None
+    status = None
+    bodyParts = Nil
   }
 
   def build: CacheableResponse = {
-    builder.build().asInstanceOf[CacheableResponse]
+    import scala.collection.JavaConverters._
+    new CacheableResponse(status.get, headers.get, bodyParts.asJava)
   }
 }
 
