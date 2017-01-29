@@ -8,9 +8,8 @@ import java.util.concurrent.Executors
 
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
-import play.api.libs.ws.ahc.StandaloneAhcWSClient
 import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
-import play.shaded.ahc.org.asynchttpclient._
+import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse, _ }
 
 import scala.concurrent.Await
 
@@ -28,7 +27,8 @@ trait TimeoutResponse {
 /**
  * A provider that pulls a response from the cache.
  */
-class CachingWSClient(client: StandaloneAhcWSClient, val cache: AhcWSCache) extends TimeoutResponse
+class CachingAsyncHttpClient(client: AsyncHttpClient, val cache: AhcWSCache)
+    extends TimeoutResponse
     with Debug {
 
   private val cacheThreadPool = Executors.newFixedThreadPool(2)
@@ -49,7 +49,7 @@ class CachingWSClient(client: StandaloneAhcWSClient, val cache: AhcWSCache) exte
   }
 
   @throws(classOf[IOException])
-  protected def executeRequest[T](request: Request, handler: AsyncHandler[T]): ListenableFuture[T] = {
+  def executeRequest[T](request: Request, handler: AsyncHandler[T]): ListenableFuture[T] = {
     handler match {
       case asyncCompletionHandler: AsyncCompletionHandler[T] =>
         execute(request, asyncCompletionHandler, null)
@@ -127,7 +127,7 @@ class CachingWSClient(client: StandaloneAhcWSClient, val cache: AhcWSCache) exte
         // Run a validation request in a future (which will update the cache later)...
         val response = entry.response
         val validationRequest = buildValidationRequest(request, response)
-        client.executeRequest(validationRequest, backgroundAsyncHandler(validationRequest))
+        client.executeRequest(validationRequest, backgroundAsyncHandler[AHCResponse](validationRequest))
 
         // ...AND return the response from cache.
         val staleResponse = cache.generateCachedResponse(request, entry, currentAge, isFresh = false)
@@ -152,11 +152,6 @@ class CachingWSClient(client: StandaloneAhcWSClient, val cache: AhcWSCache) exte
         val validationRequest = buildValidationRequest(request, response)
         client.executeRequest(validationRequest, cacheAsyncHandler(request, handler, Some(action)))
     }
-  }
-
-  protected def serveTimeout[T](request: Request, handler: AsyncHandler[T]): CacheFuture[T] = {
-    val timeoutResponse = generateTimeoutResponse(request)
-    executeFromCache(handler, request, timeoutResponse)
   }
 
   protected def executeFromCache[T](handler: AsyncHandler[T], request: Request, response: CacheableResponse): CacheFuture[T] = {
@@ -215,12 +210,17 @@ class CachingWSClient(client: StandaloneAhcWSClient, val cache: AhcWSCache) exte
     builder.build()
   }
 
-  protected def cacheAsyncHandler[T](request: Request, handler: AsyncCompletionHandler[T], action: Option[ResponseServeAction] = None): AsyncCachingHandler[T] = {
-    new AsyncCachingHandler(request, handler, cache, action)
-  }
-
   protected def backgroundAsyncHandler[T](request: Request): BackgroundAsyncHandler[T] = {
     new BackgroundAsyncHandler(request, cache)
+  }
+
+  protected def serveTimeout[T](request: Request, handler: AsyncHandler[T]): CacheFuture[T] = {
+    val timeoutResponse = generateTimeoutResponse(request)
+    executeFromCache(handler, request, timeoutResponse)
+  }
+
+  protected def cacheAsyncHandler[T](request: Request, handler: AsyncCompletionHandler[T], action: Option[ResponseServeAction] = None): AsyncCachingHandler[T] = {
+    new AsyncCachingHandler(request, handler, cache, action)
   }
 }
 

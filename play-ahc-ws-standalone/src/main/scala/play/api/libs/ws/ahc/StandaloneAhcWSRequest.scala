@@ -203,7 +203,7 @@ case class StandaloneAhcWSRequest(
 
   override def execute(): Future[Response] = {
     val executor = filterWSRequestExecutor(WSRequestExecutor { request =>
-      AhcEngine.execute(client, request.asInstanceOf[StandaloneAhcWSRequest].buildRequest())
+      client.execute(request.asInstanceOf[StandaloneAhcWSRequest].buildRequest())
     })
 
     executor(this)

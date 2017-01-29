@@ -6,11 +6,12 @@ package play.api.libs.ws.ahc
 import akka.stream.Materializer
 import com.typesafe.sslconfig.ssl.SystemConfiguration
 import com.typesafe.sslconfig.ssl.debug.DebugConfiguration
+import play.api.libs.ws.ahc.cache.{ AhcWSCache, CachingAsyncHttpClient }
 import play.api.libs.ws.{ EmptyBody, StandaloneWSClient, StandaloneWSRequest }
 import play.shaded.ahc.org.asynchttpclient._
 
 import scala.collection.immutable.TreeMap
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ ExecutionContext, Future }
 
 /**
  * A WS client backed by an AsyncHttpClient.
@@ -25,7 +26,30 @@ case class StandaloneAhcWSClient(asyncHttpClient: AsyncHttpClient)(implicit val 
 
   private[libs] def executionContext: ExecutionContext = materializer.executionContext
 
-  private[libs] def executeRequest[T](request: Request, handler: AsyncHandler[T]): ListenableFuture[T] = asyncHttpClient.executeRequest(request, handler)
+  private val cachingClient = new CachingAsyncHttpClient(asyncHttpClient, AhcWSCache())
+
+  private[libs] def execute(request: Request): Future[StandaloneAhcWSResponse] = {
+    import play.shaded.ahc.org.asynchttpclient.{ AsyncCompletionHandler, Response => AHCResponse }
+
+    import scala.concurrent.Promise
+    val result = Promise[StandaloneAhcWSResponse]()
+
+    cachingClient.executeRequest(request, new AsyncCompletionHandler[AHCResponse]() {
+      override def onCompleted(response: AHCResponse): AHCResponse = {
+        result.success(StandaloneAhcWSResponse(response))
+        response
+      }
+
+      override def onThrowable(t: Throwable): Unit = {
+        result.failure(t)
+      }
+    })
+    result.future
+  }
+
+  private[libs] def executeRequest[T](request: Request, handler: AsyncHandler[T]): ListenableFuture[T] = {
+    asyncHttpClient.executeRequest(request, handler)
+  }
 
   def close(): Unit = asyncHttpClient.close()
 
