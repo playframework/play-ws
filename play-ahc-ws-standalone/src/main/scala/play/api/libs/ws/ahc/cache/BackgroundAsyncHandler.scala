@@ -1,4 +1,4 @@
-package play.api.libs.ws.ning.cache
+package play.api.libs.ws.ahc.cache
 
 import play.shaded.ahc.org.asynchttpclient._
 import com.typesafe.play.cachecontrol.ResponseCachingActions.{ DoCacheResponse, DoNotCacheResponse }

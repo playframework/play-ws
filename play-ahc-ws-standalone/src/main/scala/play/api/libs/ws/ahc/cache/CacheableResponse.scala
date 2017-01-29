@@ -1,4 +1,4 @@
-package play.api.libs.ws.ning.cache
+package play.api.libs.ws.ahc.cache
 
 import java.io.{ ByteArrayInputStream, IOException, InputStream }
 import java.net.{ MalformedURLException, SocketAddress }

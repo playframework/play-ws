@@ -57,7 +57,5 @@ object Dependencies {
       playJson ++
       specsBuild
 
-  val standaloneAhcWSDependencies = slf4j ++ slf4jtest.map(_ % Test) ++ specsBuild
-
-  val standaloneCacheDependencies = cachecontrol ++ guava
+  val standaloneAhcWSDependencies = cachecontrol ++ guava ++ slf4j ++ slf4jtest.map(_ % Test) ++ specsBuild
 }

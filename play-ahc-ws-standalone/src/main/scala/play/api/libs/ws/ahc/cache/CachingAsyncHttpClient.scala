@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2009-2015 Typesafe Inc. <http://www.typesafe.com>
  */
-package play.api.libs.ws.ning.cache
+package play.api.libs.ws.ahc.cache
 
 import java.io._
 import java.util.concurrent.Executors

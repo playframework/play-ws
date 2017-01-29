@@ -1,4 +1,4 @@
-package play.api.libs.ws.ning.cache
+package play.api.libs.ws.ahc.cache
 
 import java.util.concurrent.{ Callable, CompletableFuture, Executor, TimeUnit }
 import java.util.function.BiConsumer

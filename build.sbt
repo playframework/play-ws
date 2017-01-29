@@ -260,33 +260,6 @@ lazy val `play-ahc-ws-standalone` = project
   )
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
-
-lazy val `play-ws-cache` = project
-  .in(file("play-ws-cache"))
-  .configs(IntegrationTest)
-  .settings(commonSettings)
-  .settings(formattingSettings)
-  .settings(Defaults.itSettings: _*)
-  .settings(SbtScalariform.scalariformSettingsWithIt)
-  .settings(
-    testOptions in IntegrationTest := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
-    libraryDependencies ++= slf4jtest.map(_ % "it,test"),
-    libraryDependencies ++= Seq(
-      "com.novocode" % "junit-interface" % "0.11" % "it,test"
-    ),
-    libraryDependencies ++= akkaHttp.map(_ % "it,test"),
-    libraryDependencies ++= Seq(
-      "specs2-core",
-      "specs2-junit",
-      "specs2-mock"
-    ).map("org.specs2" %% _ % specsVersion % "it,test")
-  )
-  .settings(libraryDependencies ++= standaloneCacheDependencies)
-  .settings(shadedAhcSettings)
-  .settings(shadedOAuthSettings)
-  .dependsOn(`play-ahc-ws-standalone`)
-  .disablePlugins(sbtassembly.AssemblyPlugin)
-
 //---------------------------------------------------------------
 // Root Project
 //---------------------------------------------------------------
@@ -300,8 +273,7 @@ lazy val root = project
   .aggregate(
     `shaded`,
     `play-ws-standalone`,
-    `play-ahc-ws-standalone`,
-    `play-ws-cache`
+    `play-ahc-ws-standalone`
   )
   .disablePlugins(sbtassembly.AssemblyPlugin)
 

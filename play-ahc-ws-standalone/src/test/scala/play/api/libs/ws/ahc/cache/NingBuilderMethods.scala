@@ -1,4 +1,4 @@
-package play.api.libs.ws.ning.cache
+package play.api.libs.ws.ahc.cache
 
 import play.api.libs.ws.ahc.AhcConfigBuilder
 import play.shaded.ahc.io.netty.handler.codec.http.{ DefaultHttpHeaders, HttpHeaders }

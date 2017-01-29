@@ -1,4 +1,4 @@
-package play.api.libs.ws.ning.cache
+package play.api.libs.ws.ahc.cache
 
 import com.typesafe.play.cachecontrol.HeaderName
 import org.specs2.mutable.Specification

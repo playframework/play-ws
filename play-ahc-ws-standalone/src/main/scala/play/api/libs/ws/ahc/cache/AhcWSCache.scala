@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2009-2015 Typesafe Inc. <http://www.typesafe.com>
  */
-package play.api.libs.ws.ning.cache
+package play.api.libs.ws.ahc.cache
 
 import java.net.URI
 
@@ -271,7 +271,7 @@ class AhcWSCache(underlying: GCache[CacheKey, CacheEntry]) extends CacheDefaults
    */
   def calculateSecondaryKeys(request: Request, response: Response): Option[Map[HeaderName, Seq[String]]] = {
     val cacheRequest = generateCacheRequest(request)
-    val headers = ningHeadersToMap(response.getHeaders).map {
+    val headers = headersToMap(response.getHeaders).map {
       case (name, values) =>
         (HeaderName(name), values)
     }
@@ -408,7 +408,7 @@ class AhcWSCache(underlying: GCache[CacheKey, CacheEntry]) extends CacheDefaults
 
   protected def generateCacheRequest(request: Request): CacheRequest = {
     val uri = request.getUri.toJavaNetURI
-    val headers = ningHeadersToMap(request.getHeaders).map {
+    val headers = headersToMap(request.getHeaders).map {
       case (name, values) =>
         (HeaderName(name), values)
     }
@@ -420,7 +420,7 @@ class AhcWSCache(underlying: GCache[CacheKey, CacheEntry]) extends CacheDefaults
     val uri: URI = response.getUri.toJavaNetURI
     val status: Int = response.getStatusCode
     val responseHeaders = response.getHeaders
-    val headers = ningHeadersToMap(responseHeaders).map {
+    val headers = headersToMap(responseHeaders).map {
       case (name, values) =>
         (HeaderName(name), values)
     }
@@ -435,7 +435,7 @@ class AhcWSCache(underlying: GCache[CacheKey, CacheEntry]) extends CacheDefaults
 
   protected def generateOriginResponse(request: Request, status: Int, responseHeaders: HttpResponseHeaders): OriginResponse = {
     val uri = request.getUri.toJavaNetURI
-    val headers = ningHeadersToMap(responseHeaders.getHeaders).map {
+    val headers = headersToMap(responseHeaders.getHeaders).map {
       case (name, values) =>
         (HeaderName(name), values)
     }

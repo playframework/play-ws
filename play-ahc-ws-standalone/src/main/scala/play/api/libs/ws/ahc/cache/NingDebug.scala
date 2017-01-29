@@ -1,24 +1,23 @@
-package play.api.libs.ws.ning.cache
+package play.api.libs.ws.ahc.cache
 
+import play.api.libs.ws.ahc.CaseInsensitiveOrdered
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import play.shaded.ahc.org.asynchttpclient._
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable
+import scala.collection.immutable.TreeMap
 
 /**
  * Useful Ning header mapping.
  */
 trait NingUtilities {
 
-  def ningHeadersToMap(headers: java.util.Map[String, java.util.Collection[String]]): Map[String, Seq[String]] =
-    mapAsScalaMapConverter(headers).asScala.map(e => e._1 -> e._2.asScala.toSeq).toMap
-
-  // XXX This is repeated in the AHC module, should remove
-  def ningHeadersToMap(headers: HttpHeaders): Map[String, Seq[String]] = {
-    val res: mutable.Seq[(String, String)] = headers.entries().asScala.map(e => e.getKey -> e.getValue)
-    val map = res.groupBy(_._1).map { case (k, v) => (k, v.map(_._2)) }
-    map // XXX expects CaseInsensitiveOrdered?
+  def headersToMap(headers: HttpHeaders): TreeMap[String, Seq[String]] = {
+    val mutableMap = scala.collection.mutable.HashMap[String, Seq[String]]()
+    headers.names().asScala.foreach { name =>
+      mutableMap.put(name, headers.getAll(name).asScala)
+    }
+    TreeMap[String, Seq[String]]()(CaseInsensitiveOrdered) ++ mutableMap
   }
 
 }
@@ -61,7 +60,7 @@ trait NingDebug extends NingUtilities {
       case crh: CacheableHttpResponseHeaders =>
         crh.toString
       case rh =>
-        s"HttpResponseHeaders(${ningHeadersToMap(rh.getHeaders)})"
+        s"HttpResponseHeaders(${headersToMap(rh.getHeaders)})"
     }.getOrElse("null")
   }
 
