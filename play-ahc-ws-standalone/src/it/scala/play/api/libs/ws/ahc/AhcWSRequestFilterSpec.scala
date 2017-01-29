@@ -7,16 +7,15 @@ package play.api.libs.ws.ahc
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.headers.RawHeader
-import akka.http.scaladsl.model.{ ContentTypes, HttpEntity }
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.stream.ActorMaterializer
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.matcher.FutureMatchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
-import play.api.libs.ws.{ StandaloneWSRequest, StandaloneWSResponse, _ }
+import play.api.libs.ws._
 
 import scala.collection.mutable
-import scala.concurrent.Future
 import scala.concurrent.duration._
 
 class AhcWSRequestFilterSpec(implicit ee: ExecutionEnv) extends Specification with AfterAll with FutureMatchers {

@@ -15,7 +15,7 @@ import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
 import play.shaded.ahc.org.asynchttpclient.proxy.{ ProxyServer => AHCProxyServer }
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils
-import play.shaded.ahc.org.asynchttpclient.{ Realm, Response => AHCResponse, _ }
+import play.shaded.ahc.org.asynchttpclient._
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.TreeMap

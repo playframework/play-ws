@@ -1,16 +1,12 @@
 package play.api.libs.ws.ahc.cache
 
-import play.api.libs.ws.ahc.{ AhcUtilities, CaseInsensitiveOrdered }
-import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
+import play.api.libs.ws.ahc.AhcUtilities
 import play.shaded.ahc.org.asynchttpclient._
 
-import scala.collection.JavaConverters._
-import scala.collection.immutable.TreeMap
-
 /**
- * Ning header debugging trait.
+ * Debugging trait.
  */
-trait Debug extends AhcUtilities {
+private[ahc] trait Debug extends AhcUtilities {
 
   def debug(cfg: AsyncHttpClientConfig): String = {
     s"AsyncHttpClientConfig(requestFilters = ${cfg.getRequestFilters})"

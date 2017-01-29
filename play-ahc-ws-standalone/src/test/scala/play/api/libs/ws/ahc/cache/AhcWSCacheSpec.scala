@@ -3,7 +3,7 @@ package play.api.libs.ws.ahc.cache
 import com.typesafe.play.cachecontrol.HeaderName
 import org.specs2.mutable.Specification
 
-class NingWSCacheSpec extends Specification with NingBuilderMethods {
+class AhcWSCacheSpec extends Specification with CacheBuilderMethods {
 
   "calculateSecondaryKeys" should {
 
