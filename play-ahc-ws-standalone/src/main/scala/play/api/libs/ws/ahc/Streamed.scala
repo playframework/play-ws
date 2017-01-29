@@ -13,7 +13,7 @@ import play.api.libs.ws.{ DefaultWSResponseHeaders, StreamedResponse, WSResponse
 
 import scala.concurrent.{ Future, Promise }
 
-private[play] object Streamed {
+private[play] object Streamed extends AhcUtilities {
 
   def execute(client: AsyncHttpClient, request: Request): Future[StreamedResponse] = {
     // XXX Workaround until we can use trampoline context
@@ -58,7 +58,7 @@ private[play] object Streamed {
       if (this.publisher != null) State.ABORT
       else {
         val headers = h.getHeaders
-        responseHeaders = DefaultWSResponseHeaders(statusCode, StandaloneAhcWSRequest.ahcHeadersToMap(headers))
+        responseHeaders = DefaultWSResponseHeaders(statusCode, headersToMap(headers))
         State.CONTINUE
       }
     }

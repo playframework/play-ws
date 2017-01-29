@@ -15,7 +15,7 @@ class AsyncCacheableConnection[T](
   request: Request,
   response: CacheableResponse,
   future: ListenableFuture[T])
-    extends Callable[T] with NingDebug {
+    extends Callable[T] with Debug {
 
   import AsyncCacheableConnection._
 

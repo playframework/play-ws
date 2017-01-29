@@ -29,7 +29,7 @@ trait TimeoutResponse {
  * A provider that pulls a response from the cache.
  */
 class CachingWSClient(client: StandaloneAhcWSClient, val cache: AhcWSCache) extends TimeoutResponse
-    with NingDebug {
+    with Debug {
 
   private val cacheThreadPool = Executors.newFixedThreadPool(2)
 

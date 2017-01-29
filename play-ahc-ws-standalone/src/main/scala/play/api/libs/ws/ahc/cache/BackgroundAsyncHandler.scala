@@ -11,7 +11,7 @@ import scala.concurrent.Await
  */
 class BackgroundAsyncHandler[T](request: Request, cache: AhcWSCache)
     extends AsyncHandler[T]
-    with NingDebug {
+    with Debug {
 
   import BackgroundAsyncHandler.logger
 

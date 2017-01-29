@@ -41,7 +41,7 @@ case class CacheEntry(
 /**
  * Central cache used in a NingWSClient.
  */
-class AhcWSCache(underlying: GCache[CacheKey, CacheEntry]) extends CacheDefaults with NingDebug {
+class AhcWSCache(underlying: GCache[CacheKey, CacheEntry]) extends CacheDefaults with Debug {
 
   import AhcWSCache._
 

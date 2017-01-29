@@ -18,7 +18,7 @@ class AsyncCachingHandler[T](
   maybeAction: Option[ResponseServeAction])
     extends AsyncHandler[T]
     with TimeoutResponse
-    with NingDebug {
+    with Debug {
 
   private val DATE = "Date"
 
