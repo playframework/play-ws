@@ -229,8 +229,6 @@ lazy val `play-ws-standalone` = project
 //---------------------------------------------------------------
 
 // Standalone implementation using AsyncHttpClient
-// Note that this uses integration tests in the suite, so has
-// some extra bells and whistles.
 lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
   .settings(commonSettings)
