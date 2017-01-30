@@ -4,8 +4,8 @@
 package play.api.libs.ws.ahc.cache
 
 import java.net.URI
+import javax.cache.{ Cache, Caching }
 
-import com.google.common.cache.{ Cache => GCache, CacheBuilder => GCacheBuilder }
 import com.typesafe.play.cachecontrol._
 import org.joda.time.{ DateTime, Seconds }
 import org.slf4j.LoggerFactory
@@ -14,36 +14,18 @@ import play.shaded.ahc.org.asynchttpclient._
 
 import scala.concurrent.Future
 
-/*
-https://tools.ietf.org/html/rfc7234#section-2
-
-The primary cache key consists of the request method and target URI.
- However, since HTTP caches in common use today are typically limited
- to caching responses to GET, many caches simply decline other methods
- and use only the URI as the primary cache key.
-*/
-
 /**
- * A cache entry with an optional expiry time
+ * Central HTTP cache.  This keeps a cache of HTTP responses according to
+ * https://tools.ietf.org/html/rfc7234#section-2
+ *
+ * The primary cache key consists of the request method and target URI.
+ * However, since HTTP caches in common use today are typically limited
+ * to caching responses to GET, many caches simply decline other methods
+ * and use only the URI as the primary cache key.
  */
-case class CacheEntry(
-    response: CacheableResponse,
-    requestMethod: String,
-    nominatedHeaders: Map[HeaderName, Seq[String]],
-    expiresAt: Option[DateTime]) {
+class AhcHttpCache(underlying: Cache[CacheKey, CacheEntry]) extends CacheDefaults with Debug {
 
-  /**
-   * Has the entry expired yet?
-   */
-  def isExpired: Boolean = expiresAt.exists(_.isBeforeNow)
-}
-
-/**
- * Central cache used in a NingWSClient.
- */
-class AhcWSCache(underlying: GCache[CacheKey, CacheEntry]) extends CacheDefaults with Debug {
-
-  import AhcWSCache._
+  private val logger = LoggerFactory.getLogger(this.getClass)
 
   private val responseCachingCalculator = new ResponseCachingCalculator(this)
 
@@ -67,7 +49,7 @@ class AhcWSCache(underlying: GCache[CacheKey, CacheEntry]) extends CacheDefaults
   def get(key: CacheKey): Future[Option[CacheEntry]] = {
     logger.debug(s"get: key = $key")
     require(key != null, "key is null")
-    val entry = Option(underlying.getIfPresent(key))
+    val entry = Option(underlying.get(key))
     Future.successful(entry)
   }
 
@@ -81,7 +63,7 @@ class AhcWSCache(underlying: GCache[CacheKey, CacheEntry]) extends CacheDefaults
 
   def remove(key: CacheKey): Future[Unit] = {
     require(key != null, "key is null")
-    Future.successful(underlying.invalidate(key))
+    Future.successful(underlying.remove(key))
   }
 
   /**
@@ -89,7 +71,7 @@ class AhcWSCache(underlying: GCache[CacheKey, CacheEntry]) extends CacheDefaults
    */
   def invalidateKey(key: CacheKey): Unit = {
     // mark any caches as stale by replacing the date with TSE
-    Option(underlying.getIfPresent(key)).foreach { entry =>
+    Option(underlying.get(key)).foreach { entry =>
       val expiredEntry = entry.copy(expiresAt = Some(HttpDate.fromEpochSeconds(0)))
       put(key, expiredEntry)
     }
@@ -250,7 +232,7 @@ class AhcWSCache(underlying: GCache[CacheKey, CacheEntry]) extends CacheDefaults
     }
   }
 
-  protected def isNonErrorResponse(response: CacheableResponse) = {
+  protected def isNonErrorResponse(response: CacheableResponse): Boolean = {
     //Here, a "non-error response" is one with a 2xx (Successful) or 3xx
     //(Redirection) status code.
     response.getStatusCode match {
@@ -465,27 +447,28 @@ class AhcWSCache(underlying: GCache[CacheKey, CacheEntry]) extends CacheDefaults
   }
 
   override def toString: String = {
-    s"NingWSCache(${underlying.stats()})"
+    s"AhcHttpCache(${underlying})"
   }
 }
 
-object AhcWSCache {
-
-  private val logger = LoggerFactory.getLogger("play.api.libs.ws.ning.cache.NingWSCache")
+object AhcHttpCache {
 
   /**
-   * Create a new Guava cache
+   * Creates a new cache using the default caching provider
+   * and "play-ws-cache" as the default cache.
    */
-  def apply(): AhcWSCache = {
-    val cacheBuilder = GCacheBuilder.newBuilder()
-    val gcache: GCache[CacheKey, CacheEntry] = cacheBuilder.build[CacheKey, CacheEntry]()
-    apply(gcache)
+  def apply(): AhcHttpCache = {
+    val cacheManager = Caching.getCachingProvider.getCacheManager
+    val simpleCache = cacheManager.getCache("play-ws-cache", classOf[CacheKey], classOf[CacheEntry])
+    apply(simpleCache)
   }
 
   /**
-   * Create a new cache utilizing the given underlying Guava cache.
-   * @param underlying a Guava cache
+   * Creates a new cache utilizing the given JSR 107 cache.
+   * @param underlying a JSR 107 cache
    */
-  def apply(underlying: GCache[CacheKey, CacheEntry]): AhcWSCache = new AhcWSCache(underlying)
+  def apply(underlying: Cache[CacheKey, CacheEntry]): AhcHttpCache = {
+    new AhcHttpCache(underlying)
+  }
 
 }

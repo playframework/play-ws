@@ -10,7 +10,7 @@ object Dependencies {
     "specs2-core",
     "specs2-junit",
     "specs2-mock"
-  ).map("org.specs2" %% _ % specsVersion % Test)
+  ).map("org.specs2" %% _ % specsVersion)
 
   // Use the published milestone
   val playJsonVersion = "2.6.0-M1"
@@ -50,12 +50,23 @@ object Dependencies {
   val akka = Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion)
   val akkaHttp = Seq("com.typesafe.akka" %% "akka-http" % "10.0.1")
 
+  val junitInterface = Seq(
+    "com.novocode" % "junit-interface" % "0.11"
+  )
+
+  // https://mvnrepository.com/artifact/com.github.ben-manes.caffeine/jcache
+  val caffeine = Seq(
+    "com.github.ben-manes.caffeine" % "caffeine" % "2.3.5",
+    "com.github.ben-manes.caffeine" % "jcache" % "2.3.5"
+  )
+
   val standaloneApiWSDependencies = javaxInject ++
       sslConfigCore ++
       akka ++
       scalaXml ++
-      playJson ++
-      specsBuild
+      playJson
 
-  val standaloneAhcWSDependencies = cachecontrol ++ guava ++ slf4j ++ slf4jtest ++ specsBuild
+  val standaloneAhcWSDependencies = cachecontrol ++
+    caffeine ++
+    slf4j
 }

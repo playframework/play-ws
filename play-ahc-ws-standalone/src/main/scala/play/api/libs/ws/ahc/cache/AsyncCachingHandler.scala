@@ -14,7 +14,7 @@ import scala.concurrent.duration.Duration
 class AsyncCachingHandler[T](
   request: Request,
   handler: AsyncCompletionHandler[T],
-  cache: AhcWSCache,
+  cache: AhcHttpCache,
   maybeAction: Option[ResponseServeAction])
     extends AsyncHandler[T]
     with TimeoutResponse

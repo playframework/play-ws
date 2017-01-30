@@ -8,7 +8,7 @@ import play.shaded.ahc.org.asynchttpclient.{ Request, RequestBuilder }
  */
 trait CacheBuilderMethods {
 
-  def generateCache: AhcWSCache = AhcWSCache()
+  def generateCache: AhcHttpCache = AhcHttpCache()
 
   def generateRequest(url: String)(block: HttpHeaders => HttpHeaders): Request = {
     val requestBuilder = new RequestBuilder()

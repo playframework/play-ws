@@ -27,7 +27,7 @@ trait TimeoutResponse {
 /**
  * A provider that pulls a response from the cache.
  */
-class CachingAsyncHttpClient(client: AsyncHttpClient, val cache: AhcWSCache)
+class CachingAsyncHttpClient(client: AsyncHttpClient, cache: AhcHttpCache)
     extends TimeoutResponse
     with Debug {
 

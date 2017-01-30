@@ -9,7 +9,7 @@ import scala.concurrent.Await
 /**
  * An async handler that accumulates a response and stores it to cache in the background.
  */
-class BackgroundAsyncHandler[T](request: Request, cache: AhcWSCache)
+class BackgroundAsyncHandler[T](request: Request, cache: AhcHttpCache)
     extends AsyncHandler[T]
     with Debug {
 

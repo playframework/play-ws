@@ -220,6 +220,7 @@ lazy val shaded = Project(id = "shaded", base = file("shaded") )
 lazy val `play-ws-standalone` = project
   .in(file("play-ws-standalone"))
   .settings(commonSettings)
+  .settings(libraryDependencies ++= (specsBuild ++ junitInterface).map(_ % Test))
   .settings(libraryDependencies ++= standaloneApiWSDependencies)
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
@@ -232,23 +233,12 @@ lazy val `play-ws-standalone` = project
 // some extra bells and whistles.
 lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
-  .configs(IntegrationTest)
   .settings(commonSettings)
   .settings(formattingSettings)
-  .settings(Defaults.itSettings: _*)
-  .settings(SbtScalariform.scalariformSettingsWithIt)
+  .settings(SbtScalariform.scalariformSettings)
   .settings(
-    testOptions in IntegrationTest := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
-    libraryDependencies ++= slf4jtest.map(_ % "it,test"),
-    libraryDependencies ++= Seq(
-      "com.novocode" % "junit-interface" % "0.11" % "it,test"
-    ),
-    libraryDependencies ++= akkaHttp.map(_ % "it,test"),
-    libraryDependencies ++= Seq(
-      "specs2-core",
-      "specs2-junit",
-      "specs2-mock"
-    ).map("org.specs2" %% _ % specsVersion % "it,test")
+    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
+    libraryDependencies ++= (slf4jtest ++ specsBuild ++ junitInterface).map(_ % Test)
   )
   .settings(libraryDependencies ++= standaloneAhcWSDependencies)
   .settings(shadedAhcSettings)
@@ -260,16 +250,36 @@ lazy val `play-ahc-ws-standalone` = project
   )
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
+lazy val `integration-tests` = project.in(file("integration-tests"))
+  .settings(commonSettings)
+  .settings(formattingSettings)
+  .settings(SbtScalariform.scalariformSettings)
+  .settings(
+    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
+    libraryDependencies ++= (specsBuild ++ akkaHttp).map(_ % Test)
+  )
+  .settings(libraryDependencies ++= standaloneAhcWSDependencies)
+  .settings(shadedAhcSettings)
+  .settings(shadedOAuthSettings)
+  .dependsOn(
+    `play-ahc-ws-standalone`
+  )
+  .disablePlugins(sbtassembly.AssemblyPlugin)
+
 //---------------------------------------------------------------
 // Root Project
 //---------------------------------------------------------------
 
 lazy val root = project
   .in(file("."))
+  .settings(name := "play-ws-standalone-root")
   .settings(commonSettings)
   .settings(formattingSettings)
   .settings(disableDocs)
   .settings(disablePublishing)
+  .dependsOn(
+    `integration-tests`
+  )
   .aggregate(
     `shaded`,
     `play-ws-standalone`,
