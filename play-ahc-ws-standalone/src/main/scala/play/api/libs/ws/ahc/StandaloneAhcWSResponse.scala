@@ -17,7 +17,7 @@ import scala.xml.Elem
 /**
  * A WS HTTP response.
  */
-case class StandaloneAhcWSResponse(ahcResponse: AHCResponse) extends StandaloneWSResponse {
+case class StandaloneAhcWSResponse(ahcResponse: AHCResponse) extends StandaloneWSResponse with AhcUtilities {
 
   import play.api.libs.json._
 
@@ -26,7 +26,7 @@ case class StandaloneAhcWSResponse(ahcResponse: AHCResponse) extends StandaloneW
    */
   lazy val allHeaders: Map[String, Seq[String]] = {
     val headers: HttpHeaders = ahcResponse.getHeaders
-    StandaloneAhcWSRequest.ahcHeadersToMap(headers)
+    headersToMap(headers)
   }
 
   /**

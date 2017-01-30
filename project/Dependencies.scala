@@ -1,7 +1,6 @@
 /*
  * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
  */
-import Dependencies.slf4jtest
 import sbt._
 
 object Dependencies {
@@ -20,7 +19,7 @@ object Dependencies {
     "com.typesafe.play" %% "play-functional" % playJsonVersion
   )
 
-  val slf4j = Seq("org.slf4j" % "slf4j-api" % "1.7.16")
+  val slf4j = Seq("org.slf4j" % "slf4j-api" % "1.7.22")
 
   //
   val slf4jtest = Seq("uk.org.lidalia" % "slf4j-test" % "1.1.0")
@@ -36,7 +35,13 @@ object Dependencies {
   val signpostVersion = "1.2.1.2"
   val oauth = Seq("oauth.signpost" % "signpost-core" % signpostVersion)
 
-  val asyncHttpClientVersion = "2.0.11"
+  val cachecontrolVersion = "1.1.1"
+  val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % cachecontrolVersion)
+
+  val guavaVersion = "21.0"
+  val guava = Seq("com.google.guava" % "guava" % guavaVersion)
+
+  val asyncHttpClientVersion = "2.0.27"
   val asyncHttpClient = Seq(
     "org.asynchttpclient" % "async-http-client" % asyncHttpClientVersion excludeAll ExclusionRule(organization = "org.slf4j")
   )
@@ -52,6 +57,5 @@ object Dependencies {
       playJson ++
       specsBuild
 
-  val standaloneAhcWSDependencies = slf4j ++ slf4jtest.map(_ % Test) ++ specsBuild
-
+  val standaloneAhcWSDependencies = cachecontrol ++ guava ++ slf4j ++ slf4jtest ++ specsBuild
 }

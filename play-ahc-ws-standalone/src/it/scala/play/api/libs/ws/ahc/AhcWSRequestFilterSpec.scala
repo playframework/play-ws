@@ -13,10 +13,9 @@ import org.specs2.concurrent.ExecutionEnv
 import org.specs2.matcher.FutureMatchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
-import play.api.libs.ws.{ StandaloneWSRequest, StandaloneWSResponse, _ }
+import play.api.libs.ws._
 
 import scala.collection.mutable
-import scala.concurrent.Future
 import scala.concurrent.duration._
 
 class AhcWSRequestFilterSpec(implicit ee: ExecutionEnv) extends Specification with AfterAll with FutureMatchers {

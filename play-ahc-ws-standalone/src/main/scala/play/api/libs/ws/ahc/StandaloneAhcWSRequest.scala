@@ -15,39 +15,12 @@ import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
 import play.shaded.ahc.org.asynchttpclient.proxy.{ ProxyServer => AHCProxyServer }
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils
-import play.shaded.ahc.org.asynchttpclient.{ Realm, Response => AHCResponse, _ }
+import play.shaded.ahc.org.asynchttpclient._
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.TreeMap
+import scala.concurrent.Future
 import scala.concurrent.duration.Duration
-import scala.concurrent.{ Future, Promise }
-
-case object StandaloneAhcWSRequest {
-  private[libs] def ahcHeadersToMap(headers: HttpHeaders): TreeMap[String, Seq[String]] = {
-    val mutableMap = scala.collection.mutable.HashMap[String, Seq[String]]()
-    headers.names().asScala.foreach { name =>
-      mutableMap.put(name, headers.getAll(name).asScala)
-    }
-    TreeMap[String, Seq[String]]()(CaseInsensitiveOrdered) ++ mutableMap
-  }
-
-  private[libs] def execute(request: Request, client: StandaloneAhcWSClient): Future[StandaloneAhcWSResponse] = {
-    import play.shaded.ahc.org.asynchttpclient.AsyncCompletionHandler
-    val result = Promise[StandaloneAhcWSResponse]()
-
-    client.executeRequest(request, new AsyncCompletionHandler[AHCResponse]() {
-      override def onCompleted(response: AHCResponse): AHCResponse = {
-        result.success(StandaloneAhcWSResponse(response))
-        response
-      }
-
-      override def onThrowable(t: Throwable): Unit = {
-        result.failure(t)
-      }
-    })
-    result.future
-  }
-}
 
 /**
  * A Ahc WS Request.
@@ -67,7 +40,7 @@ case class StandaloneAhcWSRequest(
     proxyServer: Option[WSProxyServer] = None,
     disableUrlEncoding: Option[Boolean] = None,
     private val filters: Seq[WSRequestFilter] = Nil
-)(implicit materializer: Materializer) extends StandaloneWSRequest {
+)(implicit materializer: Materializer) extends StandaloneWSRequest with AhcUtilities {
   override type Self = StandaloneWSRequest
   override type Response = StandaloneWSResponse
 
@@ -230,7 +203,7 @@ case class StandaloneAhcWSRequest(
 
   override def execute(): Future[Response] = {
     val executor = filterWSRequestExecutor(WSRequestExecutor { request =>
-      StandaloneAhcWSRequest.execute(request.asInstanceOf[StandaloneAhcWSRequest].buildRequest(), client)
+      client.execute(request.asInstanceOf[StandaloneAhcWSRequest].buildRequest())
     })
 
     executor(this)
@@ -241,7 +214,7 @@ case class StandaloneAhcWSRequest(
   }
 
   override def stream(): Future[StreamedResponse] = {
-    Streamed.execute(client.underlying[AsyncHttpClient], buildRequest())
+    Streamed.execute(client.asyncHttpClient, buildRequest())
   }
 
   /**
@@ -257,7 +230,7 @@ case class StandaloneAhcWSRequest(
    * so may return extra headers that were not directly input.
    */
   def requestHeaders: Map[String, Seq[String]] = {
-    StandaloneAhcWSRequest.ahcHeadersToMap(buildRequest().getHeaders)
+    headersToMap(buildRequest().getHeaders)
   }
 
   /**
