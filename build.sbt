@@ -238,7 +238,7 @@ lazy val `play-ahc-ws-standalone` = project
   .settings(SbtScalariform.scalariformSettings)
   .settings(
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
-    libraryDependencies ++= (slf4jtest ++ specsBuild ++ junitInterface).map(_ % Test)
+    libraryDependencies ++= (slf4jtest ++ specsBuild ++ junitInterface ++ caffeine).map(_ % Test)
   )
   .settings(libraryDependencies ++= standaloneAhcWSDependencies)
   .settings(shadedAhcSettings)
