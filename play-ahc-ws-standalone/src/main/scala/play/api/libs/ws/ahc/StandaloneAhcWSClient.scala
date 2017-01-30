@@ -60,7 +60,9 @@ case class StandaloneAhcWSClient(asyncHttpClient: AsyncHttpClient, httpCache: Op
     asyncHttpClient.executeRequest(request, handler)
   }
 
-  def close(): Unit = asyncHttpClient.close()
+  def close(): Unit = {
+    asyncHttpClient.close()
+  }
 
   def url(url: String): StandaloneWSRequest = StandaloneAhcWSRequest(this, url, "GET", EmptyBody, TreeMap()(CaseInsensitiveOrdered), Map(), None, None, None, None, None, None, None)
 }

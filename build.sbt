@@ -256,7 +256,7 @@ lazy val `integration-tests` = project.in(file("integration-tests"))
   .settings(SbtScalariform.scalariformSettings)
   .settings(
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
-    libraryDependencies ++= (specsBuild ++ akkaHttp).map(_ % Test)
+    libraryDependencies ++= (specsBuild ++ akkaHttp ++ caffeine).map(_ % Test)
   )
   .settings(libraryDependencies ++= standaloneAhcWSDependencies)
   .settings(shadedAhcSettings)

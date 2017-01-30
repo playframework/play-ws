@@ -454,16 +454,6 @@ class AhcHttpCache(underlying: Cache[CacheKey, CacheEntry]) extends CacheDefault
 object AhcHttpCache {
 
   /**
-   * Creates a new cache using the default caching provider
-   * and "play-ws-cache" as the default cache.
-   */
-  def apply(): AhcHttpCache = {
-    val cacheManager = Caching.getCachingProvider.getCacheManager
-    val simpleCache = cacheManager.getCache("play-ws-cache", classOf[CacheKey], classOf[CacheEntry])
-    apply(simpleCache)
-  }
-
-  /**
    * Creates a new cache utilizing the given JSR 107 cache.
    * @param underlying a JSR 107 cache
    */

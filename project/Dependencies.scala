@@ -54,6 +54,8 @@ object Dependencies {
     "com.novocode" % "junit-interface" % "0.11"
   )
 
+  val jcache = Seq("javax.cache" % "cache-api" % "1.0.0")
+
   // https://mvnrepository.com/artifact/com.github.ben-manes.caffeine/jcache
   val caffeine = Seq(
     "com.github.ben-manes.caffeine" % "caffeine" % "2.3.5",
@@ -67,6 +69,6 @@ object Dependencies {
       playJson
 
   val standaloneAhcWSDependencies = cachecontrol ++
-    caffeine ++
+    jcache ++
     slf4j
 }
