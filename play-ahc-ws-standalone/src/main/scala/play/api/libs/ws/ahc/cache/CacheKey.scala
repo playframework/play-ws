@@ -21,7 +21,7 @@ object CacheKey {
  * A cache entry with an optional expiry time
  */
 case class CacheEntry(
-  response: CacheableResponse,
+    response: CacheableResponse,
     requestMethod: String,
     nominatedHeaders: Map[HeaderName, Seq[String]],
     expiresAt: Option[DateTime]) {

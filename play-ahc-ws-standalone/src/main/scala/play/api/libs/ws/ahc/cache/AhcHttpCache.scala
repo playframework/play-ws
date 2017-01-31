@@ -4,7 +4,7 @@
 package play.api.libs.ws.ahc.cache
 
 import java.net.URI
-import javax.cache.{ Cache, Caching }
+import javax.cache.Cache
 
 import com.typesafe.play.cachecontrol._
 import org.joda.time.{ DateTime, Seconds }

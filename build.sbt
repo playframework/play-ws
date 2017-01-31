@@ -203,14 +203,28 @@ val shadedOAuthSettings = Seq(
 // Shaded aggregate project
 //---------------------------------------------------------------
 
+import xml.{NodeSeq, Node => XNode, Elem}
+import xml.transform.{RuleTransformer, RewriteRule}
+
+def dependenciesFilter(n: XNode) = new RuleTransformer(new RewriteRule {
+  override def transform(n: XNode): NodeSeq = n match {
+    case e: Elem if e.label == "dependencies" => NodeSeq.Empty
+    case other => other
+  }
+}).transform(n).head
+
 lazy val shaded = Project(id = "shaded", base = file("shaded") )
   .settings(disableDocs)
   .settings(disablePublishing)
+  .settings(
+    // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom
+    // Remove dependencies from the POM because we have a FAT jar here.
+    makePomConfiguration := makePomConfiguration.value.copy(process = dependenciesFilter)
+  )
   .aggregate(
     `shaded-asynchttpclient`,
     `shaded-oauth`
-  )
-  .disablePlugins(sbtassembly.AssemblyPlugin)
+  ).disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
 // WS API
@@ -228,6 +242,10 @@ lazy val `play-ws-standalone` = project
 // Shaded AsyncHttpClient implementation of WS
 //---------------------------------------------------------------
 
+def excludeUnshaded(module: ModuleID): ModuleID =
+  module.exclude("org.asynchttpclient", "async-http-client")
+        .exclude("oauth.signpost", "signpost-core")
+
 // Standalone implementation using AsyncHttpClient
 lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
@@ -242,15 +260,17 @@ lazy val `play-ahc-ws-standalone` = project
   .settings(shadedAhcSettings)
   .settings(shadedOAuthSettings)
   .dependsOn(
-    `play-ws-standalone`,
-    `shaded-oauth`,
-    `shaded-asynchttpclient`
+    `play-ws-standalone`
+  ).aggregate(
+    `shaded`
   )
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
 lazy val `integration-tests` = project.in(file("integration-tests"))
   .settings(commonSettings)
   .settings(formattingSettings)
+  .settings(disableDocs)
+  .settings(disablePublishing)
   .settings(SbtScalariform.scalariformSettings)
   .settings(
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
@@ -275,13 +295,11 @@ lazy val root = project
   .settings(formattingSettings)
   .settings(disableDocs)
   .settings(disablePublishing)
-  .dependsOn(
-    `integration-tests`
-  )
   .aggregate(
     `shaded`,
     `play-ws-standalone`,
-    `play-ahc-ws-standalone`
+    `play-ahc-ws-standalone`,
+    `integration-tests`
   )
   .disablePlugins(sbtassembly.AssemblyPlugin)
 

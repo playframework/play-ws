@@ -184,7 +184,7 @@ case class CacheableResponse(
   }
 
   override def toString: String = {
-    s"CacheableResponse(status = $status, headers = $headers, bodyParts = $bodyParts)"
+    s"CacheableResponse(status = $status, headers = $headers, bodyParts size = ${bodyParts.size()})"
   }
 
   override def getLocalAddress: SocketAddress = status.getLocalAddress

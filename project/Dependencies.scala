@@ -15,13 +15,12 @@ object Dependencies {
   // Use the published milestone
   val playJsonVersion = "2.6.0-M1"
   val playJson = Seq(
-    "com.typesafe.play" %% "play-json" % playJsonVersion,
-    "com.typesafe.play" %% "play-functional" % playJsonVersion
-  )
+    "play-json",
+    "play-functional"
+  ).map("com.typesafe.play" %% _ % playJsonVersion)
 
   val slf4j = Seq("org.slf4j" % "slf4j-api" % "1.7.22")
 
-  //
   val slf4jtest = Seq("uk.org.lidalia" % "slf4j-test" % "1.1.0")
 
   val javaxInject = Seq("javax.inject" % "javax.inject" % "1")
@@ -33,34 +32,29 @@ object Dependencies {
   val scalaXml = Seq("org.scala-lang.modules" %% "scala-xml" % scalaXmlVersion)
 
   val signpostVersion = "1.2.1.2"
-  val oauth = Seq("oauth.signpost" % "signpost-core" % signpostVersion)
+  val oauth = Seq(
+    ("oauth.signpost" % "signpost-core" % signpostVersion)
+  )
 
-  val cachecontrolVersion = "1.1.1"
+  val cachecontrolVersion = "1.1.2"
   val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % cachecontrolVersion)
-
-  val guavaVersion = "21.0"
-  val guava = Seq("com.google.guava" % "guava" % guavaVersion)
 
   val asyncHttpClientVersion = "2.0.27"
   val asyncHttpClient = Seq(
-    "org.asynchttpclient" % "async-http-client" % asyncHttpClientVersion excludeAll ExclusionRule(organization = "org.slf4j")
+    ("org.asynchttpclient" % "async-http-client" % asyncHttpClientVersion)
   )
 
   val akkaVersion = "2.4.14"
   val akka = Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion)
   val akkaHttp = Seq("com.typesafe.akka" %% "akka-http" % "10.0.1")
 
-  val junitInterface = Seq(
-    "com.novocode" % "junit-interface" % "0.11"
-  )
+  val junitInterface = Seq("com.novocode" % "junit-interface" % "0.11")
 
   val jcache = Seq("javax.cache" % "cache-api" % "1.0.0")
 
   // https://mvnrepository.com/artifact/com.github.ben-manes.caffeine/jcache
-  val caffeine = Seq(
-    "com.github.ben-manes.caffeine" % "caffeine" % "2.3.5",
-    "com.github.ben-manes.caffeine" % "jcache" % "2.3.5"
-  )
+  val caffeineVersion = "2.3.5"
+  val caffeine = Seq("com.github.ben-manes.caffeine" % "jcache" % caffeineVersion)
 
   val standaloneApiWSDependencies = javaxInject ++
       sslConfigCore ++
@@ -69,6 +63,6 @@ object Dependencies {
       playJson
 
   val standaloneAhcWSDependencies = cachecontrol ++
-    jcache ++
+    caffeine ++
     slf4j
 }
