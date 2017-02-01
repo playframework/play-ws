@@ -12,3 +12,5 @@ addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.3")
 addSbtPlugin("org.scalariform" % "sbt-scalariform" % "1.6.0")
 
 addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.1.13")
+
+addSbtPlugin("com.gilt" % "sbt-dependency-graph-sugar" % "0.8.2")

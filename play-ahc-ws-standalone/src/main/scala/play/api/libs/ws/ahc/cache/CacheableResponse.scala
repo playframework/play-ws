@@ -184,7 +184,7 @@ case class CacheableResponse(
   }
 
   override def toString: String = {
-    s"CacheableResponse(status = $status, headers = $headers, bodyParts = $bodyParts)"
+    s"CacheableResponse(status = $status, headers = $headers, bodyParts size = ${bodyParts.size()})"
   }
 
   override def getLocalAddress: SocketAddress = status.getLocalAddress
@@ -203,7 +203,7 @@ case class CacheableHttpResponseHeaders(trailingHeaders: Boolean, headers: HttpH
 object CacheableResponse {
   private val logger = LoggerFactory.getLogger("play.api.libs.ws.ning.cache.CacheableResponse")
 
-  def apply(code: Int, urlString: String)(implicit cache: AhcWSCache): CacheableResponse = {
+  def apply(code: Int, urlString: String)(implicit cache: AhcHttpCache): CacheableResponse = {
     val uri: Uri = Uri.create(urlString)
     val status = new CacheableHttpResponseStatus(uri, code, "", "")
     val headers = new DefaultHttpHeaders()

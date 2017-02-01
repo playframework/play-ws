@@ -203,14 +203,28 @@ val shadedOAuthSettings = Seq(
 // Shaded aggregate project
 //---------------------------------------------------------------
 
+import xml.{NodeSeq, Node => XNode, Elem}
+import xml.transform.{RuleTransformer, RewriteRule}
+
+def dependenciesFilter(n: XNode) = new RuleTransformer(new RewriteRule {
+  override def transform(n: XNode): NodeSeq = n match {
+    case e: Elem if e.label == "dependencies" => NodeSeq.Empty
+    case other => other
+  }
+}).transform(n).head
+
 lazy val shaded = Project(id = "shaded", base = file("shaded") )
   .settings(disableDocs)
   .settings(disablePublishing)
+  .settings(
+    // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom
+    // Remove dependencies from the POM because we have a FAT jar here.
+    makePomConfiguration := makePomConfiguration.value.copy(process = dependenciesFilter)
+  )
   .aggregate(
     `shaded-asynchttpclient`,
     `shaded-oauth`
-  )
-  .disablePlugins(sbtassembly.AssemblyPlugin)
+  ).disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
 // WS API
@@ -220,6 +234,7 @@ lazy val shaded = Project(id = "shaded", base = file("shaded") )
 lazy val `play-ws-standalone` = project
   .in(file("play-ws-standalone"))
   .settings(commonSettings)
+  .settings(libraryDependencies ++= (specsBuild ++ junitInterface).map(_ % Test))
   .settings(libraryDependencies ++= standaloneApiWSDependencies)
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
@@ -227,36 +242,45 @@ lazy val `play-ws-standalone` = project
 // Shaded AsyncHttpClient implementation of WS
 //---------------------------------------------------------------
 
+def excludeUnshaded(module: ModuleID): ModuleID =
+  module.exclude("org.asynchttpclient", "async-http-client")
+        .exclude("oauth.signpost", "signpost-core")
+
 // Standalone implementation using AsyncHttpClient
-// Note that this uses integration tests in the suite, so has
-// some extra bells and whistles.
 lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
-  .configs(IntegrationTest)
   .settings(commonSettings)
   .settings(formattingSettings)
-  .settings(Defaults.itSettings: _*)
-  .settings(SbtScalariform.scalariformSettingsWithIt)
+  .settings(SbtScalariform.scalariformSettings)
   .settings(
-    testOptions in IntegrationTest := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
-    libraryDependencies ++= slf4jtest.map(_ % "it,test"),
-    libraryDependencies ++= Seq(
-      "com.novocode" % "junit-interface" % "0.11" % "it,test"
-    ),
-    libraryDependencies ++= akkaHttp.map(_ % "it,test"),
-    libraryDependencies ++= Seq(
-      "specs2-core",
-      "specs2-junit",
-      "specs2-mock"
-    ).map("org.specs2" %% _ % specsVersion % "it,test")
+    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
+    libraryDependencies ++= (slf4jtest ++ specsBuild ++ junitInterface ++ caffeine).map(_ % Test)
   )
   .settings(libraryDependencies ++= standaloneAhcWSDependencies)
   .settings(shadedAhcSettings)
   .settings(shadedOAuthSettings)
   .dependsOn(
-    `play-ws-standalone`,
-    `shaded-oauth`,
-    `shaded-asynchttpclient`
+    `play-ws-standalone`
+  ).aggregate(
+    `shaded`
+  )
+  .disablePlugins(sbtassembly.AssemblyPlugin)
+
+lazy val `integration-tests` = project.in(file("integration-tests"))
+  .settings(commonSettings)
+  .settings(formattingSettings)
+  .settings(disableDocs)
+  .settings(disablePublishing)
+  .settings(SbtScalariform.scalariformSettings)
+  .settings(
+    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
+    libraryDependencies ++= (specsBuild ++ akkaHttp ++ caffeine).map(_ % Test)
+  )
+  .settings(libraryDependencies ++= standaloneAhcWSDependencies)
+  .settings(shadedAhcSettings)
+  .settings(shadedOAuthSettings)
+  .dependsOn(
+    `play-ahc-ws-standalone`
   )
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
@@ -266,6 +290,7 @@ lazy val `play-ahc-ws-standalone` = project
 
 lazy val root = project
   .in(file("."))
+  .settings(name := "play-ws-standalone-root")
   .settings(commonSettings)
   .settings(formattingSettings)
   .settings(disableDocs)
@@ -273,7 +298,8 @@ lazy val root = project
   .aggregate(
     `shaded`,
     `play-ws-standalone`,
-    `play-ahc-ws-standalone`
+    `play-ahc-ws-standalone`,
+    `integration-tests`
   )
   .disablePlugins(sbtassembly.AssemblyPlugin)
 

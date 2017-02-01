@@ -6,7 +6,7 @@ package play.api.libs.ws.ahc
 import akka.stream.Materializer
 import com.typesafe.sslconfig.ssl.SystemConfiguration
 import com.typesafe.sslconfig.ssl.debug.DebugConfiguration
-import play.api.libs.ws.ahc.cache.{ AhcWSCache, CachingAsyncHttpClient }
+import play.api.libs.ws.ahc.cache.{ AhcHttpCache, CachingAsyncHttpClient }
 import play.api.libs.ws.{ EmptyBody, StandaloneWSClient, StandaloneWSRequest }
 import play.shaded.ahc.org.asynchttpclient._
 
@@ -16,17 +16,18 @@ import scala.concurrent.{ ExecutionContext, Future }
 /**
  * A WS client backed by an AsyncHttpClient.
  *
- * If you need to debug AsyncHttpClient, add <logger name="org.asynchttpclient" level="DEBUG" /> into your conf/logback.xml file.
+ * If you need to debug AsyncHttpClient, add <logger name="play.shaded.ahc.org.asynchttpclient" level="DEBUG" /> into your conf/logback.xml file.
  *
  * @param asyncHttpClient an already configured asynchttpclient
+ * @param httpCache An optional HTTP caching layer.
  */
-case class StandaloneAhcWSClient(asyncHttpClient: AsyncHttpClient)(implicit val materializer: Materializer) extends StandaloneWSClient {
+case class StandaloneAhcWSClient(asyncHttpClient: AsyncHttpClient, httpCache: Option[AhcHttpCache])(implicit val materializer: Materializer) extends StandaloneWSClient {
 
   def underlying[T]: T = asyncHttpClient.asInstanceOf[T]
 
   private[libs] def executionContext: ExecutionContext = materializer.executionContext
 
-  private val cachingClient = new CachingAsyncHttpClient(asyncHttpClient, AhcWSCache())
+  private val maybeCache = httpCache.map(new CachingAsyncHttpClient(asyncHttpClient, _))
 
   private[libs] def execute(request: Request): Future[StandaloneAhcWSResponse] = {
     import play.shaded.ahc.org.asynchttpclient.{ AsyncCompletionHandler, Response => AHCResponse }
@@ -34,7 +35,7 @@ case class StandaloneAhcWSClient(asyncHttpClient: AsyncHttpClient)(implicit val 
     import scala.concurrent.Promise
     val result = Promise[StandaloneAhcWSResponse]()
 
-    cachingClient.executeRequest(request, new AsyncCompletionHandler[AHCResponse]() {
+    val handler = new AsyncCompletionHandler[AHCResponse]() {
       override def onCompleted(response: AHCResponse): AHCResponse = {
         result.success(StandaloneAhcWSResponse(response))
         response
@@ -43,7 +44,15 @@ case class StandaloneAhcWSClient(asyncHttpClient: AsyncHttpClient)(implicit val 
       override def onThrowable(t: Throwable): Unit = {
         result.failure(t)
       }
-    })
+    }
+
+    maybeCache match {
+      case Some(cachingClient) =>
+        cachingClient.executeRequest(request, handler)
+      case None =>
+        asyncHttpClient.executeRequest(request, handler)
+    }
+
     result.future
   }
 
@@ -51,7 +60,9 @@ case class StandaloneAhcWSClient(asyncHttpClient: AsyncHttpClient)(implicit val 
     asyncHttpClient.executeRequest(request, handler)
   }
 
-  def close(): Unit = asyncHttpClient.close()
+  def close(): Unit = {
+    asyncHttpClient.close()
+  }
 
   def url(url: String): StandaloneWSRequest = StandaloneAhcWSRequest(this, url, "GET", EmptyBody, TreeMap()(CaseInsensitiveOrdered), Map(), None, None, None, None, None, None, None)
 }
@@ -77,13 +88,13 @@ object StandaloneAhcWSClient {
    *
    * @param config configuration settings
    */
-  def apply(config: AhcWSClientConfig = AhcWSClientConfigFactory.forConfig())(implicit materializer: Materializer): StandaloneAhcWSClient = {
+  def apply(config: AhcWSClientConfig = AhcWSClientConfigFactory.forConfig(), httpCache: Option[AhcHttpCache] = None)(implicit materializer: Materializer): StandaloneAhcWSClient = {
     if (config.wsClientConfig.ssl.debug.enabled) {
       new DebugConfiguration(StandaloneAhcWSClient.loggerFactory).configure(config.wsClientConfig.ssl.debug)
     }
     val ahcConfig = new AhcConfigBuilder(config).build()
     val asyncHttpClient = new DefaultAsyncHttpClient(ahcConfig)
-    val client = new StandaloneAhcWSClient(asyncHttpClient) // add the wrapper around AHC
+    val client = new StandaloneAhcWSClient(asyncHttpClient, httpCache)
     new SystemConfiguration(loggerFactory).configure(config.wsClientConfig.ssl)
     client
   }
