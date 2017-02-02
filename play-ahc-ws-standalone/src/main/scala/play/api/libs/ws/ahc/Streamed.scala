@@ -5,19 +5,17 @@ package play.api.libs.ws.ahc
 
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import org.reactivestreams.{ Publisher, Subscriber, Subscription }
+import play.api.libs.ws.{ DefaultWSResponseHeaders, StreamedResponse, WSResponseHeaders }
 import play.shaded.ahc.org.asynchttpclient.AsyncHandler.State
 import play.shaded.ahc.org.asynchttpclient._
 import play.shaded.ahc.org.asynchttpclient.handler.StreamedAsyncHandler
-import org.reactivestreams.{ Publisher, Subscriber, Subscription }
-import play.api.libs.ws.{ DefaultWSResponseHeaders, StreamedResponse, WSResponseHeaders }
 
-import scala.concurrent.{ Future, Promise }
+import scala.concurrent.{ ExecutionContext, Future, Promise }
 
 private[play] object Streamed extends AhcUtilities {
 
-  def execute(client: AsyncHttpClient, request: Request): Future[StreamedResponse] = {
-    // XXX Workaround until we can use trampoline context
-    import scala.concurrent.ExecutionContext.Implicits.global
+  def execute(client: AsyncHttpClient, request: Request)(implicit ec: ExecutionContext): Future[StreamedResponse] = {
 
     val promise = Promise[(WSResponseHeaders, Publisher[HttpResponseBodyPart])]()
     client.executeRequest(request, new DefaultStreamedAsyncHandler(promise))
