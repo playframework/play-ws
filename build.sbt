@@ -103,7 +103,7 @@ lazy val shadeAssemblySettings = commonSettings ++ Seq(
   assemblyJarName in assembly := {
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((epoch, major)) =>
-        s"${name.value}_$epoch.$major-${version.value}.jar"
+        s"${name.value}.jar" // we are only shading java
       case _ =>
         sys.error("Cannot find valid scala version!")
     }
@@ -115,7 +115,8 @@ lazy val shadeAssemblySettings = commonSettings ++ Seq(
       case _ =>
         sys.error("Cannot find valid scala version!")
     }
-  }
+  },
+  crossPaths := false // only useful for Java
 )
 
 val ahcMerge: MergeStrategy = new MergeStrategy {
@@ -216,11 +217,6 @@ def dependenciesFilter(n: XNode) = new RuleTransformer(new RewriteRule {
 lazy val shaded = Project(id = "shaded", base = file("shaded") )
   .settings(disableDocs)
   .settings(disablePublishing)
-  .settings(
-    // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom
-    // Remove dependencies from the POM because we have a FAT jar here.
-    makePomConfiguration := makePomConfiguration.value.copy(process = dependenciesFilter)
-  )
   .aggregate(
     `shaded-asynchttpclient`,
     `shaded-oauth`
@@ -241,10 +237,10 @@ lazy val `play-ws-standalone` = project
 //---------------------------------------------------------------
 // Shaded AsyncHttpClient implementation of WS
 //---------------------------------------------------------------
-
-def excludeUnshaded(module: ModuleID): ModuleID =
-  module.exclude("org.asynchttpclient", "async-http-client")
-        .exclude("oauth.signpost", "signpost-core")
+//
+//def excludeUnshaded(module: ModuleID): ModuleID =
+//  module.exclude("org.asynchttpclient", "async-http-client")
+//        .exclude("oauth.signpost", "signpost-core")
 
 // Standalone implementation using AsyncHttpClient
 lazy val `play-ahc-ws-standalone` = project

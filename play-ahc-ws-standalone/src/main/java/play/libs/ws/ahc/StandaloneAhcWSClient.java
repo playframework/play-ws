@@ -15,6 +15,7 @@ import play.libs.ws.StandaloneWSClient;
 import play.shaded.ahc.org.asynchttpclient.AsyncHttpClient;
 import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClient;
 import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClientConfig;
+import scala.concurrent.ExecutionContext;
 
 import java.io.IOException;
 
@@ -73,5 +74,9 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
         DefaultAsyncHttpClient ahcClient = new DefaultAsyncHttpClient(asyncHttpClientConfig);
 
         return new StandaloneAhcWSClient(ahcClient, materializer);
+    }
+
+    ExecutionContext executionContext() {
+        return materializer.executionContext();
     }
 }

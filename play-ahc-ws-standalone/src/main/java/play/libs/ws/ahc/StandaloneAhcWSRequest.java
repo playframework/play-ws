@@ -460,7 +460,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     public CompletionStage<? extends StreamedResponse> stream() {
         AsyncHttpClient asyncClient = (AsyncHttpClient) client.getUnderlying();
         Request request = buildRequest();
-        return StreamedResponse.from(Streamed.execute(asyncClient, request));
+        return StreamedResponse.from(Streamed.execute(asyncClient, request, client.executionContext()));
     }
 
     Request buildRequest() {
