@@ -1,6 +1,7 @@
 import Dependencies._
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
+import sbt.Keys.libraryDependencies
 import sbt._
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
@@ -137,6 +138,16 @@ val ahcMerge: MergeStrategy = new MergeStrategy {
   override val name: String = "ahcMerge"
 }
 
+import xml.{NodeSeq, Node => XNode, Elem}
+import xml.transform.{RuleTransformer, RewriteRule}
+
+def dependenciesFilter(n: XNode) = new RuleTransformer(new RewriteRule {
+  override def transform(n: XNode): NodeSeq = n match {
+    case e: Elem if e.label == "dependencies" => NodeSeq.Empty
+    case other => other
+  }
+}).transform(n).head
+
 //---------------------------------------------------------------
 // Shaded AsyncHttpClient implementation
 //---------------------------------------------------------------
@@ -159,13 +170,21 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
         val oldStrategy = (assemblyMergeStrategy in assembly).value
         oldStrategy(x)
     },
-    //logLevel in assembly := Level.Debug,
+
+    // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom
+    // Remove dependencies from the POM because we have a FAT jar here.
+    makePomConfiguration := makePomConfiguration.value.copy(process = dependenciesFilter),
+    ivyXML := <dependencies></dependencies>,
+
+      //logLevel in assembly := Level.Debug,
     assemblyShadeRules in assembly := Seq(
       ShadeRule.rename("org.asynchttpclient.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.rename("io.netty.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.rename("javassist.**" -> "play.shaded.ahc.@0").inAll,
-      ShadeRule.rename("com.typesafe.netty.**" -> "play.shaded.ahc.@0").inAll
-    ),
+      ShadeRule.rename("com.typesafe.netty.**" -> "play.shaded.ahc.@0").inAll,
+      ShadeRule.zap("org.reactivestreams.**").inAll,
+      ShadeRule.zap("org.slf4j").inAll
+  ),
     assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeBin = false, includeScala = false),
     packageBin in Compile := assembly.value
   )
@@ -185,8 +204,15 @@ lazy val `shaded-oauth` = project.in(file("shaded/oauth"))
     logLevel in assembly := Level.Error,
     assemblyShadeRules in assembly := Seq(
       ShadeRule.rename("oauth.**" -> "play.shaded.oauth.@0").inAll,
+      ShadeRule.rename("com.google.gdata.**" -> "play.shaded.oauth.@0").inAll,
       ShadeRule.rename("org.apache.commons.**" -> "play.shaded.oauth.@0").inAll
     ),
+
+    // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom
+    // Remove dependencies from the POM because we have a FAT jar here.
+    makePomConfiguration := makePomConfiguration.value.copy(process = dependenciesFilter),
+    ivyXML := <dependencies></dependencies>,
+
     assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeBin = false, includeScala = false),
     packageBin in Compile := assembly.value
   )
@@ -203,16 +229,6 @@ val shadedOAuthSettings = Seq(
 //---------------------------------------------------------------
 // Shaded aggregate project
 //---------------------------------------------------------------
-
-import xml.{NodeSeq, Node => XNode, Elem}
-import xml.transform.{RuleTransformer, RewriteRule}
-
-def dependenciesFilter(n: XNode) = new RuleTransformer(new RewriteRule {
-  override def transform(n: XNode): NodeSeq = n match {
-    case e: Elem if e.label == "dependencies" => NodeSeq.Empty
-    case other => other
-  }
-}).transform(n).head
 
 lazy val shaded = Project(id = "shaded", base = file("shaded") )
   .settings(disableDocs)
@@ -238,9 +254,28 @@ lazy val `play-ws-standalone` = project
 // Shaded AsyncHttpClient implementation of WS
 //---------------------------------------------------------------
 //
-//def excludeUnshaded(module: ModuleID): ModuleID =
-//  module.exclude("org.asynchttpclient", "async-http-client")
-//        .exclude("oauth.signpost", "signpost-core")
+
+def addShadedDeps(deps: Seq[xml.Node], node: xml.Node): xml.Node = {
+  node match {
+    case elem: xml.Elem =>
+      val child = if (elem.label == "dependencies") {
+        elem.child ++ deps
+      } else {
+        elem.child.map(addShadedDeps(deps, _))
+      }
+      xml.Elem(elem.prefix, elem.label, elem.attributes, elem.scope, false, child: _*)
+    case _ =>
+      node
+  }
+}
+
+val shadedAsyncHttpClientArtifact = Artifact(
+  name="shaded-asynchttpclient", `type`="jar", extension="jar", classifier=None,
+  configurations=Seq(Compile), url=None, extraAttributes=Map())
+
+val shadedOAuthArtifact = Artifact(
+  name="shaded-oauth", `type`="jar", extension="jar", classifier=None,
+  configurations=Seq(Compile), url=None, extraAttributes=Map())
 
 // Standalone implementation using AsyncHttpClient
 lazy val `play-ahc-ws-standalone` = project
@@ -255,7 +290,27 @@ lazy val `play-ahc-ws-standalone` = project
   .settings(libraryDependencies ++= standaloneAhcWSDependencies)
   .settings(shadedAhcSettings)
   .settings(shadedOAuthSettings)
-  .dependsOn(
+  .settings(
+    ivyXML :=
+      <dependencies>
+        <dependency org="com.typesafe.play" name="shaded-asynchttpclient" rev={version.value} />
+        <dependency org="com.typesafe.play" name="shaded-oauth" rev={version.value} />
+      </dependencies>,
+    pomPostProcess := {
+      (node: xml.Node) => addShadedDeps(List(
+        <dependency>
+          <groupId>com.typesafe.play</groupId>
+          <artifactId>shaded-asynchttpclient</artifactId>
+          <version>{version.value}</version>
+        </dependency>,
+        <dependency>
+          <groupId>com.typesafe.play</groupId>
+          <artifactId>shaded-oauth</artifactId>
+          <version>{version.value}</version>
+        </dependency>
+      ), node)
+    }
+  ).dependsOn(
     `play-ws-standalone`
   ).aggregate(
     `shaded`
