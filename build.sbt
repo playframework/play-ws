@@ -1,7 +1,6 @@
 import Dependencies._
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
-import sbt.Keys.libraryDependencies
 import sbt._
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
@@ -170,21 +169,22 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
         val oldStrategy = (assemblyMergeStrategy in assembly).value
         oldStrategy(x)
     },
-
-    // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom
-    // Remove dependencies from the POM because we have a FAT jar here.
-    makePomConfiguration := makePomConfiguration.value.copy(process = dependenciesFilter),
-    ivyXML := <dependencies></dependencies>,
-
-      //logLevel in assembly := Level.Debug,
+    //logLevel in assembly := Level.Debug,
     assemblyShadeRules in assembly := Seq(
       ShadeRule.rename("org.asynchttpclient.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.rename("io.netty.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.rename("javassist.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.rename("com.typesafe.netty.**" -> "play.shaded.ahc.@0").inAll,
-      ShadeRule.zap("org.reactivestreams.**").inAll,
-      ShadeRule.zap("org.slf4j").inAll
-  ),
+      ShadeRule.zap("org.reactivestreams.**").inAll
+    ),
+
+    // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom
+    // Remove dependencies from the POM because we have a FAT jar here.
+    makePomConfiguration := makePomConfiguration.value.copy(process = dependenciesFilter),
+    //ivyXML := <dependencies></dependencies>,
+    //ivyLoggingLevel := UpdateLogging.Full,
+    //logLevel := Level.Debug,
+
     assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeBin = false, includeScala = false),
     packageBin in Compile := assembly.value
   )
@@ -204,15 +204,8 @@ lazy val `shaded-oauth` = project.in(file("shaded/oauth"))
     logLevel in assembly := Level.Error,
     assemblyShadeRules in assembly := Seq(
       ShadeRule.rename("oauth.**" -> "play.shaded.oauth.@0").inAll,
-      ShadeRule.rename("com.google.gdata.**" -> "play.shaded.oauth.@0").inAll,
       ShadeRule.rename("org.apache.commons.**" -> "play.shaded.oauth.@0").inAll
     ),
-
-    // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom
-    // Remove dependencies from the POM because we have a FAT jar here.
-    makePomConfiguration := makePomConfiguration.value.copy(process = dependenciesFilter),
-    ivyXML := <dependencies></dependencies>,
-
     assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeBin = false, includeScala = false),
     packageBin in Compile := assembly.value
   )
@@ -253,7 +246,6 @@ lazy val `play-ws-standalone` = project
 //---------------------------------------------------------------
 // Shaded AsyncHttpClient implementation of WS
 //---------------------------------------------------------------
-//
 
 def addShadedDeps(deps: Seq[xml.Node], node: xml.Node): xml.Node = {
   node match {
@@ -269,14 +261,6 @@ def addShadedDeps(deps: Seq[xml.Node], node: xml.Node): xml.Node = {
   }
 }
 
-val shadedAsyncHttpClientArtifact = Artifact(
-  name="shaded-asynchttpclient", `type`="jar", extension="jar", classifier=None,
-  configurations=Seq(Compile), url=None, extraAttributes=Map())
-
-val shadedOAuthArtifact = Artifact(
-  name="shaded-oauth", `type`="jar", extension="jar", classifier=None,
-  configurations=Seq(Compile), url=None, extraAttributes=Map())
-
 // Standalone implementation using AsyncHttpClient
 lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
@@ -291,11 +275,6 @@ lazy val `play-ahc-ws-standalone` = project
   .settings(shadedAhcSettings)
   .settings(shadedOAuthSettings)
   .settings(
-    ivyXML :=
-      <dependencies>
-        <dependency org="com.typesafe.play" name="shaded-asynchttpclient" rev={version.value} />
-        <dependency org="com.typesafe.play" name="shaded-oauth" rev={version.value} />
-      </dependencies>,
     pomPostProcess := {
       (node: xml.Node) => addShadedDeps(List(
         <dependency>
@@ -310,7 +289,8 @@ lazy val `play-ahc-ws-standalone` = project
         </dependency>
       ), node)
     }
-  ).dependsOn(
+  )
+  .dependsOn(
     `play-ws-standalone`
   ).aggregate(
     `shaded`

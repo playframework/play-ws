@@ -33,7 +33,7 @@ object Dependencies {
 
   val signpostVersion = "1.2.1.2"
   val oauth = Seq(
-    ("oauth.signpost" % "signpost-core" % signpostVersion)
+    "oauth.signpost" % "signpost-core" % signpostVersion
   )
 
   val cachecontrolVersion = "1.1.2"
@@ -41,12 +41,14 @@ object Dependencies {
 
   val asyncHttpClientVersion = "2.0.27"
   val asyncHttpClient = Seq(
-    ("org.asynchttpclient" % "async-http-client" % asyncHttpClientVersion)
+    "org.asynchttpclient" % "async-http-client" % asyncHttpClientVersion
   )
 
   val akkaVersion = "2.4.14"
   val akka = Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion)
   val akkaHttp = Seq("com.typesafe.akka" %% "akka-http" % "10.0.1")
+
+  val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.0")
 
   val junitInterface = Seq("com.novocode" % "junit-interface" % "0.11")
 
@@ -62,7 +64,5 @@ object Dependencies {
       scalaXml ++
       playJson
 
-  val standaloneAhcWSDependencies = cachecontrol ++
-    caffeine ++
-    slf4j
+  val standaloneAhcWSDependencies = cachecontrol ++ caffeine ++ slf4j ++ reactiveStreams
 }

@@ -20,6 +20,8 @@ Play WS uses shaded versions of AsyncHttpClient and OAuth Signpost, repackaged u
 
 Specifically, shading AsyncHttpClient means that there are no version conflicts introduced between Netty 4.0 and Netty 4.1 using Play WS.
 
+> **NOTE**: If you are developing play-ws and publishing `shaded-asynchttpclient` and `shaded-oauth` using `sbt publishLocal`, you need to be aware that updating `~/.ivy2/local` does not overwrite `~/.ivy2/cache` and so you will not see your updated shaded code until you remove it from cache.  See http://eed3si9n.com/field-test for more details.  This bug has been filed as https://github.com/sbt/sbt/issues/2687.
+
 ### Shaded AHC Defaults 
 
 Because Play WS shades AsyncHttpClient, the default settings are also shaded and so do not adhere to the AHC documentation.  This means that the settings in `ahc-default.properties` and the AsyncHttpClient system properties are prepended with `play.shaded.ahc`, for example the `usePooledMemory` setting in the shaded version of AsyncHttpClient is defined like this:
@@ -53,6 +55,9 @@ object ScalaClient {
   def main(args: Array[String]): Unit = {
     // Create Akka system for thread and streaming management
     implicit val system = ActorSystem()
+    system.registerOnTermination {
+      System.exit(0)
+    }
     implicit val materializer = ActorMaterializer()
 
     // Create the standalone WS client
@@ -97,6 +102,7 @@ public class JavaClient {
         // Set up Akka materializer to handle streaming
         final String name = "wsclient";
         ActorSystem system = ActorSystem.create(name);
+        system.registerOnTermination(System.exit(0));
         final ActorMaterializerSettings settings = ActorMaterializerSettings.create(system);
         final ActorMaterializer materializer = ActorMaterializer.create(settings, system, name);
 
@@ -121,6 +127,27 @@ public class JavaClient {
     }
 }
 ```
+
+## Releasing
+
+This project uses `sbt-release` to push to Sonatype and Maven.  You will need Lightbend Sonatype credentials and a GPG key that is available on one of the public keyservers to release this project.
+
+To release cleanly, you should clone this project fresh into a directory with writable credentials (i.e. you have ssh key to github):
+
+```bash
+mkdir releases
+cd releases
+git clone git@github.com:playframework/play-ws.git
+```
+
+and from there you can release:
+
+```bash
+cd play-ws
+sbt release
+```
+
+The script will walk you through integration tests and publishing.
 
 ## License
 
