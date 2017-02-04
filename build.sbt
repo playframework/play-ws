@@ -1,7 +1,8 @@
 import Dependencies._
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
-import sbt._
+import sbt.Keys.artifact
+import sbt.{addArtifact, _}
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
 
@@ -275,6 +276,7 @@ lazy val `play-ahc-ws-standalone` = project
   .settings(shadedAhcSettings)
   .settings(shadedOAuthSettings)
   .settings(
+    // This will not work if you do a publishLocal, because that uses ivy...
     pomPostProcess := {
       (node: xml.Node) => addShadedDeps(List(
         <dependency>
