@@ -93,7 +93,6 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
         return StreamedResponse.from(Streamed.execute(asyncHttpClient, request, executionContext()));
     }
 
-
     /**
      * A convenience method for creating a StandaloneAhcWSClient from configuration.
      *

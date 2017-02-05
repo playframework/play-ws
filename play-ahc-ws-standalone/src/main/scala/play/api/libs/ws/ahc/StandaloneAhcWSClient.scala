@@ -11,10 +11,10 @@ import com.typesafe.sslconfig.ssl.SystemConfiguration
 import com.typesafe.sslconfig.ssl.debug.DebugConfiguration
 import play.api.libs.ws.ahc.cache._
 import play.api.libs.ws.{ EmptyBody, StandaloneWSClient, StandaloneWSRequest, StreamedResponse }
-import play.shaded.ahc.org.asynchttpclient._
+import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse, _ }
 
 import scala.collection.immutable.TreeMap
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ ExecutionContext, Future, Promise }
 
 /**
  * A WS client backed by an AsyncHttpClient.
@@ -31,17 +31,15 @@ class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(implici
     asyncHttpClient.close()
   }
 
-  def url(url: String): StandaloneWSRequest = StandaloneAhcWSRequest(this, url, "GET", EmptyBody, TreeMap()(CaseInsensitiveOrdered), Map(), None, None, None, None, None, None, None)
+  def url(url: String): StandaloneWSRequest = {
+    StandaloneAhcWSRequest(this, url, "GET", EmptyBody, TreeMap()(CaseInsensitiveOrdered), Map(), None, None, None, None, None, None, None)
+  }
 
-  private[libs] def execute(request: Request): Future[StandaloneAhcWSResponse] = {
-    import play.shaded.ahc.org.asynchttpclient.{ AsyncCompletionHandler, Response => AHCResponse }
-
-    import scala.concurrent.Promise
-
+  private[ahc] def execute(request: Request): Future[StandaloneAhcWSResponse] = {
     val result = Promise[StandaloneAhcWSResponse]()
     val handler = new AsyncCompletionHandler[AHCResponse]() {
       override def onCompleted(response: AHCResponse): AHCResponse = {
-        result.success(new StandaloneAhcWSResponse(response))
+        result.success(StandaloneAhcWSResponse(response))
         response
       }
 
@@ -54,15 +52,12 @@ class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(implici
     result.future
   }
 
-  private[libs] def executeStream(request: Request): Future[StreamedResponse] = {
+  private[ahc] def executeStream(request: Request): Future[StreamedResponse] = {
     Streamed.execute(asyncHttpClient, request)(executionContext)
   }
 
   private def executionContext: ExecutionContext = materializer.executionContext
 
-  private[libs] def executeRequest[T](request: Request, handler: AsyncHandler[T]): ListenableFuture[T] = {
-    asyncHttpClient.executeRequest(request, handler)
-  }
 }
 
 object StandaloneAhcWSClient {
