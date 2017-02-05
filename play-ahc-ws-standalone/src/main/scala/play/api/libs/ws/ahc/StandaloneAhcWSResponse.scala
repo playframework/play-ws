@@ -17,7 +17,7 @@ import scala.xml.Elem
 /**
  * A WS HTTP response.
  */
-case class StandaloneAhcWSResponse(ahcResponse: AHCResponse) extends StandaloneWSResponse with AhcUtilities {
+class StandaloneAhcWSResponse(ahcResponse: AHCResponse) extends StandaloneWSResponse with AhcUtilities {
 
   import play.api.libs.json._
 
@@ -98,4 +98,10 @@ case class StandaloneAhcWSResponse(ahcResponse: AHCResponse) extends StandaloneW
   override def toString: String =
     s"AhcWSResponse($status, $statusText)"
 
+}
+
+object StandaloneAhcWSResponse {
+  def apply(ahcResponse: AHCResponse): StandaloneAhcWSResponse = {
+    new StandaloneAhcWSResponse(ahcResponse)
+  }
 }

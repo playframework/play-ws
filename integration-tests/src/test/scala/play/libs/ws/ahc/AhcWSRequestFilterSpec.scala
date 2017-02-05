@@ -26,9 +26,10 @@ class AhcWSRequestFilterSpec(implicit executionEnv: ExecutionEnv) extends Specif
   implicit val system = ActorSystem()
   implicit val materializer = ActorMaterializer()
 
-  // Create the standalone WS client
+  // Create the standalone WS client with no cache
   val client = StandaloneAhcWSClient.create(
     AhcWSClientConfigFactory.forConfig(ConfigFactory.load, this.getClass.getClassLoader),
+    null,
     materializer
   )
 

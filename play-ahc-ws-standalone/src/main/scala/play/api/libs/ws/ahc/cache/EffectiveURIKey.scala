@@ -6,21 +6,21 @@ import com.typesafe.play.cachecontrol.HeaderName
 import org.joda.time.DateTime
 import play.shaded.ahc.org.asynchttpclient._
 
-case class CacheKey(method: String, uri: URI) {
+case class EffectiveURIKey(method: String, uri: URI) {
   override def toString: String = method + " " + uri.toString
 }
 
-object CacheKey {
-  def apply(request: Request): CacheKey = {
+object EffectiveURIKey {
+  def apply(request: Request): EffectiveURIKey = {
     require(request != null)
-    CacheKey(request.getMethod, request.getUri.toJavaNetURI)
+    EffectiveURIKey(request.getMethod, request.getUri.toJavaNetURI)
   }
 }
 
 /**
  * A cache entry with an optional expiry time
  */
-case class CacheEntry(
+case class ResponseEntry(
     response: CacheableResponse,
     requestMethod: String,
     nominatedHeaders: Map[HeaderName, Seq[String]],

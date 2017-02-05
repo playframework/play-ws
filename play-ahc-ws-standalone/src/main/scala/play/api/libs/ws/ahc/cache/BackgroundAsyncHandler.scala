@@ -19,7 +19,7 @@ class BackgroundAsyncHandler[T](request: Request, cache: AhcHttpCache)
 
   private val builder = new CacheableResponseBuilder
 
-  private val key = CacheKey(request)
+  private val key = EffectiveURIKey(request)
 
   private var maybeThrowable: Option[Throwable] = None
 

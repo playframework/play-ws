@@ -23,7 +23,7 @@ import scala.concurrent.Future
  * to caching responses to GET, many caches simply decline other methods
  * and use only the URI as the primary cache key.
  */
-class AhcHttpCache(underlying: Cache[CacheKey, CacheEntry]) extends CacheDefaults with Debug {
+class AhcHttpCache(underlying: Cache[EffectiveURIKey, ResponseEntry]) extends CacheDefaults with Debug {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -46,14 +46,14 @@ class AhcHttpCache(underlying: Cache[CacheKey, CacheEntry]) extends CacheDefault
    */
   override def isShared: Boolean = false
 
-  def get(key: CacheKey): Future[Option[CacheEntry]] = {
+  def get(key: EffectiveURIKey): Future[Option[ResponseEntry]] = {
     logger.debug(s"get: key = $key")
     require(key != null, "key is null")
     val entry = Option(underlying.get(key))
     Future.successful(entry)
   }
 
-  def put(key: CacheKey, entry: CacheEntry): Future[Unit] = {
+  def put(key: EffectiveURIKey, entry: ResponseEntry): Future[Unit] = {
     logger.debug(s"put: key = $key, entry = $entry")
     require(entry != null, "value is null")
 
@@ -61,7 +61,7 @@ class AhcHttpCache(underlying: Cache[CacheKey, CacheEntry]) extends CacheDefault
     Future.successful(())
   }
 
-  def remove(key: CacheKey): Future[Unit] = {
+  def remove(key: EffectiveURIKey): Future[Unit] = {
     require(key != null, "key is null")
     Future.successful(underlying.remove(key))
   }
@@ -69,7 +69,7 @@ class AhcHttpCache(underlying: Cache[CacheKey, CacheEntry]) extends CacheDefault
   /**
    * Invalidates the key.
    */
-  def invalidateKey(key: CacheKey): Unit = {
+  def invalidateKey(key: EffectiveURIKey): Unit = {
     // mark any caches as stale by replacing the date with TSE
     Option(underlying.get(key)).foreach { entry =>
       val expiredEntry = entry.copy(expiresAt = Some(HttpDate.fromEpochSeconds(0)))
@@ -86,7 +86,7 @@ class AhcHttpCache(underlying: Cache[CacheKey, CacheEntry]) extends CacheDefault
     action
   }
 
-  def selectionAction(request: Request, entries: Seq[CacheEntry]): ResponseSelectionAction = {
+  def selectionAction(request: Request, entries: Seq[ResponseEntry]): ResponseSelectionAction = {
     val cacheRequest = generateCacheRequest(request)
     val storedResponses = entries.map { entry =>
       generateStoredResponse(entry.response, entry.requestMethod, entry.nominatedHeaders)
@@ -95,7 +95,7 @@ class AhcHttpCache(underlying: Cache[CacheKey, CacheEntry]) extends CacheDefault
     responseSelectionCalculator.selectResponse(cacheRequest, storedResponses)
   }
 
-  def serveAction(request: Request, entry: CacheEntry, currentAge: Seconds): ResponseServeAction = {
+  def serveAction(request: Request, entry: ResponseEntry, currentAge: Seconds): ResponseServeAction = {
     val cacheRequest = generateCacheRequest(request)
     val storedResponse = generateStoredResponse(entry.response, entry.requestMethod, entry.nominatedHeaders)
 
@@ -156,7 +156,7 @@ class AhcHttpCache(underlying: Cache[CacheKey, CacheEntry]) extends CacheDefault
    * @param requestTime
    * @return
    */
-  def calculateCurrentAge(request: Request, entry: CacheEntry, requestTime: DateTime): Seconds = {
+  def calculateCurrentAge(request: Request, entry: ResponseEntry, requestTime: DateTime): Seconds = {
     val cacheRequest: CacheRequest = generateCacheRequest(request)
     val storedResponse: StoredResponse = generateStoredResponse(entry.response, entry.requestMethod, entry.nominatedHeaders)
     val currentAge = calculateCurrentAge(cacheRequest, storedResponse, requestTime, responseTime = HttpDate.now)
@@ -166,7 +166,7 @@ class AhcHttpCache(underlying: Cache[CacheKey, CacheEntry]) extends CacheDefault
   /**
    *
    */
-  def calculateFreshnessLifetime(request: Request, entry: CacheEntry): Seconds = {
+  def calculateFreshnessLifetime(request: Request, entry: ResponseEntry): Seconds = {
     val cacheRequest: CacheRequest = generateCacheRequest(request)
     val storedResponse: StoredResponse = generateStoredResponse(entry.response, entry.requestMethod, entry.nominatedHeaders)
     val freshnessLifetime = freshnessCalculator.calculateFreshnessLifetime(cacheRequest, storedResponse)
@@ -187,7 +187,7 @@ class AhcHttpCache(underlying: Cache[CacheKey, CacheEntry]) extends CacheDefault
       //A cache MUST invalidate the effective request URI (Section 5.5 of
       //[RFC7230]) when it receives a non-error response to a request with a
       //method whose safety is unknown.
-      val responseKey = CacheKey(request.getMethod, response.getUri.toJavaNetURI)
+      val responseKey = EffectiveURIKey(request.getMethod, response.getUri.toJavaNetURI)
       invalidateKey(responseKey)
 
       //A cache MUST invalidate the effective Request URI (Section 5.5 of
@@ -203,14 +203,14 @@ class AhcHttpCache(underlying: Cache[CacheKey, CacheEntry]) extends CacheDefault
         //differs from the host part in the effective request URI (Section 5.5
         //of [RFC7230]).  This helps prevent denial-of-service attacks.
         if (requestHost.equalsIgnoreCase(contentLocation.getHost)) {
-          val key = CacheKey(request.getMethod, contentLocation)
+          val key = EffectiveURIKey(request.getMethod, contentLocation)
           invalidateKey(key)
         }
       }
 
       getURI(response, "Location").foreach { location =>
         if (requestHost.equalsIgnoreCase(location.getHost)) {
-          val key = CacheKey(request.getMethod, location)
+          val key = EffectiveURIKey(request.getMethod, location)
           invalidateKey(key)
         }
       }
@@ -286,8 +286,8 @@ class AhcHttpCache(underlying: Cache[CacheKey, CacheEntry]) extends CacheDefault
 
     val nominated = calculateSecondaryKeys(request, strippedResponse).getOrElse(Map())
     val ttl = calculateTimeToLive(request, strippedResponse.status, strippedResponse.headers)
-    val entry = new CacheEntry(strippedResponse, request.getMethod, nominated, ttl)
-    put(CacheKey(request), entry)
+    val entry = new ResponseEntry(strippedResponse, request.getMethod, nominated, ttl)
+    put(EffectiveURIKey(request), entry)
   }
 
   /**
@@ -346,7 +346,7 @@ class AhcHttpCache(underlying: Cache[CacheKey, CacheEntry]) extends CacheDefault
   /**
    * Generates a response for the HTTP response with the appropriate headers.
    */
-  def generateCachedResponse(request: Request, entry: CacheEntry, currentAge: Seconds, isFresh: Boolean): CacheableResponse = {
+  def generateCachedResponse(request: Request, entry: ResponseEntry, currentAge: Seconds, isFresh: Boolean): CacheableResponse = {
     replaceHeaders(entry.response) { headers =>
       //    When a stored response is used to satisfy a request without
       //    validation, a cache MUST generate an Age header field (Section 5.1),
@@ -457,7 +457,7 @@ object AhcHttpCache {
    * Creates a new cache utilizing the given JSR 107 cache.
    * @param underlying a JSR 107 cache
    */
-  def apply(underlying: Cache[CacheKey, CacheEntry]): AhcHttpCache = {
+  def apply(underlying: Cache[EffectiveURIKey, ResponseEntry]): AhcHttpCache = {
     new AhcHttpCache(underlying)
   }
 

@@ -11,22 +11,34 @@ import org.slf4j.LoggerFactory;
 import play.api.libs.ws.ahc.AhcConfigBuilder;
 import play.api.libs.ws.ahc.AhcLoggerFactory;
 import play.api.libs.ws.ahc.AhcWSClientConfig;
+import play.api.libs.ws.ahc.Streamed;
+import play.api.libs.ws.ahc.cache.AhcHttpCache;
+import play.api.libs.ws.ahc.cache.ResponseEntry;
+import play.api.libs.ws.ahc.cache.EffectiveURIKey;
+import play.api.libs.ws.ahc.cache.CachingAsyncHttpClient;
 import play.libs.ws.StandaloneWSClient;
-import play.shaded.ahc.org.asynchttpclient.AsyncHttpClient;
-import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClient;
-import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClientConfig;
+import play.libs.ws.StandaloneWSResponse;
+import play.libs.ws.StreamedResponse;
+import play.shaded.ahc.org.asynchttpclient.*;
+import scala.compat.java8.FutureConverters;
 import scala.concurrent.ExecutionContext;
+import scala.concurrent.Future;
+import scala.concurrent.Promise;
 
+import javax.cache.Cache;
+import javax.inject.Inject;
 import java.io.IOException;
+import java.util.concurrent.CompletionStage;
 
 /**
- * A WS client backed by an AsyncHttpClient instance.
+ * A WS asyncHttpClient backed by an AsyncHttpClient instance.
  */
 public class StandaloneAhcWSClient implements StandaloneWSClient {
 
     private final AsyncHttpClient asyncHttpClient;
     private final Materializer materializer;
 
+    @Inject
     public StandaloneAhcWSClient(AsyncHttpClient asyncHttpClient, Materializer materializer) {
         this.asyncHttpClient = asyncHttpClient;
         this.materializer = materializer;
@@ -47,14 +59,49 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
         asyncHttpClient.close();
     }
 
+    CompletionStage<StandaloneWSResponse> execute(Request request) {
+        final Promise<StandaloneWSResponse> scalaPromise = scala.concurrent.Promise$.MODULE$.apply();
+
+        AsyncCompletionHandler<Response> handler = new AsyncCompletionHandler<Response>() {
+            @Override
+            public Response onCompleted(Response response) {
+                StandaloneAhcWSResponse r = new StandaloneAhcWSResponse(response);
+                scalaPromise.success(r);
+                return response;
+            }
+
+            @Override
+            public void onThrowable(Throwable t) {
+                scalaPromise.failure(t);
+            }
+        };
+
+        try {
+            asyncHttpClient.executeRequest(request, handler);
+        } catch (RuntimeException exception) {
+            scalaPromise.failure(exception);
+        }
+        Future<StandaloneWSResponse> future = scalaPromise.future();
+        return FutureConverters.toJava(future);
+    }
+
+    private ExecutionContext executionContext() {
+        return materializer.executionContext();
+    }
+
+    CompletionStage<? extends StreamedResponse> executeStream(Request request) {
+        return StreamedResponse.from(Streamed.execute(asyncHttpClient, request, executionContext()));
+    }
+
     /**
      * A convenience method for creating a StandaloneAhcWSClient from configuration.
      *
      * @param ahcWSClientConfig the configuration object
+     * @param cache if not null, will be used for HTTP response caching.
      * @param materializer an akka materializer
      * @return a fully configured StandaloneAhcWSClient instance.
      */
-    public static StandaloneAhcWSClient create(AhcWSClientConfig ahcWSClientConfig, Materializer materializer) {
+    public static StandaloneAhcWSClient create(AhcWSClientConfig ahcWSClientConfig, Cache<EffectiveURIKey, ResponseEntry> cache, Materializer materializer) {
         AhcLoggerFactory loggerFactory = new AhcLoggerFactory(LoggerFactory.getILoggerFactory());
 
         // Set up debugging configuration
@@ -69,14 +116,17 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
         // Set up SSL configuration settings that are global..
         new SystemConfiguration(loggerFactory).configure(ahcWSClientConfig.wsClientConfig().ssl());
 
-        // Create the AHC client
+        // Create the AHC asyncHttpClient
         DefaultAsyncHttpClientConfig asyncHttpClientConfig = ahcBuilder.build();
-        DefaultAsyncHttpClient ahcClient = new DefaultAsyncHttpClient(asyncHttpClientConfig);
+        DefaultAsyncHttpClient defaultAsyncHttpClient = new DefaultAsyncHttpClient(asyncHttpClientConfig);
 
+        AsyncHttpClient ahcClient;
+        if (cache != null) {
+            ahcClient = new CachingAsyncHttpClient(defaultAsyncHttpClient, cache);
+        } else {
+            ahcClient = defaultAsyncHttpClient;
+        }
         return new StandaloneAhcWSClient(ahcClient, materializer);
     }
 
-    ExecutionContext executionContext() {
-        return materializer.executionContext();
-    }
 }
