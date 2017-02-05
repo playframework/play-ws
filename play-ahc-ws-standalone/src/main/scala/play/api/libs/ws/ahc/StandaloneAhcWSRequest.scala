@@ -214,7 +214,7 @@ case class StandaloneAhcWSRequest(
   }
 
   override def stream(): Future[StreamedResponse] = {
-    Streamed.execute(client.asyncHttpClient, buildRequest())(client.executionContext)
+    client.executeStream(buildRequest())
   }
 
   /**

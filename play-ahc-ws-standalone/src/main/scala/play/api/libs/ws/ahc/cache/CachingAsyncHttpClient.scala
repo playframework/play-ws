@@ -5,6 +5,7 @@ package play.api.libs.ws.ahc.cache
 
 import java.io._
 import java.util.concurrent.Executors
+import javax.cache.Cache
 
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -27,10 +28,12 @@ trait TimeoutResponse {
 /**
  * A provider that pulls a response from the cache.
  */
-class CachingAsyncHttpClient(client: AsyncHttpClient, cache: AhcHttpCache)
+class CachingAsyncHttpClient(underlying: AsyncHttpClient, cache: Cache[EffectiveURIKey, ResponseEntry])
     extends AsyncHttpClient
     with TimeoutResponse
     with Debug {
+
+  private val ahcHttpCache = AhcHttpCache(cache)
 
   private val cacheThreadPool = Executors.newFixedThreadPool(2)
 
@@ -43,10 +46,7 @@ class CachingAsyncHttpClient(client: AsyncHttpClient, cache: AhcHttpCache)
   private val cacheTimeout = scala.concurrent.duration.Duration(1, "second")
 
   def close(): Unit = {
-    if (logger.isTraceEnabled) {
-      logger.trace("close: ")
-    }
-    client.close()
+    underlying.close()
   }
 
   @throws(classOf[IOException])
@@ -56,7 +56,7 @@ class CachingAsyncHttpClient(client: AsyncHttpClient, cache: AhcHttpCache)
         execute(request, asyncCompletionHandler, null)
 
       case other =>
-        throw new IllegalStateException(s"Only AsyncCompletionHandler is implemented, type is ${other.getClass}" )
+        throw new IllegalStateException(s"Only AsyncCompletionHandler is implemented, type is ${other.getClass}")
     }
   }
 
@@ -69,14 +69,14 @@ class CachingAsyncHttpClient(client: AsyncHttpClient, cache: AhcHttpCache)
     // Ask the cache if it has anything matching the primary key...
     val key = EffectiveURIKey(request)
     val requestTime = HttpDate.now
-    val entryResults = Await.result(cache.get(key), cacheTimeout).toSeq
+    val entryResults = Await.result(ahcHttpCache.get(key), cacheTimeout).toSeq
     if (logger.isDebugEnabled) {
       logger.debug(s"execute $key: results = $entryResults")
     }
 
     // Selects a response out of the results -- if there is no selected response, then
     // depending on the Cache-Control header values, the response may be to timeout or forward.
-    cache.selectionAction(request, entryResults) match {
+    ahcHttpCache.selectionAction(request, entryResults) match {
       case SelectedResponse(_, index) =>
         val entry = entryResults(index)
         logger.debug(s"execute $key: selected from cache: $entry")
@@ -88,7 +88,7 @@ class CachingAsyncHttpClient(client: AsyncHttpClient, cache: AhcHttpCache)
 
       case ForwardToOrigin(reason) =>
         logger.debug(s"execute $key: $reason -- forwarding to origin server")
-        client.executeRequest(request, cacheAsyncHandler(request, handler))
+        underlying.executeRequest(request, cacheAsyncHandler(request, handler))
     }
   }
 
@@ -99,21 +99,21 @@ class CachingAsyncHttpClient(client: AsyncHttpClient, cache: AhcHttpCache)
 
     val key = EffectiveURIKey(request)
 
-    val currentAge = cache.calculateCurrentAge(request, entry, requestTime)
+    val currentAge = ahcHttpCache.calculateCurrentAge(request, entry, requestTime)
 
-    cache.serveAction(request, entry, currentAge) match {
+    ahcHttpCache.serveAction(request, entry, currentAge) match {
       case ServeFresh(reason) =>
         logger.debug(s"serveResponse $key: $reason -- serving fresh response")
 
         // Serve fresh responses from cache, without going to the origin server.
-        val freshResponse = cache.generateCachedResponse(request, entry, currentAge, isFresh = true)
+        val freshResponse = ahcHttpCache.generateCachedResponse(request, entry, currentAge, isFresh = true)
         executeFromCache(handler, request, freshResponse)
 
       case ServeStale(reason) =>
         logger.debug(s"serveResponse $key: $reason -- serving stale response found for $key")
 
         // Serve stale response from cache, without going to the origin sever.
-        val staleResponse = cache.generateCachedResponse(request, entry, currentAge, isFresh = false)
+        val staleResponse = ahcHttpCache.generateCachedResponse(request, entry, currentAge, isFresh = false)
         executeFromCache(handler, request, staleResponse)
 
       case ServeStaleAndValidate(reason) =>
@@ -128,10 +128,10 @@ class CachingAsyncHttpClient(client: AsyncHttpClient, cache: AhcHttpCache)
         // Run a validation request in a future (which will update the cache later)...
         val response = entry.response
         val validationRequest = buildValidationRequest(request, response)
-        client.executeRequest(validationRequest, backgroundAsyncHandler[AHCResponse](validationRequest))
+        underlying.executeRequest(validationRequest, backgroundAsyncHandler[AHCResponse](validationRequest))
 
         // ...AND return the response from cache.
-        val staleResponse = cache.generateCachedResponse(request, entry, currentAge, isFresh = false)
+        val staleResponse = ahcHttpCache.generateCachedResponse(request, entry, currentAge, isFresh = false)
         executeFromCache(handler, request, staleResponse)
 
       case action @ Validate(reason, staleIfError) =>
@@ -142,7 +142,7 @@ class CachingAsyncHttpClient(client: AsyncHttpClient, cache: AhcHttpCache)
         // so the stale response could still be used... we just need to check.
         val response = entry.response
         val validationRequest = buildValidationRequest(request, response)
-        client.executeRequest(validationRequest, cacheAsyncHandler(validationRequest, handler, Some(action)))
+        underlying.executeRequest(validationRequest, cacheAsyncHandler(validationRequest, handler, Some(action)))
 
       case action @ ValidateOrTimeout(reason) =>
         logger.debug(s"serveResponse: $reason -- must revalidate and timeout on disconnect")
@@ -151,7 +151,7 @@ class CachingAsyncHttpClient(client: AsyncHttpClient, cache: AhcHttpCache)
         // timeout response instead of serving a stale response.
         val response = entry.response
         val validationRequest = buildValidationRequest(request, response)
-        client.executeRequest(validationRequest, cacheAsyncHandler(request, handler, Some(action)))
+        underlying.executeRequest(validationRequest, cacheAsyncHandler(request, handler, Some(action)))
     }
   }
 
@@ -212,7 +212,7 @@ class CachingAsyncHttpClient(client: AsyncHttpClient, cache: AhcHttpCache)
   }
 
   protected def backgroundAsyncHandler[T](request: Request): BackgroundAsyncHandler[T] = {
-    new BackgroundAsyncHandler(request, cache)
+    new BackgroundAsyncHandler(request, ahcHttpCache)
   }
 
   protected def serveTimeout[T](request: Request, handler: AsyncHandler[T]): CacheFuture[T] = {
@@ -221,59 +221,59 @@ class CachingAsyncHttpClient(client: AsyncHttpClient, cache: AhcHttpCache)
   }
 
   protected def cacheAsyncHandler[T](request: Request, handler: AsyncCompletionHandler[T], action: Option[ResponseServeAction] = None): AsyncCachingHandler[T] = {
-    new AsyncCachingHandler(request, handler, cache, action)
+    new AsyncCachingHandler(request, handler, ahcHttpCache, action)
   }
 
   override def prepareGet(s: String): BoundRequestBuilder = {
-    client.prepareGet(s)
+    underlying.prepareGet(s)
   }
 
   override def preparePost(s: String): BoundRequestBuilder = {
-    client.preparePost(s)
+    underlying.preparePost(s)
   }
 
   override def preparePut(s: String): BoundRequestBuilder = {
-    client.preparePut(s)
+    underlying.preparePut(s)
   }
 
   override def prepareOptions(s: String): BoundRequestBuilder = {
-    client.prepareOptions(s)
+    underlying.prepareOptions(s)
   }
 
   override def setSignatureCalculator(signatureCalculator: SignatureCalculator): AsyncHttpClient = {
-    client.setSignatureCalculator(signatureCalculator)
+    underlying.setSignatureCalculator(signatureCalculator)
   }
 
   override def prepareHead(s: String): BoundRequestBuilder = {
-    client.prepareHead(s)
+    underlying.prepareHead(s)
   }
 
   override def prepareConnect(s: String): BoundRequestBuilder = {
-    client.prepareConnect(s)
+    underlying.prepareConnect(s)
   }
 
   override def prepareTrace(s: String): BoundRequestBuilder = {
-    client.prepareTrace(s)
+    underlying.prepareTrace(s)
   }
 
   override def prepareRequest(request: Request): BoundRequestBuilder = {
-    client.prepareRequest(request)
+    underlying.prepareRequest(request)
   }
 
   override def prepareRequest(requestBuilder: RequestBuilder): BoundRequestBuilder = {
-    client.prepareRequest(requestBuilder)
+    underlying.prepareRequest(requestBuilder)
   }
 
   override def prepareDelete(s: String): BoundRequestBuilder = {
-    client.prepareDelete(s)
+    underlying.prepareDelete(s)
   }
 
   override def preparePatch(s: String): BoundRequestBuilder = {
-    client.preparePatch(s)
+    underlying.preparePatch(s)
   }
 
   override def isClosed: Boolean = {
-    client.isClosed
+    underlying.isClosed
   }
 
   override def executeRequest[T](requestBuilder: RequestBuilder, asyncHandler: AsyncHandler[T]): ListenableFuture[T] = {
@@ -281,11 +281,11 @@ class CachingAsyncHttpClient(client: AsyncHttpClient, cache: AhcHttpCache)
   }
 
   override def executeRequest(request: Request): ListenableFuture[AHCResponse] = {
-    client.executeRequest(request)
+    underlying.executeRequest(request)
   }
 
   override def executeRequest(requestBuilder: RequestBuilder): ListenableFuture[AHCResponse] = {
-    client.executeRequest(requestBuilder)
+    underlying.executeRequest(requestBuilder)
   }
 }
 

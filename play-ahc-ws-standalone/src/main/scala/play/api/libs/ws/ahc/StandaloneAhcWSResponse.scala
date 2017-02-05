@@ -99,3 +99,9 @@ class StandaloneAhcWSResponse(ahcResponse: AHCResponse) extends StandaloneWSResp
     s"AhcWSResponse($status, $statusText)"
 
 }
+
+object StandaloneAhcWSResponse {
+  def apply(ahcResponse: AHCResponse): StandaloneAhcWSResponse = {
+    new StandaloneAhcWSResponse(ahcResponse)
+  }
+}

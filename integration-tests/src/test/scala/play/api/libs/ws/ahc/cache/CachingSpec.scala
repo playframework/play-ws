@@ -71,7 +71,8 @@ class CachingSpec(implicit ee: ExecutionEnv) extends Specification with BeforeAf
   "GET" should {
 
     "work once" in {
-      val ws = new StandaloneAhcWSClient(asyncHttpClient, cache = Some(AhcHttpCache(createCache())))
+      val cachingAsyncHttpClient = new CachingAsyncHttpClient(asyncHttpClient, createCache())
+      val ws = new StandaloneAhcWSClient(cachingAsyncHttpClient)
 
       ws.url("http://localhost:9000/").get().map { response =>
         response.body must be_==("<h1>Say hello to akka-http</h1>")
