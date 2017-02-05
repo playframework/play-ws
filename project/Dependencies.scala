@@ -19,7 +19,7 @@ object Dependencies {
     "play-functional"
   ).map("com.typesafe.play" %% _ % playJsonVersion)
 
-  val slf4j = Seq("org.slf4j" % "slf4j-api" % "1.7.22")
+  val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "1.7.22")
 
   val slf4jtest = Seq("uk.org.lidalia" % "slf4j-test" % "1.1.0")
 
@@ -64,5 +64,5 @@ object Dependencies {
       scalaXml ++
       playJson
 
-  val standaloneAhcWSDependencies = cachecontrol ++ caffeine ++ slf4j ++ reactiveStreams
+  val standaloneAhcWSDependencies = cachecontrol ++ jcache ++ slf4jApi ++ reactiveStreams
 }
