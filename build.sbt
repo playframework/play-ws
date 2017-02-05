@@ -1,7 +1,8 @@
 import Dependencies._
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
-import sbt._
+import sbt.Keys.artifact
+import sbt.{addArtifact, _}
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
 
@@ -137,6 +138,16 @@ val ahcMerge: MergeStrategy = new MergeStrategy {
   override val name: String = "ahcMerge"
 }
 
+import xml.{NodeSeq, Node => XNode, Elem}
+import xml.transform.{RuleTransformer, RewriteRule}
+
+def dependenciesFilter(n: XNode) = new RuleTransformer(new RewriteRule {
+  override def transform(n: XNode): NodeSeq = n match {
+    case e: Elem if e.label == "dependencies" => NodeSeq.Empty
+    case other => other
+  }
+}).transform(n).head
+
 //---------------------------------------------------------------
 // Shaded AsyncHttpClient implementation
 //---------------------------------------------------------------
@@ -164,8 +175,17 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
       ShadeRule.rename("org.asynchttpclient.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.rename("io.netty.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.rename("javassist.**" -> "play.shaded.ahc.@0").inAll,
-      ShadeRule.rename("com.typesafe.netty.**" -> "play.shaded.ahc.@0").inAll
+      ShadeRule.rename("com.typesafe.netty.**" -> "play.shaded.ahc.@0").inAll,
+      ShadeRule.zap("org.reactivestreams.**").inAll
     ),
+
+    // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom
+    // Remove dependencies from the POM because we have a FAT jar here.
+    makePomConfiguration := makePomConfiguration.value.copy(process = dependenciesFilter),
+    //ivyXML := <dependencies></dependencies>,
+    //ivyLoggingLevel := UpdateLogging.Full,
+    //logLevel := Level.Debug,
+
     assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeBin = false, includeScala = false),
     packageBin in Compile := assembly.value
   )
@@ -204,16 +224,6 @@ val shadedOAuthSettings = Seq(
 // Shaded aggregate project
 //---------------------------------------------------------------
 
-import xml.{NodeSeq, Node => XNode, Elem}
-import xml.transform.{RuleTransformer, RewriteRule}
-
-def dependenciesFilter(n: XNode) = new RuleTransformer(new RewriteRule {
-  override def transform(n: XNode): NodeSeq = n match {
-    case e: Elem if e.label == "dependencies" => NodeSeq.Empty
-    case other => other
-  }
-}).transform(n).head
-
 lazy val shaded = Project(id = "shaded", base = file("shaded") )
   .settings(disableDocs)
   .settings(disablePublishing)
@@ -237,10 +247,20 @@ lazy val `play-ws-standalone` = project
 //---------------------------------------------------------------
 // Shaded AsyncHttpClient implementation of WS
 //---------------------------------------------------------------
-//
-//def excludeUnshaded(module: ModuleID): ModuleID =
-//  module.exclude("org.asynchttpclient", "async-http-client")
-//        .exclude("oauth.signpost", "signpost-core")
+
+def addShadedDeps(deps: Seq[xml.Node], node: xml.Node): xml.Node = {
+  node match {
+    case elem: xml.Elem =>
+      val child = if (elem.label == "dependencies") {
+        elem.child ++ deps
+      } else {
+        elem.child.map(addShadedDeps(deps, _))
+      }
+      xml.Elem(elem.prefix, elem.label, elem.attributes, elem.scope, false, child: _*)
+    case _ =>
+      node
+  }
+}
 
 // Standalone implementation using AsyncHttpClient
 lazy val `play-ahc-ws-standalone` = project
@@ -255,6 +275,23 @@ lazy val `play-ahc-ws-standalone` = project
   .settings(libraryDependencies ++= standaloneAhcWSDependencies)
   .settings(shadedAhcSettings)
   .settings(shadedOAuthSettings)
+  .settings(
+    // This will not work if you do a publishLocal, because that uses ivy...
+    pomPostProcess := {
+      (node: xml.Node) => addShadedDeps(List(
+        <dependency>
+          <groupId>com.typesafe.play</groupId>
+          <artifactId>shaded-asynchttpclient</artifactId>
+          <version>{version.value}</version>
+        </dependency>,
+        <dependency>
+          <groupId>com.typesafe.play</groupId>
+          <artifactId>shaded-oauth</artifactId>
+          <version>{version.value}</version>
+        </dependency>
+      ), node)
+    }
+  )
   .dependsOn(
     `play-ws-standalone`
   ).aggregate(
