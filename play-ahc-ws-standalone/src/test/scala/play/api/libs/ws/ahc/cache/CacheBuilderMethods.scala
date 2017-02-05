@@ -15,8 +15,8 @@ trait CacheBuilderMethods {
 
   def generateCache: AhcHttpCache = {
     val cacheManager = Caching.getCachingProvider.getCacheManager
-    val configuration: Configuration[CacheKey, CacheEntry] = new MutableConfiguration().setTypes(classOf[CacheKey], classOf[CacheEntry]).setStoreByValue(false).setExpiryPolicyFactory(new SingletonFactory(new EternalExpiryPolicy()))
-    val simpleCache = cacheManager.createCache[CacheKey, CacheEntry, Configuration[CacheKey, CacheEntry]]("play-ws-cache", configuration)
+    val configuration: Configuration[EffectiveURIKey, ResponseEntry] = new MutableConfiguration().setTypes(classOf[EffectiveURIKey], classOf[ResponseEntry]).setStoreByValue(false).setExpiryPolicyFactory(new SingletonFactory(new EternalExpiryPolicy()))
+    val simpleCache = cacheManager.createCache[EffectiveURIKey, ResponseEntry, Configuration[EffectiveURIKey, ResponseEntry]]("play-ws-cache", configuration)
 
     AhcHttpCache(simpleCache)
   }

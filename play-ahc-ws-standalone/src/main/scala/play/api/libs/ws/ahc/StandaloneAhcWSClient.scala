@@ -3,15 +3,17 @@
  */
 package play.api.libs.ws.ahc
 
+import javax.cache.Cache
+
 import akka.stream.Materializer
 import com.typesafe.sslconfig.ssl.SystemConfiguration
 import com.typesafe.sslconfig.ssl.debug.DebugConfiguration
-import play.api.libs.ws.ahc.cache.{ AhcHttpCache, CachingAsyncHttpClient }
-import play.api.libs.ws.{ EmptyBody, StandaloneWSClient, StandaloneWSRequest }
+import play.api.libs.ws.ahc.cache._
+import play.api.libs.ws.{EmptyBody, StandaloneWSClient, StandaloneWSRequest}
 import play.shaded.ahc.org.asynchttpclient._
 
 import scala.collection.immutable.TreeMap
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * A WS client backed by an AsyncHttpClient.
@@ -19,22 +21,25 @@ import scala.concurrent.{ ExecutionContext, Future }
  * If you need to debug AsyncHttpClient, add <logger name="play.shaded.ahc.org.asynchttpclient" level="DEBUG" /> into your conf/logback.xml file.
  *
  * @param asyncHttpClient an already configured asynchttpclient
- * @param httpCache An optional HTTP caching layer.
+ * @param cache An optional HTTP caching layer.
  */
-case class StandaloneAhcWSClient(asyncHttpClient: AsyncHttpClient, httpCache: Option[AhcHttpCache])(implicit val materializer: Materializer) extends StandaloneWSClient {
+class StandaloneAhcWSClient(asyncHttpClient: AsyncHttpClient, cache: Option[Cache[EffectiveURIKey, ResponseEntry]] = None)(implicit val materializer: Materializer) extends StandaloneWSClient {
+
+  private val httpClient: AsyncHttpClient = {
+    cache.map(AhcHttpCache(_)).map {
+      new CachingAsyncHttpClient(asyncHttpClient, _)
+    }.getOrElse(asyncHttpClient)
+  }
 
   def underlying[T]: T = asyncHttpClient.asInstanceOf[T]
 
   private[libs] def executionContext: ExecutionContext = materializer.executionContext
 
-  private val maybeCache = httpCache.map(new CachingAsyncHttpClient(asyncHttpClient, _))
-
   private[libs] def execute(request: Request): Future[StandaloneAhcWSResponse] = {
     import play.shaded.ahc.org.asynchttpclient.{ AsyncCompletionHandler, Response => AHCResponse }
-
     import scala.concurrent.Promise
-    val result = Promise[StandaloneAhcWSResponse]()
 
+    val result = Promise[StandaloneAhcWSResponse]()
     val handler = new AsyncCompletionHandler[AHCResponse]() {
       override def onCompleted(response: AHCResponse): AHCResponse = {
         result.success(StandaloneAhcWSResponse(response))
@@ -46,13 +51,7 @@ case class StandaloneAhcWSClient(asyncHttpClient: AsyncHttpClient, httpCache: Op
       }
     }
 
-    maybeCache match {
-      case Some(cachingClient) =>
-        cachingClient.executeRequest(request, handler)
-      case None =>
-        asyncHttpClient.executeRequest(request, handler)
-    }
-
+    httpClient.executeRequest(request, handler)
     result.future
   }
 
@@ -88,13 +87,13 @@ object StandaloneAhcWSClient {
    *
    * @param config configuration settings
    */
-  def apply(config: AhcWSClientConfig = AhcWSClientConfigFactory.forConfig(), httpCache: Option[AhcHttpCache] = None)(implicit materializer: Materializer): StandaloneAhcWSClient = {
+  def apply(config: AhcWSClientConfig = AhcWSClientConfigFactory.forConfig(), cache: Option[Cache[EffectiveURIKey, ResponseEntry]] = None)(implicit materializer: Materializer): StandaloneAhcWSClient = {
     if (config.wsClientConfig.ssl.debug.enabled) {
       new DebugConfiguration(StandaloneAhcWSClient.loggerFactory).configure(config.wsClientConfig.ssl.debug)
     }
     val ahcConfig = new AhcConfigBuilder(config).build()
     val asyncHttpClient = new DefaultAsyncHttpClient(ahcConfig)
-    val client = new StandaloneAhcWSClient(asyncHttpClient, httpCache)
+    val client = new StandaloneAhcWSClient(asyncHttpClient, cache)
     new SystemConfiguration(loggerFactory).configure(config.wsClientConfig.ssl)
     client
   }

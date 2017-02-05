@@ -28,7 +28,8 @@ trait TimeoutResponse {
  * A provider that pulls a response from the cache.
  */
 class CachingAsyncHttpClient(client: AsyncHttpClient, cache: AhcHttpCache)
-    extends TimeoutResponse
+    extends AsyncHttpClient
+    with TimeoutResponse
     with Debug {
 
   private val cacheThreadPool = Executors.newFixedThreadPool(2)
@@ -49,13 +50,13 @@ class CachingAsyncHttpClient(client: AsyncHttpClient, cache: AhcHttpCache)
   }
 
   @throws(classOf[IOException])
-  def executeRequest[T](request: Request, handler: AsyncHandler[T]): ListenableFuture[T] = {
+  override def executeRequest[T](request: Request, handler: AsyncHandler[T]): ListenableFuture[T] = {
     handler match {
       case asyncCompletionHandler: AsyncCompletionHandler[T] =>
         execute(request, asyncCompletionHandler, null)
 
       case other =>
-        throw new IllegalStateException("not implemented!")
+        throw new IllegalStateException(s"Only AsyncCompletionHandler is implemented, type is ${other.getClass}" )
     }
   }
 
@@ -66,7 +67,7 @@ class CachingAsyncHttpClient(client: AsyncHttpClient, cache: AhcHttpCache)
     }
 
     // Ask the cache if it has anything matching the primary key...
-    val key = CacheKey(request)
+    val key = EffectiveURIKey(request)
     val requestTime = HttpDate.now
     val entryResults = Await.result(cache.get(key), cacheTimeout).toSeq
     if (logger.isDebugEnabled) {
@@ -94,9 +95,9 @@ class CachingAsyncHttpClient(client: AsyncHttpClient, cache: AhcHttpCache)
   /**
    * Serves a future containing the response, based on the cache behavior.
    */
-  protected def serveResponse[T](handler: AsyncCompletionHandler[T], request: Request, entry: CacheEntry, requestTime: DateTime): ListenableFuture[T] = {
+  protected def serveResponse[T](handler: AsyncCompletionHandler[T], request: Request, entry: ResponseEntry, requestTime: DateTime): ListenableFuture[T] = {
 
-    val key = CacheKey(request)
+    val key = EffectiveURIKey(request)
 
     val currentAge = cache.calculateCurrentAge(request, entry, requestTime)
 
@@ -221,6 +222,70 @@ class CachingAsyncHttpClient(client: AsyncHttpClient, cache: AhcHttpCache)
 
   protected def cacheAsyncHandler[T](request: Request, handler: AsyncCompletionHandler[T], action: Option[ResponseServeAction] = None): AsyncCachingHandler[T] = {
     new AsyncCachingHandler(request, handler, cache, action)
+  }
+
+  override def prepareGet(s: String): BoundRequestBuilder = {
+    client.prepareGet(s)
+  }
+
+  override def preparePost(s: String): BoundRequestBuilder = {
+    client.preparePost(s)
+  }
+
+  override def preparePut(s: String): BoundRequestBuilder = {
+    client.preparePut(s)
+  }
+
+  override def prepareOptions(s: String): BoundRequestBuilder = {
+    client.prepareOptions(s)
+  }
+
+  override def setSignatureCalculator(signatureCalculator: SignatureCalculator): AsyncHttpClient = {
+    client.setSignatureCalculator(signatureCalculator)
+  }
+
+  override def prepareHead(s: String): BoundRequestBuilder = {
+    client.prepareHead(s)
+  }
+
+  override def prepareConnect(s: String): BoundRequestBuilder = {
+    client.prepareConnect(s)
+  }
+
+  override def prepareTrace(s: String): BoundRequestBuilder = {
+    client.prepareTrace(s)
+  }
+
+  override def prepareRequest(request: Request): BoundRequestBuilder = {
+    client.prepareRequest(request)
+  }
+
+  override def prepareRequest(requestBuilder: RequestBuilder): BoundRequestBuilder = {
+    client.prepareRequest(requestBuilder)
+  }
+
+  override def prepareDelete(s: String): BoundRequestBuilder = {
+    client.prepareDelete(s)
+  }
+
+  override def preparePatch(s: String): BoundRequestBuilder = {
+    client.preparePatch(s)
+  }
+
+  override def isClosed: Boolean = {
+    client.isClosed
+  }
+
+  override def executeRequest[T](requestBuilder: RequestBuilder, asyncHandler: AsyncHandler[T]): ListenableFuture[T] = {
+    executeRequest(requestBuilder.build(), asyncHandler)
+  }
+
+  override def executeRequest(request: Request): ListenableFuture[AHCResponse] = {
+    client.executeRequest(request)
+  }
+
+  override def executeRequest(requestBuilder: RequestBuilder): ListenableFuture[AHCResponse] = {
+    client.executeRequest(requestBuilder)
   }
 }
 

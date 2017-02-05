@@ -59,10 +59,10 @@ class CachingSpec(implicit ee: ExecutionEnv) extends Specification with BeforeAf
     system.terminate()
   }
 
-  def createCache(): Cache[CacheKey, CacheEntry] = {
+  def createCache(): Cache[EffectiveURIKey, ResponseEntry] = {
     val cacheManager = Caching.getCachingProvider.getCacheManager
     val configuration = new MutableConfiguration()
-      .setTypes(classOf[CacheKey], classOf[CacheEntry])
+      .setTypes(classOf[EffectiveURIKey], classOf[ResponseEntry])
       .setStoreByValue(false)
       .setExpiryPolicyFactory(new SingletonFactory(new EternalExpiryPolicy()))
     cacheManager.createCache("play-ws-cache", configuration)
@@ -71,7 +71,7 @@ class CachingSpec(implicit ee: ExecutionEnv) extends Specification with BeforeAf
   "GET" should {
 
     "work once" in {
-      val ws = new StandaloneAhcWSClient(asyncHttpClient, httpCache = Some(AhcHttpCache(createCache())))
+      val ws = new StandaloneAhcWSClient(asyncHttpClient, cache = Some(AhcHttpCache(createCache())))
 
       ws.url("http://localhost:9000/").get().map { response =>
         response.body must be_==("<h1>Say hello to akka-http</h1>")

@@ -442,7 +442,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
         WSRequestExecutor executor = foldRight(r -> {
             StandaloneAhcWSRequest ahcWsRequest = (StandaloneAhcWSRequest) r;
             Request ahcRequest = ahcWsRequest.buildRequest();
-            return ahcWsRequest.execute(ahcRequest);
+            return client.execute(ahcRequest);
         }, filters.iterator());
         return executor.apply(this);
     }
@@ -586,31 +586,6 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
             values.add(value);
             map.put(name, values);
         }
-    }
-
-    private CompletionStage<StandaloneWSResponse> execute(Request request) {
-
-        final Promise<StandaloneWSResponse> scalaPromise = scala.concurrent.Promise$.MODULE$.apply();
-        try {
-            AsyncHttpClient asyncHttpClient = (AsyncHttpClient) client.getUnderlying();
-            asyncHttpClient.executeRequest(request, new AsyncCompletionHandler<Response>() {
-                @Override
-                public Response onCompleted(Response response) {
-                    StandaloneAhcWSResponse r = new StandaloneAhcWSResponse(response);
-                    scalaPromise.success(r);
-                    return response;
-                }
-
-                @Override
-                public void onThrowable(Throwable t) {
-                    scalaPromise.failure(t);
-                }
-            });
-        } catch (RuntimeException exception) {
-            scalaPromise.failure(exception);
-        }
-        Future<StandaloneWSResponse> future = scalaPromise.future();
-        return FutureConverters.toJava(future);
     }
 
     Realm auth(String username, String password, WSAuthScheme scheme) {

@@ -29,7 +29,7 @@ class AsyncCachingHandler[T](
 
   protected val requestTime: DateTime = HttpDate.now
 
-  protected val key: CacheKey = CacheKey(request)
+  protected val key: EffectiveURIKey = EffectiveURIKey(request)
 
   protected val timeout: Duration = scala.concurrent.duration.Duration(1, "second")
 
