@@ -207,6 +207,11 @@ lazy val `shaded-oauth` = project.in(file("shaded/oauth"))
       ShadeRule.rename("oauth.**" -> "play.shaded.oauth.@0").inAll,
       ShadeRule.rename("org.apache.commons.**" -> "play.shaded.oauth.@0").inAll
     ),
+
+    // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom
+    // Remove dependencies from the POM because we have a FAT jar here.
+    makePomConfiguration := makePomConfiguration.value.copy(process = dependenciesFilter),
+
     assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeBin = false, includeScala = false),
     packageBin in Compile := assembly.value
   )
@@ -306,6 +311,7 @@ lazy val `integration-tests` = project.in(file("integration-tests"))
   .settings(disablePublishing)
   .settings(SbtScalariform.scalariformSettings)
   .settings(
+    concurrentRestrictions += Tags.limitAll(1), // only one integration test at a time
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
     libraryDependencies ++= (specsBuild ++ akkaHttp ++ caffeine).map(_ % Test)
   )
