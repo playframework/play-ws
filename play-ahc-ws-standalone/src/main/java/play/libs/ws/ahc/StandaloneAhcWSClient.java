@@ -85,7 +85,7 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
         return FutureConverters.toJava(future);
     }
 
-    private ExecutionContext executionContext() {
+    ExecutionContext executionContext() {
         return materializer.executionContext();
     }
 

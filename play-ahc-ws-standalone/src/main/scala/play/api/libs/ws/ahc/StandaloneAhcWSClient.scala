@@ -56,7 +56,7 @@ class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(implici
     Streamed.execute(asyncHttpClient, request)(executionContext)
   }
 
-  private def executionContext: ExecutionContext = materializer.executionContext
+  def executionContext: ExecutionContext = materializer.executionContext
 
 }
 
