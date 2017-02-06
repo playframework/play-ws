@@ -116,8 +116,8 @@ lazy val shadeAssemblySettings = commonSettings ++ Seq(
       case _ =>
         sys.error("Cannot find valid scala version!")
     }
-  },
-  crossPaths := false // only useful for Java
+  }
+  // crossPaths := false // XXX only useful for Java and seems to munge the Scala projects
 )
 
 val ahcMerge: MergeStrategy = new MergeStrategy {
