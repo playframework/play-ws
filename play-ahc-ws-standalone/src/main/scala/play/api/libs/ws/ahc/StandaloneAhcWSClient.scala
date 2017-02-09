@@ -80,6 +80,8 @@ object StandaloneAhcWSClient {
    * }}}
    *
    * @param config configuration settings
+   * @param cache if not null, will be used for HTTP response caching.
+   * @param materializer the akka materializer.
    */
   def apply(config: AhcWSClientConfig = AhcWSClientConfigFactory.forConfig(), cache: Option[Cache[EffectiveURIKey, ResponseEntry]] = None)(implicit materializer: Materializer): StandaloneAhcWSClient = {
     if (config.wsClientConfig.ssl.debug.enabled) {
