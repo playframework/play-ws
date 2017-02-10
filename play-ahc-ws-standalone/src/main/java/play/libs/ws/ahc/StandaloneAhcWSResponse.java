@@ -4,12 +4,11 @@
 
 package play.libs.ws.ahc;
 
-
 import com.fasterxml.jackson.databind.JsonNode;
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders;
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils;
 import org.w3c.dom.Document;
-import play.libs.Json;
+
 import play.libs.ws.StandaloneWSResponse;
 import play.libs.ws.WSCookie;
 
