@@ -13,11 +13,8 @@ object Dependencies {
   ).map("org.specs2" %% _ % specsVersion)
 
   // Use the published milestone
-  val playJsonVersion = "2.6.0-M1"
-  val playJson = Seq(
-    "play-json",
-    "play-functional"
-  ).map("com.typesafe.play" %% _ % playJsonVersion)
+  val playJsonVersion = "2.6.0-M2"
+  val playJson = "com.typesafe.play" %% "play-json" % playJsonVersion
 
   val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "1.7.22")
 
@@ -61,7 +58,7 @@ object Dependencies {
   val standaloneApiWSDependencies = javaxInject ++
       sslConfigCore ++
       akka ++
-      scalaXml ++
+      scalaXml :+
       playJson
 
   val standaloneAhcWSDependencies = cachecontrol ++ jcache ++ slf4jApi ++ reactiveStreams
