@@ -18,13 +18,16 @@ trait StandaloneWSClient extends Closeable {
   def underlying[T]: T
 
   /**
-   * Generates a request.
+   * Generates a request.  Throws IllegalArgumentException if the URL is invalid.
    *
    * @param url The base URL to make HTTP requests to.
    * @return a request
    */
+  @throws[IllegalArgumentException]
   def url(url: String): StandaloneWSRequest
 
-  /** Closes this client, and releases underlying resources. */
+  /**
+   * Closes this client, and releases underlying resources.
+   */
   @throws[IOException] def close(): Unit
 }
