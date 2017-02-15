@@ -11,6 +11,7 @@ import akka.stream.javadsl.Source;
 import akka.util.ByteString;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders;
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders;
 import play.shaded.ahc.org.asynchttpclient.*;
@@ -57,6 +58,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     private final StandaloneAhcWSClient client;
 
     private final Materializer materializer;
+    private final ObjectMapper objectMapper;
 
     private int timeout = 0;
     private boolean followRedirects;
@@ -64,12 +66,13 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
     private final List<WSRequestFilter> filters = new ArrayList<>();
 
-    public StandaloneAhcWSRequest(StandaloneAhcWSClient client, String url, Materializer materializer) {
+    public StandaloneAhcWSRequest(StandaloneAhcWSClient client, String url, Materializer materializer, ObjectMapper mapper) {
         this.client = client;
         URI reference = URI.create(url);
 
         this.url = url;
         this.materializer = materializer;
+        this.objectMapper = mapper;
         String userInfo = reference.getUserInfo();
         if (userInfo != null) {
             this.setAuth(userInfo);
@@ -78,6 +81,11 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
             this.setQueryString(reference.getQuery());
         }
     }
+
+    public StandaloneAhcWSRequest(StandaloneAhcWSClient client, String url, Materializer materializer) {
+        this(client, url, materializer, StandaloneAhcWSClient.DEFAULT_OBJECT_MAPPER);
+    }
+
 
     @Override
     public StandaloneAhcWSRequest setRequestFilter(WSRequestFilter filter) {
@@ -514,7 +522,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
             possiblyModifiedHeaders.set(HttpHeaders.Names.CONTENT_TYPE, contentType);
             byte[] bodyBytes;
             try {
-                bodyBytes = Json.mapper().writeValueAsBytes(jsonBody);
+                bodyBytes = objectMapper.writeValueAsBytes(jsonBody);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
