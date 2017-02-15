@@ -13,7 +13,7 @@ object Dependencies {
   ).map("org.specs2" %% _ % specsVersion)
 
   // Use the published milestone
-  val playJsonVersion = "2.6.0-M2"
+  val playJsonVersion = "2.6.0-M3"
   val playJson = "com.typesafe.play" %% "play-json" % playJsonVersion
 
   val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "1.7.22")

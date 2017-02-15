@@ -5,6 +5,7 @@
 package play.libs.ws.ahc;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders;
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils;
 import org.w3c.dom.Document;
@@ -12,6 +13,7 @@ import org.w3c.dom.Document;
 import play.libs.ws.StandaloneWSResponse;
 import play.libs.ws.WSCookie;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -29,9 +31,15 @@ import static java.util.stream.Collectors.toList;
 public class StandaloneAhcWSResponse implements StandaloneWSResponse {
 
     private final play.shaded.ahc.org.asynchttpclient.Response ahcResponse;
+    private final ObjectMapper objectMapper;
+
+    public StandaloneAhcWSResponse(play.shaded.ahc.org.asynchttpclient.Response ahcResponse, ObjectMapper mapper) {
+        this.ahcResponse = ahcResponse;
+        this.objectMapper = mapper;
+    }
 
     public StandaloneAhcWSResponse(play.shaded.ahc.org.asynchttpclient.Response ahcResponse) {
-        this.ahcResponse = ahcResponse;
+        this(ahcResponse, StandaloneAhcWSClient.DEFAULT_OBJECT_MAPPER);
     }
 
     @Override
@@ -147,7 +155,11 @@ public class StandaloneAhcWSResponse implements StandaloneWSResponse {
     @Override
     public JsonNode asJson() {
         // Jackson will automatically detect the correct encoding according to the rules in RFC-4627
-        return Json.parse(ahcResponse.getResponseBodyAsStream());
+        try {
+            return objectMapper.readValue(ahcResponse.getResponseBodyAsStream(), JsonNode.class);
+        } catch(IOException e) {
+            throw new RuntimeException("Error parsing JSON from WS response body", e);
+        }
     }
 
     /**

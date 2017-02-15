@@ -4,44 +4,77 @@
 
 package play.libs.ws.ahc;
 
+import java.io.IOException;
+import java.util.concurrent.CompletionStage;
+
+import javax.cache.Cache;
+import javax.inject.Inject;
+
 import akka.stream.Materializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.typesafe.sslconfig.ssl.SystemConfiguration;
 import com.typesafe.sslconfig.ssl.debug.DebugConfiguration;
 import org.slf4j.LoggerFactory;
+import play.api.libs.json.jackson.PlayJsonModule$;
 import play.api.libs.ws.ahc.AhcConfigBuilder;
 import play.api.libs.ws.ahc.AhcLoggerFactory;
 import play.api.libs.ws.ahc.AhcWSClientConfig;
 import play.api.libs.ws.ahc.Streamed;
-import play.api.libs.ws.ahc.cache.AhcHttpCache;
-import play.api.libs.ws.ahc.cache.ResponseEntry;
-import play.api.libs.ws.ahc.cache.EffectiveURIKey;
 import play.api.libs.ws.ahc.cache.CachingAsyncHttpClient;
+import play.api.libs.ws.ahc.cache.EffectiveURIKey;
+import play.api.libs.ws.ahc.cache.ResponseEntry;
 import play.libs.ws.StandaloneWSClient;
 import play.libs.ws.StandaloneWSResponse;
 import play.libs.ws.StreamedResponse;
-import play.shaded.ahc.org.asynchttpclient.*;
+import play.shaded.ahc.org.asynchttpclient.AsyncCompletionHandler;
+import play.shaded.ahc.org.asynchttpclient.AsyncHttpClient;
+import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClient;
+import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClientConfig;
+import play.shaded.ahc.org.asynchttpclient.Request;
+import play.shaded.ahc.org.asynchttpclient.Response;
 import scala.compat.java8.FutureConverters;
 import scala.concurrent.ExecutionContext;
 import scala.concurrent.Future;
 import scala.concurrent.Promise;
-
-import javax.cache.Cache;
-import javax.inject.Inject;
-import java.io.IOException;
-import java.util.concurrent.CompletionStage;
 
 /**
  * A WS asyncHttpClient backed by an AsyncHttpClient instance.
  */
 public class StandaloneAhcWSClient implements StandaloneWSClient {
 
+    static ObjectMapper DEFAULT_OBJECT_MAPPER = new ObjectMapper()
+        .registerModule(PlayJsonModule$.MODULE$)
+        .registerModule(new Jdk8Module())
+        .registerModule(new JavaTimeModule());
+
     private final AsyncHttpClient asyncHttpClient;
     private final Materializer materializer;
+    private final ObjectMapper objectMapper;
 
+    /**
+     * Creates a new client.
+     *
+     * @param asyncHttpClient the underlying AsyncHttpClient
+     * @param materializer the Materializer to use for streams
+     * @param mapper the ObjectMapper to use for serializing JSON objects
+     */
     @Inject
-    public StandaloneAhcWSClient(AsyncHttpClient asyncHttpClient, Materializer materializer) {
+    public StandaloneAhcWSClient(AsyncHttpClient asyncHttpClient, Materializer materializer, ObjectMapper mapper) {
         this.asyncHttpClient = asyncHttpClient;
         this.materializer = materializer;
+        this.objectMapper = mapper;
+    }
+
+    /**
+     * Creates a new client with the default Jackson ObjectMapper.
+     *
+     * @param asyncHttpClient the underlying AsyncHttpClient
+     * @param materializer the Materializer to use for streams
+     */
+    public StandaloneAhcWSClient(AsyncHttpClient asyncHttpClient, Materializer materializer) {
+        this(asyncHttpClient, materializer, DEFAULT_OBJECT_MAPPER);
     }
 
     @Override
@@ -51,7 +84,7 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
 
     @Override
     public StandaloneAhcWSRequest url(String url) {
-        return new StandaloneAhcWSRequest(this, url, materializer);
+        return new StandaloneAhcWSRequest(this, url, materializer, objectMapper);
     }
 
     @Override
@@ -65,7 +98,7 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
         AsyncCompletionHandler<Response> handler = new AsyncCompletionHandler<Response>() {
             @Override
             public Response onCompleted(Response response) {
-                StandaloneAhcWSResponse r = new StandaloneAhcWSResponse(response);
+                StandaloneAhcWSResponse r = new StandaloneAhcWSResponse(response, objectMapper);
                 scalaPromise.success(r);
                 return response;
             }
