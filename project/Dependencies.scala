@@ -13,7 +13,7 @@ object Dependencies {
   ).map("org.specs2" %% _ % specsVersion)
 
   // Use the published milestone
-  val playJsonVersion = "2.6.0-M3"
+  val playJsonVersion = "2.6.0-M5"
   val playJson = "com.typesafe.play" %% "play-json" % playJsonVersion
 
   val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "1.7.22")
@@ -41,6 +41,7 @@ object Dependencies {
     "org.asynchttpclient" % "async-http-client" % asyncHttpClientVersion
   )
 
+  // XXX need to use 2.3 for scala 2.10
   val akkaVersion = "2.4.14"
   val akka = Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion)
   val akkaHttp = Seq("com.typesafe.akka" %% "akka-http" % "10.0.1")
