@@ -36,7 +36,7 @@ object Dependencies {
   val cachecontrolVersion = "1.1.2"
   val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % cachecontrolVersion)
 
-  val asyncHttpClientVersion = "2.0.27"
+  val asyncHttpClientVersion = "2.0.30"
   val asyncHttpClient = Seq(
     "org.asynchttpclient" % "async-http-client" % asyncHttpClientVersion
   )
