@@ -56,7 +56,8 @@ class CachingSpec(implicit ee: ExecutionEnv) extends Specification with BeforeAf
   override def afterAll = {
     futureServer.foreach(_.unbind())(materializer.executionContext)
     asyncHttpClient.close()
-    system.terminate()
+    system.shutdown()
+    //system.terminate()
   }
 
   def createCache(): Cache[EffectiveURIKey, ResponseEntry] = {

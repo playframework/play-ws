@@ -53,7 +53,8 @@ class AhcWSRequestFilterSpec(implicit executionEnv: ExecutionEnv) extends Specif
   override def afterAll = {
     futureServer.foreach(_.unbind)
     client.close()
-    system.terminate()
+    system.shutdown()
+    //system.terminate()
   }
 
   "setRequestFilter" should {

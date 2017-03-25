@@ -13,16 +13,16 @@ object Dependencies {
   ).map("org.specs2" %% _ % specsVersion)
 
   // Use the published milestone
-  val playJsonVersion = "2.6.0-M3"
-  val playJson = "com.typesafe.play" %% "play-json" % playJsonVersion
+  val playJsonVersion = "2.6.0-M6"
+  val playJson = Seq("com.typesafe.play" %% "play-json" % playJsonVersion)
 
-  val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "1.7.22")
+  val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "1.7.22" % Provided)
 
   val slf4jtest = Seq("uk.org.lidalia" % "slf4j-test" % "1.1.0")
 
   val javaxInject = Seq("javax.inject" % "javax.inject" % "1")
 
-  val sslConfigVersion = "0.2.1"
+  val sslConfigVersion = "0.2.2"
   val sslConfigCore = Seq("com.typesafe" %% "ssl-config-core" % sslConfigVersion)
 
   val scalaXmlVersion = "1.0.6"
@@ -42,8 +42,13 @@ object Dependencies {
   )
 
   val akkaVersion = "2.4.14"
+  val akkaVersion210 = "2.3.16"
   val akka = Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion)
+  val akka210 = Seq("com.typesafe.akka" %% "akka-stream-experimental" % "2.0.5")
+
+  // Used in testing
   val akkaHttp = Seq("com.typesafe.akka" %% "akka-http" % "10.0.1")
+  val akkaHttp210 = Seq("com.typesafe.akka" %% "akka-http-experimental" % "2.0.5")
 
   val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.0")
 
@@ -55,11 +60,7 @@ object Dependencies {
   val caffeineVersion = "2.3.5"
   val caffeine = Seq("com.github.ben-manes.caffeine" % "jcache" % caffeineVersion)
 
-  val standaloneApiWSDependencies = javaxInject ++
-      sslConfigCore ++
-      akka ++
-      scalaXml :+
-      playJson
+  val standaloneApiWSDependencies = javaxInject ++ sslConfigCore ++ playJson
 
   val standaloneAhcWSDependencies = cachecontrol ++ jcache ++ slf4jApi ++ reactiveStreams
 }
