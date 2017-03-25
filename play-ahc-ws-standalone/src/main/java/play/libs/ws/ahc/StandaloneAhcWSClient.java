@@ -25,6 +25,7 @@ import play.api.libs.ws.ahc.Streamed;
 import play.api.libs.ws.ahc.cache.CachingAsyncHttpClient;
 import play.api.libs.ws.ahc.cache.EffectiveURIKey;
 import play.api.libs.ws.ahc.cache.ResponseEntry;
+import play.libs.ws.FromStreamedResponse;
 import play.libs.ws.StandaloneWSClient;
 import play.libs.ws.StandaloneWSResponse;
 import play.libs.ws.StreamedResponse;
@@ -123,7 +124,7 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
     }
 
     CompletionStage<? extends StreamedResponse> executeStream(Request request) {
-        return StreamedResponse.from(Streamed.execute(asyncHttpClient, request, executionContext()));
+        return FromStreamedResponse.from(Streamed.execute(asyncHttpClient, request, executionContext()));
     }
 
     /**

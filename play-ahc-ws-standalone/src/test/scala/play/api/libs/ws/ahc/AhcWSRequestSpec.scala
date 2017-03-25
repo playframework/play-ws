@@ -29,7 +29,8 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
 
   override def afterAll: Unit = {
     wsClient.close()
-    system.terminate()
+    system.shutdown()
+    //system.terminate()
   }
 
   def withClient(block: StandaloneWSClient => Result): Result = {

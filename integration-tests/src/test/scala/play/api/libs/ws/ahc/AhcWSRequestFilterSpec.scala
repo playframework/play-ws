@@ -40,7 +40,8 @@ class AhcWSRequestFilterSpec(implicit ee: ExecutionEnv) extends Specification wi
       }
     } ~ {
       get {
-        parameters('key.as[String]) { (key) =>
+        import akka.http.scaladsl.server.directives.ParameterDirectives.ParamMagnet
+        parameters('key) { (key) =>
           val httpEntity = HttpEntity(ContentTypes.`text/html(UTF-8)`, s"<h1>Say hello to akka-http, key = $key</h1>")
           complete(httpEntity)
         }
@@ -55,7 +56,8 @@ class AhcWSRequestFilterSpec(implicit ee: ExecutionEnv) extends Specification wi
   override def afterAll = {
     futureServer.foreach(_.unbind())
     client.close()
-    system.terminate()
+    system.shutdown()
+    //system.terminate()
   }
 
   "with request filters" should {

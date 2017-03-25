@@ -17,7 +17,7 @@ val previousVersion = None
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
 resolvers in ThisBuild += Resolver.sonatypeRepo("public")
 
-val javacSettings = Seq(
+def javacSettings = Seq(
   "-source", "1.8",
   "-target", "1.8",
   "-Xlint:deprecation",
@@ -247,6 +247,11 @@ lazy val `play-ws-standalone` = project
   .settings(commonSettings)
   .settings(libraryDependencies ++= (specsBuild ++ junitInterface).map(_ % Test))
   .settings(libraryDependencies ++= standaloneApiWSDependencies)
+  .settings(libraryDependencies ++= (
+    scalaBinaryVersion.value match {
+      case "2.10" => akka210 ++ Seq("org.scala-lang.modules" %% "scala-java8-compat" % "0.5.0")
+      case _      => akka ++ scalaXml
+    }))
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
@@ -278,6 +283,11 @@ lazy val `play-ahc-ws-standalone` = project
     libraryDependencies ++= (slf4jtest ++ specsBuild ++ junitInterface ++ caffeine).map(_ % Test)
   )
   .settings(libraryDependencies ++= standaloneAhcWSDependencies)
+  .settings(libraryDependencies ++= (
+    scalaBinaryVersion.value match {
+      case "2.10" => akkaHttp210
+      case _      => akkaHttp ++ scalaXml
+    }))
   .settings(shadedAhcSettings)
   .settings(shadedOAuthSettings)
   .settings(
@@ -313,7 +323,12 @@ lazy val `integration-tests` = project.in(file("integration-tests"))
   .settings(
     concurrentRestrictions += Tags.limitAll(1), // only one integration test at a time
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
-    libraryDependencies ++= (specsBuild ++ akkaHttp ++ caffeine).map(_ % Test)
+    libraryDependencies ++= (specsBuild ++ caffeine).map(_ % Test),
+    libraryDependencies ++= (
+      scalaBinaryVersion.value match {
+        case "2.10" => akkaHttp210.map(_ % Test)
+        case _      => (akkaHttp ++ scalaXml).map(_ % Test)
+      })
   )
   .settings(libraryDependencies ++= standaloneAhcWSDependencies)
   .settings(shadedAhcSettings)

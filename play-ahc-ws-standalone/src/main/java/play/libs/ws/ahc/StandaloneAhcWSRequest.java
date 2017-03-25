@@ -5,7 +5,6 @@
 package play.libs.ws.ahc;
 
 import akka.stream.Materializer;
-import akka.stream.javadsl.AsPublisher;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
 import akka.util.ByteString;
@@ -21,13 +20,9 @@ import play.shaded.ahc.org.asynchttpclient.request.body.generator.InputStreamBod
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils;
 import org.reactivestreams.Publisher;
 import play.api.libs.ws.ahc.FormUrlEncodedParser;
-import play.api.libs.ws.ahc.Streamed;
 
 import play.libs.oauth.OAuth;
 import play.libs.ws.*;
-import scala.compat.java8.FutureConverters;
-import scala.concurrent.Future;
-import scala.concurrent.Promise;
 
 import java.io.File;
 import java.io.InputStream;
@@ -545,8 +540,9 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
             possiblyModifiedHeaders.remove(HttpHeaders.Names.CONTENT_LENGTH);
 
             @SuppressWarnings("unchecked") Source<ByteString, ?> sourceBody = (Source<ByteString, ?>) body;
+            final Sink<ByteBuffer, Publisher<ByteBuffer>> sink = NoFanoutPublisher.sink;
             Publisher<ByteBuffer> publisher = sourceBody.map(ByteString::toByteBuffer)
-                    .runWith(Sink.asPublisher(AsPublisher.WITHOUT_FANOUT), materializer);
+                    .runWith(sink, materializer);
             builder.setBody(publisher, contentLength);
         } else {
             throw new IllegalStateException("Impossible body: " + body);

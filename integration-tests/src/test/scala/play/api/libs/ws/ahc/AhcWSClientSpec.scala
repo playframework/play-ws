@@ -25,7 +25,8 @@ class AhcWSClientSpec(implicit ee: ExecutionEnv) extends Specification with Afte
 
   override def afterAll = {
     client.close()
-    system.terminate()
+    system.shutdown()
+    //system.terminate()
   }
 
   "url" should {
