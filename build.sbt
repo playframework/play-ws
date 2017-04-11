@@ -1,8 +1,6 @@
 import Dependencies._
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
-import sbt.Keys.artifact
-import sbt.{addArtifact, _}
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
 
@@ -176,7 +174,8 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
       ShadeRule.rename("io.netty.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.rename("javassist.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.rename("com.typesafe.netty.**" -> "play.shaded.ahc.@0").inAll,
-      ShadeRule.zap("org.reactivestreams.**").inAll
+      ShadeRule.zap("org.reactivestreams.**").inAll,
+      ShadeRule.zap("org.slf4j.**").inAll
     ),
 
     // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom
@@ -202,10 +201,11 @@ lazy val `shaded-oauth` = project.in(file("shaded/oauth"))
     name := "shaded-oauth"
   )
   .settings(
-    logLevel in assembly := Level.Error,
+    //logLevel in assembly := Level.Debug,
     assemblyShadeRules in assembly := Seq(
       ShadeRule.rename("oauth.**" -> "play.shaded.oauth.@0").inAll,
-      ShadeRule.rename("org.apache.commons.**" -> "play.shaded.oauth.@0").inAll
+      ShadeRule.rename("org.apache.commons.**" -> "play.shaded.oauth.@0").inAll,
+      ShadeRule.zap("com.google.gdata.**").inAll
     ),
 
     // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom
