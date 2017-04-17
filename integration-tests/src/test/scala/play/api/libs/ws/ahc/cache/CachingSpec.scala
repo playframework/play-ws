@@ -21,9 +21,6 @@ import play.shaded.ahc.org.asynchttpclient._
 
 import scala.collection.mutable
 
-/**
- *
- */
 class CachingSpec(implicit ee: ExecutionEnv) extends Specification with AfterAll with FutureMatchers with Mockito {
 
   sequential
