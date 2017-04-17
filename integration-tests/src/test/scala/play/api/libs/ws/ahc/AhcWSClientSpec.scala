@@ -5,30 +5,19 @@ package play.api.libs.ws.ahc
 
 import java.io.File
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{ ContentTypes, HttpEntity }
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.Route
-import akka.stream.ActorMaterializer
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.execute.Result
 import org.specs2.matcher.FutureMatchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
+import play.AkkaServerProvider
 
 import scala.concurrent._
-import scala.concurrent.duration._
 
-class AhcWSClientSpec(implicit ee: ExecutionEnv) extends Specification with AfterAll with FutureMatchers {
-
-  sequential
-
-  val testServerPort = 49231
-
-  // Create Akka system for thread and streaming management
-  implicit val system = ActorSystem()
-  implicit val materializer = ActorMaterializer()
+class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv) extends Specification with AkkaServerProvider with AfterAll with FutureMatchers {
 
   def withClient(config: AhcWSClientConfig = AhcWSClientConfigFactory.forConfig())(block: StandaloneAhcWSClient => Result): Result = {
     val client = StandaloneAhcWSClient(config)
@@ -44,7 +33,7 @@ class AhcWSClientSpec(implicit ee: ExecutionEnv) extends Specification with Afte
     new File(path)
   }
 
-  private val route: Route = {
+  override val routes: Route = {
     import akka.http.scaladsl.server.Directives._
     import akka.http.scaladsl.server.directives.ContentTypeResolver.Default
     path("file") {
@@ -58,15 +47,6 @@ class AhcWSClientSpec(implicit ee: ExecutionEnv) extends Specification with Afte
       }
   }
 
-  private val futureServer = {
-    Http().bindAndHandle(route, "localhost", port = 9000)
-  }
-
-  override def afterAll = {
-    futureServer.foreach(_.unbind())(materializer.executionContext)
-    system.terminate()
-  }
-
   "url" should {
     "throw an exception on invalid url" in {
       withClient() { client =>
@@ -76,7 +56,7 @@ class AhcWSClientSpec(implicit ee: ExecutionEnv) extends Specification with Afte
 
     "not throw exception on valid url" in {
       withClient() { client =>
-        { client.url("http://localhost:9000") } must not(throwAn[IllegalArgumentException])
+        { client.url(s"http://localhost:$testServerPort") } must not(throwAn[IllegalArgumentException])
       }
     }
   }
@@ -85,14 +65,14 @@ class AhcWSClientSpec(implicit ee: ExecutionEnv) extends Specification with Afte
 
     "request a url" in {
       withClient() { client =>
-        val result = Await.result(client.url("http://localhost:9000/index").get().map(res => res.body), 5.seconds)
+        val result = Await.result(client.url(s"http://localhost:$testServerPort/index").get().map(res => res.body), defaultTimeout)
         result must beEqualTo("<h1>Say hello to akka-http</h1>")
       }
     }
 
     "request a file" in {
       withClient() { client =>
-        val result = Await.result(client.url("http://localhost:9000/file").get().map(res => res.body), 5.seconds)
+        val result = Await.result(client.url(s"http://localhost:$testServerPort/file").get().map(res => res.body), defaultTimeout)
         result.trim must beEqualTo("This is a gzipped file")
       }
     }
@@ -101,7 +81,7 @@ class AhcWSClientSpec(implicit ee: ExecutionEnv) extends Specification with Afte
 
       "strip the Content-Encoding by default" in {
         withClient() { client =>
-          val result = Await.result(client.url("http://localhost:9000/file").get(), 5.seconds)
+          val result = Await.result(client.url(s"http://localhost:$testServerPort/file").get(), defaultTimeout)
           result.header("Content-Encoding") must beNone
           result.body.trim must beEqualTo("This is a gzipped file")
         }
@@ -112,7 +92,7 @@ class AhcWSClientSpec(implicit ee: ExecutionEnv) extends Specification with Afte
         val config = AhcWSClientConfigFactory.forConfig().copy(keepEncodingHeader = true)
 
         withClient(config) { client =>
-          val result = Await.result(client.url("http://localhost:9000/file").get(), 5.seconds)
+          val result = Await.result(client.url(s"http://localhost:$testServerPort/file").get(), defaultTimeout)
           result.header("Content-Encoding") must beSome("gzip")
           result.body.trim must beEqualTo("This is a gzipped file")
         }

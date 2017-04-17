@@ -21,7 +21,6 @@ import scala.concurrent.duration.{ Duration, _ }
 import scala.language.implicitConversions
 
 class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
-  sequential
 
   implicit val system = ActorSystem()
   implicit val materializer = ActorMaterializer()

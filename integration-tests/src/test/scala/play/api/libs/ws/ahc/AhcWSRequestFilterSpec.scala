@@ -4,34 +4,24 @@
 
 package play.api.libs.ws.ahc
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model.{ ContentTypes, HttpEntity }
-import akka.stream.ActorMaterializer
+import akka.http.scaladsl.server.Route
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.matcher.FutureMatchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
+import play.AkkaServerProvider
 import play.api.libs.ws._
 
 import scala.collection.mutable
-import scala.concurrent.duration._
 
-class AhcWSRequestFilterSpec(implicit ee: ExecutionEnv) extends Specification with AfterAll with FutureMatchers {
-
-  val testServerPort = 49133
-
-  sequential
-
-  // Create Akka system for thread and streaming management
-  implicit val system = ActorSystem()
-  implicit val materializer = ActorMaterializer()
+class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv) extends Specification with AkkaServerProvider with AfterAll with FutureMatchers {
 
   // Create the standalone WS client
   val client = StandaloneAhcWSClient()
 
-  private val route = {
+  override val routes: Route = {
     import akka.http.scaladsl.server.Directives._
     headerValueByName("X-Request-Id") { value =>
       respondWithHeader(RawHeader("X-Request-Id", value)) {
@@ -48,14 +38,9 @@ class AhcWSRequestFilterSpec(implicit ee: ExecutionEnv) extends Specification wi
     }
   }
 
-  private val futureServer = {
-    Http().bindAndHandle(route, "localhost", testServerPort)
-  }
-
-  override def afterAll = {
-    futureServer.foreach(_.unbind())
+  override def afterAll(): Unit = {
+    super.afterAll()
     client.close()
-    system.terminate()
   }
 
   "with request filters" should {
@@ -78,7 +63,7 @@ class AhcWSRequestFilterSpec(implicit ee: ExecutionEnv) extends Specification wi
         WSRequestExecutor(r => e.apply(r.withQueryString("key" -> "some string")))
       }).get().map { response =>
         response.body must contain("some string")
-      }.await(retries = 0, timeout = 5.seconds)
+      }.await(retries = 0, timeout = defaultTimeout)
     }
 
     "work with one request filter" in {
@@ -88,7 +73,7 @@ class AhcWSRequestFilterSpec(implicit ee: ExecutionEnv) extends Specification wi
         .get().map { _ =>
           callList must contain(1)
         }
-        .await(retries = 0, timeout = 5.seconds)
+        .await(retries = 0, timeout = defaultTimeout)
     }
 
     "work with three request filter" in {
@@ -100,7 +85,7 @@ class AhcWSRequestFilterSpec(implicit ee: ExecutionEnv) extends Specification wi
         .get().map { _ =>
           callList must containTheSameElementsAs(Seq(1, 2, 3))
         }
-        .await(retries = 0, timeout = 5.seconds)
+        .await(retries = 0, timeout = defaultTimeout)
     }
 
     "should allow filters to modify the request" in {
@@ -111,7 +96,7 @@ class AhcWSRequestFilterSpec(implicit ee: ExecutionEnv) extends Specification wi
         .get().map { response ⇒
           response.allHeaders("X-Request-Id").head must be_==("someid")
         }
-        .await(retries = 0, timeout = 5.seconds)
+        .await(retries = 0, timeout = defaultTimeout)
     }
   }
 }
