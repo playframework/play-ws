@@ -4,12 +4,6 @@
 
 package play.libs.ws.ahc;
 
-import java.io.IOException;
-import java.util.concurrent.CompletionStage;
-
-import javax.cache.Cache;
-import javax.inject.Inject;
-
 import akka.stream.Materializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -22,22 +16,20 @@ import play.api.libs.ws.ahc.AhcConfigBuilder;
 import play.api.libs.ws.ahc.AhcLoggerFactory;
 import play.api.libs.ws.ahc.AhcWSClientConfig;
 import play.api.libs.ws.ahc.Streamed;
+import play.api.libs.ws.ahc.cache.Cache;
 import play.api.libs.ws.ahc.cache.CachingAsyncHttpClient;
-import play.api.libs.ws.ahc.cache.EffectiveURIKey;
-import play.api.libs.ws.ahc.cache.ResponseEntry;
 import play.libs.ws.StandaloneWSClient;
 import play.libs.ws.StandaloneWSResponse;
 import play.libs.ws.StreamedResponse;
-import play.shaded.ahc.org.asynchttpclient.AsyncCompletionHandler;
-import play.shaded.ahc.org.asynchttpclient.AsyncHttpClient;
-import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClient;
-import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClientConfig;
-import play.shaded.ahc.org.asynchttpclient.Request;
-import play.shaded.ahc.org.asynchttpclient.Response;
+import play.shaded.ahc.org.asynchttpclient.*;
 import scala.compat.java8.FutureConverters;
 import scala.concurrent.ExecutionContext;
 import scala.concurrent.Future;
 import scala.concurrent.Promise;
+
+import javax.inject.Inject;
+import java.io.IOException;
+import java.util.concurrent.CompletionStage;
 
 /**
  * A WS asyncHttpClient backed by an AsyncHttpClient instance.
@@ -134,7 +126,7 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
      * @param materializer an akka materializer
      * @return a fully configured StandaloneAhcWSClient instance.
      */
-    public static StandaloneAhcWSClient create(AhcWSClientConfig ahcWSClientConfig, Cache<EffectiveURIKey, ResponseEntry> cache, Materializer materializer) {
+    public static StandaloneAhcWSClient create(AhcWSClientConfig ahcWSClientConfig, Cache cache, Materializer materializer) {
         AhcLoggerFactory loggerFactory = new AhcLoggerFactory(LoggerFactory.getILoggerFactory());
 
         // Set up debugging configuration
@@ -155,7 +147,7 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
 
         AsyncHttpClient ahcClient;
         if (cache != null) {
-            ahcClient = new CachingAsyncHttpClient(defaultAsyncHttpClient, cache);
+            ahcClient = new CachingAsyncHttpClient(defaultAsyncHttpClient, cache, ExecutionContext.Implicits$.MODULE$.global());
         } else {
             ahcClient = defaultAsyncHttpClient;
         }

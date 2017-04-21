@@ -1,9 +1,11 @@
+/*
+ * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ *
+ */
+
 package play.api.libs.ws.ahc.cache
 
-import javax.cache.{ Cache, Caching }
-import javax.cache.configuration.FactoryBuilder.SingletonFactory
-import javax.cache.configuration.MutableConfiguration
-import javax.cache.expiry.EternalExpiryPolicy
+import java.util.concurrent.TimeUnit
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
@@ -13,15 +15,17 @@ import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.matcher.FutureMatchers
-import org.specs2.mutable.{ BeforeAfter, Specification }
+import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
 import play.api.libs.ws.ahc._
 import play.shaded.ahc.org.asynchttpclient._
 
+import scala.collection.mutable
+
 /**
  *
  */
-class CachingSpec(implicit ee: ExecutionEnv) extends Specification with BeforeAfter with AfterAll with FutureMatchers {
+class CachingSpec(implicit ee: ExecutionEnv) extends Specification with AfterAll with FutureMatchers {
 
   sequential
 
@@ -45,33 +49,17 @@ class CachingSpec(implicit ee: ExecutionEnv) extends Specification with BeforeAf
     Http().bindAndHandle(route, "localhost", port = 9000)
   }
 
-  override def before = {
-  }
-
-  override def after = {
-    val cacheManager = Caching.getCachingProvider.getCacheManager
-    cacheManager.destroyCache("play-ws-cache")
-  }
-
   override def afterAll = {
     futureServer.foreach(_.unbind())(materializer.executionContext)
     asyncHttpClient.close()
     system.terminate()
   }
 
-  def createCache(): Cache[EffectiveURIKey, ResponseEntry] = {
-    val cacheManager = Caching.getCachingProvider.getCacheManager
-    val configuration = new MutableConfiguration()
-      .setTypes(classOf[EffectiveURIKey], classOf[ResponseEntry])
-      .setStoreByValue(false)
-      .setExpiryPolicyFactory(new SingletonFactory(new EternalExpiryPolicy()))
-    cacheManager.createCache("play-ws-cache", configuration)
-  }
-
   "GET" should {
 
     "work once" in {
-      val cachingAsyncHttpClient = new CachingAsyncHttpClient(asyncHttpClient, createCache())
+      val cache = new StubHttpCache()
+      val cachingAsyncHttpClient = new CachingAsyncHttpClient(asyncHttpClient, cache, scala.concurrent.ExecutionContext.global)
       val ws = new StandaloneAhcWSClient(cachingAsyncHttpClient)
 
       ws.url("http://localhost:9000/").get().map { response =>
@@ -80,4 +68,20 @@ class CachingSpec(implicit ee: ExecutionEnv) extends Specification with BeforeAf
     }
 
   }
+}
+
+class StubHttpCache extends Cache {
+
+  private val underlying = new mutable.HashMap[EffectiveURIKey, ResponseEntry]()
+
+  override def remove(key: EffectiveURIKey): Unit = underlying.remove(key)
+
+  override def put(key: EffectiveURIKey, entry: ResponseEntry): Unit = underlying.put(key, entry)
+
+  override def get(key: EffectiveURIKey): ResponseEntry = underlying.get(key).orNull
+
+  override def close(): Unit = {
+
+  }
+
 }

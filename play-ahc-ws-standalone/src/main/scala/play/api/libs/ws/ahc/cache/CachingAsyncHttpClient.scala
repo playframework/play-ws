@@ -1,25 +1,25 @@
 /*
- * Copyright (C) 2009-2015 Typesafe Inc. <http://www.typesafe.com>
+ * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ *
  */
 package play.api.libs.ws.ahc.cache
 
 import java.io._
-import java.util.concurrent.Executors
-import javax.cache.Cache
 
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
+import play.shaded.ahc.org.asynchttpclient.handler.StreamedAsyncHandler
 import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse, _ }
 
-import scala.concurrent.Await
+import scala.concurrent.{ Await, ExecutionContext }
 
 trait TimeoutResponse {
 
   def generateTimeoutResponse(request: Request): CacheableResponse = {
     val uri = request.getUri
     val status = new CacheableHttpResponseStatus(uri, 504, "Gateway Timeout", "")
-    val headers = new CacheableHttpResponseHeaders(false, new DefaultHttpHeaders())
+    val headers = CacheableHttpResponseHeaders(false, new DefaultHttpHeaders())
     val bodyParts = java.util.Collections.emptyList[CacheableHttpResponseBodyPart]()
     CacheableResponse(status, headers, bodyParts)
   }
@@ -28,14 +28,12 @@ trait TimeoutResponse {
 /**
  * A provider that pulls a response from the cache.
  */
-class CachingAsyncHttpClient(underlying: AsyncHttpClient, cache: Cache[EffectiveURIKey, ResponseEntry])
+class CachingAsyncHttpClient(underlying: AsyncHttpClient, cache: Cache, executionContext: ExecutionContext)
     extends AsyncHttpClient
     with TimeoutResponse
     with Debug {
 
   private val ahcHttpCache = AhcHttpCache(cache)
-
-  private val cacheThreadPool = Executors.newFixedThreadPool(2)
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -55,8 +53,12 @@ class CachingAsyncHttpClient(underlying: AsyncHttpClient, cache: Cache[Effective
       case asyncCompletionHandler: AsyncCompletionHandler[T] =>
         execute(request, asyncCompletionHandler, null)
 
+      case streamedHandler: StreamedAsyncHandler[T] =>
+        // Streamed requests don't go through the cache
+        underlying.executeRequest(request, streamedHandler)
+
       case other =>
-        throw new IllegalStateException(s"Only AsyncCompletionHandler is implemented, type is ${other.getClass}")
+        throw new IllegalStateException(s"Unknown handler type ${other.getClass.getName}")
     }
   }
 
@@ -160,7 +162,9 @@ class CachingAsyncHttpClient(underlying: AsyncHttpClient, cache: Cache[Effective
 
     val cacheFuture = new CacheFuture[T](handler)
     val callable = new AsyncCacheableConnection[T](handler, request, response, cacheFuture)
-    cacheThreadPool.submit(callable)
+    executionContext.execute(new Runnable {
+      override def run(): Unit = callable.call()
+    })
     cacheFuture
   }
 

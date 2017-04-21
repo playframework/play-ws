@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2009-2015 Typesafe Inc. <http://www.typesafe.com>
+ * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ *
  */
 package play.api.libs.ws.ahc.cache
 
 import java.net.URI
-import javax.cache.Cache
 
 import com.typesafe.play.cachecontrol._
 import org.joda.time.{ DateTime, Seconds }
@@ -23,7 +23,7 @@ import scala.concurrent.Future
  * to caching responses to GET, many caches simply decline other methods
  * and use only the URI as the primary cache key.
  */
-class AhcHttpCache(underlying: Cache[EffectiveURIKey, ResponseEntry]) extends CacheDefaults with Debug {
+class AhcHttpCache(underlying: Cache) extends CacheDefaults with Debug {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -150,11 +150,7 @@ class AhcHttpCache(underlying: Cache[EffectiveURIKey, ResponseEntry]) extends Ca
   }
 
   /**
-   *
-   * @param request
-   * @param entry
-   * @param requestTime
-   * @return
+   * Calculates the current age of the stored response.
    */
   def calculateCurrentAge(request: Request, entry: ResponseEntry, requestTime: DateTime): Seconds = {
     val cacheRequest: CacheRequest = generateCacheRequest(request)
@@ -174,9 +170,7 @@ class AhcHttpCache(underlying: Cache[EffectiveURIKey, ResponseEntry]) extends Ca
   }
 
   /**
-   *
-   * @param request
-   * @param response
+   * Invalidates the effective request URI if the method is unsafe.
    */
   def invalidateIfUnsafe(request: Request, response: CacheableResponse): Unit = {
     logger.trace(s"invalidate: request = ${debug(request)}, response = ${debug(response)}")
@@ -218,10 +212,7 @@ class AhcHttpCache(underlying: Cache[EffectiveURIKey, ResponseEntry]) extends Ca
   }
 
   /**
-   *
-   * @param response
-   * @param headerName
-   * @return
+   * Gets the effective URI of the response.
    */
   protected def getURI(response: CacheableResponse, headerName: String): Option[URI] = {
     Option(response.getHeaders.get(headerName)).map { value =>
@@ -246,10 +237,7 @@ class AhcHttpCache(underlying: Cache[EffectiveURIKey, ResponseEntry]) extends Ca
   }
 
   /**
-   *
-   * @param request
-   * @param response
-   * @return
+   * Calculates the secondary keys of the request.
    */
   def calculateSecondaryKeys(request: Request, response: Response): Option[Map[HeaderName, Seq[String]]] = {
     val cacheRequest = generateCacheRequest(request)
@@ -262,16 +250,16 @@ class AhcHttpCache(underlying: Cache[EffectiveURIKey, ResponseEntry]) extends Ca
   }
 
   /**
-   *
+   * Calculates the current age of the stored response.
    */
-  def calculateCurrentAge(request: CacheRequest, response: StoredResponse, requestTime: DateTime, responseTime: DateTime): Seconds = {
+  protected def calculateCurrentAge(request: CacheRequest, response: StoredResponse, requestTime: DateTime, responseTime: DateTime): Seconds = {
     currentAgeCalculator.calculateCurrentAge(request, response, requestTime, responseTime)
   }
 
   /**
-   *
+   * Calculates the time to live.  Currently hardcoded to 24 hours.
    */
-  def calculateTimeToLive(request: Request, status: CacheableHttpResponseStatus, headers: CacheableHttpResponseHeaders): Option[DateTime] = {
+  protected def calculateTimeToLive(request: Request, status: CacheableHttpResponseStatus, headers: CacheableHttpResponseHeaders): Option[DateTime] = {
     Some(DateTime.now.plusHours(24))
   }
 
@@ -286,7 +274,7 @@ class AhcHttpCache(underlying: Cache[EffectiveURIKey, ResponseEntry]) extends Ca
 
     val nominated = calculateSecondaryKeys(request, strippedResponse).getOrElse(Map())
     val ttl = calculateTimeToLive(request, strippedResponse.status, strippedResponse.headers)
-    val entry = new ResponseEntry(strippedResponse, request.getMethod, nominated, ttl)
+    val entry = ResponseEntry(strippedResponse, request.getMethod, nominated, ttl)
     put(EffectiveURIKey(request), entry)
   }
 
@@ -398,7 +386,7 @@ class AhcHttpCache(underlying: Cache[EffectiveURIKey, ResponseEntry]) extends Ca
     CacheRequest(uri = uri, method = method, headers = headers)
   }
 
-  protected def generateStoredResponse(response: CacheableResponse, requestMethod: String, nominatedHeaders: Map[HeaderName, Seq[String]]) = {
+  protected def generateStoredResponse(response: CacheableResponse, requestMethod: String, nominatedHeaders: Map[HeaderName, Seq[String]]): StoredResponse = {
     val uri: URI = response.getUri.toJavaNetURI
     val status: Int = response.getStatusCode
     val responseHeaders = response.getHeaders
@@ -438,12 +426,16 @@ class AhcHttpCache(underlying: Cache[EffectiveURIKey, ResponseEntry]) extends Ca
       stripHeaderNames.asScala.foreach(httpResponse.getHeaders.remove)
       logger.debug(s"massageCachedResponse: strippedHeaders = ${httpResponse.getHeaders}")
       val isTrailing = httpResponse.headers.isTrailling
-      val newHeaders = new CacheableHttpResponseHeaders(isTrailing, httpResponse.getHeaders)
+      val newHeaders = CacheableHttpResponseHeaders(isTrailing, httpResponse.getHeaders)
       httpResponse.copy(headers = newHeaders)
     } else {
       httpResponse
     }
     r
+  }
+
+  def close(): Unit = {
+    underlying.close()
   }
 
   override def toString: String = {
@@ -454,10 +446,9 @@ class AhcHttpCache(underlying: Cache[EffectiveURIKey, ResponseEntry]) extends Ca
 object AhcHttpCache {
 
   /**
-   * Creates a new cache utilizing the given JSR 107 cache.
-   * @param underlying a JSR 107 cache
+   * Creates a new cache.
    */
-  def apply(underlying: Cache[EffectiveURIKey, ResponseEntry]): AhcHttpCache = {
+  def apply(underlying: Cache): AhcHttpCache = {
     new AhcHttpCache(underlying)
   }
 

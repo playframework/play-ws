@@ -274,8 +274,9 @@ lazy val `play-ahc-ws-standalone` = project
   .settings(formattingSettings)
   .settings(SbtScalariform.scalariformSettings)
   .settings(
+    fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
-    libraryDependencies ++= (slf4jtest ++ specsBuild ++ junitInterface ++ caffeine).map(_ % Test)
+    libraryDependencies ++= (slf4jtest ++ specsBuild ++ junitInterface).map(_ % Test)
   )
   .settings(libraryDependencies ++= standaloneAhcWSDependencies)
   .settings(shadedAhcSettings)
@@ -311,9 +312,10 @@ lazy val `integration-tests` = project.in(file("integration-tests"))
   .settings(disablePublishing)
   .settings(SbtScalariform.scalariformSettings)
   .settings(
+    fork in Test := true,
     concurrentRestrictions += Tags.limitAll(1), // only one integration test at a time
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
-    libraryDependencies ++= (specsBuild ++ akkaHttp ++ caffeine).map(_ % Test)
+    libraryDependencies ++= (specsBuild ++ akkaHttp).map(_ % Test)
   )
   .settings(libraryDependencies ++= standaloneAhcWSDependencies)
   .settings(shadedAhcSettings)

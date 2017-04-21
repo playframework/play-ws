@@ -4,16 +4,17 @@
 import sbt._
 
 object Dependencies {
+  val logback = Seq("ch.qos.logback" % "logback-core" % "1.2.3")
 
   val specsVersion = "3.8.6"
   val specsBuild = Seq(
     "specs2-core",
     "specs2-junit",
     "specs2-mock"
-  ).map("org.specs2" %% _ % specsVersion)
+  ).map("org.specs2" %% _ % specsVersion) ++ logback
 
   // Use the published milestone
-  val playJsonVersion = "2.6.0-M3"
+  val playJsonVersion = "2.6.0-M6"
   val playJson = "com.typesafe.play" %% "play-json" % playJsonVersion
 
   val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "1.7.22")
@@ -36,24 +37,19 @@ object Dependencies {
   val cachecontrolVersion = "1.1.2"
   val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % cachecontrolVersion)
 
-  val asyncHttpClientVersion = "2.0.27"
+  // https://mvnrepository.com/artifact/org.asynchttpclient/async-http-client
+  val asyncHttpClientVersion = "2.0.31"
   val asyncHttpClient = Seq(
     "org.asynchttpclient" % "async-http-client" % asyncHttpClientVersion
   )
 
-  val akkaVersion = "2.4.14"
+  val akkaVersion = "2.5.0"
   val akka = Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion)
-  val akkaHttp = Seq("com.typesafe.akka" %% "akka-http" % "10.0.1")
+  val akkaHttp = Seq("com.typesafe.akka" %% "akka-http" % "10.0.5")
 
   val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.0")
 
   val junitInterface = Seq("com.novocode" % "junit-interface" % "0.11")
-
-  val jcache = Seq("javax.cache" % "cache-api" % "1.0.0")
-
-  // https://mvnrepository.com/artifact/com.github.ben-manes.caffeine/jcache
-  val caffeineVersion = "2.3.5"
-  val caffeine = Seq("com.github.ben-manes.caffeine" % "jcache" % caffeineVersion)
 
   val standaloneApiWSDependencies = javaxInject ++
       sslConfigCore ++
@@ -61,5 +57,5 @@ object Dependencies {
       scalaXml :+
       playJson
 
-  val standaloneAhcWSDependencies = cachecontrol ++ jcache ++ slf4jApi ++ reactiveStreams
+  val standaloneAhcWSDependencies = cachecontrol ++ slf4jApi ++ reactiveStreams
 }

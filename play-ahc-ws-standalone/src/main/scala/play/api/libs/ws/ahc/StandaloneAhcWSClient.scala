@@ -3,7 +3,6 @@
  */
 package play.api.libs.ws.ahc
 
-import javax.cache.Cache
 import javax.inject.Inject
 
 import akka.stream.Materializer
@@ -95,18 +94,18 @@ object StandaloneAhcWSClient {
    * }}}
    *
    * @param config configuration settings
-   * @param cache if not null, will be used for HTTP response caching.
+   * @param maybeCache if not null, will be used for HTTP response caching.
    * @param materializer the akka materializer.
    */
-  def apply(config: AhcWSClientConfig = AhcWSClientConfigFactory.forConfig(), cache: Option[Cache[EffectiveURIKey, ResponseEntry]] = None)(implicit materializer: Materializer): StandaloneAhcWSClient = {
+  def apply(config: AhcWSClientConfig = AhcWSClientConfigFactory.forConfig(), maybeCache: Option[Cache] = None)(implicit materializer: Materializer): StandaloneAhcWSClient = {
     if (config.wsClientConfig.ssl.debug.enabled) {
       new DebugConfiguration(StandaloneAhcWSClient.loggerFactory).configure(config.wsClientConfig.ssl.debug)
     }
     val ahcConfig = new AhcConfigBuilder(config).build()
     val asyncHttpClient = new DefaultAsyncHttpClient(ahcConfig)
     val wsClient = new StandaloneAhcWSClient(
-      cache.map {
-        new CachingAsyncHttpClient(asyncHttpClient, _)
+      maybeCache.map { cache =>
+        new CachingAsyncHttpClient(asyncHttpClient, cache, ExecutionContext.Implicits.global)
       }.getOrElse {
         asyncHttpClient
       }
