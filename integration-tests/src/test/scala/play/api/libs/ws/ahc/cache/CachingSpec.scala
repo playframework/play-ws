@@ -5,8 +5,6 @@
 
 package play.api.libs.ws.ahc.cache
 
-import java.util.concurrent.TimeUnit
-
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
@@ -15,6 +13,7 @@ import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.matcher.FutureMatchers
+import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
 import play.api.libs.ws.ahc._
@@ -25,7 +24,7 @@ import scala.collection.mutable
 /**
  *
  */
-class CachingSpec(implicit ee: ExecutionEnv) extends Specification with AfterAll with FutureMatchers {
+class CachingSpec(implicit ee: ExecutionEnv) extends Specification with AfterAll with FutureMatchers with Mockito {
 
   sequential
 
@@ -58,13 +57,15 @@ class CachingSpec(implicit ee: ExecutionEnv) extends Specification with AfterAll
   "GET" should {
 
     "work once" in {
-      val cache = new StubHttpCache()
+      val cache = mock[Cache]
       val cachingAsyncHttpClient = new CachingAsyncHttpClient(asyncHttpClient, cache, scala.concurrent.ExecutionContext.global)
       val ws = new StandaloneAhcWSClient(cachingAsyncHttpClient)
 
       ws.url("http://localhost:9000/").get().map { response =>
         response.body must be_==("<h1>Say hello to akka-http</h1>")
       }.await
+
+      there was one(cache).get(EffectiveURIKey("GET", new java.net.URI("http://localhost:9000/")))
     }
 
   }
