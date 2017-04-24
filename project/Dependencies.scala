@@ -17,13 +17,13 @@ object Dependencies {
   val playJsonVersion = "2.6.0-M6"
   val playJson = "com.typesafe.play" %% "play-json" % playJsonVersion
 
-  val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "1.7.22")
+  val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "1.7.25")
 
-  val slf4jtest = Seq("uk.org.lidalia" % "slf4j-test" % "1.1.0")
+  val slf4jtest = Seq("uk.org.lidalia" % "slf4j-test" % "1.2.0")
 
   val javaxInject = Seq("javax.inject" % "javax.inject" % "1")
 
-  val sslConfigVersion = "0.2.1"
+  val sslConfigVersion = "0.2.2"
   val sslConfigCore = Seq("com.typesafe" %% "ssl-config-core" % sslConfigVersion)
 
   val scalaXmlVersion = "1.0.6"
@@ -37,7 +37,6 @@ object Dependencies {
   val cachecontrolVersion = "1.1.2"
   val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % cachecontrolVersion)
 
-  // https://mvnrepository.com/artifact/org.asynchttpclient/async-http-client
   val asyncHttpClientVersion = "2.0.31"
   val asyncHttpClient = Seq(
     "org.asynchttpclient" % "async-http-client" % asyncHttpClientVersion
