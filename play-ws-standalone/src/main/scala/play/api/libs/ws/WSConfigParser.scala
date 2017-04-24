@@ -1,3 +1,8 @@
+/*
+ * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ *
+ */
+
 package play.api.libs.ws
 
 import javax.inject.{ Inject, Provider, Singleton }

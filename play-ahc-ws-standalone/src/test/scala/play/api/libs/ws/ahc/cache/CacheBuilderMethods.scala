@@ -1,12 +1,14 @@
-package play.api.libs.ws.ahc.cache
+/*
+ * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ *
+ */
 
-import javax.cache.Caching
-import javax.cache.configuration.FactoryBuilder.SingletonFactory
-import javax.cache.configuration.{ Configuration, MutableConfiguration }
-import javax.cache.expiry.EternalExpiryPolicy
+package play.api.libs.ws.ahc.cache
 
 import play.shaded.ahc.io.netty.handler.codec.http.{ DefaultHttpHeaders, HttpHeaders }
 import play.shaded.ahc.org.asynchttpclient.{ Request, RequestBuilder }
+
+import scala.collection.mutable
 
 /**
  * Utility methods to make building requests and responses easier.
@@ -14,11 +16,7 @@ import play.shaded.ahc.org.asynchttpclient.{ Request, RequestBuilder }
 trait CacheBuilderMethods {
 
   def generateCache: AhcHttpCache = {
-    val cacheManager = Caching.getCachingProvider.getCacheManager
-    val configuration: Configuration[EffectiveURIKey, ResponseEntry] = new MutableConfiguration().setTypes(classOf[EffectiveURIKey], classOf[ResponseEntry]).setStoreByValue(false).setExpiryPolicyFactory(new SingletonFactory(new EternalExpiryPolicy()))
-    val simpleCache = cacheManager.createCache[EffectiveURIKey, ResponseEntry, Configuration[EffectiveURIKey, ResponseEntry]]("play-ws-cache", configuration)
-
-    AhcHttpCache(simpleCache)
+    AhcHttpCache(new StubHttpCache())
   }
 
   def generateRequest(url: String)(block: HttpHeaders => HttpHeaders): Request = {
@@ -29,6 +27,22 @@ trait CacheBuilderMethods {
       .setUrl(url)
       .setHeaders(requestHeaders)
       .build
+  }
+
+}
+
+class StubHttpCache extends Cache {
+
+  private val underlying = new mutable.HashMap[EffectiveURIKey, ResponseEntry]()
+
+  override def remove(key: EffectiveURIKey): Unit = underlying.remove(key)
+
+  override def put(key: EffectiveURIKey, entry: ResponseEntry): Unit = underlying.put(key, entry)
+
+  override def get(key: EffectiveURIKey): ResponseEntry = underlying.get(key).orNull
+
+  override def close(): Unit = {
+
   }
 
 }

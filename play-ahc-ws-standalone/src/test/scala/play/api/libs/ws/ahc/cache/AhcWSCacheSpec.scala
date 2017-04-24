@@ -1,3 +1,8 @@
+/*
+ * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ *
+ */
+
 package play.api.libs.ws.ahc.cache
 
 import com.typesafe.play.cachecontrol.HeaderName
@@ -20,6 +25,7 @@ class AhcWSCacheSpec extends Specification with CacheBuilderMethods {
         d must haveKey(HeaderName("Accept-Encoding"))
         d(HeaderName("Accept-Encoding")) must be_==(Seq("gzip"))
       }
+
     }
 
   }

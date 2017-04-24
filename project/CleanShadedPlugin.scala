@@ -1,3 +1,8 @@
+/*
+ * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ *
+ */
+
 // https://github.com/sbt/sbt-dirty-money/blob/master/src/main/scala/sbtdirtymoney/DirtyMoneyPlugin.scala
 
 import sbt._, Keys._
