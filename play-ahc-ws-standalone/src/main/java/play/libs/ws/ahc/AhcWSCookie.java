@@ -24,27 +24,38 @@ public class AhcWSCookie implements WSCookie {
         return ahcCookie;
     }
 
+    @Override
     public String getDomain() {
         return ahcCookie.getDomain();
     }
 
+    @Override
     public String getName() {
         return ahcCookie.getName();
     }
 
+    @Override
     public String getValue() {
         return ahcCookie.getValue();
     }
 
+    @Override
     public String getPath() {
         return ahcCookie.getPath();
     }
 
+    @Override
     public long getMaxAge() {
         return ahcCookie.getMaxAge();
     }
 
+    @Override
     public boolean isSecure() {
         return ahcCookie.isSecure();
+    }
+
+    @Override
+    public boolean httpOnly() {
+        return ahcCookie.isHttpOnly();
     }
 }
