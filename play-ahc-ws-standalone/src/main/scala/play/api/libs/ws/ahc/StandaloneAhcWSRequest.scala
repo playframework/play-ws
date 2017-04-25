@@ -32,6 +32,7 @@ case class StandaloneAhcWSRequest(
     body: WSBody = EmptyBody,
     headers: Map[String, Seq[String]] = TreeMap()(CaseInsensitiveOrdered),
     queryString: Map[String, Seq[String]] = Map.empty,
+    cookies: Seq[WSCookie] = Seq.empty,
     calc: Option[WSSignatureCalculator] = None,
     auth: Option[(String, String, WSAuthScheme)] = None,
     followRedirects: Option[Boolean] = None,
@@ -44,8 +45,8 @@ case class StandaloneAhcWSRequest(
   override type Self = StandaloneWSRequest
   override type Response = StandaloneWSResponse
 
-  require(client != null, "Null client!")
-  require(url != null, "Null url!")
+  require(client != null, "A [[StandaloneAhcWSClient]] is required, but it is null")
+  require(url != null, "A url is required, but it is null")
 
   override def contentType: Option[String] = this.headers.get(HttpHeaders.Names.CONTENT_TYPE).map(_.head)
 
@@ -65,17 +66,30 @@ case class StandaloneAhcWSRequest(
   override def withAuth(username: String, password: String, scheme: WSAuthScheme): Self =
     copy(auth = Some((username, password, scheme)))
 
-  override def withHeaders(hdrs: (String, String)*): Self = {
-    val headers = hdrs.foldLeft(this.headers)((m, hdr) =>
-      if (m.contains(hdr._1)) m.updated(hdr._1, m(hdr._1) :+ hdr._2)
-      else m + (hdr._1 -> Seq(hdr._2)))
-    copy(headers = headers)
+  override def setHeaders(hdrs: (String, String)*): Self = {
+    var newHeaders = hdrs.foldLeft(TreeMap[String, Seq[String]]()(CaseInsensitiveOrdered)) {
+      (m, hdr) =>
+        if (m.contains(hdr._1)) m.updated(hdr._1, m(hdr._1) :+ hdr._2)
+        else m + (hdr._1 -> Seq(hdr._2))
+    }
+
+    // preserve the content type
+    newHeaders = contentType match {
+      case Some(ct) =>
+        newHeaders.updated(HttpHeaders.Names.CONTENT_TYPE, Seq(ct))
+      case None =>
+        newHeaders
+    }
+
+    copy(headers = newHeaders)
   }
 
-  override def withQueryString(parameters: (String, String)*): Self =
-    copy(queryString = parameters.foldLeft(this.queryString) {
+  override def setQueryString(parameters: (String, String)*): Self =
+    copy(queryString = parameters.foldLeft(Map.empty[String, Seq[String]]) {
       case (m, (k, v)) => m + (k -> (v +: m.getOrElse(k, Nil)))
     })
+
+  override def setCookies(cookies: WSCookie*): StandaloneWSRequest = copy(cookies = cookies)
 
   override def withFollowRedirects(follow: Boolean): Self = copy(followRedirects = Some(follow))
 
@@ -159,10 +173,10 @@ case class StandaloneAhcWSRequest(
   }
 
   private def withBodyAndContentType(wsBody: WSBody, contentType: String): Self = {
-    if (headers.contains("Content-Type")) {
+    if (headers.contains(HttpHeaders.Names.CONTENT_TYPE)) {
       withBody(wsBody)
     } else {
-      withBody(wsBody).withHeaders("Content-Type" -> contentType)
+      withBody(wsBody).setHeaders(HttpHeaders.Names.CONTENT_TYPE -> contentType)
     }
   }
 
@@ -344,6 +358,9 @@ case class StandaloneAhcWSRequest(
       case _ =>
         throw new IllegalStateException("Unknown signature calculator found: use a class that implements SignatureCalculator")
     }
+
+    // cookies
+    cookies.foreach(c => builder.addCookie(c.underlying))
 
     builderWithBody.build()
   }

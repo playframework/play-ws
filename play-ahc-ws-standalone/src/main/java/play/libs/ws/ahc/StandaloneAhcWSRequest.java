@@ -21,13 +21,9 @@ import play.shaded.ahc.org.asynchttpclient.request.body.generator.InputStreamBod
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils;
 import org.reactivestreams.Publisher;
 import play.api.libs.ws.ahc.FormUrlEncodedParser;
-import play.api.libs.ws.ahc.Streamed;
 
 import play.libs.oauth.OAuth;
 import play.libs.ws.*;
-import scala.compat.java8.FutureConverters;
-import scala.concurrent.Future;
-import scala.concurrent.Promise;
 
 import java.io.File;
 import java.io.InputStream;
