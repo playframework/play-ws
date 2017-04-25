@@ -15,19 +15,37 @@ public interface WSCookie {
      *
      * @return the "native" object
      */
-    public Object getUnderlying();
+    Object getUnderlying();
 
-    public String getDomain();
+    /**
+     * @return the cookie domain.
+     */
+    String getDomain();
 
-    public String getName();
+    /**
+     * @return the cookie name.
+     */
+    String getName();
 
-    public String getValue();
+    /**
+     * @return the cookie value.
+     */
+    String getValue();
 
-    public String getPath();
+    /**
+     * @return the cookie path.
+     */
+    String getPath();
 
-    public long getMaxAge();
+    /**
+     * @return the cookie max age, in seconds.
+     */
+    long getMaxAge();
 
-    public boolean isSecure();
+    /**
+     * @return if the cookie is secure or not.
+     */
+    boolean isSecure();
 
     // Cookie ports should not be used; cookies for a given host are shared across
     // all the ports on that host.

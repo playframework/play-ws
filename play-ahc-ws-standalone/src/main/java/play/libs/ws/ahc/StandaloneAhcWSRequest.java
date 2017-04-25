@@ -47,6 +47,8 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     private final Map<String, List<String>> headers = new HashMap<>();
     private final Map<String, List<String>> queryParameters = new HashMap<>();
 
+    private final List<WSCookie> cookies = new ArrayList<>();
+
     private String username;
     private String password;
     private WSAuthScheme scheme;
@@ -130,6 +132,29 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     public StandaloneAhcWSRequest setQueryString(Map<String, List<String>> params) {
         this.queryParameters.clear();
         this.queryParameters.putAll(params);
+        return this;
+    }
+
+    @Override
+    public StandaloneAhcWSRequest addCookie(WSCookie cookie) {
+        if (cookie == null) {
+            throw new NullPointerException("Trying to add a null WSCookie");
+        }
+
+        this.cookies.add(cookie);
+        return this;
+    }
+
+    @Override
+    public StandaloneAhcWSRequest addCookies(WSCookie ... cookies) {
+        Arrays.asList(cookies).forEach(this::addCookie);
+        return this;
+    }
+
+    @Override
+    public StandaloneAhcWSRequest setCookies(List<WSCookie> cookies) {
+        this.cookies.clear();
+        cookies.forEach(this::addCookie);
         return this;
     }
 
@@ -455,6 +480,12 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
                 throw new IllegalStateException("Use OAuth.OAuthCalculator");
             }
         }
+
+        // add cookies
+        this.cookies.forEach(cookie -> {
+            AhcWSCookie ahcWSCookie = (AhcWSCookie)cookie;
+            builder.addCookie(ahcWSCookie.getUnderlying());
+        });
 
         return builder.build();
     }

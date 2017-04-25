@@ -394,6 +394,36 @@ public interface StandaloneWSRequest {
     StandaloneWSRequest setQueryString(Map<String, List<String>> params);
 
     /**
+     * Add a new cookie. This can be called repeatedly and will preserve existent cookies.
+     *
+     * @param cookie the cookie to be added
+     * @return the modified WSRequest.
+     *
+     * @see #addCookies(WSCookie...)
+     * @see #setCookies(List)
+     */
+    StandaloneWSRequest addCookie(WSCookie cookie);
+
+    /**
+     * Add new cookies. This can be called repeatedly and will preserve existent cookies.
+     *
+     * @param cookies the list of cookies to be added
+     * @return the modified WSRequest.
+     *
+     * @see #addCookie(WSCookie)
+     * @see #setCookies(List)
+     */
+    StandaloneWSRequest addCookies(WSCookie ... cookies);
+
+    /**
+     * Set the request cookies. This discard the existent cookies.
+     *
+     * @param cookies the cookies to be used.
+     * @return the modified WSRequest.
+     */
+    StandaloneWSRequest setCookies(List<WSCookie> cookies);
+
+    /**
      * Sets the authentication header for the current request using BASIC authentication.
      *
      * @param userInfo a string formed as "username:password".

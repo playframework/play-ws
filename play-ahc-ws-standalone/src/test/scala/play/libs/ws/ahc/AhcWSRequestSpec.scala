@@ -6,7 +6,7 @@ package play.libs.ws.ahc
 import play.shaded.ahc.org.asynchttpclient.{ Request, RequestBuilderBase, SignatureCalculator }
 import org.specs2.mock.Mockito
 import org.specs2.mutable._
-import play.libs.ws.{ WSAuthScheme, WSSignatureCalculator }
+import play.libs.ws.{ WSAuthScheme, WSCookie, WSSignatureCalculator }
 import play.libs.oauth.OAuth
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 
@@ -299,6 +299,70 @@ class AhcWSRequestSpec extends Specification with Mockito {
 
       "not support a query string if it starts with = and is empty" in {
         requestWithQueryString("=&src=typd") must throwA[RuntimeException]
+      }
+    }
+
+    "For Cookies" in {
+
+      def cookie(name: String, value: String): WSCookie = {
+        new AhcWSCookie(
+          play.shaded.ahc.org.asynchttpclient.cookie.Cookie.newValidCookie(name, value, true, "example.com", "/", 1000, true, true)
+        )
+      }
+
+      "add a new cookie" in {
+        val client = mock[StandaloneAhcWSClient]
+        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+          .addCookie(cookie("cookie1", "value1"))
+          .buildRequest()
+
+        request.getCookies.asScala.head.getName must beEqualTo("cookie1")
+      }
+
+      "add more than one cookie" in {
+        val client = mock[StandaloneAhcWSClient]
+        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+          .addCookies(cookie("cookie1", "value1"), cookie("cookie2", "value2"))
+          .buildRequest()
+
+        request.getCookies.asScala must size(2)
+        request.getCookies.asScala.head.getName must beEqualTo("cookie1")
+        request.getCookies.asScala(1).getName must beEqualTo("cookie2")
+      }
+
+      "keep existent cookies when adding a new one" in {
+        val client = mock[StandaloneAhcWSClient]
+        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+          .addCookie(cookie("cookie1", "value1"))
+          .addCookie(cookie("cookie2", "value2"))
+          .buildRequest()
+
+        request.getCookies.asScala must size(2)
+        request.getCookies.asScala.head.getName must beEqualTo("cookie1")
+        request.getCookies.asScala(1).getName must beEqualTo("cookie2")
+      }
+
+      "set all cookies" in {
+        val client = mock[StandaloneAhcWSClient]
+        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+          .setCookies(List(cookie("cookie1", "value1"), cookie("cookie2", "value2")).asJava)
+          .buildRequest()
+
+        request.getCookies.asScala must size(2)
+        request.getCookies.asScala.head.getName must beEqualTo("cookie1")
+        request.getCookies.asScala(1).getName must beEqualTo("cookie2")
+      }
+
+      "discard old cookies when setting" in {
+        val client = mock[StandaloneAhcWSClient]
+        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+          .addCookies(cookie("cookie1", "value1"), cookie("cookie2", "value2"))
+          .setCookies(List(cookie("cookie3", "value1"), cookie("cookie4", "value2")).asJava)
+          .buildRequest()
+
+        request.getCookies.asScala must size(2)
+        request.getCookies.asScala.head.getName must beEqualTo("cookie3")
+        request.getCookies.asScala(1).getName must beEqualTo("cookie4")
       }
     }
   }
