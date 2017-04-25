@@ -20,7 +20,8 @@ public class AhcWSCookie implements WSCookie {
     /**
      * Returns the underlying "native" object for the cookie.
      */
-    public Object getUnderlying() {
+    @Override
+    public play.shaded.ahc.org.asynchttpclient.cookie.Cookie getUnderlying() {
         return ahcCookie;
     }
 
