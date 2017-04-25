@@ -8,18 +8,21 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable._
 import play.libs.ws.{ WSAuthScheme, WSSignatureCalculator }
 import play.libs.oauth.OAuth
+import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
+
+import scala.collection.JavaConverters._
 
 class AhcWSRequestSpec extends Specification with Mockito {
 
   "AhcWSRequest" should {
 
-    "respond to getMethod" in {
+    "Have GET method as the default" in {
       val client = mock[StandaloneAhcWSClient]
       val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
       request.buildRequest().getMethod must be_==("GET")
     }
 
-    "set virtualHost appropriately" in {
+    "Set virtualHost appropriately" in {
       val client = mock[StandaloneAhcWSClient]
       val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
       request.setVirtualHost("foo.com")
@@ -27,58 +30,65 @@ class AhcWSRequestSpec extends Specification with Mockito {
       actual must beEqualTo("foo.com")
     }
 
-    "Have form body on POST of content type text/plain" in {
-      val client = mock[StandaloneAhcWSClient]
-      val formEncoding = java.net.URLEncoder.encode("param1=value1", "UTF-8")
+    "For POST requests" in {
 
-      val ahcRequest = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
-        .setHeader("Content-Type", "text/plain")
-        .setBody("HELLO WORLD")
-      val req = ahcRequest.buildRequest()
-      req.getStringData must be_==("HELLO WORLD")
-    }
+      "set text/plain content-types for text bodies" in {
+        val client = mock[StandaloneAhcWSClient]
+        val formEncoding = java.net.URLEncoder.encode("param1=value1", "UTF-8")
 
-    "Have form body on POST of content type application/x-www-form-urlencoded explicitly set" in {
-      import scala.collection.JavaConverters._
-      val client = mock[StandaloneAhcWSClient]
-      val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
-        .setHeader("Content-Type", "application/x-www-form-urlencoded") // set content type by hand
-        .setBody("HELLO WORLD") // and body is set to string (see #5221)
-        .buildRequest()
-      req.getStringData must be_==("HELLO WORLD") // should result in byte data.
-    }
+        val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
+          .setBody("HELLO WORLD")
+          .asInstanceOf[StandaloneAhcWSRequest]
+          .buildRequest()
+        req.getStringData must be_==("HELLO WORLD")
+      }
 
-    "Have form params on POST of content type application/x-www-form-urlencoded when signed" in {
-      import scala.collection.JavaConverters._
-      val client = mock[StandaloneAhcWSClient]
-      val consumerKey = new OAuth.ConsumerKey("key", "secret")
-      val token = new OAuth.RequestToken("token", "secret")
-      val calc = new OAuth.OAuthCalculator(consumerKey, token)
-      val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
-        .setHeader("Content-Type", "application/x-www-form-urlencoded") // set content type by hand
-        .setBody("param1=value1")
-        .sign(calc)
-        .buildRequest()
-      // Note we use getFormParams instead of getByteData here.
-      req.getFormParams.asScala must containTheSameElementsAs(List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1")))
-    }
+      "keep existent content type when setting body" in {
+        val client = mock[StandaloneAhcWSClient]
+        val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
+          .setContentType("application/x-www-form-urlencoded") // set content type by hand
+          .setBody("HELLO WORLD") // and body is set to string (see #5221)
+          .asInstanceOf[StandaloneAhcWSRequest]
+          .buildRequest()
 
-    "Remove a user defined content length header if we are parsing body explicitly when signed" in {
-      import scala.collection.JavaConverters._
-      val client = mock[StandaloneAhcWSClient]
-      val consumerKey = new OAuth.ConsumerKey("key", "secret")
-      val token = new OAuth.RequestToken("token", "secret")
-      val calc = new OAuth.OAuthCalculator(consumerKey, token)
-      val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
-        .setHeader("Content-Type", "application/x-www-form-urlencoded") // set content type by hand
-        .setBody("param1=value1")
-        .setHeader("Content-Length", "9001") // add a meaningless content length here...
-        .sign(calc)
-        .buildRequest()
+        req.getHeaders.get(HttpHeaders.Names.CONTENT_TYPE) must be_==("application/x-www-form-urlencoded") // preserve the content type
+        req.getStringData must be_==("HELLO WORLD") // should result in byte data.
+      }
 
-      val headers = req.getHeaders
-      req.getFormParams.asScala must containTheSameElementsAs(List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1")))
-      headers.get("Content-Length") must beNull // no content length!
+      "have form params when content-type application/x-www-form-urlencoded and signed" in {
+        import scala.collection.JavaConverters._
+        val client = mock[StandaloneAhcWSClient]
+        val consumerKey = new OAuth.ConsumerKey("key", "secret")
+        val token = new OAuth.RequestToken("token", "secret")
+        val calc = new OAuth.OAuthCalculator(consumerKey, token)
+        val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
+          .setContentType("application/x-www-form-urlencoded") // set content type by hand
+          .setBody("param1=value1")
+          .sign(calc)
+          .asInstanceOf[StandaloneAhcWSRequest]
+          .buildRequest()
+        // Note we use getFormParams instead of getByteData here.
+        req.getFormParams.asScala must containTheSameElementsAs(List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1")))
+      }
+
+      "remove a user defined content length header if we are parsing body explicitly when signed" in {
+        import scala.collection.JavaConverters._
+        val client = mock[StandaloneAhcWSClient]
+        val consumerKey = new OAuth.ConsumerKey("key", "secret")
+        val token = new OAuth.RequestToken("token", "secret")
+        val calc = new OAuth.OAuthCalculator(consumerKey, token)
+        val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
+          .setContentType("application/x-www-form-urlencoded") // set content type by hand
+          .setBody("param1=value1")
+          .addHeader("Content-Length", "9001") // add a meaningless content length here...
+          .sign(calc)
+          .asInstanceOf[StandaloneAhcWSRequest]
+          .buildRequest()
+
+        val headers = req.getHeaders
+        req.getFormParams.asScala must containTheSameElementsAs(List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1")))
+        headers.get("Content-Length") must beNull // no content length!
+      }
     }
 
     "Use a custom signature calculator" in {
@@ -109,37 +119,6 @@ class AhcWSRequestSpec extends Specification with Mockito {
 
     "not support setting a request timeout > Integer.MAX_VALUE" in {
       requestWithTimeout(Int.MaxValue.toLong + 1) must throwA[IllegalArgumentException]
-    }
-
-    "set a query string appropriately" in {
-      val queryParams = requestWithQueryString("q=playframework&src=typd")
-      queryParams.size must beEqualTo(2)
-      queryParams.exists(p => (p.getName == "q") && (p.getValue == "playframework")) must beTrue
-      queryParams.exists(p => (p.getName == "src") && (p.getValue == "typd")) must beTrue
-    }
-
-    "support several query string values for a parameter" in {
-      val queryParams = requestWithQueryString("q=scala&q=playframework&q=fp")
-      queryParams.size must beEqualTo(3)
-      queryParams.exists(p => (p.getName == "q") && (p.getValue == "scala")) must beTrue
-      queryParams.exists(p => (p.getName == "q") && (p.getValue == "playframework")) must beTrue
-      queryParams.exists(p => (p.getName == "q") && (p.getValue == "fp")) must beTrue
-      queryParams.count(p => p.getName == "q") must beEqualTo(3)
-    }
-
-    "support a query string parameter without value" in {
-      val queryParams = requestWithQueryString("q=playframework&src=")
-      queryParams.size must beEqualTo(2)
-      queryParams.exists(p => (p.getName == "q") && (p.getValue == "playframework")) must beTrue
-      queryParams.exists(p => (p.getName.equals("src")) && (p.getValue == null)) must beTrue
-    }
-
-    "not support a query string with more than 2 = per part" in {
-      requestWithQueryString("q=scala=playframework&src=typd") must throwA[RuntimeException]
-    }
-
-    "not support a query string if it starts with = and is empty" in {
-      requestWithQueryString("=&src=typd") must throwA[RuntimeException]
     }
 
     "only send first content type header and add charset=utf-8 to the Content-Type header if it's manually adding but lacking charset" in {
@@ -178,6 +157,150 @@ class AhcWSRequestSpec extends Specification with Mockito {
       req.getRealm.isUsePreemptiveAuth must beTrue
     }
 
+    "For HTTP Headers" in {
+
+      "add a new header" in {
+        val client = mock[StandaloneAhcWSClient]
+        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+
+        request
+          .addHeader("header1", "value1")
+          .buildRequest()
+          .getHeaders.get("header1") must beEqualTo("value1")
+      }
+
+      "add new value for existent header" in {
+        val client = mock[StandaloneAhcWSClient]
+        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+          .addHeader("header1", "value1")
+          .addHeader("header1", "value2")
+
+        request.getHeaders.get("header1").asScala must contain("value1")
+        request.getHeaders.get("header1").asScala must contain("value2")
+
+        val ahcRequest = request.buildRequest()
+
+        ahcRequest.getHeaders.getAll("header1").asScala must contain("value1")
+        ahcRequest.getHeaders.getAll("header1").asScala must contain("value2")
+      }
+
+      "set all headers" in {
+        val client = mock[StandaloneAhcWSClient]
+        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+
+        request
+          .setHeaders(Map(
+            "header1" -> Seq("value1").asJava,
+            "header2" -> Seq("value2").asJava).asJava
+          )
+          .buildRequest()
+          .getHeaders
+          .get("header1") must beEqualTo("value1")
+      }
+
+      "keep existent headers when adding a new one" in {
+        val client = mock[StandaloneAhcWSClient]
+        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+
+        val ahcReq = request
+          .addHeader("header1", "value1")
+          .addHeader("header2", "value2")
+          .buildRequest()
+
+        ahcReq.getHeaders.get("header1") must beEqualTo("value1")
+        ahcReq.getHeaders.get("header2") must beEqualTo("value2")
+      }
+
+      "treat header names case insensitively" in {
+        val client = mock[StandaloneAhcWSClient]
+        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+          .addHeader("header1", "value1")
+          .addHeader("HEADER1", "value2")
+          .buildRequest()
+
+        request.getHeaders.getAll("header1").asScala must contain("value1")
+        request.getHeaders.getAll("header1").asScala must contain("value2")
+      }
+
+    }
+
+    "For query string parameters" in {
+
+      "add query string parameter" in {
+        val client = mock[StandaloneAhcWSClient]
+        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+          .addQueryParameter("p1", "v1")
+          .buildRequest()
+
+        request.getUrl must contain("p1=v1")
+      }
+
+      "add new value for existent parameter" in {
+        val client = mock[StandaloneAhcWSClient]
+        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+          .addQueryParameter("p1", "v1")
+          .addQueryParameter("p1", "v2")
+          .buildRequest()
+
+        request.getUrl must contain("p1=v1")
+        request.getUrl must contain("p1=v2")
+      }
+
+      "keep existent parameters when adding a new one" in {
+        val client = mock[StandaloneAhcWSClient]
+        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+          .addQueryParameter("p1", "v1")
+          .addQueryParameter("p2", "v2")
+          .buildRequest()
+
+        request.getUrl must contain("p1=v1")
+        request.getUrl must contain("p2=v2")
+      }
+
+      "set all the parameters" in {
+        val client = mock[StandaloneAhcWSClient]
+        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+          .setQueryString(Map(
+            "p1" -> Seq("v1").asJava,
+            "p2" -> Seq("v2").asJava).asJava
+          )
+          .buildRequest()
+
+        request.getUrl must contain("p1=v1")
+        request.getUrl must contain("p2=v2")
+      }
+
+      "set a query string appropriately" in {
+        val queryParams = requestWithQueryString("q=playframework&src=typd")
+        queryParams.size must beEqualTo(2)
+        queryParams.exists(p => (p.getName == "q") && (p.getValue == "playframework")) must beTrue
+        queryParams.exists(p => (p.getName == "src") && (p.getValue == "typd")) must beTrue
+      }
+
+      "support several query string values for a parameter" in {
+        val queryParams = requestWithQueryString("q=scala&q=playframework&q=fp")
+        queryParams.size must beEqualTo(3)
+        queryParams.exists(p => (p.getName == "q") && (p.getValue == "scala")) must beTrue
+        queryParams.exists(p => (p.getName == "q") && (p.getValue == "playframework")) must beTrue
+        queryParams.exists(p => (p.getName == "q") && (p.getValue == "fp")) must beTrue
+        queryParams.count(p => p.getName == "q") must beEqualTo(3)
+      }
+
+      "support a query string parameter without value" in {
+        val queryParams = requestWithQueryString("q=playframework&src=")
+        queryParams.size must beEqualTo(2)
+        queryParams.exists(p => (p.getName == "q") && (p.getValue == "playframework")) must beTrue
+        queryParams.exists(p => (p.getName.equals("src")) && (p.getValue == null)) must beTrue
+      }
+
+      "not support a query string with more than 2 = per part" in {
+        requestWithQueryString("q=scala=playframework&src=typd") must throwA[RuntimeException]
+      }
+
+      "not support a query string if it starts with = and is empty" in {
+        requestWithQueryString("=&src=typd") must throwA[RuntimeException]
+      }
+    }
   }
 
   def requestWithTimeout(timeout: Long) = {
@@ -193,6 +316,6 @@ class AhcWSRequestSpec extends Specification with Mockito {
     val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
     request.setQueryString(query)
     val queryParams = request.buildRequest().getQueryParams
-    queryParams.asScala.toSeq
+    queryParams.asScala
   }
 }
