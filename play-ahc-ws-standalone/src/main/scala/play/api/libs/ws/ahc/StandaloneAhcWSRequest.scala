@@ -16,6 +16,7 @@ import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
 import play.shaded.ahc.org.asynchttpclient.proxy.{ ProxyServer => AHCProxyServer }
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils
 import play.shaded.ahc.org.asynchttpclient._
+import play.shaded.ahc.org.asynchttpclient.cookie.{ Cookie => AhcCookie }
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.TreeMap
@@ -360,7 +361,7 @@ case class StandaloneAhcWSRequest(
     }
 
     // cookies
-    cookies.foreach(c => builder.addCookie(c.underlying))
+    cookies.foreach(c => builder.addCookie(c.underlying[AhcCookie]))
 
     builderWithBody.build()
   }

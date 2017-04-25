@@ -108,8 +108,6 @@ trait StandaloneWSRequest {
    * Returns this request with the given headers, discarding the existent ones.
    *
    * @param headers the headers to be used
-   *
-   * @see [[addHeaders()]]
    */
   def setHeaders(headers: (String, String)*): Self
 
@@ -117,9 +115,6 @@ trait StandaloneWSRequest {
    * Returns this request with the given headers, preserving the existent ones.
    *
    * @param headers the headers to be used
-   *
-   * @see [[addHeaders()]]
-   * @see [[setHeaders()]]
    */
   @deprecated("Use setHeaders or addHeaders", "1.0.0")
   def withHeaders(headers: (String, String)*): Self = addHeaders(headers: _*)
@@ -128,8 +123,6 @@ trait StandaloneWSRequest {
    * Returns this request with the given headers, preserving the existent ones.
    *
    * @param hdrs the headers to be added
-   *
-   * @see [[setHeaders()]]
    */
   def addHeaders(hdrs: (String, String)*): Self = {
     val newHeaders = headers.toList.flatMap { param =>
@@ -142,7 +135,6 @@ trait StandaloneWSRequest {
    * Returns this request with the given query string parameters, discarding the existent ones.
    *
    * @param parameters the query string parameters
-   * @see [[addQueryString()]]
    */
   def setQueryString(parameters: (String, String)*): Self
 
@@ -150,9 +142,6 @@ trait StandaloneWSRequest {
    * Returns this request with the given query string parameters, preserving the existent ones.
    *
    * @param parameters the query string parameters
-   *
-   * @see [[addQueryString()]]
-   * @see [[setQueryString()]]
    */
   @deprecated("Use setQueryString or addQueryString", "1.0.0")
   def withQueryString(parameters: (String, String)*): Self = addQueryString(parameters: _*)
@@ -161,8 +150,6 @@ trait StandaloneWSRequest {
    * Returns this request with the given query string parameters, preserving the existent ones.
    *
    * @param parameters the query string parameters
-   *
-   * @see [[withQueryString()]]
    */
   def addQueryString(parameters: (String, String)*): Self = {
     val newQueryStringParams = queryString.toList.flatMap { param =>
