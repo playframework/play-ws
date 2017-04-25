@@ -17,6 +17,6 @@ public class HeaderAppendingFilter implements WSRequestFilter {
 
     @Override
     public WSRequestExecutor apply(WSRequestExecutor executor) {
-        return request -> executor.apply(request.setHeader(key, value));
+        return request -> executor.apply(request.addHeader(key, value));
     }
 }
