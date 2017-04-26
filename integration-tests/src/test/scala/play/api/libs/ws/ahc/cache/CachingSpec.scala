@@ -12,14 +12,14 @@ import org.specs2.concurrent.ExecutionEnv
 import org.specs2.matcher.FutureMatchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
-import org.specs2.specification.{AfterAll, BeforeAfter}
+import org.specs2.specification.AfterAll
 import play.AkkaServerProvider
 import play.api.libs.ws.ahc._
 import play.shaded.ahc.org.asynchttpclient._
 
 import scala.collection.mutable
 
-class CachingSpec(implicit val executionEnv: ExecutionEnv) extends Specification with AkkaServerProvider with BeforeAfter with AfterAll with FutureMatchers with Mockito {
+class CachingSpec(implicit val executionEnv: ExecutionEnv) extends Specification with AkkaServerProvider with AfterAll with FutureMatchers with Mockito {
 
   val asyncHttpClient: AsyncHttpClient = {
     val config = AhcWSClientConfigFactory.forClientConfig()
@@ -29,22 +29,13 @@ class CachingSpec(implicit val executionEnv: ExecutionEnv) extends Specification
 
   override val routes: Route = {
     import akka.http.scaladsl.server.Directives._
-    path("hello") {
-      respondWithHeader(RawHeader("Cache-Control", "public")) {
-        complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to akka-http</h1>"))
-      }
+    respondWithHeader(RawHeader("Cache-Control", "public")) {
+      val httpEntity = HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to akka-http</h1>")
+      complete(httpEntity)
     }
   }
 
-  override def before = {
-  }
-
-  override def after = {
-    val cacheManager = Caching.getCachingProvider.getCacheManager
-    cacheManager.destroyCache("play-ws-cache")
-  }
-
-  override def afterAll = {
+  override def afterAll(): Unit = {
     super.afterAll()
     asyncHttpClient.close()
   }
@@ -56,11 +47,11 @@ class CachingSpec(implicit val executionEnv: ExecutionEnv) extends Specification
       val cachingAsyncHttpClient = new CachingAsyncHttpClient(asyncHttpClient, cache, scala.concurrent.ExecutionContext.global)
       val ws = new StandaloneAhcWSClient(cachingAsyncHttpClient)
 
-      ws.url(s"http://localhost:$testServerPort/hello").get().map { response =>
+      ws.url(s"http://localhost:$testServerPort/").get().map { response =>
         response.body must be_==("<h1>Say hello to akka-http</h1>")
       }.await
 
-      there was one(cache).get(EffectiveURIKey("GET", new java.net.URI("http://localhost:9000/")))
+      there was one(cache).get(EffectiveURIKey("GET", new java.net.URI(s"http://localhost:$testServerPort/")))
     }
 
   }
