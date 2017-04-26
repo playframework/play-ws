@@ -105,14 +105,14 @@ trait StandaloneWSRequest {
   def withAuth(username: String, password: String, scheme: WSAuthScheme): Self
 
   /**
-   * Returns this request with the given headers, discarding the existent ones.
+   * Returns this request with the given headers, discarding the existing ones.
    *
    * @param headers the headers to be used
    */
   def setHeaders(headers: (String, String)*): Self
 
   /**
-   * Returns this request with the given headers, preserving the existent ones.
+   * Returns this request with the given headers, preserving the existing ones.
    *
    * @param headers the headers to be used
    */
@@ -120,7 +120,7 @@ trait StandaloneWSRequest {
   def withHeaders(headers: (String, String)*): Self = addHeaders(headers: _*)
 
   /**
-   * Returns this request with the given headers, preserving the existent ones.
+   * Returns this request with the given headers, preserving the existing ones.
    *
    * @param hdrs the headers to be added
    */
@@ -132,14 +132,14 @@ trait StandaloneWSRequest {
   }
 
   /**
-   * Returns this request with the given query string parameters, discarding the existent ones.
+   * Returns this request with the given query string parameters, discarding the existing ones.
    *
    * @param parameters the query string parameters
    */
   def setQueryString(parameters: (String, String)*): Self
 
   /**
-   * Returns this request with the given query string parameters, preserving the existent ones.
+   * Returns this request with the given query string parameters, preserving the existing ones.
    *
    * @param parameters the query string parameters
    */
@@ -147,7 +147,7 @@ trait StandaloneWSRequest {
   def withQueryString(parameters: (String, String)*): Self = addQueryString(parameters: _*)
 
   /**
-   * Returns this request with the given query string parameters, preserving the existent ones.
+   * Returns this request with the given query string parameters, preserving the existing ones.
    *
    * @param parameters the query string parameters
    */
@@ -159,14 +159,14 @@ trait StandaloneWSRequest {
   }
 
   /**
-   * Returns this request with the given query string parameters, discarding the existent ones.
+   * Returns this request with the given query string parameters, discarding the existing ones.
    *
    * @param cookies the cookies to be used
    */
   def setCookies(cookies: WSCookie*): Self
 
   /**
-   * Returns this request with the given query string parameters, preserving the existent ones.
+   * Returns this request with the given query string parameters, preserving the existing ones.
    *
    * @param cookies the cookies to be used
    */

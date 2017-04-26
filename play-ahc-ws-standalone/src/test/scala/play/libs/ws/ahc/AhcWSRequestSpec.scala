@@ -43,7 +43,7 @@ class AhcWSRequestSpec extends Specification with Mockito {
         req.getStringData must be_==("HELLO WORLD")
       }
 
-      "keep existent content type when setting body" in {
+      "keep existing content type when setting body" in {
         val client = mock[StandaloneAhcWSClient]
         val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
           .setContentType("application/x-www-form-urlencoded") // set content type by hand
@@ -169,7 +169,7 @@ class AhcWSRequestSpec extends Specification with Mockito {
           .getHeaders.get("header1") must beEqualTo("value1")
       }
 
-      "add new value for existent header" in {
+      "add new value for existing header" in {
         val client = mock[StandaloneAhcWSClient]
         val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
           .addHeader("header1", "value1")
@@ -198,7 +198,7 @@ class AhcWSRequestSpec extends Specification with Mockito {
           .get("header1") must beEqualTo("value1")
       }
 
-      "keep existent headers when adding a new one" in {
+      "keep existing headers when adding a new one" in {
         val client = mock[StandaloneAhcWSClient]
         val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
 
@@ -235,7 +235,7 @@ class AhcWSRequestSpec extends Specification with Mockito {
         request.getUrl must contain("p1=v1")
       }
 
-      "add new value for existent parameter" in {
+      "add new value for existing parameter" in {
         val client = mock[StandaloneAhcWSClient]
         val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
           .addQueryParameter("p1", "v1")
@@ -246,7 +246,7 @@ class AhcWSRequestSpec extends Specification with Mockito {
         request.getUrl must contain("p1=v2")
       }
 
-      "keep existent parameters when adding a new one" in {
+      "keep existing parameters when adding a new one" in {
         val client = mock[StandaloneAhcWSClient]
         val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
           .addQueryParameter("p1", "v1")
@@ -330,7 +330,7 @@ class AhcWSRequestSpec extends Specification with Mockito {
         request.getCookies.asScala(1).getName must beEqualTo("cookie2")
       }
 
-      "keep existent cookies when adding a new one" in {
+      "keep existing cookies when adding a new one" in {
         val client = mock[StandaloneAhcWSClient]
         val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
           .addCookie(cookie("cookie1", "value1"))

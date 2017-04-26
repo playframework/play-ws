@@ -223,7 +223,7 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
       }
     }
 
-    "keep existent headers when adding a new one" in {
+    "keep existing headers when adding a new one" in {
       withClient { client =>
         val req: AHCRequest = client
           .url("http://playframework.com/")

@@ -335,7 +335,7 @@ public interface StandaloneWSRequest {
     /**
      * Set headers to the request.  Note that duplicate headers are allowed
      * by the HTTP specification, and removing a header is not available
-     * through this API. Any existent header will be discarded here.
+     * through this API. Any existing header will be discarded here.
      *
      * @param headers the headers
      * @return the modified WSRequest.
@@ -376,7 +376,7 @@ public interface StandaloneWSRequest {
     }
 
     /**
-     * Adds a query parameter with the given name, this can be called repeatedly and will preserve existent values.
+     * Adds a query parameter with the given name, this can be called repeatedly and will preserve existing values.
      * Duplicate query parameters are allowed.
      *
      * @param name  the query parameter name
@@ -386,7 +386,7 @@ public interface StandaloneWSRequest {
     StandaloneWSRequest addQueryParameter(String name, String value);
 
     /**
-     * Sets the query string parameters. This will discard existent values.
+     * Sets the query string parameters. This will discard existing values.
      *
      * @param params the query string parameters
      * @return the modified WSRequest.
@@ -394,7 +394,7 @@ public interface StandaloneWSRequest {
     StandaloneWSRequest setQueryString(Map<String, List<String>> params);
 
     /**
-     * Add a new cookie. This can be called repeatedly and will preserve existent cookies.
+     * Add a new cookie. This can be called repeatedly and will preserve existing cookies.
      *
      * @param cookie the cookie to be added
      * @return the modified WSRequest.
@@ -405,7 +405,7 @@ public interface StandaloneWSRequest {
     StandaloneWSRequest addCookie(WSCookie cookie);
 
     /**
-     * Add new cookies. This can be called repeatedly and will preserve existent cookies.
+     * Add new cookies. This can be called repeatedly and will preserve existing cookies.
      *
      * @param cookies the list of cookies to be added
      * @return the modified WSRequest.
@@ -416,7 +416,7 @@ public interface StandaloneWSRequest {
     StandaloneWSRequest addCookies(WSCookie ... cookies);
 
     /**
-     * Set the request cookies. This discard the existent cookies.
+     * Set the request cookies. This discard the existing cookies.
      *
      * @param cookies the cookies to be used.
      * @return the modified WSRequest.
