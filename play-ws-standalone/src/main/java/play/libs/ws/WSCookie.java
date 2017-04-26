@@ -50,7 +50,7 @@ public interface WSCookie {
     /**
      * @return if the cookie is accessed only server side.
      */
-    boolean httpOnly();
+    boolean isHttpOnly();
 
     // Cookie ports should not be used; cookies for a given host are shared across
     // all the ports on that host.

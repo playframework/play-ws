@@ -56,7 +56,7 @@ public class AhcWSCookie implements WSCookie {
     }
 
     @Override
-    public boolean httpOnly() {
+    public boolean isHttpOnly() {
         return ahcCookie.isHttpOnly();
     }
 }
