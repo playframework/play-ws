@@ -67,7 +67,7 @@ case class StandaloneAhcWSRequest(
   override def withAuth(username: String, password: String, scheme: WSAuthScheme): Self =
     copy(auth = Some((username, password, scheme)))
 
-  override def setHeaders(hdrs: (String, String)*): Self = {
+  override def withHttpHeaders(hdrs: (String, String)*): Self = {
     var newHeaders = hdrs.foldLeft(TreeMap[String, Seq[String]]()(CaseInsensitiveOrdered)) {
       (m, hdr) =>
         if (m.contains(hdr._1)) m.updated(hdr._1, m(hdr._1) :+ hdr._2)
@@ -85,12 +85,12 @@ case class StandaloneAhcWSRequest(
     copy(headers = newHeaders)
   }
 
-  override def setQueryString(parameters: (String, String)*): Self =
+  override def withQueryStringParameters(parameters: (String, String)*): Self =
     copy(queryString = parameters.foldLeft(Map.empty[String, Seq[String]]) {
       case (m, (k, v)) => m + (k -> (v +: m.getOrElse(k, Nil)))
     })
 
-  override def setCookies(cookies: WSCookie*): StandaloneWSRequest = copy(cookies = cookies)
+  override def withCookies(cookies: WSCookie*): StandaloneWSRequest = copy(cookies = cookies)
 
   override def withFollowRedirects(follow: Boolean): Self = copy(followRedirects = Some(follow))
 
@@ -177,7 +177,7 @@ case class StandaloneAhcWSRequest(
     if (headers.contains(HttpHeaders.Names.CONTENT_TYPE)) {
       withBody(wsBody)
     } else {
-      withBody(wsBody).setHeaders(HttpHeaders.Names.CONTENT_TYPE -> contentType)
+      withBody(wsBody).withHttpHeaders(HttpHeaders.Names.CONTENT_TYPE -> contentType)
     }
   }
 

@@ -59,16 +59,16 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
     "set all query string parameters" in {
       val request = StandaloneAhcWSRequest(client, "http://example.com")
 
-      request.setQueryString("bar" -> "baz").uri.toString must equalTo("http://example.com?bar=baz")
-      request.setQueryString("bar" -> "baz", "bar" -> "bah").uri.toString must equalTo("http://example.com?bar=bah&bar=baz")
+      request.withQueryStringParameters("bar" -> "baz").uri.toString must equalTo("http://example.com?bar=baz")
+      request.withQueryStringParameters("bar" -> "baz", "bar" -> "bah").uri.toString must equalTo("http://example.com?bar=bah&bar=baz")
     }
 
     "discard old query parameters when setting new ones" in {
       val request = StandaloneAhcWSRequest(client, "http://example.com")
 
       request
-        .setQueryString("bar" -> "baz")
-        .setQueryString("bar" -> "bah")
+        .withQueryStringParameters("bar" -> "baz")
+        .withQueryStringParameters("bar" -> "bah")
         .uri.toString must equalTo("http://example.com?bar=bah")
     }
 
@@ -76,16 +76,16 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
       val request = StandaloneAhcWSRequest(client, "http://example.com")
 
       request
-        .setQueryString("bar" -> "baz")
-        .addQueryString("bar" -> "bah")
+        .withQueryStringParameters("bar" -> "baz")
+        .addQueryStringParameter("bar" -> "bah")
         .uri.toString must equalTo("http://example.com?bar=bah&bar=baz")
     }
 
     "support adding several query string values for a parameter" in {
       val request = StandaloneAhcWSRequest(client, "http://example.com")
       val newRequest = request
-        .setQueryString("play" -> "foo1")
-        .addQueryString("play" -> "foo2")
+        .withQueryStringParameters("play" -> "foo1")
+        .addQueryStringParameter("play" -> "foo2")
 
       newRequest.queryString.get("play") must beSome.which(_.contains("foo1"))
       newRequest.queryString.get("play") must beSome.which(_.contains("foo2"))
@@ -95,7 +95,7 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
     "support several query string values for  a parameter" in {
       withClient { client =>
         val req: AHCRequest = client.url("http://playframework.com/")
-          .setQueryString("foo" -> "foo1", "foo" -> "foo2")
+          .withQueryStringParameters("foo" -> "foo1", "foo" -> "foo2")
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
 
@@ -135,7 +135,7 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
       withClient { client =>
         val req: AHCRequest = client
           .url("http://example.com")
-          .setCookies(cookie("cookie1", "value1"), cookie("cookie2", "value2"))
+          .withCookies(cookie("cookie1", "value1"), cookie("cookie2", "value2"))
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
 
@@ -152,7 +152,7 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
       withClient { client =>
         val req: AHCRequest = client
           .url("http://example.com")
-          .setCookies(cookie("cookie1", "value1"))
+          .withCookies(cookie("cookie1", "value1"))
           .addCookies(cookie("cookie2", "value2"))
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
@@ -170,8 +170,8 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
       withClient { client =>
         val req: AHCRequest = client
           .url("http://example.com")
-          .setCookies(cookie("cookie1", "value1"), cookie("cookie2", "value2"))
-          .setCookies(cookie("cookie3", "value3"), cookie("cookie4", "value4"))
+          .withCookies(cookie("cookie1", "value1"), cookie("cookie2", "value2"))
+          .withCookies(cookie("cookie3", "value3"), cookie("cookie4", "value4"))
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
 
@@ -191,7 +191,7 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
       withClient { client =>
         val req: AHCRequest = client
           .url("http://playframework.com/")
-          .setHeaders("key" -> "value1", "key" -> "value2")
+          .withHttpHeaders("key" -> "value1", "key" -> "value2")
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
         req.getHeaders.getAll("key").asScala must containTheSameElementsAs(Seq("value1", "value2"))
@@ -202,8 +202,8 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
       withClient { client =>
         val req: AHCRequest = client
           .url("http://playframework.com/")
-          .setHeaders("key1" -> "value1")
-          .setHeaders("key2" -> "value2")
+          .withHttpHeaders("key1" -> "value1")
+          .withHttpHeaders("key2" -> "value2")
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
         req.getHeaders.get("key1") must beNull
@@ -215,8 +215,8 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
       withClient { client =>
         val req: AHCRequest = client
           .url("http://playframework.com/")
-          .setHeaders("key" -> "value1")
-          .addHeaders("key" -> "value2")
+          .withHttpHeaders("key" -> "value1")
+          .addHttpHeaders("key" -> "value2")
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
         req.getHeaders.getAll("key").asScala must containTheSameElementsAs(Seq("value1", "value2"))
@@ -227,8 +227,8 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
       withClient { client =>
         val req: AHCRequest = client
           .url("http://playframework.com/")
-          .setHeaders("key1" -> "value1")
-          .addHeaders("key2" -> "value2")
+          .withHttpHeaders("key1" -> "value1")
+          .addHttpHeaders("key2" -> "value2")
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
         req.getHeaders.get("key1") must beEqualTo("value1")
@@ -240,7 +240,7 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
       withClient { client =>
         import scala.collection.JavaConverters._
         val req: AHCRequest = client.url("http://playframework.com/")
-          .setHeaders("content-type" -> "fake/contenttype; charset=utf-8")
+          .withHttpHeaders("content-type" -> "fake/contenttype; charset=utf-8")
           .withBody(<aaa>value1</aaa>)
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
@@ -252,7 +252,7 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
       withClient { client =>
         val req: AHCRequest = client
           .url("http://playframework.com/")
-          .setHeaders("key" -> "value1", "KEY" -> "value2")
+          .withHttpHeaders("key" -> "value1", "KEY" -> "value2")
 
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
@@ -296,7 +296,7 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
       withClient { client =>
         val formEncoding = java.net.URLEncoder.encode("param1=value1", "UTF-8")
         val req: AHCRequest = client.url("http://playframework.com/")
-          .setHeaders(HttpHeaders.Names.CONTENT_TYPE -> "text/plain")
+          .withHttpHeaders(HttpHeaders.Names.CONTENT_TYPE -> "text/plain")
           .withBody("HELLO WORLD")
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
@@ -310,7 +310,7 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
     "Have form body for content type application/x-www-form-urlencoded explicitly set" in {
       withClient { client =>
         val req: AHCRequest = client.url("http://playframework.com/")
-          .setHeaders(HttpHeaders.Names.CONTENT_TYPE -> "application/x-www-form-urlencoded") // set content type by hand
+          .withHttpHeaders(HttpHeaders.Names.CONTENT_TYPE -> "application/x-www-form-urlencoded") // set content type by hand
           .withBody("HELLO WORLD") // and body is set to string (see #5221)
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
@@ -444,7 +444,7 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
     val requestToken = RequestToken("token", "secret")
     val calc = OAuthCalculator(consumerKey, requestToken)
     val req: AHCRequest = client.url("http://playframework.com/").withBody(Map("param1" -> Seq("value1")))
-      .setHeaders("Content-Length" -> "9001") // add a meaningless content length here...
+      .withHttpHeaders("Content-Length" -> "9001") // add a meaningless content length here...
       .asInstanceOf[StandaloneAhcWSRequest]
       .buildRequest()
 
@@ -460,7 +460,7 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
     val requestToken = RequestToken("token", "secret")
     val calc = OAuthCalculator(consumerKey, requestToken)
     val req: AHCRequest = client.url("http://playframework.com/").withBody(Map("param1" -> Seq("value1")))
-      .setHeaders("Content-Length" -> "9001") // add a meaningless content length here...
+      .withHttpHeaders("Content-Length" -> "9001") // add a meaningless content length here...
       .sign(calc) // this is signed, so content length is no longer valid per #5221
       .asInstanceOf[StandaloneAhcWSRequest]
       .buildRequest()

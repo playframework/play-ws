@@ -109,26 +109,26 @@ trait StandaloneWSRequest {
    *
    * @param headers the headers to be used
    */
-  def setHeaders(headers: (String, String)*): Self
+  def withHttpHeaders(headers: (String, String)*): Self
 
   /**
    * Returns this request with the given headers, preserving the existing ones.
    *
    * @param headers the headers to be used
    */
-  @deprecated("Use setHeaders or addHeaders", "1.0.0")
-  def withHeaders(headers: (String, String)*): Self = addHeaders(headers: _*)
+  @deprecated("Use withHttpHeaders or addHttpHeaders", "1.0.0")
+  def withHeaders(headers: (String, String)*): Self = addHttpHeaders(headers: _*)
 
   /**
    * Returns this request with the given headers, preserving the existing ones.
    *
    * @param hdrs the headers to be added
    */
-  def addHeaders(hdrs: (String, String)*): Self = {
+  def addHttpHeaders(hdrs: (String, String)*): Self = {
     val newHeaders = headers.toList.flatMap { param =>
       param._2.map(p => param._1 -> p)
     } ++ hdrs
-    setHeaders(newHeaders: _*)
+    withHttpHeaders(newHeaders: _*)
   }
 
   /**
@@ -136,26 +136,26 @@ trait StandaloneWSRequest {
    *
    * @param parameters the query string parameters
    */
-  def setQueryString(parameters: (String, String)*): Self
+  def withQueryStringParameters(parameters: (String, String)*): Self
 
   /**
    * Returns this request with the given query string parameters, preserving the existing ones.
    *
    * @param parameters the query string parameters
    */
-  @deprecated("Use setQueryString or addQueryString", "1.0.0")
-  def withQueryString(parameters: (String, String)*): Self = addQueryString(parameters: _*)
+  @deprecated("Use withQueryStringParameters or addQueryStringParameter", "1.0.0")
+  def withQueryString(parameters: (String, String)*): Self = addQueryStringParameter(parameters: _*)
 
   /**
    * Returns this request with the given query string parameters, preserving the existing ones.
    *
    * @param parameters the query string parameters
    */
-  def addQueryString(parameters: (String, String)*): Self = {
+  def addQueryStringParameter(parameters: (String, String)*): Self = {
     val newQueryStringParams = queryString.toList.flatMap { param =>
       param._2.map(p => param._1 -> p)
     } ++ parameters
-    setQueryString(newQueryStringParams: _*)
+    withQueryStringParameters(newQueryStringParams: _*)
   }
 
   /**
@@ -163,7 +163,7 @@ trait StandaloneWSRequest {
    *
    * @param cookies the cookies to be used
    */
-  def setCookies(cookies: WSCookie*): Self
+  def withCookies(cookies: WSCookie*): Self
 
   /**
    * Returns this request with the given query string parameters, preserving the existing ones.
@@ -171,7 +171,7 @@ trait StandaloneWSRequest {
    * @param cookies the cookies to be used
    */
   def addCookies(cookies: WSCookie*): Self = {
-    setCookies(this.cookies ++ cookies: _*)
+    withCookies(this.cookies ++ cookies: _*)
   }
 
   /**
