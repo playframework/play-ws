@@ -146,7 +146,7 @@ and from there you can release:
 
 ```bash
 cd play-ws
-sbt release
+./release
 ```
 
 The script will walk you through integration tests and publishing.
