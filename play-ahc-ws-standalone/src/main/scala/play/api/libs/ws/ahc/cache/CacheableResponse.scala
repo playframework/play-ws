@@ -10,7 +10,6 @@ import java.net.{ MalformedURLException, SocketAddress }
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
 import java.util
-import java.util.concurrent.atomic.AtomicBoolean
 
 import org.slf4j.LoggerFactory
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders.Names._
@@ -18,6 +17,7 @@ import play.shaded.ahc.io.netty.handler.codec.http.{ DefaultHttpHeaders, HttpHea
 import play.shaded.ahc.org.asynchttpclient._
 import play.shaded.ahc.org.asynchttpclient.cookie.Cookie
 import play.shaded.ahc.org.asynchttpclient.uri.Uri
+
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils._
 
 class CacheableResponseBuilder {
@@ -71,8 +71,6 @@ case class CacheableResponse(
   import CacheableResponse._
 
   private val uri: Uri = status.getUri
-  private var content: String = null
-  private val contentComputed: AtomicBoolean = new AtomicBoolean(false)
 
   def ahcStatus: HttpResponseStatus = status.asInstanceOf[HttpResponseStatus]
 
@@ -86,7 +84,7 @@ case class CacheableResponse(
       case (k, v) =>
         headerMap.add(k, v)
     }
-    val newHeaders = new CacheableHttpResponseHeaders(this.headers.trailingHeaders, headerMap)
+    val newHeaders = CacheableHttpResponseHeaders(this.headers.trailingHeaders, headerMap)
     this.copy(headers = newHeaders)
   }
 
@@ -208,7 +206,7 @@ case class CacheableHttpResponseHeaders(trailingHeaders: Boolean, headers: HttpH
 object CacheableResponse {
   private val logger = LoggerFactory.getLogger("play.api.libs.ws.ning.cache.CacheableResponse")
 
-  def apply(code: Int, urlString: String)(implicit cache: AhcHttpCache): CacheableResponse = {
+  def apply(code: Int, urlString: String): CacheableResponse = {
     val uri: Uri = Uri.create(urlString)
     val status = new CacheableHttpResponseStatus(uri, code, "", "")
     val headers = new DefaultHttpHeaders()

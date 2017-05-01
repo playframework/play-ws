@@ -26,8 +26,6 @@ class BackgroundAsyncHandler[T](request: Request, cache: AhcHttpCache)
 
   private val key = EffectiveURIKey(request)
 
-  private var maybeThrowable: Option[Throwable] = None
-
   @throws(classOf[Exception])
   def onBodyPartReceived(content: HttpResponseBodyPart): AsyncHandler.State = {
     builder.accumulate(content)
@@ -48,7 +46,7 @@ class BackgroundAsyncHandler[T](request: Request, cache: AhcHttpCache)
   }
 
   def onThrowable(t: Throwable): Unit = {
-    maybeThrowable = Some(t)
+    logger.error(s"onThrowable: received on request $request", t)
   }
 
   override def onCompleted(): T = {

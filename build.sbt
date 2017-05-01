@@ -38,15 +38,15 @@ lazy val commonSettings = mimaDefaultSettings ++ Seq(
     "-Xlint",
     "-Ywarn-dead-code"
   ),
-  //  scalacOptions in (Compile, doc) ++= {
-  //    // Work around 2.12 bug which prevents javadoc in nested java classes from compiling.
-  //    CrossVersion.partialVersion(scalaVersion.value) match {
-  //      case Some((2, v)) if v == 12 =>
-  //        Seq("-no-java-comments")
-  //      case _ =>
-  //        Nil
-  //    }
-  //  },
+  // Work around 2.12 bug which prevents javadoc in nested java classes from compiling.
+  scalacOptions in (Compile, doc) ++= {
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, v)) if v == 12 =>
+        Seq("-no-java-comments")
+      case _ =>
+        Nil
+    }
+  },
   pomExtra := (
     <url>https://github.com/playframework/play-ws</url>
       <licenses>
@@ -115,7 +115,7 @@ lazy val shadeAssemblySettings = commonSettings ++ Seq(
         sys.error("Cannot find valid scala version!")
     }
   },
-  crossPaths := false // only useful for Java 
+  crossPaths := false // only useful for Java
 )
 
 val ahcMerge: MergeStrategy = new MergeStrategy {
