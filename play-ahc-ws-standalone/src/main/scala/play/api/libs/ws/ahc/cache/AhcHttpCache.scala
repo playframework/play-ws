@@ -6,6 +6,7 @@ package play.api.libs.ws.ahc.cache
 
 import java.net.URI
 
+import com.typesafe.play.cachecontrol.HttpDate.zone
 import com.typesafe.play.cachecontrol._
 import org.joda.time.{ DateTime, Seconds }
 import org.slf4j.LoggerFactory
@@ -105,7 +106,7 @@ class AhcHttpCache(underlying: Cache, heuristicsEnabled: Boolean = false)(implic
   override def calculateFreshnessFromHeuristic(request: CacheRequest, response: CacheResponse): Option[Seconds] = {
     if (heuristicsEnabled) {
       // https://publicobject.com/2015/03/26/how-do-http-caching-heuristics-work/
-      request.headers.get(HeaderName("Last-Modified")).map { lastModifiedString =>
+      response.headers.get(HeaderName("Last-Modified")).map { lastModifiedString =>
         val lastModified = HttpDate.parse(lastModifiedString.head)
         val lastRequestedAt = HttpDate.now
         val timeSinceLastModified: Seconds = HttpDate.diff(start = lastModified, end = lastRequestedAt)
