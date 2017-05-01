@@ -24,8 +24,8 @@ val javacSettings = Seq(
 
 lazy val commonSettings = mimaDefaultSettings ++ Seq(
   organization := "com.typesafe.play",
-  scalaVersion := "2.12.1",
-  crossScalaVersions := Seq("2.12.1", "2.11.8"),
+  scalaVersion := "2.12.2",
+  crossScalaVersions := Seq("2.12.2", "2.11.11"),
   scalacOptions in (Compile, doc) ++= Seq(
     "-target:jvm-1.8",
     "-deprecation",
@@ -38,8 +38,8 @@ lazy val commonSettings = mimaDefaultSettings ++ Seq(
     "-Xlint",
     "-Ywarn-dead-code"
   ),
+  // Work around 2.12 bug which prevents javadoc in nested java classes from compiling.
   scalacOptions in (Compile, doc) ++= {
-    // Work around 2.12 bug which prevents javadoc in nested java classes from compiling.
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, v)) if v == 12 =>
         Seq("-no-java-comments")
@@ -115,7 +115,7 @@ lazy val shadeAssemblySettings = commonSettings ++ Seq(
         sys.error("Cannot find valid scala version!")
     }
   },
-  crossPaths := false // only useful for Java 
+  crossPaths := false // only useful for Java
 )
 
 val ahcMerge: MergeStrategy = new MergeStrategy {
@@ -277,6 +277,9 @@ lazy val `play-ahc-ws-standalone` = project
     fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
     libraryDependencies ++= (slf4jtest ++ specsBuild ++ junitInterface).map(_ % Test)
+  )
+  .settings(
+     // The scaladoc generation
   )
   .settings(libraryDependencies ++= standaloneAhcWSDependencies)
   .settings(shadedAhcSettings)
