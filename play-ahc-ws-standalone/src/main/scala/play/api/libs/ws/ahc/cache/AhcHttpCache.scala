@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory
 import play.shaded.ahc.io.netty.handler.codec.http.{ DefaultHttpHeaders, HttpHeaders }
 import play.shaded.ahc.org.asynchttpclient._
 
-import scala.concurrent.Future
+import scala.concurrent.{ ExecutionContext, Future }
 
 /**
  * Central HTTP cache.  This keeps a cache of HTTP responses according to
@@ -23,7 +23,7 @@ import scala.concurrent.Future
  * to caching responses to GET, many caches simply decline other methods
  * and use only the URI as the primary cache key.
  */
-class AhcHttpCache(underlying: Cache) extends CacheDefaults with Debug {
+class AhcHttpCache(underlying: Cache, heuristicsEnabled: Boolean = false)(implicit val executionContext: ExecutionContext) extends CacheDefaults with Debug {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -103,16 +103,19 @@ class AhcHttpCache(underlying: Cache) extends CacheDefaults with Debug {
   }
 
   override def calculateFreshnessFromHeuristic(request: CacheRequest, response: CacheResponse): Option[Seconds] = {
-    // XXX FIXME Look at LM-Freshness algorithm
-    // https://publicobject.com/2015/03/26/how-do-http-caching-heuristics-work/
-    request.headers.get(HeaderName("Last-Modified")).map { lastModifiedString =>
-      val lastModified = HttpDate.parse(lastModifiedString.head)
-      val lastRequestedAt = HttpDate.now
-      val timeSinceLastModified: Seconds = HttpDate.diff(start = lastModified, end = lastRequestedAt)
-      // 10% of the duration
-      val scaledDownSeconds = (0.1 * timeSinceLastModified.getSeconds).toInt
-      val scaledSeconds: Seconds = Seconds.seconds(scaledDownSeconds)
-      scaledSeconds
+    if (heuristicsEnabled) {
+      // https://publicobject.com/2015/03/26/how-do-http-caching-heuristics-work/
+      request.headers.get(HeaderName("Last-Modified")).map { lastModifiedString =>
+        val lastModified = HttpDate.parse(lastModifiedString.head)
+        val lastRequestedAt = HttpDate.now
+        val timeSinceLastModified: Seconds = HttpDate.diff(start = lastModified, end = lastRequestedAt)
+        // 10% of the duration
+        val scaledDownSeconds = (0.1 * timeSinceLastModified.getSeconds).toInt
+        val scaledSeconds: Seconds = Seconds.seconds(scaledDownSeconds)
+        scaledSeconds
+      }
+    } else {
+      None
     }
   }
 
@@ -448,8 +451,8 @@ object AhcHttpCache {
   /**
    * Creates a new cache.
    */
-  def apply(underlying: Cache): AhcHttpCache = {
-    new AhcHttpCache(underlying)
+  def apply(underlying: Cache, heuristicsEnabled: Boolean = false)(implicit executionContext: ExecutionContext): AhcHttpCache = {
+    new AhcHttpCache(underlying, heuristicsEnabled)(executionContext)
   }
 
 }

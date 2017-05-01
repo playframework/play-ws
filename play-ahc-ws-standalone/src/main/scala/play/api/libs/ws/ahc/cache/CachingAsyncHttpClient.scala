@@ -12,7 +12,7 @@ import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
 import play.shaded.ahc.org.asynchttpclient.handler.StreamedAsyncHandler
 import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse, _ }
 
-import scala.concurrent.{ Await, ExecutionContext }
+import scala.concurrent.Await
 
 trait TimeoutResponse {
 
@@ -28,18 +28,18 @@ trait TimeoutResponse {
 /**
  * A provider that pulls a response from the cache.
  */
-class CachingAsyncHttpClient(underlying: AsyncHttpClient, cache: Cache, executionContext: ExecutionContext)
+class CachingAsyncHttpClient(
+  underlying: AsyncHttpClient,
+  ahcHttpCache: AhcHttpCache)
     extends AsyncHttpClient
     with TimeoutResponse
     with Debug {
 
-  private val ahcHttpCache = AhcHttpCache(cache)
-
-  private val logger = LoggerFactory.getLogger(this.getClass)
-
   import com.typesafe.play.cachecontrol.ResponseSelectionActions._
   import com.typesafe.play.cachecontrol.ResponseServeActions._
   import com.typesafe.play.cachecontrol._
+
+  private val logger = LoggerFactory.getLogger(this.getClass)
 
   private val cacheTimeout = scala.concurrent.duration.Duration(1, "second")
 
@@ -161,9 +161,8 @@ class CachingAsyncHttpClient(underlying: AsyncHttpClient, cache: Cache, executio
     logger.trace(s"executeFromCache: handler = ${debug(handler)}, request = ${debug(request)}, response = ${debug(response)}")
 
     val cacheFuture = new CacheFuture[T](handler)
-    val callable = new AsyncCacheableConnection[T](handler, request, response, cacheFuture)
-    executionContext.execute(new Runnable {
-      override def run(): Unit = callable.call()
+    ahcHttpCache.executionContext.execute(new Runnable {
+      override def run(): Unit = new AsyncCacheableConnection[T](handler, request, response, cacheFuture).call()
     })
     cacheFuture
   }

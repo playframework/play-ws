@@ -5,10 +5,12 @@
 
 package play.api.libs.ws.ahc.cache
 
+import akka.stream.Materializer
 import play.shaded.ahc.io.netty.handler.codec.http.{ DefaultHttpHeaders, HttpHeaders }
 import play.shaded.ahc.org.asynchttpclient.{ Request, RequestBuilder }
 
 import scala.collection.mutable
+import scala.concurrent.ExecutionContext
 
 /**
  * Utility methods to make building requests and responses easier.
@@ -16,7 +18,8 @@ import scala.collection.mutable
 trait CacheBuilderMethods {
 
   def generateCache: AhcHttpCache = {
-    AhcHttpCache(new StubHttpCache())
+    import ExecutionContext.Implicits.global
+    AhcHttpCache(new StubHttpCache(), false)
   }
 
   def generateRequest(url: String)(block: HttpHeaders => HttpHeaders): Request = {

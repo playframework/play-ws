@@ -16,14 +16,13 @@ import play.api.libs.ws.ahc.AhcConfigBuilder;
 import play.api.libs.ws.ahc.AhcLoggerFactory;
 import play.api.libs.ws.ahc.AhcWSClientConfig;
 import play.api.libs.ws.ahc.Streamed;
-import play.api.libs.ws.ahc.cache.Cache;
+import play.api.libs.ws.ahc.cache.AhcHttpCache;
 import play.api.libs.ws.ahc.cache.CachingAsyncHttpClient;
 import play.libs.ws.StandaloneWSClient;
 import play.libs.ws.StandaloneWSResponse;
 import play.libs.ws.StreamedResponse;
 import play.shaded.ahc.org.asynchttpclient.*;
 import scala.compat.java8.FutureConverters;
-import scala.concurrent.ExecutionContext;
 import scala.concurrent.Future;
 import scala.concurrent.Promise;
 
@@ -110,12 +109,8 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
         return FutureConverters.toJava(future);
     }
 
-    ExecutionContext executionContext() {
-        return materializer.executionContext();
-    }
-
     CompletionStage<? extends StreamedResponse> executeStream(Request request) {
-        return StreamedResponse.from(Streamed.execute(asyncHttpClient, request, executionContext()));
+        return StreamedResponse.from(Streamed.execute(asyncHttpClient, request, materializer.executionContext()));
     }
 
     /**
@@ -126,7 +121,7 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
      * @param materializer an akka materializer
      * @return a fully configured StandaloneAhcWSClient instance.
      */
-    public static StandaloneAhcWSClient create(AhcWSClientConfig ahcWSClientConfig, Cache cache, Materializer materializer) {
+    public static StandaloneAhcWSClient create(AhcWSClientConfig ahcWSClientConfig, AhcHttpCache cache, Materializer materializer) {
         AhcLoggerFactory loggerFactory = new AhcLoggerFactory(LoggerFactory.getILoggerFactory());
 
         // Set up debugging configuration
@@ -147,7 +142,7 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
 
         AsyncHttpClient ahcClient;
         if (cache != null) {
-            ahcClient = new CachingAsyncHttpClient(defaultAsyncHttpClient, cache, ExecutionContext.Implicits$.MODULE$.global());
+            ahcClient = new CachingAsyncHttpClient(defaultAsyncHttpClient, cache);
         } else {
             ahcClient = defaultAsyncHttpClient;
         }
