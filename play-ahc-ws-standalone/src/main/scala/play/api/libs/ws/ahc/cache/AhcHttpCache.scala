@@ -6,7 +6,6 @@ package play.api.libs.ws.ahc.cache
 
 import java.net.URI
 
-import com.typesafe.play.cachecontrol.HttpDate.zone
 import com.typesafe.play.cachecontrol._
 import org.joda.time.{ DateTime, Seconds }
 import org.slf4j.LoggerFactory
