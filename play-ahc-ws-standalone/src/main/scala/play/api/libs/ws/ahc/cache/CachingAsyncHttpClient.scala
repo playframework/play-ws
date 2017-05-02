@@ -12,7 +12,7 @@ import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
 import play.shaded.ahc.org.asynchttpclient.handler.StreamedAsyncHandler
 import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse, _ }
 
-import scala.concurrent.Await
+import scala.concurrent.{ Await, ExecutionContext }
 
 trait TimeoutResponse {
 
@@ -51,7 +51,7 @@ class CachingAsyncHttpClient(
   override def executeRequest[T](request: Request, handler: AsyncHandler[T]): ListenableFuture[T] = {
     handler match {
       case asyncCompletionHandler: AsyncCompletionHandler[T] =>
-        execute(request, asyncCompletionHandler, null)
+        execute(request, asyncCompletionHandler, null)(ahcHttpCache.executionContext)
 
       case streamedHandler: StreamedAsyncHandler[T] =>
         // Streamed requests don't go through the cache
@@ -63,7 +63,7 @@ class CachingAsyncHttpClient(
   }
 
   @throws(classOf[IOException])
-  protected def execute[T](request: Request, handler: AsyncCompletionHandler[T], future: ListenableFuture[_]): ListenableFuture[T] = {
+  protected def execute[T](request: Request, handler: AsyncCompletionHandler[T], future: ListenableFuture[_])(implicit ec: ExecutionContext): ListenableFuture[T] = {
     if (logger.isTraceEnabled) {
       logger.trace(s"execute: request = ${debug(request)}, handler = ${debug(handler)}, future = $future")
     }
@@ -97,7 +97,7 @@ class CachingAsyncHttpClient(
   /**
    * Serves a future containing the response, based on the cache behavior.
    */
-  protected def serveResponse[T](handler: AsyncCompletionHandler[T], request: Request, entry: ResponseEntry, requestTime: DateTime): ListenableFuture[T] = {
+  protected def serveResponse[T](handler: AsyncCompletionHandler[T], request: Request, entry: ResponseEntry, requestTime: DateTime)(implicit ec: ExecutionContext): ListenableFuture[T] = {
 
     val key = EffectiveURIKey(request)
 
@@ -157,11 +157,11 @@ class CachingAsyncHttpClient(
     }
   }
 
-  protected def executeFromCache[T](handler: AsyncHandler[T], request: Request, response: CacheableResponse): CacheFuture[T] = {
+  protected def executeFromCache[T](handler: AsyncHandler[T], request: Request, response: CacheableResponse)(implicit ec: ExecutionContext): CacheFuture[T] = {
     logger.trace(s"executeFromCache: handler = ${debug(handler)}, request = ${debug(request)}, response = ${debug(response)}")
 
     val cacheFuture = new CacheFuture[T](handler)
-    ahcHttpCache.executionContext.execute(new Runnable {
+    ec.execute(new Runnable {
       override def run(): Unit = new AsyncCacheableConnection[T](handler, request, response, cacheFuture).call()
     })
     cacheFuture
@@ -218,7 +218,7 @@ class CachingAsyncHttpClient(
     new BackgroundAsyncHandler(request, ahcHttpCache)
   }
 
-  protected def serveTimeout[T](request: Request, handler: AsyncHandler[T]): CacheFuture[T] = {
+  protected def serveTimeout[T](request: Request, handler: AsyncHandler[T])(implicit ec: ExecutionContext): CacheFuture[T] = {
     val timeoutResponse = generateTimeoutResponse(request)
     executeFromCache(handler, request, timeoutResponse)
   }

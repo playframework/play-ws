@@ -445,14 +445,3 @@ class AhcHttpCache(underlying: Cache, heuristicsEnabled: Boolean = false)(implic
     s"AhcHttpCache(${underlying})"
   }
 }
-
-object AhcHttpCache {
-
-  /**
-   * Creates a new cache.
-   */
-  def apply(underlying: Cache, heuristicsEnabled: Boolean = false)(implicit executionContext: ExecutionContext): AhcHttpCache = {
-    new AhcHttpCache(underlying, heuristicsEnabled)(executionContext)
-  }
-
-}
