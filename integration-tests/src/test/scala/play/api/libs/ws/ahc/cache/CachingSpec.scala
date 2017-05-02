@@ -58,7 +58,7 @@ class CachingSpec(implicit ee: ExecutionEnv) extends Specification with AfterAll
 
     "work once" in {
       val cache = mock[Cache]
-      val cachingAsyncHttpClient = new CachingAsyncHttpClient(asyncHttpClient, cache, scala.concurrent.ExecutionContext.global)
+      val cachingAsyncHttpClient = new CachingAsyncHttpClient(asyncHttpClient, new AhcHttpCache(cache))
       val ws = new StandaloneAhcWSClient(cachingAsyncHttpClient)
 
       ws.url("http://localhost:9000/").get().map { response =>

@@ -7,7 +7,7 @@ package play.api.libs.ws.ahc.cache
 
 import org.specs2.mutable.Specification
 
-class CacheAsyncHandlerSpec extends Specification with CacheBuilderMethods {
+class CacheAsyncHandlerSpec extends Specification {
 
   "CacheAsyncHandlerSpec" should {
 
