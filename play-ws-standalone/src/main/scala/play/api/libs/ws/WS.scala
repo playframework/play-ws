@@ -97,6 +97,11 @@ trait WSCookie {
    * If the cookie is secure.
    */
   def secure: Boolean
+
+  /**
+   * If the cookie is HTTPOnly.
+   */
+  def httpOnly: Boolean
 }
 
 /**

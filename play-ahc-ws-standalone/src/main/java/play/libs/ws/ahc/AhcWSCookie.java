@@ -20,31 +20,43 @@ public class AhcWSCookie implements WSCookie {
     /**
      * Returns the underlying "native" object for the cookie.
      */
-    public Object getUnderlying() {
+    @Override
+    public play.shaded.ahc.org.asynchttpclient.cookie.Cookie getUnderlying() {
         return ahcCookie;
     }
 
+    @Override
     public String getDomain() {
         return ahcCookie.getDomain();
     }
 
+    @Override
     public String getName() {
         return ahcCookie.getName();
     }
 
+    @Override
     public String getValue() {
         return ahcCookie.getValue();
     }
 
+    @Override
     public String getPath() {
         return ahcCookie.getPath();
     }
 
+    @Override
     public long getMaxAge() {
         return ahcCookie.getMaxAge();
     }
 
+    @Override
     public boolean isSecure() {
         return ahcCookie.isSecure();
+    }
+
+    @Override
+    public boolean isHttpOnly() {
+        return ahcCookie.isHttpOnly();
     }
 }

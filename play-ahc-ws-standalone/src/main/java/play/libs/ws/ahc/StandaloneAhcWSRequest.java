@@ -21,13 +21,9 @@ import play.shaded.ahc.org.asynchttpclient.request.body.generator.InputStreamBod
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils;
 import org.reactivestreams.Publisher;
 import play.api.libs.ws.ahc.FormUrlEncodedParser;
-import play.api.libs.ws.ahc.Streamed;
 
 import play.libs.oauth.OAuth;
 import play.libs.ws.*;
-import scala.compat.java8.FutureConverters;
-import scala.concurrent.Future;
-import scala.concurrent.Promise;
 
 import java.io.File;
 import java.io.InputStream;
@@ -50,6 +46,8 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     private String method = "GET";
     private final Map<String, List<String>> headers = new HashMap<>();
     private final Map<String, List<String>> queryParameters = new HashMap<>();
+
+    private final List<WSCookie> cookies = new ArrayList<>();
 
     private String username;
     private String password;
@@ -93,24 +91,19 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
         return this;
     }
 
-    /**
-     * Sets a header with the given name, this can be called repeatedly.
-     *
-     * @param name  the header name
-     * @param value the header value
-     * @return the receiving WSRequest, with the new header set.
-     */
     @Override
-    public StandaloneAhcWSRequest setHeader(String name, String value) {
+    public StandaloneAhcWSRequest addHeader(String name, String value) {
         addValueTo(headers, name, value);
         return this;
     }
 
-    /**
-     * Sets a query string
-     *
-     * @param query the query string
-     */
+    @Override
+    public StandaloneAhcWSRequest setHeaders(Map<String, List<String>> headers) {
+        this.headers.clear();
+        this.headers.putAll(headers);
+        return this;
+    }
+
     @Override
     public StandaloneAhcWSRequest setQueryString(String query) {
         String[] params = query.split("&");
@@ -119,9 +112,9 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
             if (keyValue.length > 2) {
                 throw new RuntimeException(new MalformedURLException("QueryString parameter should not have more than 2 = per part"));
             } else if (keyValue.length == 2) {
-                this.setQueryParameter(keyValue[0], keyValue[1]);
+                this.addQueryParameter(keyValue[0], keyValue[1]);
             } else if (keyValue.length == 1 && param.charAt(0) != '=') {
-                this.setQueryParameter(keyValue[0], null);
+                this.addQueryParameter(keyValue[0], null);
             } else {
                 throw new RuntimeException(new MalformedURLException("QueryString part should not start with an = and not be empty"));
             }
@@ -130,8 +123,38 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     @Override
-    public StandaloneAhcWSRequest setQueryParameter(String name, String value) {
+    public StandaloneAhcWSRequest addQueryParameter(String name, String value) {
         addValueTo(queryParameters, name, value);
+        return this;
+    }
+
+    @Override
+    public StandaloneAhcWSRequest setQueryString(Map<String, List<String>> params) {
+        this.queryParameters.clear();
+        this.queryParameters.putAll(params);
+        return this;
+    }
+
+    @Override
+    public StandaloneAhcWSRequest addCookie(WSCookie cookie) {
+        if (cookie == null) {
+            throw new NullPointerException("Trying to add a null WSCookie");
+        }
+
+        this.cookies.add(cookie);
+        return this;
+    }
+
+    @Override
+    public StandaloneAhcWSRequest addCookies(WSCookie ... cookies) {
+        Arrays.asList(cookies).forEach(this::addCookie);
+        return this;
+    }
+
+    @Override
+    public StandaloneAhcWSRequest setCookies(List<WSCookie> cookies) {
+        this.cookies.clear();
+        cookies.forEach(this::addCookie);
         return this;
     }
 
@@ -204,7 +227,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
     @Override
     public StandaloneAhcWSRequest setContentType(String contentType) {
-        return setHeader(HttpHeaders.Names.CONTENT_TYPE, contentType);
+        return addHeader(HttpHeaders.Names.CONTENT_TYPE, contentType);
     }
 
     @Override
@@ -278,12 +301,12 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     @Override
-    public Map<String, Collection<String>> getHeaders() {
+    public Map<String, List<String>> getHeaders() {
         return new HashMap<>(this.headers);
     }
 
     @Override
-    public Map<String, Collection<String>> getQueryParameters() {
+    public Map<String, List<String>> getQueryParameters() {
         return new HashMap<>(this.queryParameters);
     }
 
@@ -320,128 +343,6 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     // Intentionally package public.
     String getVirtualHost() {
         return this.virtualHost;
-    }
-
-    @Override
-    public CompletionStage<? extends StandaloneWSResponse> get() {
-        return execute("GET");
-    }
-
-    //-------------------------------------------------------------------------
-    // PATCH
-    //-------------------------------------------------------------------------
-
-    @Override
-    public CompletionStage<? extends StandaloneWSResponse> patch(String body) {
-        setMethod("PATCH");
-        setBody(body);
-        return execute();
-    }
-
-    @Override
-    public CompletionStage<? extends StandaloneWSResponse> patch(JsonNode body) {
-        setMethod("PATCH");
-        setBody(body);
-        return execute();
-    }
-
-    @Override
-    public CompletionStage<? extends StandaloneWSResponse> patch(InputStream body) {
-        setMethod("PATCH");
-        setBody(body);
-        return execute();
-    }
-
-    @Override
-    public CompletionStage<? extends StandaloneWSResponse> patch(File body) {
-        setMethod("PATCH");
-        setBody(body);
-        return execute();
-    }
-
-    //-------------------------------------------------------------------------
-    // POST
-    //-------------------------------------------------------------------------
-
-    @Override
-    public CompletionStage<? extends StandaloneWSResponse> post(String body) {
-        setMethod("POST");
-        setBody(body);
-        return execute();
-    }
-
-    @Override
-    public CompletionStage<? extends StandaloneWSResponse> post(JsonNode body) {
-        setMethod("POST");
-        setBody(body);
-        return execute();
-    }
-
-    @Override
-    public CompletionStage<? extends StandaloneWSResponse> post(InputStream body) {
-        setMethod("POST");
-        setBody(body);
-        return execute();
-    }
-
-    @Override
-    public CompletionStage<? extends StandaloneWSResponse> post(File body) {
-        setMethod("POST");
-        setBody(body);
-        return execute();
-    }
-
-    //-------------------------------------------------------------------------
-    // PUT
-    //-------------------------------------------------------------------------
-
-    @Override
-    public CompletionStage<? extends StandaloneWSResponse> put(String body) {
-        setMethod("PUT");
-        setBody(body);
-        return execute();
-    }
-
-    @Override
-    public CompletionStage<? extends StandaloneWSResponse> put(JsonNode body) {
-        setMethod("PUT");
-        setBody(body);
-        return execute();
-    }
-
-    @Override
-    public CompletionStage<? extends StandaloneWSResponse> put(InputStream body) {
-        setMethod("PUT");
-        setBody(body);
-        return execute();
-    }
-
-    @Override
-    public CompletionStage<? extends StandaloneWSResponse> put(File body) {
-        setMethod("PUT");
-        setBody(body);
-        return execute();
-    }
-
-    @Override
-    public CompletionStage<? extends StandaloneWSResponse> delete() {
-        return execute("DELETE");
-    }
-
-    @Override
-    public CompletionStage<? extends StandaloneWSResponse> head() {
-        return execute("HEAD");
-    }
-
-    @Override
-    public CompletionStage<? extends StandaloneWSResponse> options() {
-        return execute("OPTIONS");
-    }
-
-    @Override
-    public CompletionStage<? extends StandaloneWSResponse> execute(String method) {
-        setMethod(method);
-        return execute();
     }
 
     @SuppressWarnings("unchecked")
@@ -580,12 +481,18 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
             }
         }
 
+        // add cookies
+        this.cookies.forEach(cookie -> {
+            AhcWSCookie ahcWSCookie = (AhcWSCookie)cookie;
+            builder.addCookie(ahcWSCookie.getUnderlying());
+        });
+
         return builder.build();
     }
 
     private void addValueTo(Map<String, List<String>> map, String name, String value) {
         if (map.containsKey(name)) {
-            Collection<String> values = map.get(name);
+            List<String> values = map.get(name);
             values.add(value);
         } else {
             List<String> values = new ArrayList<>();

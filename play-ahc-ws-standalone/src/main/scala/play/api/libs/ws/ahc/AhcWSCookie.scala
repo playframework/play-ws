@@ -50,6 +50,11 @@ private class AhcWSCookie(ahcCookie: AHCCookie) extends WSCookie {
    */
   def secure: Boolean = ahcCookie.isSecure
 
+  /**
+   * If the cookie is HTTPOnly.
+   */
+  def httpOnly: Boolean = ahcCookie.isHttpOnly
+
   /*
    * Cookie ports should not be used; cookies for a given host are shared across
    * all the ports on that host.

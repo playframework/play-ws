@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.File;
 import java.io.InputStream;
-import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
@@ -32,7 +32,9 @@ public interface StandaloneWSRequest {
      *
      * @return a promise to the response
      */
-    CompletionStage<? extends StandaloneWSResponse> get();
+    default CompletionStage<? extends StandaloneWSResponse> get() {
+        return execute("GET");
+    }
 
     //-------------------------------------------------------------------------
     // "PATCH"
@@ -44,7 +46,9 @@ public interface StandaloneWSRequest {
      * @param body represented as String
      * @return a promise to the response
      */
-    CompletionStage<? extends StandaloneWSResponse> patch(String body);
+    default CompletionStage<? extends StandaloneWSResponse> patch(String body) {
+        return setMethod("PATCH").setBody(body).execute();
+    }
 
     /**
      * Perform a PATCH on the request asynchronously.
@@ -52,15 +56,22 @@ public interface StandaloneWSRequest {
      * @param body represented as JSON
      * @return a promise to the response
      */
-    CompletionStage<? extends StandaloneWSResponse> patch(JsonNode body);
+    default CompletionStage<? extends StandaloneWSResponse> patch(JsonNode body) {
+        return setMethod("PATCH").setBody(body).execute();
+    }
 
     /**
      * Perform a PATCH on the request asynchronously.
      *
      * @param body represented as an InputStream
      * @return a promise to the response
+     *
+     * @deprecated Since 1.0.0. Use {@link #patch(Source)} instead.
      */
-    CompletionStage<? extends StandaloneWSResponse> patch(InputStream body);
+    @Deprecated
+    default CompletionStage<? extends StandaloneWSResponse> patch(InputStream body) {
+        return setMethod("PATCH").setBody(body).execute();
+    }
 
     /**
      * Perform a PATCH on the request asynchronously.
@@ -68,7 +79,19 @@ public interface StandaloneWSRequest {
      * @param body represented as a File
      * @return a promise to the response
      */
-    CompletionStage<? extends StandaloneWSResponse> patch(File body);
+    default CompletionStage<? extends StandaloneWSResponse> patch(File body) {
+        return setMethod("PATCH").setBody(body).execute();
+    }
+
+    /**
+     * Perform a PATCH on the request asynchronously.
+     *
+     * @param body the body of request
+     * @return a promise to the response
+     */
+    default <U> CompletionStage<? extends StandaloneWSResponse> patch(Source<ByteString, U> body) {
+        return setMethod("PATCH").setBody(body).execute();
+    }
 
     //-------------------------------------------------------------------------
     // "POST"
@@ -80,7 +103,9 @@ public interface StandaloneWSRequest {
      * @param body represented as String
      * @return a promise to the response
      */
-    CompletionStage<? extends StandaloneWSResponse> post(String body);
+    default CompletionStage<? extends StandaloneWSResponse> post(String body) {
+        return setMethod("POST").setBody(body).execute();
+    }
 
     /**
      * Perform a POST on the request asynchronously.
@@ -88,15 +113,22 @@ public interface StandaloneWSRequest {
      * @param body represented as JSON
      * @return a promise to the response
      */
-    CompletionStage<? extends StandaloneWSResponse> post(JsonNode body);
+    default CompletionStage<? extends StandaloneWSResponse> post(JsonNode body) {
+        return setMethod("POST").setBody(body).execute();
+    }
 
     /**
      * Perform a POST on the request asynchronously.
      *
      * @param body represented as an InputStream
      * @return a promise to the response
+     *
+     * @deprecated Since 1.0.0. Use {@link #post(Source)} instead.
      */
-    CompletionStage<? extends StandaloneWSResponse> post(InputStream body);
+    @Deprecated
+    default CompletionStage<? extends StandaloneWSResponse> post(InputStream body) {
+        return setMethod("POST").setBody(body).execute();
+    }
 
     /**
      * Perform a POST on the request asynchronously.
@@ -104,7 +136,19 @@ public interface StandaloneWSRequest {
      * @param body represented as a File
      * @return a promise to the response
      */
-    CompletionStage<? extends StandaloneWSResponse> post(File body);
+    default CompletionStage<? extends StandaloneWSResponse> post(File body) {
+        return setMethod("POST").setBody(body).execute();
+    }
+
+    /**
+     * Perform a POST on the request asynchronously.
+     *
+     * @param body the body of request
+     * @return a promise to the response
+     */
+    default <U> CompletionStage<? extends StandaloneWSResponse> post(Source<ByteString, U> body) {
+        return setMethod("POST").setBody(body).execute();
+    }
 
     //-------------------------------------------------------------------------
     // "PUT"
@@ -116,7 +160,9 @@ public interface StandaloneWSRequest {
      * @param body represented as String
      * @return a promise to the response
      */
-    CompletionStage<? extends StandaloneWSResponse> put(String body);
+    default CompletionStage<? extends StandaloneWSResponse> put(String body) {
+        return setMethod("PUT").setBody(body).execute();
+    }
 
     /**
      * Perform a PUT on the request asynchronously.
@@ -124,15 +170,22 @@ public interface StandaloneWSRequest {
      * @param body represented as JSON
      * @return a promise to the response
      */
-    CompletionStage<? extends StandaloneWSResponse> put(JsonNode body);
+    default CompletionStage<? extends StandaloneWSResponse> put(JsonNode body) {
+        return setMethod("PUT").setBody(body).execute();
+    }
 
     /**
      * Perform a PUT on the request asynchronously.
      *
      * @param body represented as an InputStream
      * @return a promise to the response
+     *
+     * @deprecated Since 1.0.0. Use {@link #post(Source)} instead.
      */
-    CompletionStage<? extends StandaloneWSResponse> put(InputStream body);
+    @Deprecated
+    default CompletionStage<? extends StandaloneWSResponse> put(InputStream body) {
+        return setMethod("PUT").setBody(body).execute();
+    }
 
     /**
      * Perform a PUT on the request asynchronously.
@@ -140,7 +193,19 @@ public interface StandaloneWSRequest {
      * @param body represented as a File
      * @return a promise to the response
      */
-    CompletionStage<? extends StandaloneWSResponse> put(File body);
+    default CompletionStage<? extends StandaloneWSResponse> put(File body) {
+        return setMethod("PUT").setBody(body).execute();
+    }
+
+    /**
+     * Perform a PUT on the request asynchronously.
+     *
+     * @param body the body of request
+     * @return a promise to the response
+     */
+    default <U> CompletionStage<? extends StandaloneWSResponse> put(Source<ByteString, U> body) {
+        return setMethod("PUT").setBody(body).execute();
+    }
 
     //-------------------------------------------------------------------------
     // Miscellaneous execution methods
@@ -151,21 +216,27 @@ public interface StandaloneWSRequest {
      *
      * @return a promise to the response
      */
-    CompletionStage<? extends StandaloneWSResponse> delete();
+    default CompletionStage<? extends StandaloneWSResponse> delete() {
+        return execute("DELETE");
+    }
 
     /**
      * Perform a HEAD on the request asynchronously.
      *
      * @return a promise to the response
      */
-    CompletionStage<? extends StandaloneWSResponse> head();
+    default CompletionStage<? extends StandaloneWSResponse> head() {
+        return execute("HEAD");
+    }
 
     /**
      * Perform an OPTIONS on the request asynchronously.
      *
      * @return a promise to the response
      */
-    CompletionStage<? extends StandaloneWSResponse> options();
+    default CompletionStage<? extends StandaloneWSResponse> options() {
+        return execute("OPTIONS");
+    }
 
     /**
      * Execute an arbitrary method on the request asynchronously.
@@ -173,7 +244,9 @@ public interface StandaloneWSRequest {
      * @param method The method to execute
      * @return a promise to the response
      */
-    CompletionStage<? extends StandaloneWSResponse> execute(String method);
+    default CompletionStage<? extends StandaloneWSResponse> execute(String method) {
+        return setMethod(method).execute();
+    }
 
     /**
      * Execute an arbitrary method on the request asynchronously.  Should be used with setMethod().
@@ -222,7 +295,7 @@ public interface StandaloneWSRequest {
      *
      * @param body Deprecated
      * @return Deprecated
-     * @deprecated use {@link #setBody(Source)} instead.
+     * @deprecated Since 1.0.0. Use {@link #setBody(Source)} instead.
      */
     @Deprecated
     StandaloneWSRequest setBody(InputStream body);
@@ -251,8 +324,34 @@ public interface StandaloneWSRequest {
      * @param name  the header name
      * @param value the header value
      * @return the modified WSRequest.
+     *
+     * @deprecated Since 1.0.0. Use {@link #addHeader(String, String)} or {@link #setHeaders(Map)}.
      */
-    StandaloneWSRequest setHeader(String name, String value);
+    @Deprecated
+    default StandaloneWSRequest setHeader(String name, String value) {
+        return addHeader(name, value);
+    }
+
+    /**
+     * Set headers to the request.  Note that duplicate headers are allowed
+     * by the HTTP specification, and removing a header is not available
+     * through this API. Any existing header will be discarded here.
+     *
+     * @param headers the headers
+     * @return the modified WSRequest.
+     */
+    StandaloneWSRequest setHeaders(Map<String, List<String>> headers);
+
+    /**
+     * Adds a header to the request.  Note that duplicate headers are allowed
+     * by the HTTP specification, and removing a header is not available
+     * through this API. Existent headers will be preserved.
+     *
+     * @param name  the header name
+     * @param value the header value
+     * @return the modified WSRequest.
+     */
+    StandaloneWSRequest addHeader(String name, String value);
 
     /**
      * Sets the query string to query.
@@ -268,8 +367,61 @@ public interface StandaloneWSRequest {
      * @param name  the query parameter name
      * @param value the query parameter value
      * @return the modified WSRequest.
+     *
+     * @deprecated Since 1.0.0. Use {@link #addQueryParameter(String, String)}, {@link #setQueryString(String)} or {@link #setQueryString(Map)} instead.
      */
-    StandaloneWSRequest setQueryParameter(String name, String value);
+    @Deprecated
+    default StandaloneWSRequest setQueryParameter(String name, String value) {
+        return addQueryParameter(name, value);
+    }
+
+    /**
+     * Adds a query parameter with the given name, this can be called repeatedly and will preserve existing values.
+     * Duplicate query parameters are allowed.
+     *
+     * @param name  the query parameter name
+     * @param value the query parameter value
+     * @return the modified WSRequest.
+     */
+    StandaloneWSRequest addQueryParameter(String name, String value);
+
+    /**
+     * Sets the query string parameters. This will discard existing values.
+     *
+     * @param params the query string parameters
+     * @return the modified WSRequest.
+     */
+    StandaloneWSRequest setQueryString(Map<String, List<String>> params);
+
+    /**
+     * Add a new cookie. This can be called repeatedly and will preserve existing cookies.
+     *
+     * @param cookie the cookie to be added
+     * @return the modified WSRequest.
+     *
+     * @see #addCookies(WSCookie...)
+     * @see #setCookies(List)
+     */
+    StandaloneWSRequest addCookie(WSCookie cookie);
+
+    /**
+     * Add new cookies. This can be called repeatedly and will preserve existing cookies.
+     *
+     * @param cookies the list of cookies to be added
+     * @return the modified WSRequest.
+     *
+     * @see #addCookie(WSCookie)
+     * @see #setCookies(List)
+     */
+    StandaloneWSRequest addCookies(WSCookie ... cookies);
+
+    /**
+     * Set the request cookies. This discard the existing cookies.
+     *
+     * @param cookies the cookies to be used.
+     * @return the modified WSRequest.
+     */
+    StandaloneWSRequest setCookies(List<WSCookie> cookies);
 
     /**
      * Sets the authentication header for the current request using BASIC authentication.
@@ -359,12 +511,12 @@ public interface StandaloneWSRequest {
     /**
      * @return the headers (a copy to prevent side-effects). This has not passed through an internal request builder and so will not be signed.
      */
-    Map<String, Collection<String>> getHeaders();
+    Map<String, List<String>> getHeaders();
 
     /**
      * @return the query parameters (a copy to prevent side-effects). This has not passed through an internal request builder and so will not be signed.
      */
-    Map<String, Collection<String>> getQueryParameters();
+    Map<String, List<String>> getQueryParameters();
 
     /**
      * @return the auth username, null if not an authenticated request.

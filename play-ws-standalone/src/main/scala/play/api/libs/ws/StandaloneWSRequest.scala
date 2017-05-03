@@ -59,6 +59,11 @@ trait StandaloneWSRequest {
   def queryString: Map[String, Seq[String]]
 
   /**
+   * The cookies for this request
+   */
+  def cookies: Seq[WSCookie]
+
+  /**
    * A calculator of the signature for this request
    */
   def calc: Option[WSSignatureCalculator]
@@ -90,7 +95,7 @@ trait StandaloneWSRequest {
 
   /**
    * sets the signature calculator for the request
-   * @param calc
+   * @param calc the signature calculator
    */
   def sign(calc: WSSignatureCalculator): Self
 
@@ -100,15 +105,74 @@ trait StandaloneWSRequest {
   def withAuth(username: String, password: String, scheme: WSAuthScheme): Self
 
   /**
-   * adds any number of HTTP headers
-   * @param hdrs
+   * Returns this request with the given headers, discarding the existing ones.
+   *
+   * @param headers the headers to be used
    */
-  def withHeaders(hdrs: (String, String)*): Self
+  def withHttpHeaders(headers: (String, String)*): Self
 
   /**
-   * adds any number of query string parameters to this request
+   * Returns this request with the given headers, preserving the existing ones.
+   *
+   * @param headers the headers to be used
    */
-  def withQueryString(parameters: (String, String)*): Self
+  @deprecated("Use withHttpHeaders or addHttpHeaders", "1.0.0")
+  def withHeaders(headers: (String, String)*): Self = addHttpHeaders(headers: _*)
+
+  /**
+   * Returns this request with the given headers, preserving the existing ones.
+   *
+   * @param hdrs the headers to be added
+   */
+  def addHttpHeaders(hdrs: (String, String)*): Self = {
+    val newHeaders = headers.toList.flatMap { param =>
+      param._2.map(p => param._1 -> p)
+    } ++ hdrs
+    withHttpHeaders(newHeaders: _*)
+  }
+
+  /**
+   * Returns this request with the given query string parameters, discarding the existing ones.
+   *
+   * @param parameters the query string parameters
+   */
+  def withQueryStringParameters(parameters: (String, String)*): Self
+
+  /**
+   * Returns this request with the given query string parameters, preserving the existing ones.
+   *
+   * @param parameters the query string parameters
+   */
+  @deprecated("Use withQueryStringParameters or addQueryStringParameter", "1.0.0")
+  def withQueryString(parameters: (String, String)*): Self = addQueryStringParameter(parameters: _*)
+
+  /**
+   * Returns this request with the given query string parameters, preserving the existing ones.
+   *
+   * @param parameters the query string parameters
+   */
+  def addQueryStringParameter(parameters: (String, String)*): Self = {
+    val newQueryStringParams = queryString.toList.flatMap { param =>
+      param._2.map(p => param._1 -> p)
+    } ++ parameters
+    withQueryStringParameters(newQueryStringParams: _*)
+  }
+
+  /**
+   * Returns this request with the given query string parameters, discarding the existing ones.
+   *
+   * @param cookies the cookies to be used
+   */
+  def withCookies(cookies: WSCookie*): Self
+
+  /**
+   * Returns this request with the given query string parameters, preserving the existing ones.
+   *
+   * @param cookies the cookies to be used
+   */
+  def addCookies(cookies: WSCookie*): Self = {
+    withCookies(this.cookies ++ cookies: _*)
+  }
 
   /**
    * Sets whether redirects (301, 302) should be followed automatically
@@ -163,24 +227,51 @@ trait StandaloneWSRequest {
   def get(): Future[Response]
 
   /**
+   * Performs a PATCH request.
    *
+   * @param body the payload body submitted with this request
+   * @return a future with the response for the PATCH request
    */
   def patch[T: BodyWritable](body: T): Future[Response]
 
+  /**
+   * Performs a PATCH request.
+   *
+   * @param body the file used as the payload body for this request
+   * @return a future with the response for the PATCH request
+   */
   def patch(body: File): Future[Response]
 
   /**
+   * Performs a POST request.
    *
+   * @param body the payload body submitted with this request
+   * @return a future with the response for the POST request
    */
   def post[T: BodyWritable](body: T): Future[Response]
 
+  /**
+   * Performs a POST request.
+   *
+   * @param body the file used as the payload body for this request
+   * @return a future with the response for the PATCH request
+   */
   def post(body: File): Future[Response]
 
   /**
+   * Performs a PUT request.
    *
+   * @param body the payload body submitted with this request
+   * @return a future with the response for the PUT request
    */
   def put[T: BodyWritable](body: T): Future[Response]
 
+  /**
+   * Performs a PUT request.
+   *
+   * @param body the file used as the payload body for this request
+   * @return a future with the response for the PUT request
+   */
   def put(body: File): Future[Response]
 
   /**
@@ -198,6 +289,11 @@ trait StandaloneWSRequest {
    */
   def options(): Future[Response]
 
+  /**
+   * Executes the given HTTP method.
+   * @param method the HTTP method that will be executed
+   * @return a future with the response for this request
+   */
   def execute(method: String): Future[Response]
 
   /**

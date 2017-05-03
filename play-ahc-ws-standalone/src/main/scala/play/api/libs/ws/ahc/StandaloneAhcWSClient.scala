@@ -38,7 +38,22 @@ class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(implici
 
   def url(url: String): StandaloneWSRequest = {
     validate(url)
-    StandaloneAhcWSRequest(this, url, "GET", EmptyBody, TreeMap()(CaseInsensitiveOrdered), Map(), None, None, None, None, None, None, None)
+    StandaloneAhcWSRequest(
+      client = this,
+      url = url,
+      method = "GET",
+      body = EmptyBody,
+      headers = TreeMap()(CaseInsensitiveOrdered),
+      queryString = Map.empty,
+      cookies = Seq.empty,
+      calc = None,
+      auth = None,
+      followRedirects = None,
+      requestTimeout = None,
+      virtualHost = None,
+      proxyServer = None,
+      disableUrlEncoding = None
+    )
   }
 
   private[ahc] def execute(request: Request): Future[StandaloneAhcWSResponse] = {
