@@ -83,16 +83,6 @@ public interface StandaloneWSRequest {
         return setMethod("PATCH").setBody(body).execute();
     }
 
-    /**
-     * Perform a PATCH on the request asynchronously.
-     *
-     * @param body the body of request
-     * @return a promise to the response
-     */
-    default <U> CompletionStage<? extends StandaloneWSResponse> patch(Source<ByteString, U> body) {
-        return setMethod("PATCH").setBody(body).execute();
-    }
-
     //-------------------------------------------------------------------------
     // "POST"
     //-------------------------------------------------------------------------
@@ -140,16 +130,6 @@ public interface StandaloneWSRequest {
         return setMethod("POST").setBody(body).execute();
     }
 
-    /**
-     * Perform a POST on the request asynchronously.
-     *
-     * @param body the body of request
-     * @return a promise to the response
-     */
-    default <U> CompletionStage<? extends StandaloneWSResponse> post(Source<ByteString, U> body) {
-        return setMethod("POST").setBody(body).execute();
-    }
-
     //-------------------------------------------------------------------------
     // "PUT"
     //-------------------------------------------------------------------------
@@ -194,16 +174,6 @@ public interface StandaloneWSRequest {
      * @return a promise to the response
      */
     default CompletionStage<? extends StandaloneWSResponse> put(File body) {
-        return setMethod("PUT").setBody(body).execute();
-    }
-
-    /**
-     * Perform a PUT on the request asynchronously.
-     *
-     * @param body the body of request
-     * @return a promise to the response
-     */
-    default <U> CompletionStage<? extends StandaloneWSResponse> put(Source<ByteString, U> body) {
         return setMethod("PUT").setBody(body).execute();
     }
 
