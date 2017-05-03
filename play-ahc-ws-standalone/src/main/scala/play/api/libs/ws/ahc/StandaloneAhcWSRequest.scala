@@ -46,7 +46,7 @@ case class StandaloneAhcWSRequest(
   override type Self = StandaloneWSRequest
   override type Response = StandaloneWSResponse
 
-  require(client != null, "A [[StandaloneAhcWSClient]] is required, but it is null")
+  require(client != null, "A StandaloneAhcWSClient is required, but it is null")
   require(url != null, "A url is required, but it is null")
 
   override def contentType: Option[String] = this.headers.get(HttpHeaders.Names.CONTENT_TYPE).map(_.head)
