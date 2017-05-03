@@ -25,7 +25,7 @@ import scala.util.{ Failure, Success, Try }
  * @param asyncHttpClient An already configured asynchttpclient.
  *                        Note that the WSClient assumes ownership of the lifecycle here, so closing the WSClient will
  *                        also close asyncHttpClient.
- * @param materializer An execution context, used to execute the stream.
+ * @param materializer A materializer, meant to execute the stream
  */
 class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(implicit materializer: Materializer) extends StandaloneWSClient {
 
