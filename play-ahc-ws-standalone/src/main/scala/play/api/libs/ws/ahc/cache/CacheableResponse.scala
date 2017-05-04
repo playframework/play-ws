@@ -68,6 +68,8 @@ case class CacheableResponse(
     headers: CacheableHttpResponseHeaders,
     bodyParts: util.List[CacheableHttpResponseBodyPart]) extends Response {
 
+  private var cookies: util.List[Cookie] = _
+
   import CacheableResponse._
 
   private val uri: Uri = status.getUri
@@ -170,8 +172,16 @@ case class CacheableResponse(
   }
 
   override def getCookies: util.List[Cookie] = {
-    // FIXME https://github.com/AsyncHttpClient/async-http-client/blob/2.0/client/src/main/java/org/asynchttpclient/netty/NettyResponse.java#L138
-    ???
+    import java.util.Collections
+
+    if (headers == null) {
+      return Collections.emptyList[Cookie]
+    }
+
+    if (cookies == null) {
+      cookies = buildCookies
+    }
+    cookies
   }
 
   override def hasResponseStatus: Boolean = {
@@ -184,6 +194,25 @@ case class CacheableResponse(
 
   override def hasResponseBody: Boolean = {
     !bodyParts.isEmpty
+  }
+
+  private def buildCookies: util.List[Cookie] = {
+    import play.shaded.ahc.org.asynchttpclient.util.MiscUtils.isNonEmpty
+    import play.shaded.ahc.org.asynchttpclient.cookie.CookieDecoder
+    import java.util.Collections
+
+    var setCookieHeaders = headers.getHeaders.getAll(SET_COOKIE2)
+    if (!isNonEmpty(setCookieHeaders)) setCookieHeaders = headers.getHeaders.getAll(SET_COOKIE)
+    if (isNonEmpty(setCookieHeaders)) {
+      val cookies = new util.ArrayList[Cookie](1)
+      import scala.collection.JavaConversions._
+      for (value <- setCookieHeaders) {
+        val c = CookieDecoder.decode(value)
+        if (c != null) cookies.add(c)
+      }
+      return Collections.unmodifiableList(cookies)
+    }
+    Collections.emptyList[Cookie]
   }
 
   override def toString: String = {
