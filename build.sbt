@@ -352,6 +352,9 @@ lazy val root = project
 //---------------------------------------------------------------
 import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
 
+// otherwise same as orgname, and "sonatypeList" says "No staging profile is found for com.typesafe.play"
+sonatypeProfileName := "com.typesafe"
+
 releaseProcess := Seq[ReleaseStep](
   checkSnapshotDependencies,
   inquireVersions,
