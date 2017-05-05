@@ -130,6 +130,35 @@ public class JavaClient {
 }
 ```
 
+## Caching
+
+Play WS implements [HTTP Caching](https://tools.ietf.org/html/rfc7234) through CachingAsyncHttpClient, AhcHTTPCache and [CacheControl](https://github.com/playframework/cachecontrol), a minimal HTTP cache management library in Scala.
+
+To create a standalone AHC client that uses caching, pass in an instance of AhcHttpCache with a cache adapter to the underlying implementation.  For example, to use Caffeine as the underlying cache, you could use the following:
+
+```scala
+class CaffeineHttpCache extends Cache {
+     val underlying = Caffeine.newBuilder()
+       .ticker(Ticker.systemTicker())
+       .expireAfterWrite(365, TimeUnit.DAYS)
+       .build[EffectiveURIKey, ResponseEntry]()
+
+  override def remove(key: EffectiveURIKey): Unit = underlying.invalidate(key)
+  override def put(key: EffectiveURIKey, entry: ResponseEntry): Unit = underlying.put(key, entry)
+  override def get(key: EffectiveURIKey): ResponseEntry = underlying.getIfPresent(key)
+  override def close(): Unit = underlying.cleanUp()
+}
+val cache = new CaffeineHttpCache()
+val client = StandaloneAhcWSClient(httpCache = AhcHttpCache(cache))   
+```
+
+There are a number of guides that help with putting together Cache-Control headers:
+
+* [Mozilla's Guide to HTTP caching](https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching)
+* [Mark Nottingham's Guide to Caching](https://www.mnot.net/cache_docs/)
+* [HTTP Caching](https://developers.google.com/web/fundamentals/performance/optimizing-content-efficiency/http-caching)
+* [REST Easy: HTTP Cache](http://odino.org/rest-better-http-cache/)
+
 ## Releasing
 
 This project uses `sbt-release` to push to Sonatype and Maven.  You will need Lightbend Sonatype credentials and a GPG key that is available on one of the public keyservers to release this project.
