@@ -71,7 +71,7 @@ class AsyncCacheableConnection[T](
 }
 
 object AsyncCacheableConnection {
-  private val logger = LoggerFactory.getLogger("play.api.libs.ws.ning.cache.AsyncCacheableConnection")
+  private val logger = LoggerFactory.getLogger("play.api.libs.ws.ahc.cache.AsyncCacheableConnection")
 }
 
 /**

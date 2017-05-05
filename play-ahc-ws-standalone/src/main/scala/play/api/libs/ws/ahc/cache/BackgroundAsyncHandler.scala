@@ -97,6 +97,6 @@ class BackgroundAsyncHandler[T](request: Request, cache: AhcHttpCache)
 }
 
 object BackgroundAsyncHandler {
-  private val logger: Logger = LoggerFactory.getLogger("play.api.libs.ws.ning.cache.BackgroundAsyncHandler")
+  private val logger: Logger = LoggerFactory.getLogger("play.api.libs.ws.ahc.cache.BackgroundAsyncHandler")
 }
 

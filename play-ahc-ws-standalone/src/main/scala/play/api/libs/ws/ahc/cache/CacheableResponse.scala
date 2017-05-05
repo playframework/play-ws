@@ -233,7 +233,7 @@ case class CacheableHttpResponseHeaders(trailingHeaders: Boolean, headers: HttpH
 }
 
 object CacheableResponse {
-  private val logger = LoggerFactory.getLogger("play.api.libs.ws.ning.cache.CacheableResponse")
+  private val logger = LoggerFactory.getLogger("play.api.libs.ws.ahc.cache.CacheableResponse")
 
   def apply(code: Int, urlString: String): CacheableResponse = {
     val uri: Uri = Uri.create(urlString)

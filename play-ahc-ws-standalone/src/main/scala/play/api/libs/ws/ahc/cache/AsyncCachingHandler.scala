@@ -217,9 +217,6 @@ class AsyncCachingHandler[T](
         cache.cacheResponse(request, freshResponse)
         freshResponse
       case None =>
-        // XXX FIXME what do we do if we have a 304 and there's nothing in the cache for it?
-        // If we make another call and it sends us another 304 back, we can get stuck in an
-        // endless loop?
         notModifiedResponse
     }
 
@@ -233,6 +230,6 @@ class AsyncCachingHandler[T](
 }
 
 object AsyncCachingHandler {
-  private val logger: Logger = LoggerFactory.getLogger("play.api.libs.ws.ning.cache.CacheAsyncHandler")
+  private val logger: Logger = LoggerFactory.getLogger("play.api.libs.ws.ahc.cache.AsyncCachingHandler")
 }
 
