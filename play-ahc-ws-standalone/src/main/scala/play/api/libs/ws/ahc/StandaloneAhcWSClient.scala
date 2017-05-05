@@ -106,17 +106,17 @@ object StandaloneAhcWSClient {
    * }}}
    *
    * @param config configuration settings
-   * @param maybeCache if not null, will be used for HTTP response caching.
+   * @param httpCache if not null, will be used for HTTP response caching.
    * @param materializer the akka materializer.
    */
-  def apply(config: AhcWSClientConfig = AhcWSClientConfigFactory.forConfig(), maybeCache: Option[AhcHttpCache] = None)(implicit materializer: Materializer): StandaloneAhcWSClient = {
+  def apply(config: AhcWSClientConfig = AhcWSClientConfigFactory.forConfig(), httpCache: Option[AhcHttpCache] = None)(implicit materializer: Materializer): StandaloneAhcWSClient = {
     if (config.wsClientConfig.ssl.debug.enabled) {
       new DebugConfiguration(StandaloneAhcWSClient.loggerFactory).configure(config.wsClientConfig.ssl.debug)
     }
     val ahcConfig = new AhcConfigBuilder(config).build()
     val asyncHttpClient = new DefaultAsyncHttpClient(ahcConfig)
     val wsClient = new StandaloneAhcWSClient(
-      maybeCache.map { cache =>
+      httpCache.map { cache =>
         new CachingAsyncHttpClient(asyncHttpClient, cache)
       }.getOrElse {
         asyncHttpClient
