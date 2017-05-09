@@ -9,8 +9,10 @@ import play.libs.ws.WSCookie;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * This is the WS response from the server.
@@ -19,14 +21,52 @@ public interface StandaloneWSResponse {
 
     /**
      * @return all the headers from the response.
+     *
+     * @deprecated Since 1.0.0. Use {@link #getHeaders()} instead.
      */
-    Map<String, List<String>> getAllHeaders();
+    @Deprecated
+    default Map<String, List<String>> getAllHeaders() {
+        return getHeaders();
+    }
 
     /**
      * @param key the header's name
      * @return a single header value from the response.
+     *
+     * @deprecated Since 1.0.0. Use {@link #getSingleHeader(String)} instead.
      */
-    String getHeader(String key);
+    @Deprecated
+    default String getHeader(String key) {
+        return getSingleHeader(key).orElse(null);
+    }
+
+    /**
+     * @return all the headers from the response.
+     */
+    Map<String, List<String>> getHeaders();
+
+    /**
+     * Get all the values of header with the specified name. If there are no values for
+     * the header with the specified name, than an empty List is returned.
+     *
+     * @param name the header name.
+     * @return all the values for this header name.
+     */
+    default List<String> getHeaderValues(String name) {
+        return getHeaders().getOrDefault(name, Collections.emptyList());
+    }
+
+    /**
+     * Get the value of the header with the specified name. If there are more than one values
+     * for this header, the first value is returned. If there are no values, than an empty
+     * Optional is returned.
+     *
+     * @param name the header name
+     * @return the header value
+     */
+    default Optional<String> getSingleHeader(String name) {
+        return getHeaderValues(name).stream().findFirst();
+    }
 
     /**
      * @return the underlying implementation response object, if any.

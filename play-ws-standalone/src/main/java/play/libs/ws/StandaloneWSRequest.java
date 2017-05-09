@@ -10,8 +10,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -482,6 +484,29 @@ public interface StandaloneWSRequest {
      * @return the headers (a copy to prevent side-effects). This has not passed through an internal request builder and so will not be signed.
      */
     Map<String, List<String>> getHeaders();
+
+    /**
+     * Get all the values of header with the specified name. If there are no values for
+     * the header with the specified name, than an empty List is returned.
+     *
+     * @param name the header name.
+     * @return all the values for this header name.
+     */
+    default List<String> getHeaderValues(String name) {
+        return getHeaders().getOrDefault(name, Collections.emptyList());
+    }
+
+    /**
+     * Get the value of the header with the specified name. If there are more than one values
+     * for this header, the first value is returned. If there are no values, than an empty
+     * Optional is returned.
+     *
+     * @param name the header name
+     * @return the header value
+     */
+    default Optional<String> getHeader(String name) {
+        return getHeaderValues(name).stream().findFirst();
+    }
 
     /**
      * @return the query parameters (a copy to prevent side-effects). This has not passed through an internal request builder and so will not be signed.

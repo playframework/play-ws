@@ -11,6 +11,7 @@ import play.libs.oauth.OAuth
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 
 import scala.collection.JavaConverters._
+import scala.compat.java8.OptionConverters._
 
 class AhcWSRequestSpec extends Specification with Mockito {
 
@@ -220,6 +221,54 @@ class AhcWSRequestSpec extends Specification with Mockito {
 
         request.getHeaders.getAll("header1").asScala must contain("value1")
         request.getHeaders.getAll("header1").asScala must contain("value2")
+      }
+
+      "get a single header" in {
+        val client = mock[StandaloneAhcWSClient]
+        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+          .addHeader("header1", "value1")
+          .addHeader("header1", "value2")
+
+        request.getHeader("header1").asScala must beSome("value1")
+      }
+
+      "get an empty optional when header is not present" in {
+        val client = mock[StandaloneAhcWSClient]
+        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+          .addHeader("header1", "value1")
+          .addHeader("header1", "value2")
+
+        request.getHeader("non").asScala must beNone
+      }
+
+      "get all values for a header" in {
+        val client = mock[StandaloneAhcWSClient]
+        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+          .addHeader("header1", "value1")
+          .addHeader("header1", "value2")
+
+        request.getHeaderValues("header1").asScala must containTheSameElementsAs(Seq("value1", "value2"))
+      }
+
+      "get an empty list when header is not present" in {
+        val client = mock[StandaloneAhcWSClient]
+        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+          .addHeader("header1", "value1")
+          .addHeader("header1", "value2")
+
+        request.getHeaderValues("Non").asScala must beEmpty
+      }
+
+      "get all headers" in {
+        val client = mock[StandaloneAhcWSClient]
+        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+          .addHeader("header1", "Value1ForHeader1")
+          .addHeader("header1", "Value2ForHeader1")
+          .addHeader("header2", "Value1ForHeader2")
+
+        val headers = request.getHeaders.asScala
+        headers("header1").asScala must containTheSameElementsAs(Seq("Value1ForHeader1", "Value2ForHeader1"))
+        headers("header2").asScala must containTheSameElementsAs(Seq("Value1ForHeader2"))
       }
 
     }

@@ -253,10 +253,60 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
         val req: AHCRequest = client
           .url("http://playframework.com/")
           .withHttpHeaders("key" -> "value1", "KEY" -> "value2")
-
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
         req.getHeaders.getAll("key").asScala must containTheSameElementsAs(Seq("value1", "value2"))
+      }
+    }
+
+    "get a single header" in {
+      withClient { client =>
+        val req = client
+          .url("http://playframework.com/")
+          .withHttpHeaders("Key1" -> "value1", "Key2" -> "value2")
+
+        req.header("Key1") must beSome("value1")
+      }
+    }
+
+    "get all values for a header" in {
+      withClient { client =>
+        val req = client
+          .url("http://playframework.com/")
+          .withHttpHeaders("Key1" -> "value1", "Key1" -> "value2", "Key2" -> "some")
+
+        req.headerValues("Key1") must containTheSameElementsAs(Seq("value1", "value2"))
+      }
+    }
+
+    "get none when header is not present" in {
+      withClient { client =>
+        val req = client
+          .url("http://playframework.com/")
+          .withHttpHeaders("Key1" -> "value1", "Key1" -> "value2", "Key2" -> "some")
+
+        req.header("Non") must beNone
+      }
+    }
+
+    "get an empty seq when header has no values" in {
+      withClient { client =>
+        val req = client
+          .url("http://playframework.com/")
+          .withHttpHeaders("Key1" -> "value1", "Key1" -> "value2", "Key2" -> "some")
+
+        req.headerValues("Non") must beEmpty
+      }
+    }
+
+    "get all the header" in {
+      withClient { client =>
+        val req = client
+          .url("http://playframework.com/")
+          .withHttpHeaders("Key1" -> "value1", "Key1" -> "value2", "Key2" -> "value")
+
+        req.headers("Key1") must containTheSameElementsAs(Seq("value1", "value2"))
+        req.headers("Key2") must containTheSameElementsAs(Seq("value"))
       }
     }
   }
