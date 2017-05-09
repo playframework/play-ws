@@ -261,7 +261,7 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
     }
   }
 
-  "For POST requests" in {
+  "For requests with body" in {
 
     "Have form params for content type application/x-www-form-urlencoded" in {
       withClient { client =>
@@ -320,10 +320,24 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
 
     "Send binary data as is" in withClient { client =>
       val binData = ByteString((0 to 511).map(_.toByte).toArray)
-      val req: AHCRequest = client.url("http://playframework.com/").withHeaders(HttpHeaders.Names.CONTENT_TYPE -> "application/x-custom-bin-data").withBody(binData).asInstanceOf[StandaloneAhcWSRequest]
+      val req: AHCRequest = client.url("http://playframework.com/")
+        .addHttpHeaders(HttpHeaders.Names.CONTENT_TYPE -> "application/x-custom-bin-data")
+        .withBody(binData)
+        .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
 
       ByteString(req.getByteData) must_== binData
+    }
+
+    "Preserve existing headers when setting the body" in {
+      withClient { client =>
+        val req: AHCRequest = client.url("http://playframework.com/")
+          .withHttpHeaders("Some-Header" -> "Some-Value")
+          .withBody("HELLO WORLD") // will set content-type header
+          .asInstanceOf[StandaloneAhcWSRequest]
+          .buildRequest()
+        req.getHeaders.get("Some-Header") must beEqualTo("Some-Value")
+      }
     }
   }
 

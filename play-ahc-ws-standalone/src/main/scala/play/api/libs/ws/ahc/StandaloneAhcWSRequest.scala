@@ -177,7 +177,7 @@ case class StandaloneAhcWSRequest(
     if (headers.contains(HttpHeaders.Names.CONTENT_TYPE)) {
       withBody(wsBody)
     } else {
-      withBody(wsBody).withHttpHeaders(HttpHeaders.Names.CONTENT_TYPE -> contentType)
+      withBody(wsBody).addHttpHeaders(HttpHeaders.Names.CONTENT_TYPE -> contentType)
     }
   }
 
