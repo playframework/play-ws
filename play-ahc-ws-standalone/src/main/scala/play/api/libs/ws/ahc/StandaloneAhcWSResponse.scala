@@ -24,7 +24,7 @@ class StandaloneAhcWSResponse(ahcResponse: AHCResponse) extends StandaloneWSResp
   /**
    * Return the headers of the response as a case-insensitive map
    */
-  lazy val allHeaders: Map[String, Seq[String]] = {
+  lazy val headers: Map[String, Seq[String]] = {
     val headers: HttpHeaders = ahcResponse.getHeaders
     headersToMap(headers)
   }
@@ -43,11 +43,6 @@ class StandaloneAhcWSResponse(ahcResponse: AHCResponse) extends StandaloneWSResp
    * The response status message.
    */
   def statusText: String = ahcResponse.getStatusText
-
-  /**
-   * Get a response header.
-   */
-  def header(key: String): Option[String] = Option(ahcResponse.getHeader(key))
 
   /**
    * Get all the cookies.

@@ -67,7 +67,7 @@ public class StandaloneAhcWSResponse implements StandaloneWSResponse {
      * Get all the HTTP headers of the response as a case-insensitive map
      */
     @Override
-    public Map<String, List<String>> getAllHeaders() {
+    public Map<String, List<String>> getHeaders() {
         final Map<String, List<String>> headerMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         final HttpHeaders headers = ahcResponse.getHeaders();
         for (String name : headers.names()) {
@@ -75,14 +75,6 @@ public class StandaloneAhcWSResponse implements StandaloneWSResponse {
             headerMap.put(name, values);
         }
         return headerMap;
-    }
-
-    /**
-     * Get the given HTTP header of the response
-     */
-    @Override
-    public String getHeader(String key) {
-        return ahcResponse.getHeader(key);
     }
 
     /**

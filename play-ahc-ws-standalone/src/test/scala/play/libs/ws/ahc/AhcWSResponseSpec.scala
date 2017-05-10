@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets
 
 import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
 
+import scala.compat.java8.OptionConverters._
 import scala.collection.JavaConverters._
 import org.specs2.mock.Mockito
 import org.specs2.mutable._
@@ -21,12 +22,13 @@ class AhcWSResponseSpec extends Specification with Mockito {
     "return the underlying response" in {
       val srcResponse = mock[Response]
       val response = new StandaloneAhcWSResponse(srcResponse)
-      response.getUnderlying must_== (srcResponse)
+      response.getUnderlying must_== srcResponse
     }
 
   }
 
-  "getAllHeaders" should {
+  "get headers" should {
+
     "get headers map which retrieves headers case insensitively" in {
       val srcResponse = mock[Response]
       val srcHeaders = new DefaultHttpHeaders()
@@ -41,6 +43,45 @@ class AhcWSResponseSpec extends Specification with Mockito {
       headers.get("BAR").asScala must_== Seq("baz")
     }
 
+    "get a single header" in {
+      val srcResponse = mock[Response]
+      val srcHeaders = new DefaultHttpHeaders()
+        .add("Foo", "a")
+        .add("foo", "b")
+        .add("FOO", "b")
+        .add("Bar", "baz")
+      srcResponse.getHeaders returns srcHeaders
+      val response = new StandaloneAhcWSResponse(srcResponse)
+
+      response.getSingleHeader("Foo").asScala must beSome("a")
+      response.getSingleHeader("Bar").asScala must beSome("baz")
+    }
+
+    "get an empty optional when header is not present" in {
+      val srcResponse = mock[Response]
+      val srcHeaders = new DefaultHttpHeaders()
+        .add("Foo", "a")
+        .add("foo", "b")
+        .add("FOO", "b")
+        .add("Bar", "baz")
+      srcResponse.getHeaders returns srcHeaders
+      val response = new StandaloneAhcWSResponse(srcResponse)
+
+      response.getSingleHeader("Non").asScala must beNone
+    }
+
+    "get all values for a header" in {
+      val srcResponse = mock[Response]
+      val srcHeaders = new DefaultHttpHeaders()
+        .add("Foo", "a")
+        .add("foo", "b")
+        .add("FOO", "b")
+        .add("Bar", "baz")
+      srcResponse.getHeaders returns srcHeaders
+      val response = new StandaloneAhcWSResponse(srcResponse)
+
+      response.getHeaderValues("Foo").asScala must containTheSameElementsAs(Seq("a", "b", "b"))
+    }
   }
 
   "getBody" should {

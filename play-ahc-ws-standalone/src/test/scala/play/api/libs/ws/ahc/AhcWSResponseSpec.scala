@@ -93,12 +93,49 @@ class AhcWSResponseSpec extends Specification with Mockito {
       ahcHeaders.add("Bar", "baz")
       ahcResponse.getHeaders returns ahcHeaders
       val response = StandaloneAhcWSResponse(ahcResponse)
-      val headers = response.allHeaders
+      val headers = response.headers
       headers must beEqualTo(Map("Foo" -> Seq("bar", "baz"), "Bar" -> Seq("baz")))
       headers.contains("foo") must beTrue
       headers.contains("Foo") must beTrue
       headers.contains("BAR") must beTrue
       headers.contains("Bar") must beTrue
+    }
+
+    "get a single header" in {
+      val ahcResponse: AHCResponse = mock[AHCResponse]
+      val ahcHeaders = new DefaultHttpHeaders(true)
+      ahcHeaders.add("Foo", "bar")
+      ahcHeaders.add("Foo", "baz")
+      ahcHeaders.add("Bar", "baz")
+      ahcResponse.getHeaders returns ahcHeaders
+      val response = StandaloneAhcWSResponse(ahcResponse)
+
+      response.header("Foo") must beSome("bar")
+      response.header("Bar") must beSome("baz")
+    }
+
+    "get none when header does not exists" in {
+      val ahcResponse: AHCResponse = mock[AHCResponse]
+      val ahcHeaders = new DefaultHttpHeaders(true)
+      ahcHeaders.add("Foo", "bar")
+      ahcHeaders.add("Foo", "baz")
+      ahcHeaders.add("Bar", "baz")
+      ahcResponse.getHeaders returns ahcHeaders
+      val response = StandaloneAhcWSResponse(ahcResponse)
+
+      response.header("Non") must beNone
+    }
+
+    "get all values for a header" in {
+      val ahcResponse: AHCResponse = mock[AHCResponse]
+      val ahcHeaders = new DefaultHttpHeaders(true)
+      ahcHeaders.add("Foo", "bar")
+      ahcHeaders.add("Foo", "baz")
+      ahcHeaders.add("Bar", "baz")
+      ahcResponse.getHeaders returns ahcHeaders
+      val response = StandaloneAhcWSResponse(ahcResponse)
+
+      response.headerValues("Foo") must beEqualTo(Seq("bar", "baz"))
     }
   }
 
