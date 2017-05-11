@@ -470,14 +470,14 @@ public interface StandaloneWSRequest {
      *     age of the universe.
      * </blockquote>
      *
-     * Play WS uses the convention of setting a duration of -1 seconds to have an infinite timeout. So you will have:
-     * <code>java.time.Duration timeout = Duration.ofSeconds(-1);</code>.
+     * Play WS uses the convention of setting a duration with negative value to have an infinite timeout.
+     * So you will have:
+     *
+     * <pre>java.time.Duration timeout = Duration.ofSeconds(-1);</pre>.
      *
      * In practice, you can also have an extreme long duration, like:
      *
-     * <code>
-     *     java.time.Duration timeout = Duration.ofMillis(Long.MAX_VALUE);
-     * </code>
+     * <pre>java.time.Duration timeout = Duration.ofMillis(Long.MAX_VALUE);</pre>
      *
      * And, as the {@link Duration} docs states, this will be good enough since this duration is greater than
      * the current estimate age of the universe.

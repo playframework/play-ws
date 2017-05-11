@@ -108,7 +108,8 @@ class AhcWSRequestSpec extends Specification with Mockito {
       called must beTrue
     }
 
-    "Request timeout" should {
+    "setRequestTimeout(long)" should {
+
       "support setting a request timeout" in {
         requestWithTimeout(1000) must beEqualTo(1000)
       }
@@ -124,13 +125,23 @@ class AhcWSRequestSpec extends Specification with Mockito {
       "not support setting a request timeout > Integer.MAX_VALUE" in {
         requestWithTimeout(Int.MaxValue.toLong + 1) must throwA[IllegalArgumentException]
       }
+    }
+
+    "setRequestTimeout(java.time.Duration)" should {
 
       "support setting a request timeout to a duration" in {
         requestWithTimeout(Duration.ofSeconds(1)) must beEqualTo(1000)
       }
 
-      "support setting a request timeout duration to infinite" in {
+      "support setting a request timeout duration to infinite using -1" in {
         requestWithTimeout(Duration.ofMillis(-1)) must beEqualTo(-1)
+      }
+
+      "support setting a request timeout duration to infinite using any negative duration" in {
+        requestWithTimeout(Duration.ofMillis(-2)) must beEqualTo(-1)
+        requestWithTimeout(Duration.ofMillis(-15)) must beEqualTo(-1)
+        requestWithTimeout(Duration.ofSeconds(-1)) must beEqualTo(-1)
+        requestWithTimeout(Duration.ofMillis(java.lang.Integer.MIN_VALUE)) must beEqualTo(-1)
       }
 
       "support setting a request timeout duration to Long.MAX_VALUE as infinite" in {

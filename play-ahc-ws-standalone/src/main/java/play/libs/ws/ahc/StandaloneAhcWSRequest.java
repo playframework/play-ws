@@ -42,6 +42,8 @@ import java.util.concurrent.CompletionStage;
  */
 public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
+    private static final Duration INFINITE = Duration.ofMillis(-1);
+
     private Object body = null;
 
     private final String url;
@@ -466,7 +468,9 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
         builder.setHeaders(possiblyModifiedHeaders);
 
-        if (this.timeout.isNegative() || this.timeout.compareTo(Duration.ZERO) > 0) {
+        if (this.timeout.isNegative()) {
+            builder.setRequestTimeout(((int) INFINITE.toMillis()));
+        } else if (this.timeout.compareTo(Duration.ZERO) > 0) {
             builder.setRequestTimeout(((int) this.timeout.toMillis()));
         }
 
