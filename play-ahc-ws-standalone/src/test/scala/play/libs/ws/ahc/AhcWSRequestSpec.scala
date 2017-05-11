@@ -3,6 +3,8 @@
  */
 package play.libs.ws.ahc
 
+import java.time.Duration
+
 import play.shaded.ahc.org.asynchttpclient.{ Request, RequestBuilderBase, SignatureCalculator }
 import org.specs2.mock.Mockito
 import org.specs2.mutable._
@@ -106,20 +108,38 @@ class AhcWSRequestSpec extends Specification with Mockito {
       called must beTrue
     }
 
-    "support setting a request timeout" in {
-      requestWithTimeout(1000) must beEqualTo(1000)
-    }
+    "Request timeout" should {
+      "support setting a request timeout" in {
+        requestWithTimeout(1000) must beEqualTo(1000)
+      }
 
-    "support setting an infinite request timeout" in {
-      requestWithTimeout(-1) must beEqualTo(-1)
-    }
+      "support setting an infinite request timeout" in {
+        requestWithTimeout(-1) must beEqualTo(-1)
+      }
 
-    "not support setting a request timeout < -1" in {
-      requestWithTimeout(-2) must throwA[IllegalArgumentException]
-    }
+      "not support setting a request timeout < -1" in {
+        requestWithTimeout(-2) must throwA[IllegalArgumentException]
+      }
 
-    "not support setting a request timeout > Integer.MAX_VALUE" in {
-      requestWithTimeout(Int.MaxValue.toLong + 1) must throwA[IllegalArgumentException]
+      "not support setting a request timeout > Integer.MAX_VALUE" in {
+        requestWithTimeout(Int.MaxValue.toLong + 1) must throwA[IllegalArgumentException]
+      }
+
+      "support setting a request timeout to a duration" in {
+        requestWithTimeout(Duration.ofSeconds(1)) must beEqualTo(1000)
+      }
+
+      "support setting a request timeout duration to infinite" in {
+        requestWithTimeout(Duration.ofMillis(-1)) must beEqualTo(-1)
+      }
+
+      "support setting a request timeout duration to Long.MAX_VALUE as infinite" in {
+        requestWithTimeout(Duration.ofMillis(java.lang.Long.MAX_VALUE)) must beEqualTo(-1)
+      }
+
+      "not support setting a request timeout to null" in {
+        requestWithTimeout(null) must throwA[IllegalArgumentException]
+      }
     }
 
     "only send first content type header and add charset=utf-8 to the Content-Type header if it's manually adding but lacking charset" in {
@@ -414,6 +434,13 @@ class AhcWSRequestSpec extends Specification with Mockito {
         request.getCookies.asScala(1).getName must beEqualTo("cookie4")
       }
     }
+  }
+
+  def requestWithTimeout(timeout: Duration) = {
+    val client = mock[StandaloneAhcWSClient]
+    val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+    request.setRequestTimeout(timeout)
+    request.buildRequest().getRequestTimeout()
   }
 
   def requestWithTimeout(timeout: Long) = {

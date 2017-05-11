@@ -32,6 +32,8 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletionStage;
 
@@ -58,7 +60,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     private final Materializer materializer;
     private final ObjectMapper objectMapper;
 
-    private int timeout = 0;
+    private Duration timeout = Duration.ZERO;
     private boolean followRedirects;
     private String virtualHost = null;
 
@@ -221,7 +223,16 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
         if (timeout < -1 || timeout > Integer.MAX_VALUE) {
             throw new IllegalArgumentException("Timeout must be between -1 and " + Integer.MAX_VALUE + " inclusive");
         }
-        this.timeout = (int) timeout;
+        this.timeout = Duration.of(timeout, ChronoUnit.MILLIS);
+        return this;
+    }
+
+    @Override
+    public StandaloneAhcWSRequest setRequestTimeout(Duration timeout) {
+        if (timeout == null) {
+            throw new IllegalArgumentException("Timeout must not be null.");
+        }
+        this.timeout = timeout;
         return this;
     }
 
@@ -331,7 +342,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     @Override
-    public long getRequestTimeout() {
+    public Duration getRequestTimeoutDuration() {
         return this.timeout;
     }
 
@@ -455,8 +466,8 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
         builder.setHeaders(possiblyModifiedHeaders);
 
-        if (this.timeout == -1 || this.timeout > 0) {
-            builder.setRequestTimeout(this.timeout);
+        if (this.timeout.isNegative() || this.timeout.compareTo(Duration.ZERO) > 0) {
+            builder.setRequestTimeout(((int) this.timeout.toMillis()));
         }
 
         builder.setFollowRedirect(this.followRedirects);
