@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.File;
 import java.io.InputStream;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -451,8 +452,40 @@ public interface StandaloneWSRequest {
      *
      * @param timeout the request timeout in milliseconds. A value of -1 indicates an infinite request timeout.
      * @return the modified WSRequest.
+     *
+     * @deprecated Since 1.0.0. Use {@link #setRequestTimeout(Duration)} instead.
      */
+    @Deprecated
     StandaloneWSRequest setRequestTimeout(long timeout);
+
+    /**
+     * Sets the request timeout duration. Java {@link Duration} class does not have a specific instance
+     * to represent an infinite timeout, but according to the docs, in practice, you can somehow emulate
+     * it:
+     *
+     * <blockquote>
+     *     A physical duration could be of infinite length. For practicality, the duration is stored
+     *     with constraints similar to Instant. The duration uses nanosecond resolution with a maximum
+     *     value of the seconds that can be held in a long. This is greater than the current estimated
+     *     age of the universe.
+     * </blockquote>
+     *
+     * Play WS uses the convention of setting a duration with negative value to have an infinite timeout.
+     * So you will have:
+     *
+     * <pre>java.time.Duration timeout = Duration.ofSeconds(-1);</pre>.
+     *
+     * In practice, you can also have an extreme long duration, like:
+     *
+     * <pre>java.time.Duration timeout = Duration.ofMillis(Long.MAX_VALUE);</pre>
+     *
+     * And, as the {@link Duration} docs states, this will be good enough since this duration is greater than
+     * the current estimate age of the universe.
+     *
+     * @param timeout the request timeout in milliseconds. A duration of -1 indicates an infinite request timeout.
+     * @return the modified WSRequest.
+     */
+    StandaloneWSRequest setRequestTimeout(Duration timeout);
 
     /**
      * Adds a request filter.
@@ -538,8 +571,20 @@ public interface StandaloneWSRequest {
      * request as input.
      *
      * @return the timeout
+     *
+     * @deprecated Since 1.0.0. Use {@link #getRequestTimeoutDuration()} instead.
      */
-    long getRequestTimeout();
+    @Deprecated
+    default long getRequestTimeout() {
+        return getRequestTimeoutDuration().toMillis();
+    }
+
+    /**
+     * Gets the original request timeout duration, passed into the request as input.
+     *
+     * @return the timeout duration.
+     */
+    Duration getRequestTimeoutDuration();
 
     /**
      * @return true if the request is configure to follow redirect, false if it is configure not to, null if nothing is configured and the global client preference should be used instead.
