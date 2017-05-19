@@ -11,10 +11,10 @@ We've provided some documentation here on how to use Play WS in your app (withou
 To get started, you can add `play-ahc-ws-standalone` as a dependency in SBT:
 
 ```scala
-libraryDependencies += "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.0.0-M7"
+libraryDependencies += "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.0.0-M10"
 ```
 
-This adds the standalone version of Play WS, backed by AsyncHttpClient.  This library contains both the Scala and Java APIs, under `play.api.libs.ws` and `play.libs.ws`.
+This adds the standalone version of Play WS, backed by [AsyncHttpClient](https://github.com/AsyncHttpClient/async-http-client).  This library contains both the Scala and Java APIs, under `play.api.libs.ws` and `play.libs.ws`.
 
 ## Shading
 
@@ -34,7 +34,7 @@ play.shaded.ahc.org.asynchttpclient.usePooledMemory=true
 
 ## Instantiating a standalone client
 
-The standalone client needs Akka to handle streaming data internally:
+The standalone client needs [Akka](http://akka.io/) to handle streaming data internally:
 
 ### Scala
 
@@ -45,7 +45,6 @@ package playwsclient
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import com.typesafe.config.ConfigFactory
 import play.api.libs.ws._
 import play.api.libs.ws.ahc._
 
@@ -104,28 +103,29 @@ public class JavaClient {
         // Set up Akka materializer to handle streaming
         final String name = "wsclient";
         ActorSystem system = ActorSystem.create(name);
-        system.registerOnTermination(System.exit(0));
+        system.registerOnTermination(() -> System.exit(0));
         final ActorMaterializerSettings settings = ActorMaterializerSettings.create(system);
         final ActorMaterializer materializer = ActorMaterializer.create(settings, system, name);
 
         // Create the WS client from the `application.conf` file, the current classloader and materializer.
         StandaloneAhcWSClient client = StandaloneAhcWSClient.create(
                 AhcWSClientConfigFactory.forConfig(ConfigFactory.load(), system.getClass().getClassLoader()),
-                materializer);
+                materializer
+        );
 
-       CompletionStage<? extends StandaloneWSResponse> completionStage = client.url("http://www.google.com").get();
-
-        completionStage.whenComplete((response, throwable) -> {
-            String statusText = response.getStatusText();
-            System.out.println("Got a response " + statusText);
-        }).thenRun(() -> {
-            try {
-                client.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).thenRun(system::terminate);
-
+        client.url("http://www.google.com").get()
+                .whenComplete((response, throwable) -> {
+                    String statusText = response.getStatusText();
+                    System.out.println("Got a response " + statusText);
+                })
+                .thenRun(() -> {
+                    try {
+                        client.close();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                })
+                .thenRun(system::terminate);
     }
 }
 ```
