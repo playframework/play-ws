@@ -117,6 +117,23 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
      * A convenience method for creating a StandaloneAhcWSClient from configuration.
      *
      * @param ahcWSClientConfig the configuration object
+     * @param materializer an akka materializer
+     * @return a fully configured StandaloneAhcWSClient instance.
+     *
+     * @see #create(AhcWSClientConfig, AhcHttpCache, Materializer)
+     */
+    public static StandaloneAhcWSClient create(AhcWSClientConfig ahcWSClientConfig, Materializer materializer) {
+        return create(
+                ahcWSClientConfig,
+                null /* no cache*/,
+                materializer
+        );
+    }
+
+    /**
+     * A convenience method for creating a StandaloneAhcWSClient from configuration.
+     *
+     * @param ahcWSClientConfig the configuration object
      * @param cache if not null, will be used for HTTP response caching.
      * @param materializer an akka materializer
      * @return a fully configured StandaloneAhcWSClient instance.
