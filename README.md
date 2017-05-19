@@ -113,7 +113,7 @@ public class JavaClient {
                 AhcWSClientConfigFactory.forConfig(ConfigFactory.load(), system.getClass().getClassLoader()),
                 materializer);
 
-        CompletionStage<StandaloneWSResponse> completionStage = client.url("http://www.google.com").get();
+       CompletionStage<? extends StandaloneWSResponse> completionStage = client.url("http://www.google.com").get();
 
         completionStage.whenComplete((response, throwable) -> {
             String statusText = response.getStatusText();
