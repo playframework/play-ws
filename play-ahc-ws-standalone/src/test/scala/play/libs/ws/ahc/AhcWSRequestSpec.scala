@@ -40,7 +40,7 @@ class AhcWSRequestSpec extends Specification with Mockito {
         val formEncoding = java.net.URLEncoder.encode("param1=value1", "UTF-8")
 
         val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
-          .setBody(WSBodyFactory.string("HELLO WORLD"))
+          .setBody(AhcWSBody.string("HELLO WORLD"))
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
         req.getStringData must be_==("HELLO WORLD")
@@ -50,7 +50,7 @@ class AhcWSRequestSpec extends Specification with Mockito {
         val client = mock[StandaloneAhcWSClient]
         val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
           .setContentType("application/x-www-form-urlencoded") // set content type by hand
-          .setBody(WSBodyFactory.string("HELLO WORLD")) // and body is set to string (see #5221)
+          .setBody(AhcWSBody.string("HELLO WORLD")) // and body is set to string (see #5221)
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
 
@@ -66,7 +66,7 @@ class AhcWSRequestSpec extends Specification with Mockito {
         val calc = new OAuth.OAuthCalculator(consumerKey, token)
         val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
           .setContentType("application/x-www-form-urlencoded") // set content type by hand
-          .setBody(WSBodyFactory.string("param1=value1"))
+          .setBody(AhcWSBody.string("param1=value1"))
           .sign(calc)
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
@@ -82,7 +82,7 @@ class AhcWSRequestSpec extends Specification with Mockito {
         val calc = new OAuth.OAuthCalculator(consumerKey, token)
         val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
           .setContentType("application/x-www-form-urlencoded") // set content type by hand
-          .setBody(WSBodyFactory.string("param1=value1"))
+          .setBody(AhcWSBody.string("param1=value1"))
           .addHeader("Content-Length", "9001") // add a meaningless content length here...
           .sign(calc)
           .asInstanceOf[StandaloneAhcWSRequest]
@@ -156,7 +156,7 @@ class AhcWSRequestSpec extends Specification with Mockito {
     "only send first content type header and add charset=utf-8 to the Content-Type header if it's manually adding but lacking charset" in {
       val client = mock[StandaloneAhcWSClient]
       val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
-      request.setBody(WSBodyFactory.string("HELLO WORLD"))
+      request.setBody(client.body("HELLO WORLD"))
       request.setHeader("Content-Type", "application/json")
       request.setHeader("Content-Type", "application/xml")
       val req = request.buildRequest()
@@ -166,7 +166,7 @@ class AhcWSRequestSpec extends Specification with Mockito {
     "only send first content type header and keep the charset if it has been set manually with a charset" in {
       val client = mock[StandaloneAhcWSClient]
       val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
-      request.setBody(WSBodyFactory.string("HELLO WORLD"))
+      request.setBody(client.body("HELLO WORLD"))
       request.setHeader("Content-Type", "application/json; charset=US-ASCII")
       request.setHeader("Content-Type", "application/xml")
       val req = request.buildRequest()

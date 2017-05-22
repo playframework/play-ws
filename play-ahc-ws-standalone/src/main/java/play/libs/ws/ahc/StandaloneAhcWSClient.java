@@ -5,6 +5,9 @@
 package play.libs.ws.ahc;
 
 import akka.stream.Materializer;
+import akka.stream.javadsl.Source;
+import akka.util.ByteString;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -21,13 +24,16 @@ import play.api.libs.ws.ahc.cache.CachingAsyncHttpClient;
 import play.libs.ws.StandaloneWSClient;
 import play.libs.ws.StandaloneWSResponse;
 import play.libs.ws.StreamedResponse;
+import play.libs.ws.WSBody;
 import play.shaded.ahc.org.asynchttpclient.*;
 import scala.compat.java8.FutureConverters;
 import scala.concurrent.Future;
 import scala.concurrent.Promise;
 
 import javax.inject.Inject;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -81,6 +87,30 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
     @Override
     public void close() throws IOException {
         asyncHttpClient.close();
+    }
+
+    public WSBody<Object> body() {
+        return AhcWSBody.empty();
+    }
+
+    public WSBody<String> body(String body) {
+        return AhcWSBody.string(body);
+    }
+
+    public WSBody<JsonNode> body(JsonNode body) {
+        return AhcWSBody.json(body);
+    }
+
+    public WSBody<Source<ByteString, ?>> body(Source<ByteString, ?> body) {
+        return AhcWSBody.source(body);
+    }
+
+    public WSBody<File> body(File body) {
+        return AhcWSBody.file(body);
+    }
+
+    public WSBody<InputStream> body(InputStream body) {
+        return AhcWSBody.inputStream(body);
     }
 
     CompletionStage<StandaloneWSResponse> execute(Request request) {

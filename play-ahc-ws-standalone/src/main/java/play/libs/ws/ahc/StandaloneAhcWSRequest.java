@@ -12,6 +12,7 @@ import akka.util.ByteString;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders;
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders;
 import play.shaded.ahc.org.asynchttpclient.*;
@@ -44,7 +45,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
     private static final Duration INFINITE = Duration.ofMillis(-1);
 
-    private Object body = null;
+    private WSBody<Object> wsBody;
 
     private final String url;
     private String method = "GET";
@@ -75,6 +76,8 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
         this.url = url;
         this.materializer = materializer;
         this.objectMapper = mapper;
+        this.wsBody = AhcWSBody.empty();
+
         String userInfo = reference.getUserInfo();
         if (userInfo != null) {
             this.setAuth(userInfo);
@@ -260,14 +263,26 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     /**
-     * Sets a body directly.
+     * Returns the wsBody of the request.
+      * @return
+     */
+    public WSBody body() {
+        return wsBody;
+    }
+
+    /**
+     * Sets a wsBody directly.
      *
-     * @param body the body as an unbound object.
-     * @return the body directly
+     * @param body the wsBody as an unbound object.
+     * @return the wsBody directly
      */
     @Override
     public StandaloneAhcWSRequest setBody(WSBody body) {
-        this.body = body;
+        if (body == null) {
+            this.wsBody = AhcWSBody.empty();
+        } else {
+            this.wsBody = body;
+        }
         return this;
     }
 
@@ -356,10 +371,11 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
         builder.setUrl(url);
         builder.setQueryParams(queryParameters);
 
+        Object body = wsBody.body();
         if (body == null) {
             // do nothing
-        } else if (body instanceof StringBody) {
-            String stringBody = ((StringBody) body).string();
+        } else if (body instanceof String) {
+            String stringBody = (String) body;
 
             // Detect and maybe add charset
             String contentType = possiblyModifiedHeaders.get(HttpHeaders.Names.CONTENT_TYPE);
@@ -392,8 +408,8 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
             }
 
             builder.setCharset(charset);
-        } else if (body instanceof JsonBody) {
-            JsonNode jsonBody = ((JsonBody) body).json();
+        } else if (body instanceof JsonNode) {
+            JsonNode jsonBody = (JsonNode) body;
             List<String> contentType = new ArrayList<>();
             contentType.add("application/json");
             possiblyModifiedHeaders.set(HttpHeaders.Names.CONTENT_TYPE, contentType);
@@ -404,15 +420,15 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
                 throw new RuntimeException(e);
             }
             builder.setBody(new ByteArrayBodyGenerator(bodyBytes));
-        } else if (body instanceof FileBody) {
-            File fileBody = ((FileBody) body).file();
+        } else if (body instanceof File) {
+            File fileBody = ((File) body);
             FileBodyGenerator bodyGenerator = new FileBodyGenerator(fileBody);
             builder.setBody(bodyGenerator);
-        } else if (body instanceof InputStreamBody) {
-            InputStream inputStreamBody = ((InputStreamBody) body).inputStream();
+        } else if (body instanceof InputStream) {
+            InputStream inputStreamBody = ((InputStream) body);
             InputStreamBodyGenerator bodyGenerator = new InputStreamBodyGenerator(inputStreamBody);
             builder.setBody(bodyGenerator);
-        } else if (body instanceof SourceBody) {
+        } else if (body instanceof Source) {
             // If the body has a streaming interface it should be up to the user to provide a manual Content-Length
             // else every content would be Transfer-Encoding: chunked
             // If the Content-Length is -1 Async-Http-Client sets a Transfer-Encoding: chunked
@@ -421,12 +437,12 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
                     .map(Long::valueOf).orElse(-1L);
             possiblyModifiedHeaders.remove(HttpHeaders.Names.CONTENT_LENGTH);
 
-            Source<ByteString, ?> sourceBody = ((SourceBody) body).source();
+            Source<ByteString, ?> sourceBody = ((Source<ByteString, ?>) body);
             Publisher<ByteBuffer> publisher = sourceBody.map(ByteString::toByteBuffer)
                     .runWith(Sink.asPublisher(AsPublisher.WITHOUT_FANOUT), materializer);
             builder.setBody(publisher, contentLength);
         } else {
-            throw new IllegalStateException("Impossible body: " + body);
+            throw new IllegalStateException("Impossible wsBody: " + wsBody);
         }
 
         builder.setHeaders(possiblyModifiedHeaders);
