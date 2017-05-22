@@ -4,12 +4,6 @@
 package play.libs.ws;
 
 
-import akka.stream.javadsl.Source;
-import akka.util.ByteString;
-import com.fasterxml.jackson.databind.JsonNode;
-
-import java.io.File;
-import java.io.InputStream;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
@@ -46,43 +40,10 @@ public interface StandaloneWSRequest {
     /**
      * Perform a PATCH on the request asynchronously.
      *
-     * @param body represented as String
+     * @param body represented as body
      * @return a promise to the response
      */
-    default CompletionStage<? extends StandaloneWSResponse> patch(String body) {
-        return setMethod("PATCH").setBody(body).execute();
-    }
-
-    /**
-     * Perform a PATCH on the request asynchronously.
-     *
-     * @param body represented as JSON
-     * @return a promise to the response
-     */
-    default CompletionStage<? extends StandaloneWSResponse> patch(JsonNode body) {
-        return setMethod("PATCH").setBody(body).execute();
-    }
-
-    /**
-     * Perform a PATCH on the request asynchronously.
-     *
-     * @param body represented as an InputStream
-     * @return a promise to the response
-     *
-     * @deprecated Since 1.0.0. Use {@link #patch(Source)} instead.
-     */
-    @Deprecated
-    default CompletionStage<? extends StandaloneWSResponse> patch(InputStream body) {
-        return setMethod("PATCH").setBody(body).execute();
-    }
-
-    /**
-     * Perform a PATCH on the request asynchronously.
-     *
-     * @param body represented as a File
-     * @return a promise to the response
-     */
-    default CompletionStage<? extends StandaloneWSResponse> patch(File body) {
+    default CompletionStage<? extends StandaloneWSResponse> patch(WSBody body) {
         return setMethod("PATCH").setBody(body).execute();
     }
 
@@ -93,43 +54,10 @@ public interface StandaloneWSRequest {
     /**
      * Perform a POST on the request asynchronously.
      *
-     * @param body represented as String
+     * @param body represented as body
      * @return a promise to the response
      */
-    default CompletionStage<? extends StandaloneWSResponse> post(String body) {
-        return setMethod("POST").setBody(body).execute();
-    }
-
-    /**
-     * Perform a POST on the request asynchronously.
-     *
-     * @param body represented as JSON
-     * @return a promise to the response
-     */
-    default CompletionStage<? extends StandaloneWSResponse> post(JsonNode body) {
-        return setMethod("POST").setBody(body).execute();
-    }
-
-    /**
-     * Perform a POST on the request asynchronously.
-     *
-     * @param body represented as an InputStream
-     * @return a promise to the response
-     *
-     * @deprecated Since 1.0.0. Use {@link #post(Source)} instead.
-     */
-    @Deprecated
-    default CompletionStage<? extends StandaloneWSResponse> post(InputStream body) {
-        return setMethod("POST").setBody(body).execute();
-    }
-
-    /**
-     * Perform a POST on the request asynchronously.
-     *
-     * @param body represented as a File
-     * @return a promise to the response
-     */
-    default CompletionStage<? extends StandaloneWSResponse> post(File body) {
+    default CompletionStage<? extends StandaloneWSResponse> post(WSBody body) {
         return setMethod("POST").setBody(body).execute();
     }
 
@@ -140,43 +68,10 @@ public interface StandaloneWSRequest {
     /**
      * Perform a PUT on the request asynchronously.
      *
-     * @param body represented as String
+     * @param body represented as body
      * @return a promise to the response
      */
-    default CompletionStage<? extends StandaloneWSResponse> put(String body) {
-        return setMethod("PUT").setBody(body).execute();
-    }
-
-    /**
-     * Perform a PUT on the request asynchronously.
-     *
-     * @param body represented as JSON
-     * @return a promise to the response
-     */
-    default CompletionStage<? extends StandaloneWSResponse> put(JsonNode body) {
-        return setMethod("PUT").setBody(body).execute();
-    }
-
-    /**
-     * Perform a PUT on the request asynchronously.
-     *
-     * @param body represented as an InputStream
-     * @return a promise to the response
-     *
-     * @deprecated Since 1.0.0. Use {@link #post(Source)} instead.
-     */
-    @Deprecated
-    default CompletionStage<? extends StandaloneWSResponse> put(InputStream body) {
-        return setMethod("PUT").setBody(body).execute();
-    }
-
-    /**
-     * Perform a PUT on the request asynchronously.
-     *
-     * @param body represented as a File
-     * @return a promise to the response
-     */
-    default CompletionStage<? extends StandaloneWSResponse> put(File body) {
+    default CompletionStage<? extends StandaloneWSResponse> put(WSBody body) {
         return setMethod("PUT").setBody(body).execute();
     }
 
@@ -253,41 +148,7 @@ public interface StandaloneWSRequest {
      * @param body the body of the request.
      * @return the modified WSRequest.
      */
-    StandaloneWSRequest setBody(String body);
-
-    /**
-     * Set the body this request should use.
-     *
-     * @param body the body of the request.
-     * @return the modified WSRequest.
-     */
-    StandaloneWSRequest setBody(JsonNode body);
-
-    /**
-     * Set the body this request should use.
-     *
-     * @param body Deprecated
-     * @return Deprecated
-     * @deprecated Since 1.0.0. Use {@link #setBody(Source)} instead.
-     */
-    @Deprecated
-    StandaloneWSRequest setBody(InputStream body);
-
-    /**
-     * Set the body this request should use.
-     *
-     * @param body the body of the request.
-     * @return the modified WSRequest.
-     */
-    StandaloneWSRequest setBody(File body);
-
-    /**
-     * Set the body this request should use.
-     *
-     * @param body the body of the request.
-     * @return the modified WSRequest.
-     */
-    <U> StandaloneWSRequest setBody(Source<ByteString, U> body);
+    StandaloneWSRequest setBody(WSBody body);
 
     /**
      * Adds a header to the request.  Note that duplicate headers are allowed

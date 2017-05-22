@@ -3,7 +3,6 @@
  */
 package play.api.libs.ws
 
-import java.io.File
 import java.net.URI
 
 import scala.concurrent.Future
@@ -226,16 +225,6 @@ trait StandaloneWSRequest {
   def withMethod(method: String): Self
 
   /**
-   * Sets the body for this request
-   */
-  def withBody(body: WSBody): Self
-
-  /**
-   * Sets the body for this request
-   */
-  def withBody(file: File): Self
-
-  /**
    * Sets the body for this request.
    */
   def withBody[T: BodyWritable](body: T): Self
@@ -254,14 +243,6 @@ trait StandaloneWSRequest {
   def patch[T: BodyWritable](body: T): Future[Response]
 
   /**
-   * Performs a PATCH request.
-   *
-   * @param body the file used as the payload body for this request
-   * @return a future with the response for the PATCH request
-   */
-  def patch(body: File): Future[Response]
-
-  /**
    * Performs a POST request.
    *
    * @param body the payload body submitted with this request
@@ -270,28 +251,12 @@ trait StandaloneWSRequest {
   def post[T: BodyWritable](body: T): Future[Response]
 
   /**
-   * Performs a POST request.
-   *
-   * @param body the file used as the payload body for this request
-   * @return a future with the response for the PATCH request
-   */
-  def post(body: File): Future[Response]
-
-  /**
    * Performs a PUT request.
    *
    * @param body the payload body submitted with this request
    * @return a future with the response for the PUT request
    */
   def put[T: BodyWritable](body: T): Future[Response]
-
-  /**
-   * Performs a PUT request.
-   *
-   * @param body the file used as the payload body for this request
-   * @return a future with the response for the PUT request
-   */
-  def put(body: File): Future[Response]
 
   /**
    * Perform a DELETE on the request asynchronously.

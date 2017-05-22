@@ -5,6 +5,9 @@
 package play.libs.ws.ahc;
 
 import akka.stream.Materializer;
+import akka.stream.javadsl.Source;
+import akka.util.ByteString;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -21,13 +24,16 @@ import play.api.libs.ws.ahc.cache.CachingAsyncHttpClient;
 import play.libs.ws.StandaloneWSClient;
 import play.libs.ws.StandaloneWSResponse;
 import play.libs.ws.StreamedResponse;
+import play.libs.ws.WSBody;
 import play.shaded.ahc.org.asynchttpclient.*;
 import scala.compat.java8.FutureConverters;
 import scala.concurrent.Future;
 import scala.concurrent.Promise;
 
 import javax.inject.Inject;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -36,9 +42,9 @@ import java.util.concurrent.CompletionStage;
 public class StandaloneAhcWSClient implements StandaloneWSClient {
 
     static ObjectMapper DEFAULT_OBJECT_MAPPER = new ObjectMapper()
-        .registerModule(PlayJsonModule$.MODULE$)
-        .registerModule(new Jdk8Module())
-        .registerModule(new JavaTimeModule());
+            .registerModule(PlayJsonModule$.MODULE$)
+            .registerModule(new Jdk8Module())
+            .registerModule(new JavaTimeModule());
 
     private final AsyncHttpClient asyncHttpClient;
     private final Materializer materializer;
@@ -48,8 +54,8 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
      * Creates a new client.
      *
      * @param asyncHttpClient the underlying AsyncHttpClient
-     * @param materializer the Materializer to use for streams
-     * @param mapper the ObjectMapper to use for serializing JSON objects
+     * @param materializer    the Materializer to use for streams
+     * @param mapper          the ObjectMapper to use for serializing JSON objects
      */
     @Inject
     public StandaloneAhcWSClient(AsyncHttpClient asyncHttpClient, Materializer materializer, ObjectMapper mapper) {
@@ -62,7 +68,7 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
      * Creates a new client with the default Jackson ObjectMapper.
      *
      * @param asyncHttpClient the underlying AsyncHttpClient
-     * @param materializer the Materializer to use for streams
+     * @param materializer    the Materializer to use for streams
      */
     public StandaloneAhcWSClient(AsyncHttpClient asyncHttpClient, Materializer materializer) {
         this(asyncHttpClient, materializer, DEFAULT_OBJECT_MAPPER);
@@ -81,6 +87,30 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
     @Override
     public void close() throws IOException {
         asyncHttpClient.close();
+    }
+
+    public WSBody<Object> body() {
+        return AhcWSBody.empty();
+    }
+
+    public WSBody<String> body(String body) {
+        return AhcWSBody.string(body);
+    }
+
+    public WSBody<JsonNode> body(JsonNode body) {
+        return AhcWSBody.json(body);
+    }
+
+    public WSBody<Source<ByteString, ?>> body(Source<ByteString, ?> body) {
+        return AhcWSBody.source(body);
+    }
+
+    public WSBody<File> body(File body) {
+        return AhcWSBody.file(body);
+    }
+
+    public WSBody<InputStream> body(InputStream body) {
+        return AhcWSBody.inputStream(body);
     }
 
     CompletionStage<StandaloneWSResponse> execute(Request request) {
@@ -134,8 +164,8 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
      * A convenience method for creating a StandaloneAhcWSClient from configuration.
      *
      * @param ahcWSClientConfig the configuration object
-     * @param cache if not null, will be used for HTTP response caching.
-     * @param materializer an akka materializer
+     * @param cache             if not null, will be used for HTTP response caching.
+     * @param materializer      an akka materializer
      * @return a fully configured StandaloneAhcWSClient instance.
      */
     public static StandaloneAhcWSClient create(AhcWSClientConfig ahcWSClientConfig, AhcHttpCache cache, Materializer materializer) {

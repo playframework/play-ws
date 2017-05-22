@@ -12,6 +12,7 @@ import akka.util.ByteString;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders;
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders;
 import play.shaded.ahc.org.asynchttpclient.*;
@@ -44,7 +45,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
     private static final Duration INFINITE = Duration.ofMillis(-1);
 
-    private Object body = null;
+    private WSBody<Object> wsBody;
 
     private final String url;
     private String method = "GET";
@@ -75,6 +76,8 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
         this.url = url;
         this.materializer = materializer;
         this.objectMapper = mapper;
+        this.wsBody = AhcWSBody.empty();
+
         String userInfo = reference.getUserInfo();
         if (userInfo != null) {
             this.setAuth(userInfo);
@@ -150,7 +153,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     @Override
-    public StandaloneAhcWSRequest addCookies(WSCookie ... cookies) {
+    public StandaloneAhcWSRequest addCookies(WSCookie... cookies) {
         Arrays.asList(cookies).forEach(this::addCookie);
         return this;
     }
@@ -260,51 +263,27 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     /**
-     * Sets a body directly.
+     * Returns the wsBody of the request.
      *
-     * @param body the body as an unbound object.
-     * @return the body directly
+     * @return
      */
-    public StandaloneAhcWSRequest setBody(Object body) {
-        this.body = body;
-        return this;
-    }
-
-    @Override
-    public StandaloneAhcWSRequest setBody(String body) {
-        this.body = body;
-        return this;
-    }
-
-    @Override
-    public StandaloneAhcWSRequest setBody(JsonNode body) {
-        this.body = body;
-        return this;
+    public WSBody body() {
+        return wsBody;
     }
 
     /**
-     * Set the body this request should use.
+     * Sets a wsBody directly.
      *
-     * @param body Deprecated
-     * @return Deprecated
-     * @deprecated use {@link #setBody(Source)} instead.
+     * @param body the wsBody as an unbound object.
+     * @return the wsBody directly
      */
-    @Deprecated
     @Override
-    public StandaloneAhcWSRequest setBody(InputStream body) {
-        this.body = body;
-        return this;
-    }
-
-    @Override
-    public StandaloneAhcWSRequest setBody(File body) {
-        this.body = body;
-        return this;
-    }
-
-    @Override
-    public <U> StandaloneAhcWSRequest setBody(Source<ByteString, U> body) {
-        this.body = body;
+    public StandaloneAhcWSRequest setBody(WSBody body) {
+        if (body == null) {
+            this.wsBody = AhcWSBody.empty();
+        } else {
+            this.wsBody = body;
+        }
         return this;
     }
 
@@ -370,7 +349,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     private WSRequestExecutor foldRight(WSRequestExecutor executor, Iterator<WSRequestFilter> iterator) {
-        if (! iterator.hasNext()) {
+        if (!iterator.hasNext()) {
             return executor;
         }
 
@@ -393,10 +372,11 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
         builder.setUrl(url);
         builder.setQueryParams(queryParameters);
 
+        Object body = wsBody.body();
         if (body == null) {
             // do nothing
         } else if (body instanceof String) {
-            String stringBody = ((String) body);
+            String stringBody = (String) body;
 
             // Detect and maybe add charset
             String contentType = possiblyModifiedHeaders.get(HttpHeaders.Names.CONTENT_TYPE);
@@ -446,7 +426,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
             FileBodyGenerator bodyGenerator = new FileBodyGenerator(fileBody);
             builder.setBody(bodyGenerator);
         } else if (body instanceof InputStream) {
-            InputStream inputStreamBody = (InputStream) body;
+            InputStream inputStreamBody = ((InputStream) body);
             InputStreamBodyGenerator bodyGenerator = new InputStreamBodyGenerator(inputStreamBody);
             builder.setBody(bodyGenerator);
         } else if (body instanceof Source) {
@@ -463,7 +443,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
                     .runWith(Sink.asPublisher(AsPublisher.WITHOUT_FANOUT), materializer);
             builder.setBody(publisher, contentLength);
         } else {
-            throw new IllegalStateException("Impossible body: " + body);
+            throw new IllegalStateException("Unknown body: " + wsBody);
         }
 
         builder.setHeaders(possiblyModifiedHeaders);
@@ -498,7 +478,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
         // add cookies
         this.cookies.forEach(cookie -> {
-            AhcWSCookie ahcWSCookie = (AhcWSCookie)cookie;
+            AhcWSCookie ahcWSCookie = (AhcWSCookie) cookie;
             builder.addCookie(ahcWSCookie.getUnderlying());
         });
 
