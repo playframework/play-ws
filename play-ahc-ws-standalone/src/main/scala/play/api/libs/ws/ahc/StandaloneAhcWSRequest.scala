@@ -3,7 +3,7 @@
  */
 package play.api.libs.ws.ahc
 
-import java.io.{ File, UnsupportedEncodingException }
+import java.io.UnsupportedEncodingException
 import java.net.URI
 import java.nio.charset.{ Charset, StandardCharsets }
 
@@ -13,10 +13,10 @@ import akka.util.ByteString
 import play.api.libs.ws.{ StandaloneWSRequest, _ }
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
-import play.shaded.ahc.org.asynchttpclient.proxy.{ ProxyServer => AHCProxyServer }
-import play.shaded.ahc.org.asynchttpclient.util.HttpUtils
 import play.shaded.ahc.org.asynchttpclient._
 import play.shaded.ahc.org.asynchttpclient.cookie.{ Cookie => AhcCookie }
+import play.shaded.ahc.org.asynchttpclient.proxy.{ ProxyServer => AHCProxyServer }
+import play.shaded.ahc.org.asynchttpclient.util.HttpUtils
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.TreeMap

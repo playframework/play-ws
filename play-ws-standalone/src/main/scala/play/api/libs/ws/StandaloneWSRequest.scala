@@ -3,7 +3,6 @@
  */
 package play.api.libs.ws
 
-import java.io.File
 import java.net.URI
 
 import scala.concurrent.Future

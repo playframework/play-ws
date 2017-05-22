@@ -265,45 +265,8 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
      * @param body the body as an unbound object.
      * @return the body directly
      */
-    public StandaloneAhcWSRequest setBody(Object body) {
-        this.body = body;
-        return this;
-    }
-
     @Override
-    public StandaloneAhcWSRequest setBody(String body) {
-        this.body = body;
-        return this;
-    }
-
-    @Override
-    public StandaloneAhcWSRequest setBody(JsonNode body) {
-        this.body = body;
-        return this;
-    }
-
-    /**
-     * Set the body this request should use.
-     *
-     * @param body Deprecated
-     * @return Deprecated
-     * @deprecated use {@link #setBody(Source)} instead.
-     */
-    @Deprecated
-    @Override
-    public StandaloneAhcWSRequest setBody(InputStream body) {
-        this.body = body;
-        return this;
-    }
-
-    @Override
-    public StandaloneAhcWSRequest setBody(File body) {
-        this.body = body;
-        return this;
-    }
-
-    @Override
-    public <U> StandaloneAhcWSRequest setBody(Source<ByteString, U> body) {
+    public StandaloneAhcWSRequest setBody(WSBody body) {
         this.body = body;
         return this;
     }
@@ -395,8 +358,8 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
         if (body == null) {
             // do nothing
-        } else if (body instanceof String) {
-            String stringBody = ((String) body);
+        } else if (body instanceof StringBody) {
+            String stringBody = ((StringBody) body).string();
 
             // Detect and maybe add charset
             String contentType = possiblyModifiedHeaders.get(HttpHeaders.Names.CONTENT_TYPE);
@@ -429,8 +392,8 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
             }
 
             builder.setCharset(charset);
-        } else if (body instanceof JsonNode) {
-            JsonNode jsonBody = (JsonNode) body;
+        } else if (body instanceof JsonBody) {
+            JsonNode jsonBody = ((JsonBody) body).json();
             List<String> contentType = new ArrayList<>();
             contentType.add("application/json");
             possiblyModifiedHeaders.set(HttpHeaders.Names.CONTENT_TYPE, contentType);
@@ -441,15 +404,15 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
                 throw new RuntimeException(e);
             }
             builder.setBody(new ByteArrayBodyGenerator(bodyBytes));
-        } else if (body instanceof File) {
-            File fileBody = (File) body;
+        } else if (body instanceof FileBody) {
+            File fileBody = ((FileBody) body).file();
             FileBodyGenerator bodyGenerator = new FileBodyGenerator(fileBody);
             builder.setBody(bodyGenerator);
-        } else if (body instanceof InputStream) {
-            InputStream inputStreamBody = (InputStream) body;
+        } else if (body instanceof InputStreamBody) {
+            InputStream inputStreamBody = ((InputStreamBody) body).inputStream();
             InputStreamBodyGenerator bodyGenerator = new InputStreamBodyGenerator(inputStreamBody);
             builder.setBody(bodyGenerator);
-        } else if (body instanceof Source) {
+        } else if (body instanceof SourceBody) {
             // If the body has a streaming interface it should be up to the user to provide a manual Content-Length
             // else every content would be Transfer-Encoding: chunked
             // If the Content-Length is -1 Async-Http-Client sets a Transfer-Encoding: chunked
@@ -458,7 +421,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
                     .map(Long::valueOf).orElse(-1L);
             possiblyModifiedHeaders.remove(HttpHeaders.Names.CONTENT_LENGTH);
 
-            @SuppressWarnings("unchecked") Source<ByteString, ?> sourceBody = (Source<ByteString, ?>) body;
+            Source<ByteString, ?> sourceBody = ((SourceBody) body).source();
             Publisher<ByteBuffer> publisher = sourceBody.map(ByteString::toByteBuffer)
                     .runWith(Sink.asPublisher(AsPublisher.WITHOUT_FANOUT), materializer);
             builder.setBody(publisher, contentLength);
