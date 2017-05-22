@@ -116,8 +116,6 @@ case class StandaloneAhcWSRequest(
 
   override def withProxyServer(proxyServer: WSProxyServer): Self = copy(proxyServer = Some(proxyServer))
 
-  override def withBody(body: File): Self = copy(body = FileBody(body))
-
   /**
    * performs a get
    */
@@ -133,29 +131,11 @@ case class StandaloneAhcWSRequest(
   }
 
   /**
-   * Perform a PATCH on the request asynchronously.
-   * Request body won't be chunked
-   */
-  override def patch(body: File): Future[Response] = {
-    withBody(FileBody(body)).execute("PATCH")
-  }
-
-  /**
    *
    */
   override def post[T: BodyWritable](body: T): Future[Response] = {
     withBody(body).execute("POST")
   }
-
-  /**
-   * Perform a POST on the request asynchronously.
-   * Request body won't be chunked
-   */
-  override def post(body: File): Future[Response] = {
-    withBody(FileBody(body)).execute("POST")
-  }
-
-  override def withBody(body: WSBody): Self = copy(body = body)
 
   /**
    *
@@ -169,24 +149,15 @@ case class StandaloneAhcWSRequest(
    */
   def withBody[T: BodyWritable](body: T): Self = {
     val writable = implicitly[BodyWritable[T]]
-    val byteString = writable.transform(body)
-    withBodyAndContentType(InMemoryBody(byteString), writable.contentType)
+    withBodyAndContentType(writable.transform(body), writable.contentType)
   }
 
   private def withBodyAndContentType(wsBody: WSBody, contentType: String): Self = {
     if (headers.contains(HttpHeaders.Names.CONTENT_TYPE)) {
-      withBody(wsBody)
+      copy(body = wsBody)
     } else {
-      withBody(wsBody).addHttpHeaders(HttpHeaders.Names.CONTENT_TYPE -> contentType)
+      copy(body = wsBody).addHttpHeaders(HttpHeaders.Names.CONTENT_TYPE -> contentType)
     }
-  }
-
-  /**
-   * Perform a PUT on the request asynchronously.
-   * Request body won't be chunked
-   */
-  override def put(body: File): Future[Response] = {
-    withBody(FileBody(body)).execute("PUT")
   }
 
   /**
