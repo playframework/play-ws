@@ -42,9 +42,9 @@ import java.util.concurrent.CompletionStage;
 public class StandaloneAhcWSClient implements StandaloneWSClient {
 
     static ObjectMapper DEFAULT_OBJECT_MAPPER = new ObjectMapper()
-        .registerModule(PlayJsonModule$.MODULE$)
-        .registerModule(new Jdk8Module())
-        .registerModule(new JavaTimeModule());
+            .registerModule(PlayJsonModule$.MODULE$)
+            .registerModule(new Jdk8Module())
+            .registerModule(new JavaTimeModule());
 
     private final AsyncHttpClient asyncHttpClient;
     private final Materializer materializer;
@@ -54,8 +54,8 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
      * Creates a new client.
      *
      * @param asyncHttpClient the underlying AsyncHttpClient
-     * @param materializer the Materializer to use for streams
-     * @param mapper the ObjectMapper to use for serializing JSON objects
+     * @param materializer    the Materializer to use for streams
+     * @param mapper          the ObjectMapper to use for serializing JSON objects
      */
     @Inject
     public StandaloneAhcWSClient(AsyncHttpClient asyncHttpClient, Materializer materializer, ObjectMapper mapper) {
@@ -68,7 +68,7 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
      * Creates a new client with the default Jackson ObjectMapper.
      *
      * @param asyncHttpClient the underlying AsyncHttpClient
-     * @param materializer the Materializer to use for streams
+     * @param materializer    the Materializer to use for streams
      */
     public StandaloneAhcWSClient(AsyncHttpClient asyncHttpClient, Materializer materializer) {
         this(asyncHttpClient, materializer, DEFAULT_OBJECT_MAPPER);
@@ -164,8 +164,8 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
      * A convenience method for creating a StandaloneAhcWSClient from configuration.
      *
      * @param ahcWSClientConfig the configuration object
-     * @param cache if not null, will be used for HTTP response caching.
-     * @param materializer an akka materializer
+     * @param cache             if not null, will be used for HTTP response caching.
+     * @param materializer      an akka materializer
      * @return a fully configured StandaloneAhcWSClient instance.
      */
     public static StandaloneAhcWSClient create(AhcWSClientConfig ahcWSClientConfig, AhcHttpCache cache, Materializer materializer) {

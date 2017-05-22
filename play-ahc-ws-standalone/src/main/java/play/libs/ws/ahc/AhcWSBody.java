@@ -10,7 +10,7 @@ import java.io.InputStream;
 
 /**
  * This class creates WSBody instances from String, json, file, or inputstream.
- *
+ * <p>
  * It is accessed from the StandaloneAhcWSClient.
  */
 class AhcWSBody<T> implements WSBody<T> {
@@ -41,11 +41,11 @@ class AhcWSBody<T> implements WSBody<T> {
         return new AhcWSBody<>(body);
     }
 
-    public  static WSBody<InputStream> inputStream(InputStream body) {
+    public static WSBody<InputStream> inputStream(InputStream body) {
         return new AhcWSBody<>(body);
     }
 
-    public  static WSBody<Object> empty() {
+    public static WSBody<Object> empty() {
         return () -> null;
     }
 }

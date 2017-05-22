@@ -159,6 +159,40 @@ There are a number of guides that help with putting together Cache-Control heade
 * [HTTP Caching](https://developers.google.com/web/fundamentals/performance/optimizing-content-efficiency/http-caching)
 * [REST Easy: HTTP Cache](http://odino.org/rest-better-http-cache/)
 
+## API changes
+
+The standalone client API has changed from the Play-WS 2.5.x version in somme ways, 
+
+### Request Body changes
+
+Setting a request body was not well defined, and had repeated type information.  Setting a body on a request (usually for POST, PUT and PATCH) now uses the following:
+
+#### Scala
+
+The body methods now take an implicit `BodyWritable` which returns a `WSBody`.  The `DefaultBodyWritables` trait contains the expected body types.
+
+```scala
+val file = new File("foo") // A BodyWritable exists for File so the type class will be used.
+request.setBody(file)
+```
+
+#### Java
+
+There is a type `WSBody<T>` which contains the body information.  You set the request by calling out to a concrete provider of WSBody:
+
+```java
+StandaloneAhcWSClient client = ...
+WSBody<String> body = client.body("Hello world");
+request.setBody(body);
+```
+
+or by using `AhcWSBody` directly, which is useful for unit testing when you have a mock client:
+
+```java
+WSBody<String> body = AhcWSBody.string("Hello world");
+request.setBody(body);
+```
+
 ## Releasing
 
 This project uses `sbt-release` to push to Sonatype and Maven.  You will need Lightbend Sonatype credentials and a GPG key that is available on one of the public keyservers to release this project.

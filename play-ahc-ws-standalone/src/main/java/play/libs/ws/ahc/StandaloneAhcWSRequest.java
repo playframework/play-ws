@@ -153,7 +153,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     @Override
-    public StandaloneAhcWSRequest addCookies(WSCookie ... cookies) {
+    public StandaloneAhcWSRequest addCookies(WSCookie... cookies) {
         Arrays.asList(cookies).forEach(this::addCookie);
         return this;
     }
@@ -264,7 +264,8 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
     /**
      * Returns the wsBody of the request.
-      * @return
+     *
+     * @return
      */
     public WSBody body() {
         return wsBody;
@@ -348,7 +349,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     private WSRequestExecutor foldRight(WSRequestExecutor executor, Iterator<WSRequestFilter> iterator) {
-        if (! iterator.hasNext()) {
+        if (!iterator.hasNext()) {
             return executor;
         }
 
@@ -421,7 +422,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
             }
             builder.setBody(new ByteArrayBodyGenerator(bodyBytes));
         } else if (body instanceof File) {
-            File fileBody = ((File) body);
+            File fileBody = (File) body;
             FileBodyGenerator bodyGenerator = new FileBodyGenerator(fileBody);
             builder.setBody(bodyGenerator);
         } else if (body instanceof InputStream) {
@@ -437,12 +438,12 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
                     .map(Long::valueOf).orElse(-1L);
             possiblyModifiedHeaders.remove(HttpHeaders.Names.CONTENT_LENGTH);
 
-            Source<ByteString, ?> sourceBody = ((Source<ByteString, ?>) body);
+            @SuppressWarnings("unchecked") Source<ByteString, ?> sourceBody = (Source<ByteString, ?>) body;
             Publisher<ByteBuffer> publisher = sourceBody.map(ByteString::toByteBuffer)
                     .runWith(Sink.asPublisher(AsPublisher.WITHOUT_FANOUT), materializer);
             builder.setBody(publisher, contentLength);
         } else {
-            throw new IllegalStateException("Impossible wsBody: " + wsBody);
+            throw new IllegalStateException("Unknown body: " + wsBody);
         }
 
         builder.setHeaders(possiblyModifiedHeaders);
@@ -477,7 +478,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
         // add cookies
         this.cookies.forEach(cookie -> {
-            AhcWSCookie ahcWSCookie = (AhcWSCookie)cookie;
+            AhcWSCookie ahcWSCookie = (AhcWSCookie) cookie;
             builder.addCookie(ahcWSCookie.getUnderlying());
         });
 
