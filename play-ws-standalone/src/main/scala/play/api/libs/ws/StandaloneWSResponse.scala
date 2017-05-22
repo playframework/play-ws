@@ -14,13 +14,13 @@ import scala.xml.Elem
 trait StandaloneWSResponse {
 
   /**
-   * Return the current headers of the request being constructed
+   * Return the current headers for this response.
    */
   @deprecated("Use headers instead", "1.0.0")
   def allHeaders: Map[String, Seq[String]] = headers
 
   /**
-   * Return the current headers of the request being constructed
+   * Return the current headers for this response.
    */
   def headers: Map[String, Seq[String]]
 
