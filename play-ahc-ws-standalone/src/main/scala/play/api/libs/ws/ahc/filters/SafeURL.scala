@@ -27,9 +27,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package play.api.libs.ws.filters
+package play.api.libs.ws.ahc.filters
 
-import java.net.{InetAddress, URL, _}
+import java.net.{ InetAddress, URL, _ }
 import java.util.regex.Pattern
 
 /**
@@ -38,7 +38,8 @@ import java.util.regex.Pattern
  *
  * https://github.com/IncludeSecurity/safeurl-scala
  */
-private[SafeURLFilter] class SafeURL(cfg: SSRFFilterConfiguration) {
+private[filters] class SafeURL(cfg: SSRFFilterConfiguration) {
+  import SafeURL._
 
   private def isIP(addr: String): Boolean = {
     // Why don't we check if the IP address is valid as well? See http://vernon.mauery.com/content/projects/linux/ipv6_regex
@@ -47,7 +48,8 @@ private[SafeURLFilter] class SafeURL(cfg: SSRFFilterConfiguration) {
       (addr matches "\\[[0-9A-Fa-f:]*\\]")
   }
 
-  /** Resolve the given hostname to it's IP addresses.
+  /**
+   * Resolve the given hostname to it's IP addresses.
    *
    * If an IP address is passed this function will return an array
    * containing just that IP.
@@ -60,7 +62,8 @@ private[SafeURLFilter] class SafeURL(cfg: SSRFFilterConfiguration) {
     InetAddress.getAllByName(host) map (_.getHostAddress)
   }
 
-  /** Check if the given IP address lies within the subnet given in CIDR notation.
+  /**
+   * Check if the given IP address lies within the subnet given in CIDR notation.
    *
    * Supports IPv4 and IPv6.
    *
@@ -114,7 +117,8 @@ private[SafeURLFilter] class SafeURL(cfg: SSRFFilterConfiguration) {
     true
   }
 
-  /** Check if the given hostname belongs to a domain.
+  /**
+   * Check if the given hostname belongs to a domain.
    *
    * @param hostname the hostname
    * @param domain   the domain
@@ -125,7 +129,8 @@ private[SafeURLFilter] class SafeURL(cfg: SSRFFilterConfiguration) {
     hostname.toLowerCase.matches("^.*" + Pattern.quote(domain.toLowerCase) + "$")
   }
 
-  /** Check if the provided hostname matches the given common name.
+  /**
+   * Check if the provided hostname matches the given common name.
    *
    * @param hostname the hostname to check
    * @param cn       the common name
@@ -133,18 +138,19 @@ private[SafeURLFilter] class SafeURL(cfg: SSRFFilterConfiguration) {
    */
   private def cnMatch(hostname: String, cn: String): Boolean = {
     if (cn startsWith "*")
-    // *.domain.com is valid for
-    //   secure.domain.com
-    //   www.domain.com
-    // but not for
-    //   www.secure.domain.com    (only one level)
-    //   domain.com
+      // *.domain.com is valid for
+      //   secure.domain.com
+      //   www.domain.com
+      // but not for
+      //   www.secure.domain.com    (only one level)
+      //   domain.com
       hostname.toLowerCase.matches("^[0-9a-z-]+" + Pattern.quote(cn.substring(1).toLowerCase) + "$")
     else
       cn.toLowerCase == hostname.toLowerCase
   }
 
-  /** Validate the given part of a URL.
+  /**
+   * Validate the given part of a URL.
    *
    * Validation is performed by comparing the given value to the values
    * in the black- and whitelist.
@@ -156,7 +162,7 @@ private[SafeURLFilter] class SafeURL(cfg: SSRFFilterConfiguration) {
    * @param value   the value to verify
    * @param al      the access list to validate against
    * @param matches a function to check if the value matches an element from one of the lists
-   * */
+   */
   private def validate(part: URLPart.Value, value: String, al: SSRFFilterConfiguration.AccessList, matches: (String, String) => Boolean): Unit = {
     val whitelist = al.whitelist map (_.toLowerCase)
     val blacklist = al.blacklist map (_.toLowerCase)
@@ -173,7 +179,8 @@ private[SafeURLFilter] class SafeURL(cfg: SSRFFilterConfiguration) {
     }
   }
 
-  /** Validate the provided URL.
+  /**
+   * Validate the provided URL.
    *
    * This implements the main SSRF protection by matching
    * the provided URL against a set of black- and whitelists
@@ -253,7 +260,8 @@ private[SafeURLFilter] class SafeURL(cfg: SSRFFilterConfiguration) {
     (newUrlString, host.replace("[", "").replace("]", ""))
   }
 
-  /** Check if the provided URL is allowed.
+  /**
+   * Check if the provided URL is allowed.
    *
    * Same as validate() but does not throw an exception, just returns true or false.
    * See the warning for validate().
@@ -273,6 +281,10 @@ private[SafeURLFilter] class SafeURL(cfg: SSRFFilterConfiguration) {
     true
   }
 
+}
+
+object SafeURL {
+
   /** Enumeration of the different parts of a URL processed by SafeURL. */
   object URLPart extends Enumeration {
     val Protocol, Host, IP, Port = Value
@@ -291,5 +303,4 @@ private[SafeURLFilter] class SafeURL(cfg: SSRFFilterConfiguration) {
       case Reason.Blacklisted => part + " \"" + value + "\" is blacklisted."
     }
   }
-
 }

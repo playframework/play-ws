@@ -1,12 +1,12 @@
 /*
  * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
  */
-package play.api.libs.ws.filters
+package play.api.libs.ws.ahc.filters
 
-import javax.inject.{Inject, Provider}
+import javax.inject.{ Inject, Provider }
 
 import com.typesafe.config.Config
-import play.api.libs.ws.{WSRequestExecutor, WSRequestFilter}
+import play.api.libs.ws.{ WSRequestExecutor, WSRequestFilter }
 
 import scala.concurrent.Future
 
@@ -15,8 +15,8 @@ import scala.concurrent.Future
  *
  * Useful for preventing <a href="https://cwe.mitre.org/data/definitions/918.html">Server Side Request Forgery (SSRF)</a> attacks.
  */
-@Singleton
-class SSRFFilter @Inject()(configuration: SSRFFilterConfiguration) extends WSRequestFilter {
+@javax.inject.Singleton
+class SSRFFilter @Inject() (configuration: SSRFFilterConfiguration) extends WSRequestFilter {
 
   private val safeUrl = new SafeURL(configuration)
 
@@ -35,7 +35,7 @@ class SSRFFilter @Inject()(configuration: SSRFFilterConfiguration) extends WSReq
 /**
  * This class parses a SSRFFilterConfiguration from Typesafe Config.
  */
-@Singleton
+@javax.inject.Singleton
 class SSRFFilterConfigurationProvider(config: Config) extends Provider[SSRFFilterConfiguration] {
   import SSRFFilterConfiguration._
   import scala.collection.JavaConverters._
@@ -101,17 +101,17 @@ object SSRFFilterConfiguration {
 
   /** Access lists for the various parts of a URL. */
   case class AccessList(
-                         whitelist: List[String] = Nil,
-                         blacklist: List[String] = Nil
-                       )
+    whitelist: List[String] = Nil,
+    blacklist: List[String] = Nil
+  )
 
   /** Contains an AccessList for each part of the URL that is validated. */
   case class ListContainer(
-                            ip: AccessList = new AccessList,
-                            port: AccessList = new AccessList,
-                            domain: AccessList = new AccessList,
-                            protocol: AccessList = new AccessList
-                          )
+    ip: AccessList = new AccessList,
+    port: AccessList = new AccessList,
+    domain: AccessList = new AccessList,
+    protocol: AccessList = new AccessList
+  )
 
   def defaultAccessLists: ListContainer = {
     ListContainer(
