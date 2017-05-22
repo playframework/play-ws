@@ -165,7 +165,29 @@ trait WSResponseHeaders {
 
   def status: Int
 
+  /**
+   * Return the current headers for this response.
+   */
   def headers: Map[String, Seq[String]]
+
+  /**
+   * Get the value of the header with the specified name. If there are more than one values
+   * for this header, the first value is returned. If there are no values, than a None is
+   * returned.
+   *
+   * @param name the header name
+   * @return the header value
+   */
+  def header(name: String): Option[String] = headerValues(name).headOption
+
+  /**
+   * Get all the values of header with the specified name. If there are no values for
+   * the header with the specified name, than an empty sequence is returned.
+   *
+   * @param name the header name.
+   * @return all the values for this header name.
+   */
+  def headerValues(name: String): Seq[String] = headers.getOrElse(name, Seq.empty)
 }
 
 case class DefaultWSResponseHeaders(status: Int, headers: Map[String, Seq[String]]) extends WSResponseHeaders
