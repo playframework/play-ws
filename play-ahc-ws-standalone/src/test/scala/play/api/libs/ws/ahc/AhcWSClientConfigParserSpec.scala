@@ -54,6 +54,7 @@ class AhcWSClientConfigParserSpec extends Specification with Mockito {
           |play.ws.ahc.maxRequestRetry = 99
           |play.ws.ahc.disableUrlEncoding = true
           |play.ws.ahc.keepAlive = false
+          |play.ws.ahc.keepEncodingHeader = true
         """.stripMargin)
 
       actual.maxConnectionsPerHost must_== 3
@@ -64,6 +65,7 @@ class AhcWSClientConfigParserSpec extends Specification with Mockito {
       actual.maxRequestRetry must_== 99
       actual.disableUrlEncoding must beTrue
       actual.keepAlive must beFalse
+      actual.keepEncodingHeader must beTrue
     }
 
     "with keepAlive" should {

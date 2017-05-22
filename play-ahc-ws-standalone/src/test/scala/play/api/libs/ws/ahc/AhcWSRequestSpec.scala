@@ -22,7 +22,6 @@ import scala.language.implicitConversions
 import scala.collection.JavaConverters._
 
 class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
-  sequential
 
   implicit val system = ActorSystem()
   implicit val materializer = ActorMaterializer()

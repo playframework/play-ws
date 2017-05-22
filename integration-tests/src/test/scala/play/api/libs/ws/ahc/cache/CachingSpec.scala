@@ -5,38 +5,29 @@
 
 package play.api.libs.ws.ahc.cache
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.server.Route
-import akka.stream.ActorMaterializer
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.matcher.FutureMatchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
+import play.AkkaServerProvider
 import play.api.libs.ws.ahc._
 import play.shaded.ahc.org.asynchttpclient._
 
 import scala.collection.mutable
 
-/**
- *
- */
-class CachingSpec(implicit ee: ExecutionEnv) extends Specification with AfterAll with FutureMatchers with Mockito {
+class CachingSpec(implicit val executionEnv: ExecutionEnv) extends Specification with AkkaServerProvider with AfterAll with FutureMatchers with Mockito {
 
-  sequential
-
-  implicit val system = ActorSystem("test")
-  implicit val materializer = ActorMaterializer()
   val asyncHttpClient: AsyncHttpClient = {
     val config = AhcWSClientConfigFactory.forClientConfig()
     val ahcConfig: AsyncHttpClientConfig = new AhcConfigBuilder(config).build()
     new DefaultAsyncHttpClient(ahcConfig)
   }
 
-  private val route: Route = {
+  override val routes: Route = {
     import akka.http.scaladsl.server.Directives._
     respondWithHeader(RawHeader("Cache-Control", "public")) {
       val httpEntity = HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to akka-http</h1>")
@@ -44,14 +35,9 @@ class CachingSpec(implicit ee: ExecutionEnv) extends Specification with AfterAll
     }
   }
 
-  private val futureServer = {
-    Http().bindAndHandle(route, "localhost", port = 9000)
-  }
-
-  override def afterAll = {
-    futureServer.foreach(_.unbind())(materializer.executionContext)
+  override def afterAll(): Unit = {
+    super.afterAll()
     asyncHttpClient.close()
-    system.terminate()
   }
 
   "GET" should {
@@ -61,11 +47,11 @@ class CachingSpec(implicit ee: ExecutionEnv) extends Specification with AfterAll
       val cachingAsyncHttpClient = new CachingAsyncHttpClient(asyncHttpClient, new AhcHttpCache(cache))
       val ws = new StandaloneAhcWSClient(cachingAsyncHttpClient)
 
-      ws.url("http://localhost:9000/").get().map { response =>
+      ws.url(s"http://localhost:$testServerPort/").get().map { response =>
         response.body must be_==("<h1>Say hello to akka-http</h1>")
       }.await
 
-      there was one(cache).get(EffectiveURIKey("GET", new java.net.URI("http://localhost:9000/")))
+      there was one(cache).get(EffectiveURIKey("GET", new java.net.URI(s"http://localhost:$testServerPort/")))
     }
 
   }

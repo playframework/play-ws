@@ -33,6 +33,7 @@ import scala.concurrent.duration._
  * @param maxRequestRetry The maximum number of times to retry a request if it fails.
  * @param disableUrlEncoding Whether the raw URL should be used.
  * @param keepAlive keeps thread pool active, replaces allowPoolingConnection and allowSslConnectionPool
+ * @param keepEncodingHeader if true, keep the Content-Encoding header
  */
 case class AhcWSClientConfig(
   wsClientConfig: WSClientConfig = WSClientConfig(),
@@ -43,7 +44,8 @@ case class AhcWSClientConfig(
   maxNumberOfRedirects: Int = 5,
   maxRequestRetry: Int = 5,
   disableUrlEncoding: Boolean = false,
-  keepAlive: Boolean = true)
+  keepAlive: Boolean = true,
+  keepEncodingHeader: Boolean = false)
 
 /**
  * Factory for creating AhcWSClientConfig, for use from Java.
@@ -97,6 +99,7 @@ class AhcWSClientConfigParser @Inject() (
     val maxRequestRetry = configuration.getInt("play.ws.ahc.maxRequestRetry")
     val disableUrlEncoding = configuration.getBoolean("play.ws.ahc.disableUrlEncoding")
     val keepAlive = configuration.getBoolean("play.ws.ahc.keepAlive")
+    val keepEncodingHeader = configuration.getBoolean("play.ws.ahc.keepEncodingHeader")
 
     AhcWSClientConfig(
       wsClientConfig = wsClientConfig,
@@ -107,7 +110,8 @@ class AhcWSClientConfigParser @Inject() (
       maxNumberOfRedirects = maximumNumberOfRedirects,
       maxRequestRetry = maxRequestRetry,
       disableUrlEncoding = disableUrlEncoding,
-      keepAlive = keepAlive
+      keepAlive = keepAlive,
+      keepEncodingHeader = keepEncodingHeader
     )
   }
 }
@@ -195,6 +199,7 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
     builder.setMaxRequestRetry(ahcConfig.maxRequestRetry)
     builder.setDisableUrlEncodingForBoundRequests(ahcConfig.disableUrlEncoding)
     builder.setKeepAlive(ahcConfig.keepAlive)
+    builder.setKeepEncodingHeader(ahcConfig.keepEncodingHeader)
     // forcing shutdown of the AHC event loop because otherwise the test suite fails with a
     // OutOfMemoryException: cannot create new native thread. This is because when executing
     // tests in parallel there can be many threads pool that are left around because AHC is

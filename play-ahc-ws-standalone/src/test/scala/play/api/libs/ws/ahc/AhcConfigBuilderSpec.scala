@@ -105,7 +105,7 @@ class AhcConfigBuilderSpec extends Specification with Mockito {
 
           proxyServerSelector must not(beNull)
 
-          proxyServerSelector must not be_== (ProxyServerSelector.NO_PROXY_SELECTOR)
+          proxyServerSelector must not be_== ProxyServerSelector.NO_PROXY_SELECTOR
         } finally {
           // Unset http.proxyHost
           System.clearProperty(ProxyUtils.PROXY_HOST)
@@ -155,6 +155,13 @@ class AhcConfigBuilderSpec extends Specification with Mockito {
         val builder = new AhcConfigBuilder(config)
         val actual = builder.build()
         actual.isDisableUrlEncodingForBoundRequests must_== true
+      }
+
+      "allow setting ahc keepEncodingHeader" in {
+        val config = defaultConfig.copy(keepEncodingHeader = true)
+        val builder = new AhcConfigBuilder(config)
+        val actual = builder.build()
+        actual.isKeepEncodingHeader must_== true
       }
     }
 
