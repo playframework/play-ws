@@ -38,7 +38,7 @@ class AhcWSResponseSpec extends Specification with Mockito {
         .add("Bar", "baz")
       srcResponse.getHeaders returns srcHeaders
       val response = new StandaloneAhcWSResponse(srcResponse)
-      val headers = response.getAllHeaders
+      val headers = response.getHeaders
       headers.get("foo").asScala must_== Seq("a", "b", "b")
       headers.get("BAR").asScala must_== Seq("baz")
     }
