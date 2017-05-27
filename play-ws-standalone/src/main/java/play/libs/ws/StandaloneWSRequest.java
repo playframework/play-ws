@@ -151,22 +151,6 @@ public interface StandaloneWSRequest {
     StandaloneWSRequest setBody(WSBody body);
 
     /**
-     * Adds a header to the request.  Note that duplicate headers are allowed
-     * by the HTTP specification, and removing a header is not available
-     * through this API.
-     *
-     * @param name  the header name
-     * @param value the header value
-     * @return the modified WSRequest.
-     *
-     * @deprecated Since 1.0.0. Use {@link #addHeader(String, String)} or {@link #setHeaders(Map)}.
-     */
-    @Deprecated
-    default StandaloneWSRequest setHeader(String name, String value) {
-        return addHeader(name, value);
-    }
-
-    /**
      * Set headers to the request.  Note that duplicate headers are allowed
      * by the HTTP specification, and removing a header is not available
      * through this API. Any existing header will be discarded here.
@@ -194,20 +178,6 @@ public interface StandaloneWSRequest {
      * @return the modified WSRequest.
      */
     StandaloneWSRequest setQueryString(String query);
-
-    /**
-     * Sets a query parameter with the given name, this can be called repeatedly.  Duplicate query parameters are allowed.
-     *
-     * @param name  the query parameter name
-     * @param value the query parameter value
-     * @return the modified WSRequest.
-     *
-     * @deprecated Since 1.0.0. Use {@link #addQueryParameter(String, String)}, {@link #setQueryString(String)} or {@link #setQueryString(Map)} instead.
-     */
-    @Deprecated
-    default StandaloneWSRequest setQueryParameter(String name, String value) {
-        return addQueryParameter(name, value);
-    }
 
     /**
      * Adds a query parameter with the given name, this can be called repeatedly and will preserve existing values.
@@ -307,17 +277,6 @@ public interface StandaloneWSRequest {
      * @return the modified WSRequest
      */
     StandaloneWSRequest setVirtualHost(String virtualHost);
-
-    /**
-     * Sets the request timeout in milliseconds.
-     *
-     * @param timeout the request timeout in milliseconds. A value of -1 indicates an infinite request timeout.
-     * @return the modified WSRequest.
-     *
-     * @deprecated Since 1.0.0. Use {@link #setRequestTimeout(Duration)} instead.
-     */
-    @Deprecated
-    StandaloneWSRequest setRequestTimeout(long timeout);
 
     /**
      * Sets the request timeout duration. Java {@link Duration} class does not have a specific instance
@@ -426,19 +385,6 @@ public interface StandaloneWSRequest {
      * @return the signature calculator (example: OAuth), null if none is set.
      */
     WSSignatureCalculator getCalculator();
-
-    /**
-     * Gets the original request timeout in milliseconds, passed into the
-     * request as input.
-     *
-     * @return the timeout
-     *
-     * @deprecated Since 1.0.0. Use {@link #getRequestTimeoutDuration()} instead.
-     */
-    @Deprecated
-    default long getRequestTimeout() {
-        return getRequestTimeoutDuration().toMillis();
-    }
 
     /**
      * Gets the original request timeout duration, passed into the request as input.

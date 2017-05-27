@@ -224,15 +224,6 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     @Override
-    public StandaloneAhcWSRequest setRequestTimeout(long timeout) {
-        if (timeout < -1 || timeout > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("Timeout must be between -1 and " + Integer.MAX_VALUE + " inclusive");
-        }
-        this.timeout = Duration.of(timeout, ChronoUnit.MILLIS);
-        return this;
-    }
-
-    @Override
     public StandaloneAhcWSRequest setRequestTimeout(Duration timeout) {
         if (timeout == null) {
             throw new IllegalArgumentException("Timeout must not be null.");

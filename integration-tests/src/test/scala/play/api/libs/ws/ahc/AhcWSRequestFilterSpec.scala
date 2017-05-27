@@ -54,13 +54,13 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv) extends Sp
 
     class HeaderAppendingFilter(key: String, value: String) extends WSRequestFilter {
       override def apply(executor: WSRequestExecutor): WSRequestExecutor = {
-        WSRequestExecutor(r => executor(r.withHeaders((key, value))))
+        WSRequestExecutor(r => executor(r.withHttpHeaders((key, value))))
       }
     }
 
     "work with adhoc request filter" in {
       client.url(s"http://localhost:$testServerPort").withRequestFilter(WSRequestFilter { e =>
-        WSRequestExecutor(r => e.apply(r.withQueryString("key" -> "some string")))
+        WSRequestExecutor(r => e.apply(r.withQueryStringParameters("key" -> "some string")))
       }).get().map { response =>
         response.body must contain("some string")
       }.await(retries = 0, timeout = defaultTimeout)
@@ -94,7 +94,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv) extends Sp
       client.url(s"http://localhost:$testServerPort")
         .withRequestFilter(new HeaderAppendingFilter(appendedHeader, appendedHeaderValue))
         .get().map { response ⇒
-          response.allHeaders("X-Request-Id").head must be_==("someid")
+          response.headerValues("X-Request-Id").head must be_==("someid")
         }
         .await(retries = 0, timeout = defaultTimeout)
     }

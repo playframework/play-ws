@@ -46,14 +46,14 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
       val request = StandaloneAhcWSRequest(client, "http://example.com")
 
       request.uri.toString must equalTo("http://example.com")
-      request.withQueryString("bar" -> "baz").uri.toString must equalTo("http://example.com?bar=baz")
-      request.withQueryString("bar" -> "baz", "bar" -> "bah").uri.toString must equalTo("http://example.com?bar=bah&bar=baz")
+      request.withQueryStringParameters("bar" -> "baz").uri.toString must equalTo("http://example.com?bar=baz")
+      request.withQueryStringParameters("bar" -> "baz", "bar" -> "bah").uri.toString must equalTo("http://example.com?bar=bah&bar=baz")
     }
 
     "correctly URL-encode the query string part" in {
       val request = StandaloneAhcWSRequest(client, "http://example.com")
 
-      request.withQueryString("&" -> "=").uri.toString must equalTo("http://example.com?%26=%3D")
+      request.withQueryStringParameters("&" -> "=").uri.toString must equalTo("http://example.com?%26=%3D")
     }
 
     "set all query string parameters" in {
@@ -538,7 +538,7 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
   "Verify Content-Type header is passed through correctly" in withClient { client =>
     import scala.collection.JavaConverters._
     val req: AHCRequest = client.url("http://playframework.com/")
-      .withHeaders(HttpHeaders.Names.CONTENT_TYPE -> "text/plain; charset=US-ASCII")
+      .withHttpHeaders(HttpHeaders.Names.CONTENT_TYPE -> "text/plain; charset=US-ASCII")
       .withBody("HELLO WORLD")
       .asInstanceOf[StandaloneAhcWSRequest]
       .buildRequest()

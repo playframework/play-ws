@@ -90,7 +90,7 @@ class AhcWSRequestFilterSpec(implicit executionEnv: ExecutionEnv) extends Specif
         .get())
 
       responseFuture.map { response =>
-        response.getAllHeaders.get("X-Request-Id").get(0) must be_==("someid")
+        response.getHeaders.get("X-Request-Id").get(0) must be_==("someid")
       }.await(retries = 0, timeout = 5.seconds)
     }
   }

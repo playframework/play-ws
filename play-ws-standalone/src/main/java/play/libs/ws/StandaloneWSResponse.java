@@ -21,27 +21,6 @@ public interface StandaloneWSResponse {
 
     /**
      * @return all the headers from the response.
-     *
-     * @deprecated Since 1.0.0. Use {@link #getHeaders()} instead.
-     */
-    @Deprecated
-    default Map<String, List<String>> getAllHeaders() {
-        return getHeaders();
-    }
-
-    /**
-     * @param key the header's name
-     * @return a single header value from the response.
-     *
-     * @deprecated Since 1.0.0. Use {@link #getSingleHeader(String)} instead.
-     */
-    @Deprecated
-    default String getHeader(String key) {
-        return getSingleHeader(key).orElse(null);
-    }
-
-    /**
-     * @return all the headers from the response.
      */
     Map<String, List<String>> getHeaders();
 

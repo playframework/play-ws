@@ -108,25 +108,6 @@ class AhcWSRequestSpec extends Specification with Mockito {
       called must beTrue
     }
 
-    "setRequestTimeout(long)" should {
-
-      "support setting a request timeout" in {
-        requestWithTimeout(1000) must beEqualTo(1000)
-      }
-
-      "support setting an infinite request timeout" in {
-        requestWithTimeout(-1) must beEqualTo(-1)
-      }
-
-      "not support setting a request timeout < -1" in {
-        requestWithTimeout(-2) must throwA[IllegalArgumentException]
-      }
-
-      "not support setting a request timeout > Integer.MAX_VALUE" in {
-        requestWithTimeout(Int.MaxValue.toLong + 1) must throwA[IllegalArgumentException]
-      }
-    }
-
     "setRequestTimeout(java.time.Duration)" should {
 
       "support setting a request timeout to a duration" in {
@@ -157,8 +138,8 @@ class AhcWSRequestSpec extends Specification with Mockito {
       val client = mock[StandaloneAhcWSClient]
       val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
       request.setBody(client.body("HELLO WORLD"))
-      request.setHeader("Content-Type", "application/json")
-      request.setHeader("Content-Type", "application/xml")
+      request.addHeader("Content-Type", "application/json")
+      request.addHeader("Content-Type", "application/xml")
       val req = request.buildRequest()
       req.getHeaders.get("Content-Type") must be_==("application/json")
     }
@@ -167,8 +148,8 @@ class AhcWSRequestSpec extends Specification with Mockito {
       val client = mock[StandaloneAhcWSClient]
       val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
       request.setBody(client.body("HELLO WORLD"))
-      request.setHeader("Content-Type", "application/json; charset=US-ASCII")
-      request.setHeader("Content-Type", "application/xml")
+      request.addHeader("Content-Type", "application/json; charset=US-ASCII")
+      request.addHeader("Content-Type", "application/xml")
       val req = request.buildRequest()
       req.getHeaders.get("Content-Type") must be_==("application/json; charset=US-ASCII")
     }
@@ -448,13 +429,6 @@ class AhcWSRequestSpec extends Specification with Mockito {
   }
 
   def requestWithTimeout(timeout: Duration) = {
-    val client = mock[StandaloneAhcWSClient]
-    val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
-    request.setRequestTimeout(timeout)
-    request.buildRequest().getRequestTimeout()
-  }
-
-  def requestWithTimeout(timeout: Long) = {
     val client = mock[StandaloneAhcWSClient]
     val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
     request.setRequestTimeout(timeout)

@@ -132,14 +132,6 @@ trait StandaloneWSRequest {
   /**
    * Returns this request with the given headers, preserving the existing ones.
    *
-   * @param headers the headers to be used
-   */
-  @deprecated("Use withHttpHeaders or addHttpHeaders", "1.0.0")
-  def withHeaders(headers: (String, String)*): Self = addHttpHeaders(headers: _*)
-
-  /**
-   * Returns this request with the given headers, preserving the existing ones.
-   *
    * @param hdrs the headers to be added
    */
   def addHttpHeaders(hdrs: (String, String)*): Self = {
@@ -155,14 +147,6 @@ trait StandaloneWSRequest {
    * @param parameters the query string parameters
    */
   def withQueryStringParameters(parameters: (String, String)*): Self
-
-  /**
-   * Returns this request with the given query string parameters, preserving the existing ones.
-   *
-   * @param parameters the query string parameters
-   */
-  @deprecated("Use withQueryStringParameters or addQueryStringParameter", "1.0.0")
-  def withQueryString(parameters: (String, String)*): Self = addQueryStringParameter(parameters: _*)
 
   /**
    * Returns this request with the given query string parameters, preserving the existing ones.
