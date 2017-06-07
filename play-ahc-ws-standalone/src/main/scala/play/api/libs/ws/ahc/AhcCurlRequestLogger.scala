@@ -72,12 +72,12 @@ trait CurlFormat {
     request.body match {
       case InMemoryBody(byteString) =>
         val charset = findCharset(request)
-        val bodyString = byteString.utf8String
+        val bodyString = byteString.decodeString(charset)
         // XXX Need to escape any quotes within the body of the string.
         b.append(s"  --data '${quote(bodyString)}'")
         b.append(" \\\n")
       case other =>
-      // XXX FIXME implement this
+        throw new UnsupportedOperationException("Unsupported body type " + other.getClass)
     }
 
     // pull out some underlying values from the request.  This creates a new Request
