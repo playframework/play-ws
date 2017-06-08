@@ -245,6 +245,7 @@ lazy val shaded = Project(id = "shaded", base = file("shaded") )
 lazy val `play-ws-standalone` = project
   .in(file("play-ws-standalone"))
   .settings(commonSettings)
+  .settings(mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ws-standalone" % "1.0.0"))
   .settings(libraryDependencies ++= standaloneApiWSDependencies)
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
