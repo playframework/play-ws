@@ -188,7 +188,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
       request.addHeader("Content-Type", "application/json") // will be ignored since body already sets content type
       val req = request.buildRequest()
       req.getHeaders.get("Content-Type") must be_==("text/plain")
-    }
+    }play-ws-standalone/src/main/java/play/libs/ws/StandaloneWSRequest.java
 
     "only send first Content-Type header and keep the charset when setting the Content-Type multiple times" in {
       val client = mock[StandaloneAhcWSClient]

@@ -56,7 +56,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     private final Materializer materializer;
 
     private Duration timeout = Duration.ZERO;
-    private boolean followRedirects;
+    private Boolean followRedirects = null;
     private String virtualHost = null;
 
     private final List<WSRequestFilter> filters = new ArrayList<>();
@@ -221,8 +221,8 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     @Override
-    public String getContentType() {
-        return getHeader(CONTENT_TYPE).orElse(null);
+    public Optional<String> getContentType() {
+        return getHeader(CONTENT_TYPE);
     }
 
     @Override
@@ -296,23 +296,23 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     @Override
-    public WSSignatureCalculator getCalculator() {
-        return this.calculator;
+    public Optional<WSSignatureCalculator> getCalculator() {
+        return Optional.ofNullable(this.calculator);
     }
 
     @Override
-    public Duration getRequestTimeoutDuration() {
-        return this.timeout;
+    public Optional<Duration> getRequestTimeout() {
+        return Optional.ofNullable(this.timeout);
     }
 
     @Override
-    public boolean getFollowRedirects() {
-        return this.followRedirects;
+    public Optional<Boolean> getFollowRedirects() {
+        return Optional.ofNullable(this.followRedirects);
     }
 
     // Intentionally package public.
-    String getVirtualHost() {
-        return this.virtualHost;
+    Optional<String> getVirtualHost() {
+        return Optional.ofNullable(this.virtualHost);
     }
 
     @Override
@@ -458,11 +458,9 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
             builder.setRequestTimeout(((int) this.timeout.toMillis()));
         }
 
-        builder.setFollowRedirect(this.followRedirects);
+        getFollowRedirects().ifPresent(builder::setFollowRedirect);
 
-        if (this.virtualHost != null) {
-            builder.setVirtualHost(this.virtualHost);
-        }
+        getVirtualHost().ifPresent(builder::setVirtualHost);
 
         this.getAuth().ifPresent(auth -> builder.setRealm(auth(auth.getUsername(), auth.getPassword(), auth.getScheme())));
 
