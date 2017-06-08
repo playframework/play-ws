@@ -3,85 +3,75 @@
  */
 package play.api.libs.ws.ahc
 
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import java.net.URI
+
 import org.reactivestreams.{ Publisher, Subscriber, Subscription }
-import play.api.libs.ws.{ DefaultWSResponseHeaders, StreamedResponse, WSResponseHeaders }
 import play.shaded.ahc.org.asynchttpclient.AsyncHandler.State
 import play.shaded.ahc.org.asynchttpclient._
 import play.shaded.ahc.org.asynchttpclient.handler.StreamedAsyncHandler
 
-import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.concurrent.Promise
 
-private[play] object Streamed extends AhcUtilities {
+case class StreamedState(
+  statusCode: Int = -1,
+  statusText: String = "",
+  uriOption: Option[URI] = None,
+  responseHeaders: Map[String, Seq[String]] = Map.empty,
+  publisher: Publisher[HttpResponseBodyPart] = EmptyPublisher
+)
 
-  def execute(client: AsyncHttpClient, request: Request)(implicit ec: ExecutionContext): Future[StreamedResponse] = {
+class DefaultStreamedAsyncHandler[T](f: java.util.function.Function[StreamedState, T], promise: Promise[T]) extends StreamedAsyncHandler[Unit] with AhcUtilities {
+  private var state = StreamedState()
 
-    val promise = Promise[(WSResponseHeaders, Publisher[HttpResponseBodyPart])]()
-    client.executeRequest(request, new DefaultStreamedAsyncHandler(promise))
-    promise.future.map {
-      case (headers, publisher) =>
-        // this transformation is not part of `DefaultStreamedAsyncHandler.onCompleted` because 
-        // a reactive-streams `Publisher` needs to be returned to implement `execute2`. Though, 
-        // once `execute2` is removed, we should move the code here inside 
-        // `DefaultStreamedAsyncHandler.onCompleted`.
-        val source = Source.fromPublisher(publisher).map(bodyPart => ByteString(bodyPart.getBodyPartBytes))
-        StreamedResponse(headers, source)
+  def onStream(publisher: Publisher[HttpResponseBodyPart]): State = {
+    if (this.state.publisher != EmptyPublisher) State.ABORT
+    else {
+      this.state = state.copy(publisher = publisher)
+      promise.success(f(state))
+      State.CONTINUE
     }
   }
 
-  private class DefaultStreamedAsyncHandler(promise: Promise[(WSResponseHeaders, Publisher[HttpResponseBodyPart])]) extends StreamedAsyncHandler[Unit] {
-    private var statusCode: Int = _
-    private var responseHeaders: WSResponseHeaders = _
-    private var publisher: Publisher[HttpResponseBodyPart] = _
-
-    def onStream(publisher: Publisher[HttpResponseBodyPart]): State = {
-      if (this.publisher != null) State.ABORT
-      else {
-        this.publisher = publisher
-        promise.success((responseHeaders, publisher))
-        State.CONTINUE
-      }
+  override def onStatusReceived(status: HttpResponseStatus): State = {
+    if (this.state.publisher != EmptyPublisher) State.ABORT
+    else {
+      state = state.copy(
+        statusCode = status.getStatusCode,
+        statusText = status.getStatusText,
+        uriOption = Option(status.getUri.toJavaNetURI)
+      )
+      State.CONTINUE
     }
-
-    override def onStatusReceived(status: HttpResponseStatus): State = {
-      if (this.publisher != null) State.ABORT
-      else {
-        statusCode = status.getStatusCode
-        State.CONTINUE
-      }
-    }
-
-    override def onHeadersReceived(h: HttpResponseHeaders): State = {
-      if (this.publisher != null) State.ABORT
-      else {
-        val headers = h.getHeaders
-        responseHeaders = DefaultWSResponseHeaders(statusCode, headersToMap(headers))
-        State.CONTINUE
-      }
-    }
-
-    override def onBodyPartReceived(bodyPart: HttpResponseBodyPart): State =
-      throw new IllegalStateException("Should not have received body part")
-
-    override def onCompleted(): Unit = {
-      // EmptyPublisher can be replaces with `Source.empty` when we carry out the refactoring 
-      // mentioned in the `execute2` method.
-      promise.trySuccess((responseHeaders, EmptyPublisher))
-    }
-
-    override def onThrowable(t: Throwable): Unit = promise.tryFailure(t)
   }
 
-  private case object EmptyPublisher extends Publisher[HttpResponseBodyPart] {
-    def subscribe(s: Subscriber[_ >: HttpResponseBodyPart]): Unit = {
-      if (s eq null) throw new NullPointerException("Subscriber must not be null, rule 1.9")
-      s.onSubscribe(CancelledSubscription)
-      s.onComplete()
+  override def onHeadersReceived(h: HttpResponseHeaders): State = {
+    if (this.state.publisher != EmptyPublisher) State.ABORT
+    else {
+      state = state.copy(responseHeaders = headersToMap(h.getHeaders))
+      State.CONTINUE
     }
-    private case object CancelledSubscription extends Subscription {
-      override def request(elements: Long): Unit = ()
-      override def cancel(): Unit = ()
-    }
+  }
+
+  override def onBodyPartReceived(bodyPart: HttpResponseBodyPart): State =
+    throw new IllegalStateException("Should not have received bodypart")
+
+  override def onCompleted(): Unit = {
+    // EmptyPublisher can be replaces with `Source.empty` when we carry out the refactoring
+    // mentioned in the `execute2` method.
+    promise.trySuccess(f(state.copy(publisher = EmptyPublisher)))
+  }
+
+  override def onThrowable(t: Throwable): Unit = promise.tryFailure(t)
+}
+
+private case object EmptyPublisher extends Publisher[HttpResponseBodyPart] {
+  def subscribe(s: Subscriber[_ >: HttpResponseBodyPart]): Unit = {
+    if (s eq null) throw new NullPointerException("Subscriber must not be null, rule 1.9")
+    s.onSubscribe(CancelledSubscription)
+    s.onComplete()
+  }
+  private case object CancelledSubscription extends Subscription {
+    override def request(elements: Long): Unit = ()
+    override def cancel(): Unit = ()
   }
 }

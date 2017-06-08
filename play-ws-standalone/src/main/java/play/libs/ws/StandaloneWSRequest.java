@@ -19,6 +19,21 @@ import java.util.concurrent.CompletionStage;
  * are shown before an OAuth signature is calculated.
  */
 public interface StandaloneWSRequest {
+    // Note that you should not use default methods here, because if you call
+    // a Java API from specs2 or another scala class, then the linearization
+    // will happen differently and cause the existential to be captured rather
+    // than the type refined API:
+    //
+    // val ws: WSClient = ...
+    // val res: CompletionStage[WSResponse] = ws.url("/get").stream()
+    //
+    //[error]  found   : java.util.concurrent.CompletionStage[?0] where type ?0 <: play.libs.ws.StandaloneWSResponse
+    //[error]  required: java.util.concurrent.CompletionStage[play.libs.ws.WSResponse]
+    //[error]       val futureResponse: CompletionStage[WSResponse] = request.get()
+    //
+    // This would make an excellent Scala puzzler, because it's utterly unintuitive
+    // while still being completely to the scala compiler spec, and will work fine
+    // in a Java test.
 
     //-------------------------------------------------------------------------
     // "GET"
@@ -29,9 +44,7 @@ public interface StandaloneWSRequest {
      *
      * @return a promise to the response
      */
-    default CompletionStage<? extends StandaloneWSResponse> get() {
-        return execute("GET");
-    }
+    CompletionStage<? extends StandaloneWSResponse> get();
 
     //-------------------------------------------------------------------------
     // "PATCH"
@@ -40,12 +53,10 @@ public interface StandaloneWSRequest {
     /**
      * Perform a PATCH on the request asynchronously.
      *
-     * @param body represented as body
+     * @param body the BodyWritable
      * @return a promise to the response
      */
-    default CompletionStage<? extends StandaloneWSResponse> patch(WSBody body) {
-        return setMethod("PATCH").setBody(body).execute();
-    }
+    CompletionStage<? extends StandaloneWSResponse> patch(BodyWritable body);
 
     //-------------------------------------------------------------------------
     // "POST"
@@ -54,12 +65,10 @@ public interface StandaloneWSRequest {
     /**
      * Perform a POST on the request asynchronously.
      *
-     * @param body represented as body
+     * @param body the BodyWritable
      * @return a promise to the response
      */
-    default CompletionStage<? extends StandaloneWSResponse> post(WSBody body) {
-        return setMethod("POST").setBody(body).execute();
-    }
+     CompletionStage<? extends StandaloneWSResponse> post(BodyWritable body);
 
     //-------------------------------------------------------------------------
     // "PUT"
@@ -68,12 +77,10 @@ public interface StandaloneWSRequest {
     /**
      * Perform a PUT on the request asynchronously.
      *
-     * @param body represented as body
+     * @param body the BodyWritable
      * @return a promise to the response
      */
-    default CompletionStage<? extends StandaloneWSResponse> put(WSBody body) {
-        return setMethod("PUT").setBody(body).execute();
-    }
+    CompletionStage<? extends StandaloneWSResponse> put(BodyWritable body);
 
     //-------------------------------------------------------------------------
     // Miscellaneous execution methods
@@ -84,51 +91,45 @@ public interface StandaloneWSRequest {
      *
      * @return a promise to the response
      */
-    default CompletionStage<? extends StandaloneWSResponse> delete() {
-        return execute("DELETE");
-    }
+    CompletionStage<? extends StandaloneWSResponse> delete();
 
     /**
      * Perform a HEAD on the request asynchronously.
      *
      * @return a promise to the response
      */
-    default CompletionStage<? extends StandaloneWSResponse> head() {
-        return execute("HEAD");
-    }
+    CompletionStage<? extends StandaloneWSResponse> head();
 
     /**
      * Perform an OPTIONS on the request asynchronously.
      *
      * @return a promise to the response
      */
-    default CompletionStage<? extends StandaloneWSResponse> options() {
-        return execute("OPTIONS");
-    }
+    CompletionStage<? extends StandaloneWSResponse> options();
 
     /**
-     * Execute an arbitrary method on the request asynchronously.
+     * Executes an arbitrary method on the request asynchronously.
      *
      * @param method The method to execute
      * @return a promise to the response
      */
-    default CompletionStage<? extends StandaloneWSResponse> execute(String method) {
-        return setMethod(method).execute();
-    }
+    CompletionStage<? extends StandaloneWSResponse> execute(String method);
 
     /**
-     * Execute an arbitrary method on the request asynchronously.  Should be used with setMethod().
+     * Executes an arbitrary method on the request asynchronously.  Should be used with setMethod().
      *
      * @return a promise to the response
      */
     CompletionStage<? extends StandaloneWSResponse> execute();
 
     /**
-     * Execute this request and stream the response body.
+     * Executes this request and streams the response body.
      *
-     * @return a promise to the streaming response
+     * Use {@code response.bodyAsSource()} with this method.
+     *
+     * @return a promise to the response
      */
-    CompletionStage<? extends StreamedResponse> stream();
+    CompletionStage<? extends StandaloneWSResponse> stream();
 
     //-------------------------------------------------------------------------
     // Setters
@@ -148,7 +149,7 @@ public interface StandaloneWSRequest {
      * @param body the body of the request.
      * @return the modified WSRequest.
      */
-    StandaloneWSRequest setBody(WSBody body);
+    StandaloneWSRequest setBody(BodyWritable body);
 
     /**
      * Set headers to the request.  Note that duplicate headers are allowed
@@ -345,9 +346,7 @@ public interface StandaloneWSRequest {
      * @param name the header name.
      * @return all the values for this header name.
      */
-    default List<String> getHeaderValues(String name) {
-        return getHeaders().getOrDefault(name, Collections.emptyList());
-    }
+    List<String> getHeaderValues(String name);
 
     /**
      * Get the value of the header with the specified name. If there are more than one values
@@ -357,9 +356,7 @@ public interface StandaloneWSRequest {
      * @param name the header name
      * @return the header value
      */
-    default Optional<String> getHeader(String name) {
-        return getHeaderValues(name).stream().findFirst();
-    }
+    Optional<String> getHeader(String name);
 
     /**
      * @return the query parameters (a copy to prevent side-effects). This has not passed through an internal request builder and so will not be signed.

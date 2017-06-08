@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
  */
-package play.libs.ws.ahc;
+package play.libs.ws;
 
 import akka.util.ByteString;
 import akka.util.ByteString$;
@@ -29,7 +29,7 @@ import java.io.UnsupportedEncodingException;
 public class XML {
 
     /**
-     * Parses an XML string as DOM.
+     * Parses an XML string as DOM using UTF-8 charset and encoding.
      *
      * @param xml the input XML string
      * @return the parsed XML DOM root.
@@ -69,7 +69,6 @@ public class XML {
      */
     public static Document fromInputSource(InputSource source) {
         try {
-
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setFeature(Constants.SAX_FEATURE_PREFIX + Constants.EXTERNAL_GENERAL_ENTITIES_FEATURE, false);
             factory.setFeature(Constants.SAX_FEATURE_PREFIX + Constants.EXTERNAL_PARAMETER_ENTITIES_FEATURE, false);
@@ -79,12 +78,7 @@ public class XML {
             DocumentBuilder builder = factory.newDocumentBuilder();
 
             return builder.parse(source);
-
-        } catch (ParserConfigurationException e) {
-            throw new RuntimeException(e);
-        } catch (SAXException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
+        } catch (ParserConfigurationException | SAXException | IOException e) {
             throw new RuntimeException(e);
         }
     }

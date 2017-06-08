@@ -272,6 +272,6 @@ trait StandaloneWSRequest {
   /**
    * Execute this request and stream the response body.
    */
-  def stream(): Future[StreamedResponse]
+  def stream(): Future[Response]
 
 }

@@ -12,6 +12,7 @@ trait StandaloneWSClient extends Closeable {
 
   /**
    * The underlying implementation of the client, if any.  You must cast explicitly to the type you want.
+   *
    * @tparam T the type you are expecting (i.e. isInstanceOf)
    * @return the backing class.
    */

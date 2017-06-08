@@ -5,17 +5,18 @@ package play.libs.ws.ahc
 
 import java.time.Duration
 
-import play.shaded.ahc.org.asynchttpclient.{ Request, RequestBuilderBase, SignatureCalculator }
+import akka.util.ByteString
 import org.specs2.mock.Mockito
 import org.specs2.mutable._
-import play.libs.ws._
 import play.libs.oauth.OAuth
+import play.libs.ws._
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
+import play.shaded.ahc.org.asynchttpclient.{ Request, RequestBuilderBase, SignatureCalculator }
 
 import scala.collection.JavaConverters._
 import scala.compat.java8.OptionConverters._
 
-class AhcWSRequestSpec extends Specification with Mockito {
+class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyWritables {
 
   "AhcWSRequest" should {
 
@@ -40,7 +41,7 @@ class AhcWSRequestSpec extends Specification with Mockito {
         val formEncoding = java.net.URLEncoder.encode("param1=value1", "UTF-8")
 
         val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
-          .setBody(AhcWSBody.string("HELLO WORLD"))
+          .setBody(body("HELLO WORLD"))
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
         req.getStringData must be_==("HELLO WORLD")
@@ -50,7 +51,7 @@ class AhcWSRequestSpec extends Specification with Mockito {
         val client = mock[StandaloneAhcWSClient]
         val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
           .setContentType("application/x-www-form-urlencoded") // set content type by hand
-          .setBody(AhcWSBody.string("HELLO WORLD")) // and body is set to string (see #5221)
+          .setBody(body("HELLO WORLD")) // and body is set to string (see #5221)
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
 
@@ -66,7 +67,7 @@ class AhcWSRequestSpec extends Specification with Mockito {
         val calc = new OAuth.OAuthCalculator(consumerKey, token)
         val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
           .setContentType("application/x-www-form-urlencoded") // set content type by hand
-          .setBody(AhcWSBody.string("param1=value1"))
+          .setBody(body("param1=value1"))
           .sign(calc)
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
@@ -82,7 +83,7 @@ class AhcWSRequestSpec extends Specification with Mockito {
         val calc = new OAuth.OAuthCalculator(consumerKey, token)
         val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
           .setContentType("application/x-www-form-urlencoded") // set content type by hand
-          .setBody(AhcWSBody.string("param1=value1"))
+          .setBody(body("param1=value1"))
           .addHeader("Content-Length", "9001") // add a meaningless content length here...
           .sign(calc)
           .asInstanceOf[StandaloneAhcWSRequest]
@@ -92,6 +93,7 @@ class AhcWSRequestSpec extends Specification with Mockito {
         req.getFormParams.asScala must containTheSameElementsAs(List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1")))
         headers.get("Content-Length") must beNull // no content length!
       }
+
     }
 
     "Use a custom signature calculator" in {
@@ -137,7 +139,7 @@ class AhcWSRequestSpec extends Specification with Mockito {
     "only send first content type header and add charset=utf-8 to the Content-Type header if it's manually adding but lacking charset" in {
       val client = mock[StandaloneAhcWSClient]
       val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
-      request.setBody(client.body("HELLO WORLD"))
+      request.setBody(body("HELLO WORLD"))
       request.addHeader("Content-Type", "application/json")
       request.addHeader("Content-Type", "application/xml")
       val req = request.buildRequest()
@@ -147,7 +149,7 @@ class AhcWSRequestSpec extends Specification with Mockito {
     "only send first content type header and keep the charset if it has been set manually with a charset" in {
       val client = mock[StandaloneAhcWSClient]
       val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
-      request.setBody(client.body("HELLO WORLD"))
+      request.setBody(body("HELLO WORLD"))
       request.addHeader("Content-Type", "application/json; charset=US-ASCII")
       request.addHeader("Content-Type", "application/xml")
       val req = request.buildRequest()

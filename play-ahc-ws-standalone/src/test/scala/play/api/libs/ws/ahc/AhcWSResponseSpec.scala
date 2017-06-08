@@ -82,7 +82,7 @@ class AhcWSResponseSpec extends Specification with Mockito {
       val bytes = ByteString(-87, -72, 96, -63, -32, 46, -117, -40, -128, -7, 61, 109, 80, 45, 44, 30)
       ahcResponse.getResponseBodyAsBytes returns bytes.toArray
       val response = StandaloneAhcWSResponse(ahcResponse)
-      response.bodyAsBytes must_== bytes
+      response.body[ByteString] must_== bytes
     }
 
     "get headers from an AHC response in a case insensitive map" in {

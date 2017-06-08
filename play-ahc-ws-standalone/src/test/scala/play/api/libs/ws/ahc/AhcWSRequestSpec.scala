@@ -11,17 +11,18 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
 import play.api.libs.oauth.{ ConsumerKey, OAuthCalculator, RequestToken }
-import play.api.libs.ws.{ StandaloneWSRequest, StandaloneWSResponse, _ }
+import play.api.libs.ws._
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
 import play.shaded.ahc.org.asynchttpclient.cookie.{ Cookie => AHCCookie }
 import play.shaded.ahc.org.asynchttpclient.{ Param, Request => AHCRequest }
 
-import scala.concurrent.duration.{ Duration, _ }
-import scala.language.implicitConversions
 import scala.collection.JavaConverters._
+import scala.concurrent.duration._
+import scala.language.implicitConversions
 
 class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
+
   sequential
 
   implicit val system = ActorSystem()
@@ -239,9 +240,10 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
     "not make Content-Type header if there is Content-Type in headers already" in {
       withClient { client =>
         import scala.collection.JavaConverters._
+
         val req: AHCRequest = client.url("http://playframework.com/")
           .withHttpHeaders("content-type" -> "fake/contenttype; charset=utf-8")
-          .withBody(<aaa>value1</aaa>)
+          .withBody("I am a text/plain body")
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
         req.getHeaders.getAll(HttpHeaders.Names.CONTENT_TYPE).asScala must_== Seq("fake/contenttype; charset=utf-8")

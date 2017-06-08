@@ -7,71 +7,47 @@ package play.libs.ws.ahc;
 import akka.stream.Materializer;
 import akka.stream.javadsl.Source;
 import akka.util.ByteString;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import akka.util.ByteStringBuilder;
 import com.typesafe.sslconfig.ssl.SystemConfiguration;
 import com.typesafe.sslconfig.ssl.debug.DebugConfiguration;
 import org.slf4j.LoggerFactory;
-import play.api.libs.json.jackson.PlayJsonModule$;
 import play.api.libs.ws.ahc.AhcConfigBuilder;
 import play.api.libs.ws.ahc.AhcLoggerFactory;
 import play.api.libs.ws.ahc.AhcWSClientConfig;
-import play.api.libs.ws.ahc.Streamed;
+import play.api.libs.ws.ahc.DefaultStreamedAsyncHandler;
 import play.api.libs.ws.ahc.cache.AhcHttpCache;
 import play.api.libs.ws.ahc.cache.CachingAsyncHttpClient;
 import play.libs.ws.StandaloneWSClient;
 import play.libs.ws.StandaloneWSResponse;
-import play.libs.ws.StreamedResponse;
-import play.libs.ws.WSBody;
 import play.shaded.ahc.org.asynchttpclient.*;
 import scala.compat.java8.FutureConverters;
+import scala.concurrent.ExecutionContext;
 import scala.concurrent.Future;
 import scala.concurrent.Promise;
 
 import javax.inject.Inject;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 
 /**
  * A WS asyncHttpClient backed by an AsyncHttpClient instance.
  */
 public class StandaloneAhcWSClient implements StandaloneWSClient {
 
-    static ObjectMapper DEFAULT_OBJECT_MAPPER = new ObjectMapper()
-            .registerModule(PlayJsonModule$.MODULE$)
-            .registerModule(new Jdk8Module())
-            .registerModule(new JavaTimeModule());
-
     private final AsyncHttpClient asyncHttpClient;
     private final Materializer materializer;
-    private final ObjectMapper objectMapper;
 
     /**
      * Creates a new client.
      *
      * @param asyncHttpClient the underlying AsyncHttpClient
      * @param materializer    the Materializer to use for streams
-     * @param mapper          the ObjectMapper to use for serializing JSON objects
      */
     @Inject
-    public StandaloneAhcWSClient(AsyncHttpClient asyncHttpClient, Materializer materializer, ObjectMapper mapper) {
+    public StandaloneAhcWSClient(AsyncHttpClient asyncHttpClient, Materializer materializer) {
         this.asyncHttpClient = asyncHttpClient;
         this.materializer = materializer;
-        this.objectMapper = mapper;
-    }
-
-    /**
-     * Creates a new client with the default Jackson ObjectMapper.
-     *
-     * @param asyncHttpClient the underlying AsyncHttpClient
-     * @param materializer    the Materializer to use for streams
-     */
-    public StandaloneAhcWSClient(AsyncHttpClient asyncHttpClient, Materializer materializer) {
-        this(asyncHttpClient, materializer, DEFAULT_OBJECT_MAPPER);
     }
 
     @Override
@@ -81,36 +57,12 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
 
     @Override
     public StandaloneAhcWSRequest url(String url) {
-        return new StandaloneAhcWSRequest(this, url, materializer, objectMapper);
+        return new StandaloneAhcWSRequest(this, url, materializer);
     }
 
     @Override
     public void close() throws IOException {
         asyncHttpClient.close();
-    }
-
-    public WSBody<Object> body() {
-        return AhcWSBody.empty();
-    }
-
-    public WSBody<String> body(String body) {
-        return AhcWSBody.string(body);
-    }
-
-    public WSBody<JsonNode> body(JsonNode body) {
-        return AhcWSBody.json(body);
-    }
-
-    public WSBody<Source<ByteString, ?>> body(Source<ByteString, ?> body) {
-        return AhcWSBody.source(body);
-    }
-
-    public WSBody<File> body(File body) {
-        return AhcWSBody.file(body);
-    }
-
-    public WSBody<InputStream> body(InputStream body) {
-        return AhcWSBody.inputStream(body);
     }
 
     CompletionStage<StandaloneWSResponse> execute(Request request) {
@@ -119,7 +71,7 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
         AsyncCompletionHandler<Response> handler = new AsyncCompletionHandler<Response>() {
             @Override
             public Response onCompleted(Response response) {
-                StandaloneAhcWSResponse r = new StandaloneAhcWSResponse(response, objectMapper);
+                StandaloneAhcWSResponse r = new StandaloneAhcWSResponse(response);
                 scalaPromise.success(r);
                 return response;
             }
@@ -139,8 +91,18 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
         return FutureConverters.toJava(future);
     }
 
-    CompletionStage<? extends StreamedResponse> executeStream(Request request) {
-        return StreamedResponse.from(Streamed.execute(asyncHttpClient, request, materializer.executionContext()));
+    CompletionStage<StandaloneWSResponse> executeStream(Request request, ExecutionContext ec) {
+        final Promise<StandaloneWSResponse> scalaPromise = scala.concurrent.Promise$.MODULE$.apply();
+
+        asyncHttpClient.executeRequest(request, new DefaultStreamedAsyncHandler<>(state ->
+                new StreamedResponse(this,
+                        state.statusCode(),
+                        state.statusText(),
+                        state.uriOption().get(),
+                        state.responseHeaders(),
+                        state.publisher()),
+                scalaPromise));
+        return FutureConverters.toJava(scalaPromise.future());
     }
 
     /**
@@ -194,6 +156,18 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
             ahcClient = defaultAsyncHttpClient;
         }
         return new StandaloneAhcWSClient(ahcClient, materializer);
+    }
+
+    ByteString blockingToByteString(Source<ByteString, ?> bodyAsSource) {
+        try {
+            return bodyAsSource
+                    .runFold(ByteString.createBuilder(), ByteStringBuilder::append, materializer)
+                    .thenApply(ByteStringBuilder::result)
+                    .toCompletableFuture()
+                    .get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

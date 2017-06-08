@@ -17,6 +17,7 @@ import play.api.libs.ws._
 import scala.collection.mutable
 
 class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv) extends Specification with AkkaServerProvider with AfterAll with FutureMatchers {
+  import DefaultBodyReadables._
 
   // Create the standalone WS client
   val client = StandaloneAhcWSClient()
@@ -62,7 +63,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv) extends Sp
       client.url(s"http://localhost:$testServerPort").withRequestFilter(WSRequestFilter { e =>
         WSRequestExecutor(r => e.apply(r.withQueryStringParameters("key" -> "some string")))
       }).get().map { response =>
-        response.body must contain("some string")
+        response.body[String] must contain("some string")
       }.await(retries = 0, timeout = defaultTimeout)
     }
 
@@ -94,7 +95,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv) extends Sp
       client.url(s"http://localhost:$testServerPort")
         .withRequestFilter(new HeaderAppendingFilter(appendedHeader, appendedHeaderValue))
         .get().map { response ⇒
-          response.headerValues("X-Request-Id").head must be_==("someid")
+          response.headers("X-Request-Id").head must be_==("someid")
         }
         .await(retries = 0, timeout = defaultTimeout)
     }

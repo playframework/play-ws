@@ -3,10 +3,10 @@
  */
 package play.api.libs.ws
 
-import akka.util.ByteString
-import play.api.libs.json.JsValue
+import java.net.URI
 
-import scala.xml.Elem
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 
 /**
  * A WS HTTP response.
@@ -63,22 +63,49 @@ trait StandaloneWSResponse {
   def cookie(name: String): Option[WSCookie]
 
   /**
-   * The response body as String.
+   * @return the content type.
+   */
+  def contentType: String = header("Content-Type").getOrElse("application/octet-stream")
+
+  /**
+   * The response body as the given type.  This renders as the given type.
+   * You must have a BodyReadable in implicit scope.
+   *
+   * The simplest use case is
+   *
+   * {{{
+   * val responseBodyAsString: String = response.body[String]
+   * }}}
+   *
+   * But you can also render as JSON
+   *
+   * {{{
+   * val responseBodyAsJson: JsValue = response.getBody[JsValue]
+   * }}}
+   *
+   * or as XML:
+   *
+   * {{{
+   * val responseBodyAsByteString: ByteString = response.getBody[ByteString]
+   * }}}
+   */
+  def body[T: BodyReadable]: T = {
+    val readable = implicitly[BodyReadable[T]]
+    readable.transform(this)
+  }
+
+  /**
+   * @return the response body as String
    */
   def body: String
 
   /**
-   * The response body as Xml.
-   */
-  def xml: Elem
-
-  /**
-   * The response body as Json.
-   */
-  def json: JsValue
-
-  /**
-   * The response body as a byte string.
+   * @return The response body as ByteString.
    */
   def bodyAsBytes: ByteString
+
+  /**
+   * @return the response as a source of bytes
+   */
+  def bodyAsSource: Source[ByteString, _]
 }
