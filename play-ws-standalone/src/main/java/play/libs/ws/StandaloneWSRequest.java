@@ -367,39 +367,39 @@ public interface StandaloneWSRequest {
     Map<String, List<String>> getQueryParameters();
 
     /**
-     * @return the auth username, null if not an authenticated request.
+     * @return the auth username, Optional.empty() if not an authenticated request.
      */
-    String getUsername();
+    Optional<String> getUsername();
 
     /**
-     * @return the auth password, null if not an authenticated request
+     * @return the auth password, Optional.empty() if not an authenticated request
      */
-    String getPassword();
+    Optional<String> getPassword();
 
     /**
-     * @return the auth scheme, null if not an authenticated request.
+     * @return the auth scheme, Optional.empty() if not an authenticated request.
      */
-    WSAuthScheme getScheme();
+    Optional<WSAuthScheme> getScheme();
 
     /**
-     * @return the signature calculator (example: OAuth), null if none is set.
+     * @return the signature calculator (example: OAuth), or Optional.empty() if none is set.
      */
-    WSSignatureCalculator getCalculator();
+    Optional<WSSignatureCalculator> getCalculator();
 
     /**
      * Gets the original request timeout duration, passed into the request as input.
      *
      * @return the timeout duration.
      */
-    Duration getRequestTimeoutDuration();
+    Optional<Duration> getRequestTimeout();
 
     /**
-     * @return true if the request is configure to follow redirect, false if it is configure not to, null if nothing is configured and the global client preference should be used instead.
+     * @return true if the request is configure to follow redirect, false if it is configure not to, Optional.empty() if nothing is configured and the global client preference should be used instead.
      */
-    boolean getFollowRedirects();
+    Optional<Boolean> getFollowRedirects();
 
     /**
-     * @return the content type, if any, or null.
+     * @return the content type, if any, or Optional.empty() if no content type is found.
      */
-    String getContentType();
+    Optional<String> getContentType();
 }

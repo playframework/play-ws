@@ -34,7 +34,6 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletionStage;
 
@@ -64,7 +63,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     private final ObjectMapper objectMapper;
 
     private Duration timeout = Duration.ZERO;
-    private boolean followRedirects;
+    private Boolean followRedirects = null;
     private String virtualHost = null;
 
     private final List<WSRequestFilter> filters = new ArrayList<>();
@@ -238,12 +237,12 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     @Override
-    public String getContentType() {
+    public Optional<String> getContentType() {
         final List<String> values = headers.get(HttpHeaders.Names.CONTENT_BASE);
         if (values == null) {
-            return null;
+            return Optional.empty();
         } else {
-            return values.get(0);
+            return Optional.ofNullable(values.get(0));
         }
     }
 
@@ -294,38 +293,38 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     @Override
-    public String getUsername() {
-        return this.username;
+    public Optional<String> getUsername() {
+        return Optional.ofNullable(this.username);
     }
 
     @Override
-    public String getPassword() {
-        return this.password;
+    public Optional<String> getPassword() {
+        return Optional.ofNullable(this.password);
     }
 
     @Override
-    public WSAuthScheme getScheme() {
-        return this.scheme;
+    public Optional<WSAuthScheme> getScheme() {
+        return Optional.ofNullable(this.scheme);
     }
 
     @Override
-    public WSSignatureCalculator getCalculator() {
-        return this.calculator;
+    public Optional<WSSignatureCalculator> getCalculator() {
+        return Optional.ofNullable(this.calculator);
     }
 
     @Override
-    public Duration getRequestTimeoutDuration() {
-        return this.timeout;
+    public Optional<Duration> getRequestTimeout() {
+        return Optional.ofNullable(this.timeout);
     }
 
     @Override
-    public boolean getFollowRedirects() {
-        return this.followRedirects;
+    public Optional<Boolean> getFollowRedirects() {
+        return Optional.ofNullable(this.followRedirects);
     }
 
     // Intentionally package public.
-    String getVirtualHost() {
-        return this.virtualHost;
+    Optional<String> getVirtualHost() {
+        return Optional.ofNullable(this.virtualHost);
     }
 
     @SuppressWarnings("unchecked")
@@ -445,11 +444,9 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
             builder.setRequestTimeout(((int) this.timeout.toMillis()));
         }
 
-        builder.setFollowRedirect(this.followRedirects);
+        getFollowRedirects().map(builder::setFollowRedirect);
 
-        if (this.virtualHost != null) {
-            builder.setVirtualHost(this.virtualHost);
-        }
+        getVirtualHost().map(builder::setVirtualHost);
 
         if (this.username != null && this.password != null && this.scheme != null) {
             builder.setRealm(auth(this.username, this.password, this.scheme));

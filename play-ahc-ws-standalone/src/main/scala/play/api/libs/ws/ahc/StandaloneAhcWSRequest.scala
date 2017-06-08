@@ -37,7 +37,7 @@ case class StandaloneAhcWSRequest(
     calc: Option[WSSignatureCalculator] = None,
     auth: Option[(String, String, WSAuthScheme)] = None,
     followRedirects: Option[Boolean] = None,
-    requestTimeout: Option[Int] = None,
+    requestTimeout: Option[Duration] = None,
     virtualHost: Option[String] = None,
     proxyServer: Option[WSProxyServer] = None,
     disableUrlEncoding: Option[Boolean] = None,
@@ -97,11 +97,11 @@ case class StandaloneAhcWSRequest(
   override def withRequestTimeout(timeout: Duration): Self = {
     timeout match {
       case Duration.Inf =>
-        copy(requestTimeout = Some(-1))
+        copy(requestTimeout = Some(timeout))
       case d =>
         val millis = d.toMillis
         require(millis >= 0 && millis <= Int.MaxValue, s"Request timeout must be between 0 and ${Int.MaxValue} milliseconds")
-        copy(requestTimeout = Some(millis.toInt))
+        copy(requestTimeout = Some(timeout))
     }
   }
 
@@ -260,7 +260,12 @@ case class StandaloneAhcWSRequest(
     virtualHost.foreach(builder.setVirtualHost)
     followRedirects.foreach(builder.setFollowRedirect)
     proxyServer.foreach(p => builder.setProxyServer(createProxy(p)))
-    requestTimeout.foreach(builder.setRequestTimeout)
+    requestTimeout.foreach {
+      case d if d == Duration.Inf =>
+        builder.setRequestTimeout(-1)
+      case d =>
+        builder.setRequestTimeout(d.toMillis.toInt)
+    }
 
     val (builderWithBody, updatedHeaders) = body match {
       case EmptyBody => (builder, this.headers)
