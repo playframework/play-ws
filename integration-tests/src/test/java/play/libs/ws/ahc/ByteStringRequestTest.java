@@ -6,7 +6,6 @@ package play.libs.ws.ahc;
 
 import org.junit.Test;
 import play.libs.ws.DefaultBodyReadables;
-import play.libs.ws.DefaultBodyWritables;
 import play.shaded.ahc.org.asynchttpclient.Response;
 
 import java.nio.charset.StandardCharsets;
@@ -24,13 +23,23 @@ public class ByteStringRequestTest implements DefaultBodyReadables {
         final Response ahcResponse = mock(Response.class);
         final StandaloneAhcWSResponse response = new StandaloneAhcWSResponse(ahcResponse);
         when(ahcResponse.getContentType()).thenReturn(null);
-        when(ahcResponse.getResponseBody(StandardCharsets.UTF_8)).thenReturn("wsBody");
+        when(ahcResponse.getResponseBody()).thenReturn("wsBody");
 
         final String body = response.getBody();
-        verify(ahcResponse, times(1)).getResponseBody(StandardCharsets.UTF_8);
+        verify(ahcResponse, times(1)).getResponseBody();
         assertThat(body).isEqualTo("wsBody");
     }
 
+    public void testBodyAsDefault() {
+        final Response ahcResponse = mock(Response.class);
+        final StandaloneAhcWSResponse response = new StandaloneAhcWSResponse(ahcResponse);
+        when(ahcResponse.getContentType()).thenReturn(null);
+        when(ahcResponse.getResponseBody()).thenReturn("wsBody");
+
+        final String body = response.getBody();
+        verify(ahcResponse, times(1)).getResponseBody();
+        assertThat(body).isEqualTo("wsBody");
+    }
 //
 //        "get the getBody as UTF-8 by default when no content type" in {
 //            val ahcResponse = mock[Response]
