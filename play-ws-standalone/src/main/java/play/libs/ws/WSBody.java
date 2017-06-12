@@ -1,19 +1,24 @@
 package play.libs.ws;
 
+import java.util.function.Supplier;
+
 /**
  * A WS body marker interface.  The client is responsible for creating these instances:
- * <p>
- * <pre>
- * @{code
- *   StandaloneAhcWSClient client = ...
- *   WSBody stringBody = client.body("Hello world!");
- *   request.setBody(stringBody);
- * }
- * </pre>
  */
-public interface WSBody<T> {
+public interface WSBody<A> extends Supplier<A> {
 
-    T body();
+}
+
+abstract class AbstractWSBody<A> implements WSBody<A> {
+    private final A body;
+
+    AbstractWSBody(A body) {
+        this.body = body;
+    }
+
+    public A get() {
+        return body;
+    }
 }
 
 

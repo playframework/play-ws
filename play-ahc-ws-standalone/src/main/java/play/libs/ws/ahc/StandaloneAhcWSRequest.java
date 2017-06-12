@@ -9,34 +9,28 @@ import akka.stream.javadsl.AsPublisher;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
 import akka.util.ByteString;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import org.reactivestreams.Publisher;
+import play.api.libs.ws.ahc.FormUrlEncodedParser;
+import play.libs.oauth.OAuth;
+import play.libs.ws.*;
 import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders;
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders;
 import play.shaded.ahc.org.asynchttpclient.*;
-import play.shaded.ahc.org.asynchttpclient.request.body.generator.ByteArrayBodyGenerator;
-import play.shaded.ahc.org.asynchttpclient.request.body.generator.FileBodyGenerator;
-import play.shaded.ahc.org.asynchttpclient.request.body.generator.InputStreamBodyGenerator;
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils;
-import org.reactivestreams.Publisher;
-import play.api.libs.ws.ahc.FormUrlEncodedParser;
 
-import play.libs.oauth.OAuth;
-import play.libs.ws.*;
-
-import java.io.File;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletionStage;
+
+import static java.util.Collections.singletonList;
+import static play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_LENGTH;
+import static play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
+import static play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders.Values.APPLICATION_X_WWW_FORM_URLENCODED;
 
 /**
  * Provides the User facing API for building a WS request.
@@ -45,7 +39,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
     private static final Duration INFINITE = Duration.ofMillis(-1);
 
-    private WSBody<Object> wsBody;
+    private BodyWritable<?> bodyWritable;
 
     private final String url;
     private String method = "GET";
@@ -61,7 +55,6 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     private final StandaloneAhcWSClient client;
 
     private final Materializer materializer;
-    private final ObjectMapper objectMapper;
 
     private Duration timeout = Duration.ZERO;
     private boolean followRedirects;
@@ -69,14 +62,13 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
     private final List<WSRequestFilter> filters = new ArrayList<>();
 
-    public StandaloneAhcWSRequest(StandaloneAhcWSClient client, String url, Materializer materializer, ObjectMapper mapper) {
+    public StandaloneAhcWSRequest(StandaloneAhcWSClient client, String url, Materializer materializer) {
         this.client = client;
         URI reference = URI.create(url);
 
         this.url = url;
         this.materializer = materializer;
-        this.objectMapper = mapper;
-        this.wsBody = AhcWSBody.empty();
+        this.bodyWritable = null;
 
         String userInfo = reference.getUserInfo();
         if (userInfo != null) {
@@ -86,11 +78,6 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
             this.setQueryString(reference.getQuery());
         }
     }
-
-    public StandaloneAhcWSRequest(StandaloneAhcWSClient client, String url, Materializer materializer) {
-        this(client, url, materializer, StandaloneAhcWSClient.DEFAULT_OBJECT_MAPPER);
-    }
-
 
     @Override
     public StandaloneAhcWSRequest setRequestFilter(WSRequestFilter filter) {
@@ -234,17 +221,12 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
     @Override
     public StandaloneAhcWSRequest setContentType(String contentType) {
-        return addHeader(HttpHeaders.Names.CONTENT_TYPE, contentType);
+        return addHeader(CONTENT_TYPE, contentType);
     }
 
     @Override
     public String getContentType() {
-        final List<String> values = headers.get(HttpHeaders.Names.CONTENT_BASE);
-        if (values == null) {
-            return null;
-        } else {
-            return values.get(0);
-        }
+        return getHeader(CONTENT_TYPE).orElse(null);
     }
 
     @Override
@@ -254,27 +236,14 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     /**
-     * Returns the wsBody of the request.
+     * Sets a BodyWritable directly.  See {@link DefaultBodyWritables} for common bodies.
      *
-     * @return
-     */
-    public WSBody body() {
-        return wsBody;
-    }
-
-    /**
-     * Sets a wsBody directly.
-     *
-     * @param body the wsBody as an unbound object.
-     * @return the wsBody directly
+     * @param bodyWritable the bodyWritable to set.
+     * @return the request with body
      */
     @Override
-    public StandaloneAhcWSRequest setBody(WSBody body) {
-        if (body == null) {
-            this.wsBody = AhcWSBody.empty();
-        } else {
-            this.wsBody = body;
-        }
+    public StandaloneAhcWSRequest setBody(BodyWritable bodyWritable) {
+        this.bodyWritable = bodyWritable;
         return this;
     }
 
@@ -286,6 +255,16 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     @Override
     public Map<String, List<String>> getHeaders() {
         return new HashMap<>(this.headers);
+    }
+
+    @Override
+    public List<String> getHeaderValues(String name) {
+        return getHeaders().getOrDefault(name, Collections.emptyList());
+    }
+
+    @Override
+    public Optional<String> getHeader(String name) {
+         return getHeaderValues(name).stream().findFirst();
     }
 
     @Override
@@ -328,13 +307,62 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
         return this.virtualHost;
     }
 
-    @SuppressWarnings("unchecked")
+    @Override
+    public CompletionStage<? extends StandaloneWSResponse> get() {
+        return execute("GET");
+    }
+
+    @Override
+    public CompletionStage<? extends StandaloneWSResponse> patch(BodyWritable body) {
+        return setMethod("PATCH").setBody(body).execute();
+    }
+
+    @Override
+    public CompletionStage<? extends StandaloneWSResponse> post(BodyWritable body) {
+        return setMethod("POST").setBody(body).execute();
+    }
+
+    @Override
+    public CompletionStage<? extends StandaloneWSResponse> put(BodyWritable body) {
+        return setMethod("PUT").setBody(body).execute();
+    }
+
+    @Override
+    public CompletionStage<? extends StandaloneWSResponse> delete() {
+        return setMethod("DELETE").execute();
+    }
+
+    @Override
+    public CompletionStage<? extends StandaloneWSResponse> head() {
+        return setMethod("HEAD").execute();
+    }
+
+    @Override
+    public CompletionStage<? extends StandaloneWSResponse> options() {
+        return setMethod("OPTIONS").execute();
+    }
+
+    @Override
+    public CompletionStage<? extends StandaloneWSResponse> execute(String method) {
+        return setMethod(method).execute();
+    }
+
     @Override
     public CompletionStage<? extends StandaloneWSResponse> execute() {
         WSRequestExecutor executor = foldRight(r -> {
             StandaloneAhcWSRequest ahcWsRequest = (StandaloneAhcWSRequest) r;
             Request ahcRequest = ahcWsRequest.buildRequest();
             return client.execute(ahcRequest);
+        }, filters.iterator());
+        return executor.apply(this);
+    }
+
+    @Override
+    public CompletionStage<? extends StandaloneWSResponse> stream() {
+        WSRequestExecutor executor = foldRight(r -> {
+            StandaloneAhcWSRequest ahcWsRequest = (StandaloneAhcWSRequest) r;
+            Request ahcRequest = ahcWsRequest.buildRequest();
+            return client.executeStream(ahcRequest, materializer.executionContext());
         }, filters.iterator());
         return executor.apply(this);
     }
@@ -348,11 +376,6 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
         return foldRight(next.apply(executor), iterator);
     }
 
-    @Override
-    public CompletionStage<? extends StreamedResponse> stream() {
-        return client.executeStream(buildRequest());
-    }
-
     Request buildRequest() {
         boolean validate = true;
         HttpHeaders possiblyModifiedHeaders = new DefaultHttpHeaders(validate);
@@ -363,78 +386,62 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
         builder.setUrl(url);
         builder.setQueryParams(queryParameters);
 
-        Object body = wsBody.body();
-        if (body == null) {
+        if (bodyWritable == null) {
             // do nothing
-        } else if (body instanceof String) {
-            String stringBody = (String) body;
-
-            // Detect and maybe add charset
-            String contentType = possiblyModifiedHeaders.get(HttpHeaders.Names.CONTENT_TYPE);
+        } else {
+            // Detect and maybe add content type
+            String contentType = possiblyModifiedHeaders.get(CONTENT_TYPE);
             if (contentType == null) {
-                contentType = "text/plain";
+                contentType = bodyWritable.contentType();
             }
 
             // Always replace the content type header to make sure exactly one exists
-            List<String> contentTypeList = new ArrayList<>();
-            contentTypeList.add(contentType);
-            possiblyModifiedHeaders.set(HttpHeaders.Names.CONTENT_TYPE, contentTypeList);
+            possiblyModifiedHeaders.set(CONTENT_TYPE, singletonList(contentType));
 
-            // Find a charset and try to pull a string out of it...
-            Charset charset = HttpUtils.parseCharset(contentType);
-            if (charset == null) {
-                charset = StandardCharsets.UTF_8;
-            }
-            byte[] bodyBytes = stringBody.getBytes(charset);
+            if (bodyWritable instanceof InMemoryBodyWritable) {
+                ByteString byteString = ((InMemoryBodyWritable) bodyWritable).body().get();
+                if (contentType.equals("application/json")) {
+                    // there is no applicable charset for JSON, per RFC 7159
+                    // https://tools.ietf.org/html/rfc7159#section-8.1
+                    builder.setBody(byteString.toArray());
+                } else {
+                    // Find a charset and try to pull a string out of it...
+                    Charset charset = HttpUtils.parseCharset(contentType);
+                    if (charset == null) {
+                        charset = StandardCharsets.UTF_8;
+                    }
+                    builder.setCharset(charset);
+                    String stringBody = byteString.decodeString(charset);
 
-            // If using a POST with OAuth signing, the builder looks at
-            // getFormParams() rather than getBody() and constructs the signature
-            // based on the form params.
-            if (contentType.equals(HttpHeaders.Values.APPLICATION_X_WWW_FORM_URLENCODED) && calculator != null) {
-                possiblyModifiedHeaders.remove(HttpHeaders.Names.CONTENT_LENGTH);
+                    // If using a POST with OAuth signing, the builder looks at
+                    // getFormParams() rather than getBody() and constructs the signature
+                    // based on the form params.
+                    if (contentType.equals(APPLICATION_X_WWW_FORM_URLENCODED) && calculator != null) {
+                        possiblyModifiedHeaders.remove(CONTENT_LENGTH);
 
-                Map<String, List<String>> stringListMap = FormUrlEncodedParser.parseAsJava(stringBody, "utf-8");
-                stringListMap.forEach((key, values) -> values.forEach(value -> builder.addFormParam(key, value)));
+                        // XXX shouldn't the encoding be same as charset?
+                        Map<String, List<String>> stringListMap = FormUrlEncodedParser.parseAsJava(stringBody, "utf-8");
+                        stringListMap.forEach((key, values) -> values.forEach(value -> builder.addFormParam(key, value)));
+                    } else {
+                        builder.setBody(stringBody);
+                    }
+                }
+            } else if (bodyWritable instanceof SourceBodyWritable) {
+                // If the bodyWritable has a streaming interface it should be up to the user to provide a manual Content-Length
+                // else every content would be Transfer-Encoding: chunked
+                // If the Content-Length is -1 Async-Http-Client sets a Transfer-Encoding: chunked
+                // If the Content-Length is great than -1 Async-Http-Client will use the correct Content-Length
+                long contentLength = Optional.ofNullable(possiblyModifiedHeaders.get(CONTENT_LENGTH))
+                        .map(Long::valueOf).orElse(-1L);
+                possiblyModifiedHeaders.remove(CONTENT_LENGTH);
+
+                @SuppressWarnings("unchecked") Source<ByteString, ?> sourceBody = ((SourceBodyWritable) bodyWritable).body().get();
+                Publisher<ByteBuffer> publisher = sourceBody.map(ByteString::toByteBuffer)
+                        .runWith(Sink.asPublisher(AsPublisher.WITHOUT_FANOUT), materializer);
+                builder.setBody(publisher, contentLength);
             } else {
-                builder.setBody(stringBody);
+                throw new IllegalStateException("Unknown body writable: " + bodyWritable);
             }
-
-            builder.setCharset(charset);
-        } else if (body instanceof JsonNode) {
-            JsonNode jsonBody = (JsonNode) body;
-            List<String> contentType = new ArrayList<>();
-            contentType.add("application/json");
-            possiblyModifiedHeaders.set(HttpHeaders.Names.CONTENT_TYPE, contentType);
-            byte[] bodyBytes;
-            try {
-                bodyBytes = objectMapper.writeValueAsBytes(jsonBody);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-            builder.setBody(new ByteArrayBodyGenerator(bodyBytes));
-        } else if (body instanceof File) {
-            File fileBody = (File) body;
-            FileBodyGenerator bodyGenerator = new FileBodyGenerator(fileBody);
-            builder.setBody(bodyGenerator);
-        } else if (body instanceof InputStream) {
-            InputStream inputStreamBody = ((InputStream) body);
-            InputStreamBodyGenerator bodyGenerator = new InputStreamBodyGenerator(inputStreamBody);
-            builder.setBody(bodyGenerator);
-        } else if (body instanceof Source) {
-            // If the body has a streaming interface it should be up to the user to provide a manual Content-Length
-            // else every content would be Transfer-Encoding: chunked
-            // If the Content-Length is -1 Async-Http-Client sets a Transfer-Encoding: chunked
-            // If the Content-Length is great than -1 Async-Http-Client will use the correct Content-Length
-            long contentLength = Optional.ofNullable(possiblyModifiedHeaders.get(HttpHeaders.Names.CONTENT_LENGTH))
-                    .map(Long::valueOf).orElse(-1L);
-            possiblyModifiedHeaders.remove(HttpHeaders.Names.CONTENT_LENGTH);
-
-            @SuppressWarnings("unchecked") Source<ByteString, ?> sourceBody = (Source<ByteString, ?>) body;
-            Publisher<ByteBuffer> publisher = sourceBody.map(ByteString::toByteBuffer)
-                    .runWith(Sink.asPublisher(AsPublisher.WITHOUT_FANOUT), materializer);
-            builder.setBody(publisher, contentLength);
-        } else {
-            throw new IllegalStateException("Unknown body: " + wsBody);
         }
 
         builder.setHeaders(possiblyModifiedHeaders);

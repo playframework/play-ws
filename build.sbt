@@ -136,8 +136,8 @@ val ahcMerge: MergeStrategy = new MergeStrategy {
   override val name: String = "ahcMerge"
 }
 
-import xml.{NodeSeq, Node => XNode, Elem}
-import xml.transform.{RuleTransformer, RewriteRule}
+import scala.xml.transform.{RewriteRule, RuleTransformer}
+import scala.xml.{Elem, NodeSeq, Node => XNode}
 
 def dependenciesFilter(n: XNode) = new RuleTransformer(new RewriteRule {
   override def transform(n: XNode): NodeSeq = n match {
@@ -245,7 +245,6 @@ lazy val shaded = Project(id = "shaded", base = file("shaded") )
 lazy val `play-ws-standalone` = project
   .in(file("play-ws-standalone"))
   .settings(commonSettings)
-  .settings(libraryDependencies ++= (specsBuild ++ junitInterface).map(_ % Test))
   .settings(libraryDependencies ++= standaloneApiWSDependencies)
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
@@ -275,8 +274,7 @@ lazy val `play-ahc-ws-standalone` = project
   .settings(SbtScalariform.scalariformSettings)
   .settings(
     fork in Test := true,
-    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
-    libraryDependencies ++= (slf4jtest ++ specsBuild ++ junitInterface).map(_ % Test)
+    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v"))
   )
   .settings(
      // The scaladoc generation
@@ -305,8 +303,53 @@ lazy val `play-ahc-ws-standalone` = project
     `play-ws-standalone`
   ).aggregate(
     `shaded`
+  ).disablePlugins(sbtassembly.AssemblyPlugin)
+
+//---------------------------------------------------------------
+// JSON Readables and Writables
+//---------------------------------------------------------------
+
+lazy val `play-ws-standalone-json` = project
+  .in(file("play-ws-standalone-json"))
+  .settings(commonSettings)
+  .settings(formattingSettings)
+  .settings(SbtScalariform.scalariformSettings)
+  .settings(
+    fork in Test := true,
+    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v"))
   )
-  .disablePlugins(sbtassembly.AssemblyPlugin)
+  .settings(
+    // The scaladoc generation
+  )
+  .settings(libraryDependencies ++= standaloneAhcWSJsonDependencies)
+  .dependsOn(
+    `play-ws-standalone`
+  ).disablePlugins(sbtassembly.AssemblyPlugin)
+
+//---------------------------------------------------------------
+// XML Readables and Writables
+//---------------------------------------------------------------
+
+lazy val `play-ws-standalone-xml` = project
+  .in(file("play-ws-standalone-xml"))
+  .settings(commonSettings)
+  .settings(formattingSettings)
+  .settings(SbtScalariform.scalariformSettings)
+  .settings(
+    fork in Test := true,
+    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v"))
+  )
+  .settings(
+    // The scaladoc generation
+  )
+  .settings(libraryDependencies ++= standaloneAhcWSXMLDependencies)
+  .dependsOn(
+    `play-ws-standalone`
+  ).disablePlugins(sbtassembly.AssemblyPlugin)
+
+//---------------------------------------------------------------
+// Integration Tests
+//---------------------------------------------------------------
 
 lazy val `integration-tests` = project.in(file("integration-tests"))
   .settings(commonSettings)
@@ -318,13 +361,14 @@ lazy val `integration-tests` = project.in(file("integration-tests"))
     fork in Test := true,
     concurrentRestrictions += Tags.limitAll(1), // only one integration test at a time
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
-    libraryDependencies ++= (specsBuild ++ akkaHttp).map(_ % Test)
+    libraryDependencies ++= akkaHttp.map(_ % Test) ++ testDependencies
   )
-  .settings(libraryDependencies ++= standaloneAhcWSDependencies)
   .settings(shadedAhcSettings)
   .settings(shadedOAuthSettings)
   .dependsOn(
-    `play-ahc-ws-standalone`
+    `play-ahc-ws-standalone`,
+    `play-ws-standalone-json`,
+    `play-ws-standalone-xml`
   )
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
@@ -342,6 +386,8 @@ lazy val root = project
   .aggregate(
     `shaded`,
     `play-ws-standalone`,
+    `play-ws-standalone-json`,
+    `play-ws-standalone-xml`,
     `play-ahc-ws-standalone`,
     `integration-tests`
   )

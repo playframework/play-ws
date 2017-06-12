@@ -16,6 +16,13 @@ libraryDependencies += "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.0.0-
 
 This adds the standalone version of Play WS, backed by [AsyncHttpClient](https://github.com/AsyncHttpClient/async-http-client).  This library contains both the Scala and Java APIs, under `play.api.libs.ws` and `play.libs.ws`.
 
+To add XML and JSON support using Play-JSON or Scala XML, add the following:
+
+```scala
+libraryDependencies += "com.typesafe.play" %% "play-ws-standalone-xml" % playWsStandaloneVersion
+libraryDependencies += "com.typesafe.play" %% "play-ws-standalone-json" % playWsStandaloneVersion
+```
+
 ## Shading
 
 Play WS uses shaded versions of AsyncHttpClient and OAuth Signpost, repackaged under the `play.shaded.ahc` and `play.shaded.oauth` package names, respectively.  Shading AsyncHttpClient means that the version of Netty used behind AsyncHttpClient is completely independent of the application and Play as a whole.
@@ -30,6 +37,157 @@ Because Play WS shades AsyncHttpClient, the default settings are also shaded and
 
 ```properties
 play.shaded.ahc.org.asynchttpclient.usePooledMemory=true
+```
+
+### Typed Bodies
+
+The type system in Play-WS has changed so that the request body and the response body can use richer types.
+
+You can define your own BodyWritable or BodyReadable, but if you want to use the default out of the box settings, you can import the type mappings with the DefaultBodyReadables / DefaultBodyWritables.
+
+#### Scala
+
+```scala
+import play.api.libs.ws.DefaultBodyReadables._
+import play.api.libs.ws.DefaultBodyWritables._
+```
+
+More likely you will want the XML and JSON support:
+
+```scala
+import play.api.libs.ws.XMLBodyReadables._
+import play.api.libs.ws.XMLBodyWritables._
+```
+
+or
+
+```scala
+import play.api.libs.ws.JsonBodyReadables._
+import play.api.libs.ws.JsonBodyWritables._
+```
+
+To use a BodyReadable in a response, you must type the response explicitly:
+
+```scala
+val responseBody: Future[scala.xml.Elem] = ws.url(...).get().map { response =>
+  response.body[scala.xml.Elem]
+}
+```
+
+or using Play-JSON:
+
+```scala
+val jsonBody: Future[JsValue] = ws.url(...).get().map { response =>
+  response.body[JsValue]
+}
+```
+
+Note that there is a special case: when you are streaming the response, then you should get the body as a Source:
+
+```scala
+ws.url(...).stream().map { response =>
+   val source: Source[ByteString, NotUsed] = response.bodyAsSource
+}
+```
+
+To POST, you should pass in a type which has an implicit class mapping of BodyWritable:
+
+```scala
+val stringData = "Hello world"
+ws.url(...).post(stringData).map { response => ... }
+```
+
+You can also define your own custom BodyReadable: 
+
+```scala
+case class Foo(body: String)
+
+implicit val fooBodyReadable = BodyReadable[Foo] { response =>
+  import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse }
+  val ahcResponse = response.asInstanceOf[StandaloneAhcWSResponse].underlying[AHCResponse]
+  Foo(ahcResponse.getResponseBody)
+}
+```
+
+or custom BodyWritable:
+
+```scala
+implicit val writeableOf_Foo: BodyWritable[Foo] = {
+  // https://tools.ietf.org/html/rfc6838#section-3.2
+  BodyWritable(foo => InMemoryBody(ByteString.fromString(foo.serialize)), application/vnd.company.category+foo)
+}
+```
+
+#### Java
+
+To use the default type mappings in Java, you should use the following:
+
+```java
+import play.libs.ws.DefaultBodyReadables;
+import play.libs.ws.DefaultBodyWritables;
+```
+
+followed by:
+
+```java
+public class MyClient implements DefaultBodyWritables, DefaultBodyReadables {    
+    public CompletionStage<String> doStuff() {
+      return client.url("http://example.com").post(body("hello world")).thenApply(response ->
+        response.body(string())
+      );
+    }
+}
+```
+
+Note that there is a special case: when you are using a stream, then you should get the body as a Source:
+
+```java
+
+class MyClass {
+    public CompletionStage<Source<ByteString, NotUsed>> readResponseAsStream() {
+        return ws.url(url).stream().thenApply(response ->
+            response.bodyAsSource()
+        );
+    }
+}
+```
+
+You can also post a Source:
+
+```java
+class MyClass {
+    public CompletionStage<String> doStuff() {
+        Source<ByteString, NotUsed> source = fromSource();
+        return ws.url(url).post(source).thenApply(response ->
+            response.body()
+        );
+    }
+}
+```
+
+You can define a custom `BodyReadable`:
+
+```java
+import play.libs.ws.ahc.*;
+import play.shaded.ahc.org.asynchttpclient.Response;
+
+class FooReadable implements BodyReadable<StandaloneWSResponse, Foo> {
+    public Foo apply(StandaloneWSResponse response) {
+        Response ahcResponse = (Response) response.getUnderlying();
+        return Foo.serialize(ahcResponse.getResponseBody(StandardCharsets.UTF_8));
+    }
+}
+```
+
+You can also define your own custom `BodyWritable`:
+
+```java
+public class MyClient {
+    private BodyWritable<String> someOtherMethod(String string) {
+      akka.util.ByteString byteString = akka.util.ByteString.fromString(string);
+      return new DefaultBodyWritables.InMemoryBodyWritable(byteString, "text/plain");
+    }
+}
 ```
 
 ## Instantiating a standalone client
@@ -51,6 +209,7 @@ import play.api.libs.ws.ahc._
 import scala.concurrent.Future
 
 object ScalaClient {
+  import DefaultBodyReadables._
   import scala.concurrent.ExecutionContext.Implicits._
 
   def main(args: Array[String]): Unit = {
@@ -74,6 +233,7 @@ object ScalaClient {
   def call(wsClient: StandaloneWSClient): Future[Unit] = {
     wsClient.url("http://www.google.com").get().map { response ⇒
       val statusText: String = response.statusText
+      val body = response.body[String]
       println(s"Got a response $statusText")
     }
   }
@@ -97,7 +257,7 @@ import play.libs.ws.ahc.*;
 
 import java.util.concurrent.CompletionStage;
 
-public class JavaClient {
+public class JavaClient implements DefaultBodyReadables {
 
     public static void main(String[] args) {
         // Set up Akka materializer to handle streaming
@@ -116,6 +276,7 @@ public class JavaClient {
         client.url("http://www.google.com").get()
                 .whenComplete((response, throwable) -> {
                     String statusText = response.getStatusText();
+                    String body = response.body(string());
                     System.out.println("Got a response " + statusText);
                 })
                 .thenRun(() -> {
@@ -158,40 +319,6 @@ There are a number of guides that help with putting together Cache-Control heade
 * [Mark Nottingham's Guide to Caching](https://www.mnot.net/cache_docs/)
 * [HTTP Caching](https://developers.google.com/web/fundamentals/performance/optimizing-content-efficiency/http-caching)
 * [REST Easy: HTTP Cache](http://odino.org/rest-better-http-cache/)
-
-## API changes
-
-The standalone client API has changed from the Play-WS 2.5.x version in somme ways, 
-
-### Request Body changes
-
-Setting a request body was not well defined, and had repeated type information.  Setting a body on a request (usually for POST, PUT and PATCH) now uses the following:
-
-#### Scala
-
-The body methods now take an implicit `BodyWritable` which returns a `WSBody`.  The `DefaultBodyWritables` trait contains the expected body types.
-
-```scala
-val file = new File("foo") // A BodyWritable exists for File so the type class will be used.
-request.setBody(file)
-```
-
-#### Java
-
-There is a type `WSBody<T>` which contains the body information.  You set the request by calling out to a concrete provider of WSBody:
-
-```java
-StandaloneAhcWSClient client = ...
-WSBody<String> body = client.body("Hello world");
-request.setBody(body);
-```
-
-or by using `AhcWSBody` directly, which is useful for unit testing when you have a mock client:
-
-```java
-WSBody<String> body = AhcWSBody.string("Hello world");
-request.setBody(body);
-```
 
 ## Releasing
 

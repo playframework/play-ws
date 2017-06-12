@@ -1,41 +1,8 @@
 /*
  * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
  */
+
 package play.api.libs.ws
-
-import java.io.File
-
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
-
-/**
- * A body for the request
- */
-sealed trait WSBody
-
-/**
- * An in memory body
- *
- * @param bytes The bytes of the body
- */
-case class InMemoryBody(bytes: ByteString) extends WSBody
-
-/**
- * A streamed body
- *
- * @param bytes A flow of the bytes of the body
- */
-case class StreamedBody(bytes: Source[ByteString, _]) extends WSBody
-
-/**
- * A file body
- */
-case class FileBody(file: File) extends WSBody
-
-/**
- * An empty body
- */
-case object EmptyBody extends WSBody
 
 /**
  *
@@ -157,40 +124,6 @@ case class DefaultWSProxyServer(
 
   nonProxyHosts: Option[Seq[String]] = None
 ) extends WSProxyServer
-
-/**
- * An HTTP response header (the body has not been retrieved yet)
- */
-trait WSResponseHeaders {
-
-  def status: Int
-
-  /**
-   * Return the current headers for this response.
-   */
-  def headers: Map[String, Seq[String]]
-
-  /**
-   * Get the value of the header with the specified name. If there are more than one values
-   * for this header, the first value is returned. If there are no values, than a None is
-   * returned.
-   *
-   * @param name the header name
-   * @return the header value
-   */
-  def header(name: String): Option[String] = headerValues(name).headOption
-
-  /**
-   * Get all the values of header with the specified name. If there are no values for
-   * the header with the specified name, than an empty sequence is returned.
-   *
-   * @param name the header name.
-   * @return all the values for this header name.
-   */
-  def headerValues(name: String): Seq[String] = headers.getOrElse(name, Seq.empty)
-}
-
-case class DefaultWSResponseHeaders(status: Int, headers: Map[String, Seq[String]]) extends WSResponseHeaders
 
 /**
  * Sign a WS call with OAuth.

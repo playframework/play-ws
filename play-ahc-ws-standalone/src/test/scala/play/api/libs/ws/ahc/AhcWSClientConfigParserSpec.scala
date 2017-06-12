@@ -5,7 +5,7 @@
  */
 package play.api.libs.ws.ahc
 
-import com.typesafe.config.{ Config, ConfigFactory }
+import com.typesafe.config.ConfigFactory
 import org.specs2.mock._
 import org.specs2.mutable._
 import play.api.libs.ws.WSClientConfig

@@ -3,96 +3,51 @@
  */
 package play.api.libs.ws.ahc
 
-import java.io.IOException
-import java.nio.charset.StandardCharsets
-
+import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
-import play.shaded.ahc.org.asynchttpclient.util.HttpUtils
+import play.api.libs.ws.{ DefaultBodyReadables, StandaloneWSResponse, WSCookie }
 import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse }
-import play.api.libs.ws.{ StandaloneWSResponse, WSCookie }
 
-import scala.xml.Elem
+import scala.collection.JavaConverters._
 
 /**
- * A WS HTTP response.
+ * A WS HTTP response backed by org.asynchttpclient.Response.
  */
-class StandaloneAhcWSResponse(ahcResponse: AHCResponse) extends StandaloneWSResponse with AhcUtilities {
+class StandaloneAhcWSResponse(ahcResponse: AHCResponse) extends StandaloneWSResponse
+    with DefaultBodyReadables
+    with AhcUtilities {
 
-  import play.api.libs.json._
+  override lazy val headers: Map[String, Seq[String]] = headersToMap(ahcResponse.getHeaders)
 
-  /**
-   * Return the headers of the response as a case-insensitive map
-   */
-  lazy val headers: Map[String, Seq[String]] = {
-    val headers: HttpHeaders = ahcResponse.getHeaders
-    headersToMap(headers)
-  }
+  override def underlying[T]: T = ahcResponse.asInstanceOf[T]
 
-  /**
-   * @return The underlying response object.
-   */
-  def underlying[T] = ahcResponse.asInstanceOf[T]
+  override def status: Int = ahcResponse.getStatusCode
 
-  /**
-   * The response status code.
-   */
-  def status: Int = ahcResponse.getStatusCode
+  override def statusText: String = ahcResponse.getStatusText
 
-  /**
-   * The response status message.
-   */
-  def statusText: String = ahcResponse.getStatusText
+  override lazy val cookies: Seq[WSCookie] = ahcResponse.getCookies.asScala.map(new AhcWSCookie(_))
 
-  /**
-   * Get all the cookies.
-   */
-  def cookies: Seq[WSCookie] = {
-    import scala.collection.JavaConverters._
-    ahcResponse.getCookies.asScala.map(new AhcWSCookie(_))
-  }
+  override def cookie(name: String): Option[WSCookie] = cookies.find(_.name == Option(name))
 
-  /**
-   * Get only one cookie, using the cookie name.
-   */
-  def cookie(name: String): Option[WSCookie] = cookies.find(_.name == Option(name))
+  override def toString: String = s"StandaloneAhcWSResponse($status, $statusText)"
 
   /**
    * The response body as String.
    */
-  lazy val body: String = {
-    // RFC-2616#3.7.1 states that any text/* mime type should default to ISO-8859-1 charset if not
-    // explicitly set, while Plays default encoding is UTF-8.  So, use UTF-8 if charset is not explicitly
-    // set and content type is not text/*, otherwise default to ISO-8859-1
-    val contentType = Option(ahcResponse.getContentType).getOrElse("application/octet-stream")
-    val charset = Option(HttpUtils.parseCharset(contentType)).getOrElse {
-      if (contentType.startsWith("text/"))
-        HttpUtils.DEFAULT_CHARSET
-      else
-        StandardCharsets.UTF_8
-    }
-    ahcResponse.getResponseBody(charset)
+  override lazy val body: String = {
+    // https://tools.ietf.org/html/rfc7231#section-3.1.1.3
+    // https://tools.ietf.org/html/rfc7231#appendix-B
+    // The default charset of ISO-8859-1 for text media types has been
+    // removed; the default is now whatever the media type definition says.
+    ahcResponse.getResponseBody()
   }
-
-  /**
-   * The response body as Xml.
-   */
-  lazy val xml: Elem = XML.instance.loadString(body)
-
-  /**
-   * The response body as Json.
-   */
-  lazy val json: JsValue = Json.parse(ahcResponse.getResponseBodyAsBytes)
 
   /**
    * The response body as a byte string.
    */
-  @throws(classOf[IOException])
-  def bodyAsBytes: ByteString = ByteString(ahcResponse.getResponseBodyAsBytes)
+  override lazy val bodyAsBytes: ByteString = ByteString.fromArray(underlying[AHCResponse].getResponseBodyAsBytes)
 
-  override def toString: String =
-    s"AhcWSResponse($status, $statusText)"
-
+  override lazy val bodyAsSource: Source[ByteString, _] = Source.single(bodyAsBytes)
 }
 
 object StandaloneAhcWSResponse {

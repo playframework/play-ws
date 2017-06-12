@@ -6,15 +6,18 @@ package play.api.libs.ws.ahc
 import javax.inject.Inject
 
 import akka.stream.Materializer
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import com.typesafe.sslconfig.ssl.SystemConfiguration
 import com.typesafe.sslconfig.ssl.debug.DebugConfiguration
 import play.api.libs.ws.ahc.cache._
-import play.api.libs.ws.{ EmptyBody, StandaloneWSClient, StandaloneWSRequest, StreamedResponse }
+import play.api.libs.ws.{ EmptyBody, StandaloneWSClient, StandaloneWSRequest }
 import play.shaded.ahc.org.asynchttpclient.uri.Uri
 import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse, _ }
 
 import scala.collection.immutable.TreeMap
-import scala.concurrent.{ Future, Promise }
+import scala.compat.java8.FunctionConverters
+import scala.concurrent.{ Await, Future, Promise }
 import scala.util.{ Failure, Success, Try }
 
 /**
@@ -82,11 +85,42 @@ class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(implici
   }
 
   private[ahc] def executeStream(request: Request): Future[StreamedResponse] = {
-    Streamed.execute(asyncHttpClient, request)(materializer.executionContext)
+    val promise = Promise[StreamedResponse]()
+
+    val function = FunctionConverters.asJavaFunction[StreamedState, StreamedResponse](state =>
+      new StreamedResponse(
+        this,
+        state.statusCode,
+        state.statusText,
+        state.uriOption.get,
+        state.responseHeaders,
+        state.publisher)
+    )
+    asyncHttpClient.executeRequest(request, new DefaultStreamedAsyncHandler[StreamedResponse](function, promise))
+    promise.future
   }
+
+  private[ahc] def blockingToByteString(bodyAsSource: Source[ByteString, _]) = {
+    StandaloneAhcWSClient.logger.warn(s"blockingToByteString is a blocking and unsafe operation!")
+
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+    val limitedSource = bodyAsSource.limit(StandaloneAhcWSClient.elementLimit)
+    val result = limitedSource.runFold(ByteString.createBuilder) { (acc, bs) =>
+      acc.append(bs)
+    }.map(_.result())
+
+    Await.result(result, StandaloneAhcWSClient.blockingTimeout)
+  }
+
 }
 
 object StandaloneAhcWSClient {
+
+  import scala.concurrent.duration._
+  val blockingTimeout = 50.milliseconds
+  val elementLimit = 13 // 13 8192k blocks is roughly 100k
+  private val logger = org.slf4j.LoggerFactory.getLogger(this.getClass)
 
   private[ahc] val loggerFactory = new AhcLoggerFactory(org.slf4j.LoggerFactory.getILoggerFactory)
 
@@ -126,3 +160,4 @@ object StandaloneAhcWSClient {
     wsClient
   }
 }
+

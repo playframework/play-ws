@@ -9,7 +9,6 @@ import java.nio.charset.{ Charset, StandardCharsets }
 
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
-import akka.util.ByteString
 import play.api.libs.ws.{ StandaloneWSRequest, _ }
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
@@ -199,7 +198,7 @@ case class StandaloneAhcWSRequest(
     filters.foldRight(next)((filter, executor) => filter.apply(executor))
   }
 
-  override def stream(): Future[StreamedResponse] = {
+  override def stream(): Future[Response] = {
     client.executeStream(buildRequest())
   }
 
@@ -264,11 +263,6 @@ case class StandaloneAhcWSRequest(
 
     val (builderWithBody, updatedHeaders) = body match {
       case EmptyBody => (builder, this.headers)
-      case FileBody(file) =>
-        import play.shaded.ahc.org.asynchttpclient.request.body.generator.FileBodyGenerator
-        val bodyGenerator = new FileBodyGenerator(file)
-        builder.setBody(bodyGenerator)
-        (builder, this.headers)
       case InMemoryBody(bytes) =>
         val ct: String = contentType.getOrElse("text/plain")
 
@@ -306,7 +300,7 @@ case class StandaloneAhcWSRequest(
         }
 
         (builder, h)
-      case StreamedBody(source) =>
+      case SourceBody(source) =>
         // If the body has a streaming interface it should be up to the user to provide a manual Content-Length
         // else every content would be Transfer-Encoding: chunked
         // If the Content-Length is -1 Async-Http-Client sets a Transfer-Encoding: chunked
@@ -391,16 +385,6 @@ case class StandaloneAhcWSRequest(
    */
   def requestUrl: String = {
     buildRequest().getUrl
-  }
-
-  /**
-   * Returns the body as an array of bytes.  This is an AHC specific method.
-   */
-  def getBody: Option[ByteString] = {
-    body match {
-      case InMemoryBody(bytes) => Some(bytes)
-      case _ => None
-    }
   }
 
 }

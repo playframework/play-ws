@@ -1,14 +1,20 @@
 /*
  * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
  */
-package play.api.libs.ws.ahc
+
+package play.api.libs.ws
 
 import javax.xml.XMLConstants
 import javax.xml.parsers.SAXParserFactory
 
-import play.libs.ws.ahc.XML.Constants
+import scala.xml.Elem
+import scala.xml.factory.XMLLoader
 
-private[ahc] object XML {
+/**
+ *
+ */
+object XML {
+  import play.libs.ws.XML.Constants
 
   /*
    * We want control over the sax parser used so we specify the factory required explicitly. We know that
@@ -25,6 +31,6 @@ private[ahc] object XML {
   /*
    * A parser to be used that is configured to ensure that no schemas are loaded.
    */
-  def instance = scala.xml.XML.withSAXParser(xercesSaxParserFactory.newSAXParser())
+  def parser: XMLLoader[Elem] = scala.xml.XML.withSAXParser(xercesSaxParserFactory.newSAXParser())
 
 }

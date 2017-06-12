@@ -3,12 +3,9 @@
  */
 package play.libs.ws;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import org.w3c.dom.Document;
-import play.libs.ws.WSCookie;
+import akka.stream.javadsl.Source;
+import akka.util.ByteString;
 
-import java.io.InputStream;
-import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -74,32 +71,57 @@ public interface StandaloneWSResponse {
     WSCookie getCookie(String name);
 
     /**
-     * @return the body as a string.
+     * @return the content type.
      */
+    String getContentType();
+
+    /**
+     * Returns the response getBody as a particular type, through a
+     * {@link BodyReadable} transformation.  You can define your
+     * own {@link BodyReadable} types:
+     *
+     * <pre>
+     * {@code public class MyClass {
+     *   private BodyReadable<Foo, StandaloneWSResponse> fooReadable = (response) -> new Foo();
+     *
+     *   public void readAsFoo(StandaloneWSResponse response) {
+     *       Foo foo = response.getBody(fooReadable);
+     *   }
+     * }
+     * }
+     * </pre>
+     *
+     * or use {@code play.libs.ws.ahc.DefaultResponseReadables}
+     * for the built-ins:
+     *
+     * <pre>
+     * {@code public class MyClass implements DefaultResponseReadables {
+     *     public void readAsString(StandaloneWSResponse response) {
+     *         String getBody = response.getBody(string());
+     *     }
+     *
+     *     public void readAsJson(StandaloneWSResponse response) {
+     *         JsonNode json = response.getBody(json());
+     *     }
+     * }
+     * }
+     * </pre>
+     *
+     * @param readable the readable to convert the response to a T
+     * @param <T> the end type to return
+     * @return the response getBody transformed into an instance of T
+     */
+    <T> T getBody(BodyReadable<T> readable);
+
     String getBody();
 
-    /**
-     * @return the body as XML.
-     */
-    Document asXml();
+    ByteString getBodyAsBytes();
 
     /**
-     * @return the body as JSON node.
+     * Converts a response body into Source[ByteString, NotUsed].
+     *
+     * Note that this is only usable with a streaming request:
+     *
      */
-    JsonNode asJson();
-
-    /**
-     * @return the body as a stream.
-     */
-    InputStream getBodyAsStream();
-
-    /**
-     * @return the body as an array of bytes.
-     */
-    byte[] asByteArray();
-
-    /**
-     * @return the URI of the response.
-     */
-    URI getUri();
+    Source<ByteString, ?> getBodyAsSource();
 }
