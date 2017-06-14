@@ -13,7 +13,6 @@ import play.api.libs.ws.{ StandaloneWSRequest, _ }
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
 import play.shaded.ahc.org.asynchttpclient._
-import play.shaded.ahc.org.asynchttpclient.cookie.{ Cookie => AhcCookie }
 import play.shaded.ahc.org.asynchttpclient.proxy.{ ProxyServer => AHCProxyServer }
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils
 

@@ -17,6 +17,9 @@ trait CookieBuilder extends WSCookieConverter {
 
 }
 
+/**
+ * Converts between AHC cookie and the WS cookie.
+ */
 trait WSCookieConverter {
 
   def asCookie(cookie: WSCookie): Cookie = {
@@ -37,7 +40,7 @@ trait WSCookieConverter {
       value = c.getValue,
       domain = Option(c.getDomain),
       path = Option(c.getPath),
-      maxAge = Option(c.getMaxAge).filterNot(_ == -1L),
+      maxAge = Option(c.getMaxAge).filterNot(_ < 0),
       secure = c.isSecure,
       httpOnly = c.isHttpOnly
     )

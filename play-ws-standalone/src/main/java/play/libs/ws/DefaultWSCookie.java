@@ -4,8 +4,6 @@
 
 package play.libs.ws;
 
-import play.libs.ws.WSCookie;
-
 import java.util.Optional;
 
 /**
@@ -52,7 +50,11 @@ public class DefaultWSCookie implements WSCookie {
 
     @Override
     public Optional<Long> getMaxAge() {
-        return Optional.ofNullable(maxAge);
+        if (maxAge != null && maxAge.longValue() > -1L) {
+            return Optional.of(maxAge);
+        } else {
+            return Optional.ofNullable(maxAge);
+        }
     }
 
     @Override
