@@ -11,7 +11,7 @@ We've provided some documentation here on how to use Play WS in your app (withou
 To get started, you can add `play-ahc-ws-standalone` as a dependency in SBT:
 
 ```scala
-libraryDependencies += "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.0.0-M10"
+libraryDependencies += "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.0.0-RC3"
 ```
 
 This adds the standalone version of Play WS, backed by [AsyncHttpClient](https://github.com/AsyncHttpClient/async-http-client).  This library contains both the Scala and Java APIs, under `play.api.libs.ws` and `play.libs.ws`.
@@ -215,9 +215,11 @@ object ScalaClient {
   def main(args: Array[String]): Unit = {
     // Create Akka system for thread and streaming management
     implicit val system = ActorSystem()
+    /* currently causes the termination to hang
     system.registerOnTermination {
       System.exit(0)
     }
+    */
     implicit val materializer = ActorMaterializer()
 
     // Create the standalone WS client
