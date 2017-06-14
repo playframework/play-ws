@@ -68,7 +68,7 @@ public interface StandaloneWSResponse {
      * @param name the cookie name
      * @return a single cookie from the response, if any.
      */
-    WSCookie getCookie(String name);
+    Optional<WSCookie> getCookie(String name);
 
     /**
      * @return the content type.

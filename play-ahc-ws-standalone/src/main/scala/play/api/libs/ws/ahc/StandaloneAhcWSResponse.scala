@@ -15,6 +15,7 @@ import scala.collection.JavaConverters._
  */
 class StandaloneAhcWSResponse(ahcResponse: AHCResponse) extends StandaloneWSResponse
     with DefaultBodyReadables
+    with WSCookieConverter
     with AhcUtilities {
 
   override lazy val headers: Map[String, Seq[String]] = headersToMap(ahcResponse.getHeaders)
@@ -25,9 +26,9 @@ class StandaloneAhcWSResponse(ahcResponse: AHCResponse) extends StandaloneWSResp
 
   override def statusText: String = ahcResponse.getStatusText
 
-  override lazy val cookies: Seq[WSCookie] = ahcResponse.getCookies.asScala.map(new AhcWSCookie(_))
+  override lazy val cookies: Seq[WSCookie] = ahcResponse.getCookies.asScala.map(asCookie)
 
-  override def cookie(name: String): Option[WSCookie] = cookies.find(_.name == Option(name))
+  override def cookie(name: String): Option[WSCookie] = cookies.find(_.name == name)
 
   override def toString: String = s"StandaloneAhcWSResponse($status, $statusText)"
 

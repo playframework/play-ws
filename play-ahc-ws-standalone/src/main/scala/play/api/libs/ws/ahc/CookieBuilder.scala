@@ -1,17 +1,45 @@
 package play.api.libs.ws.ahc
 
-import play.api.libs.ws.WSCookie
+import play.api.libs.ws.{ DefaultWSCookie, WSCookie }
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders.Names._
-import play.shaded.ahc.org.asynchttpclient.cookie.CookieDecoder
+import play.shaded.ahc.org.asynchttpclient.cookie.{ Cookie, CookieDecoder }
 
-trait CookieBuilder {
+trait CookieBuilder extends WSCookieConverter {
   def buildCookies(headers: Map[String, Seq[String]]): Seq[WSCookie] = {
     val option = headers.get(SET_COOKIE2).orElse(headers.get(SET_COOKIE))
     option.map { cookiesHeaders =>
       for {
         value <- cookiesHeaders
         Some(c) = Option(CookieDecoder.decode(value))
-      } yield new AhcWSCookie(c)
+      } yield asCookie(c)
     }.getOrElse(Seq.empty)
+  }
+
+}
+
+trait WSCookieConverter {
+
+  def asCookie(cookie: WSCookie): Cookie = {
+    Cookie.newValidCookie(
+      cookie.name,
+      cookie.value,
+      false,
+      cookie.domain.orNull,
+      cookie.path.orNull,
+      cookie.maxAge.getOrElse(-1L),
+      cookie.secure,
+      cookie.httpOnly)
+  }
+
+  def asCookie(c: Cookie): WSCookie = {
+    DefaultWSCookie(
+      name = c.getName,
+      value = c.getValue,
+      domain = Option(c.getDomain),
+      path = Option(c.getPath),
+      maxAge = Option(c.getMaxAge).filterNot(_ == -1L),
+      secure = c.isSecure,
+      httpOnly = c.isHttpOnly
+    )
   }
 }

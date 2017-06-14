@@ -33,12 +33,13 @@ class AhcWSResponseSpec extends Specification with Mockito {
       val cookies: Seq[WSCookie] = response.cookies
       val cookie = cookies.head
 
-      cookie.domain must ===(domain)
-      cookie.name must beSome(name)
-      cookie.value must beSome(value)
-      cookie.path must ===(path)
+      cookie.name must ===(name)
+      cookie.value must ===(value)
+      cookie.path must beSome(path)
+      cookie.domain must beSome(domain)
       cookie.maxAge must beSome(maxAge)
       cookie.secure must beFalse
+      cookie.httpOnly must beFalse
     }
 
     "get a single cookie from an AHC response" in {
@@ -54,12 +55,13 @@ class AhcWSResponseSpec extends Specification with Mockito {
       val optionCookie = response.cookie("someName")
       optionCookie must beSome[WSCookie].which {
         cookie =>
-          cookie.name must beSome(name)
-          cookie.value must beSome(value)
-          cookie.domain must ===(domain)
-          cookie.path must ===(path)
+          cookie.name must ===(name)
+          cookie.value must ===(value)
+          cookie.path must beSome(path)
+          cookie.domain must beSome(domain)
           cookie.maxAge must beSome(maxAge)
           cookie.secure must beFalse
+          cookie.httpOnly must beFalse
       }
     }
 

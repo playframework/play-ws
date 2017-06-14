@@ -36,24 +36,24 @@ trait WSCookie {
   def underlying[T]: T
 
   /**
-   * The domain.
-   */
-  def domain: String
-
-  /**
    * The cookie name.
    */
-  def name: Option[String]
+  def name: String
 
   /**
    * The cookie value.
    */
-  def value: Option[String]
+  def value: String
+
+  /**
+   * The domain.
+   */
+  def domain: Option[String]
 
   /**
    * The path.
    */
-  def path: String
+  def path: Option[String]
 
   /**
    * The maximum age.
@@ -69,6 +69,19 @@ trait WSCookie {
    * If the cookie is HTTPOnly.
    */
   def httpOnly: Boolean
+
+}
+
+case class DefaultWSCookie(
+    name: String,
+    value: String,
+    domain: Option[String] = None,
+    path: Option[String] = None,
+    maxAge: Option[Long] = None,
+    secure: Boolean = false,
+    httpOnly: Boolean = false
+) extends WSCookie {
+  def underlying[T]: T = this.asInstanceOf[T]
 }
 
 /**

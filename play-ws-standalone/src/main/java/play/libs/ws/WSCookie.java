@@ -3,24 +3,12 @@
  */
 package play.libs.ws;
 
+import java.util.Optional;
+
 /**
  * A WS Cookie.
  */
 public interface WSCookie {
-
-    /**
-     * Returns the underlying "native" object for the cookie.
-     * <p>
-     * This is probably an <code>org.asynchttpclient.cookie.Cookie</code>.
-     *
-     * @return the "native" object
-     */
-    Object getUnderlying();
-
-    /**
-     * @return the cookie domain.
-     */
-    String getDomain();
 
     /**
      * @return the cookie name.
@@ -35,12 +23,17 @@ public interface WSCookie {
     /**
      * @return the cookie path.
      */
-    String getPath();
+    Optional<String> getPath();
+
+    /**
+     * @return the cookie domain.
+     */
+    Optional<String> getDomain();
 
     /**
      * @return the cookie max age, in seconds.
      */
-    long getMaxAge();
+    Optional<Long> getMaxAge();
 
     /**
      * @return if the cookie is secure or not.

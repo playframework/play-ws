@@ -41,7 +41,7 @@ case class StandaloneAhcWSRequest(
     proxyServer: Option[WSProxyServer] = None,
     disableUrlEncoding: Option[Boolean] = None,
     private val filters: Seq[WSRequestFilter] = Nil
-)(implicit materializer: Materializer) extends StandaloneWSRequest with AhcUtilities {
+)(implicit materializer: Materializer) extends StandaloneWSRequest with AhcUtilities with WSCookieConverter {
   override type Self = StandaloneWSRequest
   override type Response = StandaloneWSResponse
 
@@ -326,7 +326,7 @@ case class StandaloneAhcWSRequest(
     }
 
     // cookies
-    cookies.foreach(c => builder.addCookie(c.underlying[AhcCookie]))
+    cookies.foreach(c => builder.addCookie(asCookie(c)))
 
     builderWithBody.build()
   }

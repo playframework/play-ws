@@ -16,6 +16,7 @@ import play.libs.ws.*;
 import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders;
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders;
 import play.shaded.ahc.org.asynchttpclient.*;
+import play.shaded.ahc.org.asynchttpclient.cookie.Cookie;
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils;
 
 import java.net.MalformedURLException;
@@ -476,8 +477,16 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
         // add cookies
         this.cookies.forEach(cookie -> {
-            AhcWSCookie ahcWSCookie = (AhcWSCookie) cookie;
-            builder.addCookie(ahcWSCookie.getUnderlying());
+            play.shaded.ahc.org.asynchttpclient.cookie.Cookie ahcCookie = Cookie.newValidCookie(
+                    cookie.getName(),
+                    cookie.getValue(),
+                    false,
+                    cookie.getDomain().orElse(null),
+                    cookie.getPath().orElse(null),
+                    cookie.getMaxAge().orElse(-1L),
+                    cookie.isSecure(),
+                    cookie.isHttpOnly());
+            builder.addCookie(ahcCookie);
         });
 
         return builder.build();

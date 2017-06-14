@@ -5,6 +5,7 @@
 package play.libs.ws.ahc;
 
 import play.libs.ws.WSCookie;
+import play.libs.ws.WSCookieBuilder;
 import play.shaded.ahc.org.asynchttpclient.cookie.CookieDecoder;
 
 import java.util.ArrayList;
@@ -19,11 +20,10 @@ import static play.shaded.ahc.org.asynchttpclient.util.MiscUtils.isNonEmpty;
 interface CookieBuilder {
 
     default List<WSCookie> buildCookies(Map<String, List<String>> headers) {
-
         List<String> setCookieHeaders = headers.get(SET_COOKIE2);
 
         if (!isNonEmpty(setCookieHeaders)) {
-            setCookieHeaders =headers.get(SET_COOKIE);
+            setCookieHeaders = headers.get(SET_COOKIE);
         }
 
         if (isNonEmpty(setCookieHeaders)) {
@@ -31,7 +31,16 @@ interface CookieBuilder {
             for (String value : setCookieHeaders) {
                 play.shaded.ahc.org.asynchttpclient.cookie.Cookie c = CookieDecoder.decode(value);
                 if (c != null) {
-                    cookies.add(new AhcWSCookie(c));
+                    WSCookie wsCookie = new WSCookieBuilder()
+                            .setName(c.getName())
+                            .setValue(c.getValue())
+                            .setDomain(c.getDomain())
+                            .setPath(c.getPath())
+                            .setMaxAge(c.getMaxAge())
+                            .setSecure(c.isSecure())
+                            .setHttpOnly(c.isHttpOnly())
+                            .build();
+                    cookies.add(wsCookie);
                 }
             }
             return Collections.unmodifiableList(cookies);
