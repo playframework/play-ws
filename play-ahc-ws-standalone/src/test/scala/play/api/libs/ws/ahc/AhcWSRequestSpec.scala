@@ -78,7 +78,7 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
 
       request
         .withQueryStringParameters("bar" -> "baz")
-        .addQueryStringParameter("bar" -> "bah")
+        .addQueryStringParameters("bar" -> "bah")
         .uri.toString must equalTo("http://example.com?bar=bah&bar=baz")
     }
 
@@ -86,7 +86,7 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
       val request = StandaloneAhcWSRequest(client, "http://example.com")
       val newRequest = request
         .withQueryStringParameters("play" -> "foo1")
-        .addQueryStringParameter("play" -> "foo2")
+        .addQueryStringParameters("play" -> "foo2")
 
       newRequest.queryString.get("play") must beSome.which(_.contains("foo1"))
       newRequest.queryString.get("play") must beSome.which(_.contains("foo2"))
@@ -112,11 +112,7 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
 
   "For Cookies" in {
 
-    def cookie(name: String, value: String): WSCookie = {
-      new AhcWSCookie(
-        AHCCookie.newValidCookie(name, value, false, "example.com", "/", 1000, true, true)
-      )
-    }
+    def cookie(name: String, value: String): WSCookie = DefaultWSCookie(name, value)
 
     "add cookies to request" in {
       withClient { client =>
@@ -182,6 +178,20 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
 
         req.getCookies.asScala(1).getName must beEqualTo("cookie4")
         req.getCookies.asScala(1).getValue must beEqualTo("value4")
+      }
+    }
+
+    "set cookies through Cookie header directly" in {
+      withClient { client =>
+        val cookies = Seq("cookie1" -> "value1", "cookie2" -> "value2")
+        val req: AHCRequest = client
+          .url("http://example.com")
+          .addHttpHeaders("Cookie" -> cookies.map(c => c._1 + "=" + c._2).mkString(", "))
+          .asInstanceOf[StandaloneAhcWSRequest]
+          .buildRequest()
+
+        req.getHeaders.entries.asScala must size(1)
+        req.getHeaders.get("Cookie") must beEqualTo("cookie1=value1, cookie2=value2")
       }
     }
   }
@@ -547,9 +557,4 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
     req.getHeaders.getAll(HttpHeaders.Names.CONTENT_TYPE).asScala must_== Seq("text/plain; charset=US-ASCII")
   }
 
-  "AhcWSCookie.underlying" in {
-    val mockCookie = mock[AHCCookie]
-    val cookie = new AhcWSCookie(mockCookie)
-    cookie.underlying[AHCCookie] must beAnInstanceOf[AHCCookie]
-  }
 }

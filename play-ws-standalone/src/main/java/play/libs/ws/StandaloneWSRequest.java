@@ -218,7 +218,7 @@ public interface StandaloneWSRequest {
      * @see #addCookie(WSCookie)
      * @see #setCookies(List)
      */
-    StandaloneWSRequest addCookies(WSCookie ... cookies);
+    StandaloneWSRequest addCookies(WSCookie... cookies);
 
     /**
      * Set the request cookies. This discard the existing cookies.

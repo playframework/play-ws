@@ -26,37 +26,32 @@ object WSAuthScheme {
 }
 
 /**
- * A WS Cookie.  This is a trait so that we are not tied to a specific client.
+ * A WS Cookie.
  */
 trait WSCookie {
 
   /**
-   * The underlying "native" cookie object for the client.
-   */
-  def underlying[T]: T
-
-  /**
-   * The domain.
-   */
-  def domain: String
-
-  /**
    * The cookie name.
    */
-  def name: Option[String]
+  def name: String
 
   /**
    * The cookie value.
    */
-  def value: Option[String]
+  def value: String
+
+  /**
+   * The domain.
+   */
+  def domain: Option[String]
 
   /**
    * The path.
    */
-  def path: String
+  def path: Option[String]
 
   /**
-   * The maximum age.
+   * The maximum age.  If negative, then returns None.
    */
   def maxAge: Option[Long]
 
@@ -70,6 +65,16 @@ trait WSCookie {
    */
   def httpOnly: Boolean
 }
+
+case class DefaultWSCookie(
+  name: String,
+  value: String,
+  domain: Option[String] = None,
+  path: Option[String] = None,
+  maxAge: Option[Long] = None,
+  secure: Boolean = false,
+  httpOnly: Boolean = false
+) extends WSCookie
 
 /**
  * A WS proxy.

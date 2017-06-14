@@ -10,14 +10,17 @@ import org.reactivestreams.Publisher;
 import play.libs.ws.BodyReadable;
 import play.libs.ws.StandaloneWSResponse;
 import play.libs.ws.WSCookie;
+import play.libs.ws.WSCookieBuilder;
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders;
 import play.shaded.ahc.org.asynchttpclient.HttpResponseBodyPart;
 import play.shaded.ahc.org.asynchttpclient.Response;
+import play.shaded.ahc.org.asynchttpclient.cookie.Cookie;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 
 import static java.util.stream.Collectors.toList;
@@ -73,21 +76,32 @@ public class StandaloneAhcWSResponse implements StandaloneWSResponse {
      */
     @Override
     public List<WSCookie> getCookies() {
-        return ahcResponse.getCookies().stream().map(AhcWSCookie::new).collect(toList());
+        return ahcResponse.getCookies().stream().map(this::asCookie).collect(toList());
+    }
+
+    public WSCookie asCookie(Cookie c) {
+       return new WSCookieBuilder()
+                .setName(c.getName())
+                .setValue(c.getValue())
+                .setDomain(c.getDomain())
+                .setPath(c.getPath())
+                .setMaxAge(c.getMaxAge())
+                .setSecure(c.isSecure())
+                .setHttpOnly(c.isHttpOnly()).build();
     }
 
     /**
      * Get only one cookie, using the cookie name.
      */
     @Override
-    public WSCookie getCookie(String name) {
+    public Optional<WSCookie> getCookie(String name) {
         for (play.shaded.ahc.org.asynchttpclient.cookie.Cookie ahcCookie : ahcResponse.getCookies()) {
             // safe -- cookie.getName() will never return null
             if (ahcCookie.getName().equals(name)) {
-                return (new AhcWSCookie(ahcCookie));
+                return Optional.of(asCookie(ahcCookie));
             }
         }
-        return null;
+        return Optional.empty();
     }
 
     @Override

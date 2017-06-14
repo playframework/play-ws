@@ -153,7 +153,7 @@ trait StandaloneWSRequest {
    *
    * @param parameters the query string parameters
    */
-  def addQueryStringParameter(parameters: (String, String)*): Self = {
+  def addQueryStringParameters(parameters: (String, String)*): Self = {
     val newQueryStringParams = queryString.toList.flatMap { param =>
       param._2.map(p => param._1 -> p)
     } ++ parameters

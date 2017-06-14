@@ -368,9 +368,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyWritab
     "For Cookies" in {
 
       def cookie(name: String, value: String): WSCookie = {
-        new AhcWSCookie(
-          play.shaded.ahc.org.asynchttpclient.cookie.Cookie.newValidCookie(name, value, true, "example.com", "/", 1000, true, true)
-        )
+        new WSCookieBuilder().setName(name).setValue(value).build()
       }
 
       "add a new cookie" in {

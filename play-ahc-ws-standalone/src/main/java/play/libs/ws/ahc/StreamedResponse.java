@@ -77,9 +77,9 @@ public class StreamedResponse implements StandaloneWSResponse, CookieBuilder {
     }
 
     @Override
-    public WSCookie getCookie(String name) {
+    public Optional<WSCookie> getCookie(String name) {
         Predicate<WSCookie> predicate = (WSCookie c) -> c.getName().equals(name);
-        return getCookies().stream().filter(predicate).findFirst().orElse(null);
+        return getCookies().stream().filter(predicate).findFirst();
     }
 
     @Override
