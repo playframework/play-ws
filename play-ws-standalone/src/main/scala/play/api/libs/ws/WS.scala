@@ -67,13 +67,13 @@ trait WSCookie {
 }
 
 case class DefaultWSCookie(
-    name: String,
-    value: String,
-    domain: Option[String] = None,
-    path: Option[String] = None,
-    maxAge: Option[Long] = None,
-    secure: Boolean = false,
-    httpOnly: Boolean = false
+  name: String,
+  value: String,
+  domain: Option[String] = None,
+  path: Option[String] = None,
+  maxAge: Option[Long] = None,
+  secure: Boolean = false,
+  httpOnly: Boolean = false
 ) extends WSCookie
 
 /**
