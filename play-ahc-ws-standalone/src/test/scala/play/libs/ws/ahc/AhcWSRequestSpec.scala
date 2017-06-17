@@ -4,6 +4,7 @@
 package play.libs.ws.ahc
 
 import java.time.Duration
+import java.util.Collections
 
 import akka.util.ByteString
 import org.specs2.mock.Mockito
@@ -50,13 +51,28 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyWritab
       "keep existing content type when setting body" in {
         val client = mock[StandaloneAhcWSClient]
         val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
-          .setContentType("application/x-www-form-urlencoded") // set content type by hand
+          .setContentType("text/plain+hello") // set content type by hand
           .setBody(body("HELLO WORLD")) // and body is set to string (see #5221)
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
 
-        req.getHeaders.get(HttpHeaders.Names.CONTENT_TYPE) must be_==("application/x-www-form-urlencoded") // preserve the content type
+        req.getHeaders.get(HttpHeaders.Names.CONTENT_TYPE) must be_==("text/plain+hello") // preserve the content type
         req.getStringData must be_==("HELLO WORLD") // should result in byte data.
+      }
+
+      "have form params when passing in map" in {
+        import scala.collection.JavaConverters._
+        val client = mock[StandaloneAhcWSClient]
+        val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
+          .setBody(body(Collections.singletonMap("param1", "value1")))
+          .asInstanceOf[StandaloneAhcWSRequest]
+          .buildRequest()
+
+        // Must set the form url encoding autoomatically.
+        req.getHeaders.get("Content-Type") must be_==("application/x-www-form-urlencoded")
+
+        // Note we use getFormParams instead of getByteData here.
+        req.getFormParams.asScala must containTheSameElementsAs(List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1")))
       }
 
       "have form params when content-type application/x-www-form-urlencoded and signed" in {

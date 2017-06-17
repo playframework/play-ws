@@ -11,8 +11,15 @@ import akka.util.ByteString;
 
 import java.io.File;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
+
+import static java.util.stream.Collectors.joining;
 
 /**
  * This interface contains useful {@link BodyWritable} subclasses and default methods.
@@ -133,6 +140,28 @@ public interface DefaultBodyWritables {
      */
     default BodyWritable<Source<ByteString, ?>> body(File file) {
         return new SourceBodyWritable(FileIO.fromFile(file));
+    }
+
+    /**
+     * Creates {@link InMemoryBodyWritable} from form data, setting the content-type to ""application/x-www-form-urlencoded"
+     *
+     * @param formData the form data
+     * @return the serialized form data in form encoded data, using URLEncoder.encode.
+     */
+    default BodyWritable<ByteString> body(Map<String, String> formData) {
+        try {
+            List<String> values = new ArrayList<>();
+            for (Map.Entry<String, String> item : formData.entrySet()) {
+                String key = URLEncoder.encode(item.getKey(), "UTF-8");
+                String value = URLEncoder.encode(item.getValue(), "UTF-8");
+                values.add(key + "=" + value);
+            }
+            String s = values.stream().collect(joining("&"));
+            ByteString byteString = ByteString.fromString(s);
+            return new InMemoryBodyWritable(byteString, "application/x-www-form-urlencoded");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
