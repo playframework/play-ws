@@ -18,6 +18,7 @@ import play.api.libs.ws.ahc._
 import play.shaded.ahc.org.asynchttpclient._
 
 import scala.collection.mutable
+import scala.concurrent.Future
 
 class CachingSpec(implicit val executionEnv: ExecutionEnv) extends Specification with AkkaServerProvider with AfterAll with FutureMatchers with Mockito {
 
@@ -46,6 +47,8 @@ class CachingSpec(implicit val executionEnv: ExecutionEnv) extends Specification
 
     "work once" in {
       val cache = mock[Cache]
+      cache.get(any) returns Future.successful(None)
+
       val cachingAsyncHttpClient = new CachingAsyncHttpClient(asyncHttpClient, new AhcHttpCache(cache))
       val ws = new StandaloneAhcWSClient(cachingAsyncHttpClient)
 
@@ -55,22 +58,17 @@ class CachingSpec(implicit val executionEnv: ExecutionEnv) extends Specification
 
       there was one(cache).get(EffectiveURIKey("GET", new java.net.URI(s"http://localhost:$testServerPort/hello")))
     }
-
   }
 }
 
-class StubHttpCache extends Cache {
+class StubHttpCache(underlying: mutable.HashMap[EffectiveURIKey, ResponseEntry] = new mutable.HashMap()) extends Cache {
 
-  private val underlying = new mutable.HashMap[EffectiveURIKey, ResponseEntry]()
+  override def remove(key: EffectiveURIKey): Future[Unit] = Future.successful(underlying.remove(key))
 
-  override def remove(key: EffectiveURIKey): Unit = underlying.remove(key)
+  override def put(key: EffectiveURIKey, entry: ResponseEntry): Future[Unit] = Future.successful(underlying.put(key, entry))
 
-  override def put(key: EffectiveURIKey, entry: ResponseEntry): Unit = underlying.put(key, entry)
+  override def get(key: EffectiveURIKey): Future[Option[ResponseEntry]] = Future.successful(underlying.get(key))
 
-  override def get(key: EffectiveURIKey): ResponseEntry = underlying.get(key).orNull
-
-  override def close(): Unit = {
-
-  }
+  override def close(): Unit = {}
 
 }

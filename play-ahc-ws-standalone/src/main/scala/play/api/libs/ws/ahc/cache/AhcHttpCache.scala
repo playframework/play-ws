@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory
 import play.shaded.ahc.io.netty.handler.codec.http.{ DefaultHttpHeaders, HttpHeaders }
 import play.shaded.ahc.org.asynchttpclient._
 
+import scala.Option
 import scala.concurrent.{ ExecutionContext, Future }
 
 /**
@@ -24,6 +25,7 @@ import scala.concurrent.{ ExecutionContext, Future }
  * and use only the URI as the primary cache key.
  */
 class AhcHttpCache(underlying: Cache, heuristicsEnabled: Boolean = false)(implicit val executionContext: ExecutionContext) extends CacheDefaults with Debug {
+  require(underlying != null, "null underlying!")
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -49,21 +51,18 @@ class AhcHttpCache(underlying: Cache, heuristicsEnabled: Boolean = false)(implic
   def get(key: EffectiveURIKey): Future[Option[ResponseEntry]] = {
     logger.debug(s"get: key = $key")
     require(key != null, "key is null")
-    val entry = Option(underlying.get(key))
-    Future.successful(entry)
+    underlying.get(key)
   }
 
   def put(key: EffectiveURIKey, entry: ResponseEntry): Future[Unit] = {
     logger.debug(s"put: key = $key, entry = $entry")
     require(entry != null, "value is null")
-
     underlying.put(key, entry)
-    Future.successful(())
   }
 
   def remove(key: EffectiveURIKey): Future[Unit] = {
     require(key != null, "key is null")
-    Future.successful(underlying.remove(key))
+    underlying.remove(key)
   }
 
   /**
@@ -71,9 +70,11 @@ class AhcHttpCache(underlying: Cache, heuristicsEnabled: Boolean = false)(implic
    */
   def invalidateKey(key: EffectiveURIKey): Unit = {
     // mark any caches as stale by replacing the date with TSE
-    Option(underlying.get(key)).foreach { entry =>
-      val expiredEntry = entry.copy(expiresAt = Some(HttpDate.fromEpochSeconds(0)))
-      put(key, expiredEntry)
+    underlying.get(key).map { maybeEntry =>
+      maybeEntry.foreach { entry =>
+        val expiredEntry = entry.copy(expiresAt = Some(HttpDate.fromEpochSeconds(0)))
+        put(key, expiredEntry)
+      }
     }
   }
 
