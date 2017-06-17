@@ -416,7 +416,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
                     // If using a POST with OAuth signing, the builder looks at
                     // getFormParams() rather than getBody() and constructs the signature
                     // based on the form params.
-                    if (contentType.equals(APPLICATION_X_WWW_FORM_URLENCODED) && calculator != null) {
+                    if (contentType.equals(APPLICATION_X_WWW_FORM_URLENCODED)) {
                         possiblyModifiedHeaders.remove(CONTENT_LENGTH);
 
                         // XXX shouldn't the encoding be same as charset?

@@ -24,10 +24,10 @@ public class ByteStringRequestTest implements DefaultBodyReadables {
         final Response ahcResponse = mock(Response.class);
         final StandaloneAhcWSResponse response = new StandaloneAhcWSResponse(ahcResponse);
         when(ahcResponse.getContentType()).thenReturn(null);
-        when(ahcResponse.getResponseBody(StandardCharsets.UTF_8)).thenReturn("wsBody");
+        when(ahcResponse.getResponseBody()).thenReturn("wsBody");
 
         final String body = response.getBody();
-        verify(ahcResponse, times(1)).getResponseBody(StandardCharsets.UTF_8);
+        verify(ahcResponse, times(1)).getResponseBody();
         assertThat(body).isEqualTo("wsBody");
     }
 
