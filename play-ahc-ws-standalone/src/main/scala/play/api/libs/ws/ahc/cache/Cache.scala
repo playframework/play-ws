@@ -5,6 +5,8 @@
 
 package play.api.libs.ws.ahc.cache
 
+import scala.concurrent.Future
+
 /**
  * A very simple cache trait.
  *
@@ -17,20 +19,20 @@ package play.api.libs.ws.ahc.cache
  *      .expireAfterWrite(365, TimeUnit.DAYS)
  *      .build[EffectiveURIKey, ResponseEntry]()
  *
- *     override def remove(key: EffectiveURIKey): Unit = underlying.invalidate(key)
- *     override def put(key: EffectiveURIKey, entry: ResponseEntry): Unit = underlying.put(key, entry)
- *     override def get(key: EffectiveURIKey): ResponseEntry = underlying.getIfPresent(key)
+ *     override def remove(key: EffectiveURIKey) = Future.successful(Option(underlying.invalidate(key))
+ *     override def put(key: EffectiveURIKey, entry: ResponseEntry) = Future.successful(underlying.put(key, entry))
+ *     override def get(key: EffectiveURIKey) = Future.successful(underlying.getIfPresent(key))
  *     override def close(): Unit = underlying.cleanUp()
  * }
  * }}}
  */
 trait Cache {
 
-  def get(key: EffectiveURIKey): ResponseEntry
+  def get(key: EffectiveURIKey): Future[Option[ResponseEntry]]
 
-  def put(key: EffectiveURIKey, entry: ResponseEntry): Unit
+  def put(key: EffectiveURIKey, entry: ResponseEntry): Future[Unit]
 
-  def remove(key: EffectiveURIKey): Unit
+  def remove(key: EffectiveURIKey): Future[Unit]
 
   def close(): Unit
 

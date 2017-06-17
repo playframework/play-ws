@@ -17,7 +17,6 @@ import play.shaded.ahc.io.netty.handler.codec.http.{ DefaultHttpHeaders, HttpHea
 import play.shaded.ahc.org.asynchttpclient._
 import play.shaded.ahc.org.asynchttpclient.cookie.Cookie
 import play.shaded.ahc.org.asynchttpclient.uri.Uri
-
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils._
 
 class CacheableResponseBuilder {
@@ -241,6 +240,16 @@ object CacheableResponse {
     val headers = new DefaultHttpHeaders()
     val responseHeaders = CacheableHttpResponseHeaders(trailingHeaders = false, headers = headers)
     val bodyParts = util.Collections.emptyList[CacheableHttpResponseBodyPart]
+
+    CacheableResponse(status = status, headers = responseHeaders, bodyParts = bodyParts)
+  }
+
+  def apply(code: Int, urlString: String, body: String): CacheableResponse = {
+    val uri: Uri = Uri.create(urlString)
+    val status = new CacheableHttpResponseStatus(uri, code, "", "")
+    val headers = new DefaultHttpHeaders()
+    val responseHeaders = CacheableHttpResponseHeaders(trailingHeaders = false, headers = headers)
+    val bodyParts = util.Collections.singletonList(new CacheableHttpResponseBodyPart(body.getBytes, true))
 
     CacheableResponse(status = status, headers = responseHeaders, bodyParts = bodyParts)
   }
