@@ -376,6 +376,17 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyWritab
         requestWithQueryString("q=scala=playframework&src=typd") must throwA[RuntimeException]
       }
 
+      "support a query string parameter with an encoded equals sign" in {
+        import scala.collection.JavaConverters._
+        val client = mock[StandaloneAhcWSClient]
+        val request = new StandaloneAhcWSRequest(client, "http://example.com?bar=F%3Dma", /*materializer*/ null)
+        val queryParams = request.buildRequest().getQueryParams.asScala
+        val p = queryParams(0)
+
+        p.getName must beEqualTo("bar")
+        p.getValue must beEqualTo("F%253Dma")
+      }
+
       "not support a query string if it starts with = and is empty" in {
         requestWithQueryString("=&src=typd") must throwA[RuntimeException]
       }
