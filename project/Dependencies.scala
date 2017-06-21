@@ -23,8 +23,7 @@ object Dependencies {
 
   val scalaJava8Compat = Seq("org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0")
 
-  // Use the published milestone
-  val playJsonVersion = "2.6.0-M6"
+  val playJsonVersion = "2.6.0"
   val playJson = Seq("com.typesafe.play" %% "play-json" % playJsonVersion)
 
   val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "1.7.25")
@@ -46,9 +45,9 @@ object Dependencies {
   val asyncHttpClientVersion = "2.0.32"
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % asyncHttpClientVersion)
 
-  val akkaVersion = "2.5.0"
+  val akkaVersion = "2.5.3"
   val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion)
-  val akkaHttp = Seq("com.typesafe.akka" %% "akka-http" % "10.0.5")
+  val akkaHttp = Seq("com.typesafe.akka" %% "akka-http" % "10.0.8")
 
   val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.0")
 
