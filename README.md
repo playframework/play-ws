@@ -12,8 +12,10 @@ We've provided some documentation here on how to use Play WS in your app (withou
 To get started, you can add `play-ahc-ws-standalone` as a dependency in SBT:
 
 ```scala
-libraryDependencies += "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.0.0-M10"
+libraryDependencies += "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.0.0"
 ```
+
+Where the latest version is [![Maven](https://img.shields.io/maven-central/v/com.typesafe.play/play-ws-standalone_2.12.svg)](http://mvnrepository.com/artifact/com.typesafe.play/play-ws-standalone_2.12)
 
 This adds the standalone version of Play WS, backed by [AsyncHttpClient](https://github.com/AsyncHttpClient/async-http-client).  This library contains both the Scala and Java APIs, under `play.api.libs.ws` and `play.libs.ws`.
 
