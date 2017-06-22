@@ -128,6 +128,7 @@ val ahcMerge: MergeStrategy = new MergeStrategy {
       // so we have to manually tweak the resource file to match.
       val shadedline = line.replace("org.asynchttpclient", "play.shaded.ahc.org.asynchttpclient")
       IO.append(file, line)
+      IO.append(file, IO.Newline.getBytes(IO.defaultCharset))
       IO.append(file, shadedline)
       IO.append(file, IO.Newline.getBytes(IO.defaultCharset))
     }
