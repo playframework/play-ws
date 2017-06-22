@@ -127,6 +127,7 @@ val ahcMerge: MergeStrategy = new MergeStrategy {
       // In AsyncHttpClientConfigDefaults.java, the shading renames the resource keys
       // so we have to manually tweak the resource file to match.
       val shadedline = line.replace("org.asynchttpclient", "play.shaded.ahc.org.asynchttpclient")
+      IO.append(file, line)
       IO.append(file, shadedline)
       IO.append(file, IO.Newline.getBytes(IO.defaultCharset))
     }
