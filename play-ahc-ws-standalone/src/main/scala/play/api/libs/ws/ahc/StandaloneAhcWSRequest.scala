@@ -77,12 +77,12 @@ case class StandaloneAhcWSRequest(
     }
 
     // preserve the content type
-    newHeaders = contentType match {
-      case Some(ct) =>
-        newHeaders.updated(HttpHeaders.Names.CONTENT_TYPE, Seq(ct))
-      case None =>
-        newHeaders
-    }
+    //    newHeaders = contentType match {
+    //      case Some(ct) =>
+    //        newHeaders.updated(HttpHeaders.Names.CONTENT_TYPE, Seq(ct))
+    //      case None =>
+    //        newHeaders
+    //    }
 
     copy(headers = newHeaders)
   }
