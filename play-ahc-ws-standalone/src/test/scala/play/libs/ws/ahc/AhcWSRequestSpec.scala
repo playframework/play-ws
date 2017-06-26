@@ -68,7 +68,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyWritab
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
 
-        // Must set the form url encoding autoomatically.
+        // Must set the form url encoding automatically.
         req.getHeaders.get("Content-Type") must be_==("application/x-www-form-urlencoded")
 
         // Note we use getFormParams instead of getByteData here.
@@ -159,7 +159,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyWritab
       request.addHeader("Content-Type", "application/json")
       request.addHeader("Content-Type", "application/xml")
       val req = request.buildRequest()
-      req.getHeaders.get("Content-Type") must be_==("application/json")
+      req.getHeaders.getAll(HttpHeaders.Names.CONTENT_TYPE).asScala must_== Seq("application/json")
     }
 
     "only send first content type header and keep the charset if it has been set manually with a charset" in {
@@ -169,7 +169,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyWritab
       request.addHeader("Content-Type", "application/json; charset=US-ASCII")
       request.addHeader("Content-Type", "application/xml")
       val req = request.buildRequest()
-      req.getHeaders.get("Content-Type") must be_==("application/json; charset=US-ASCII")
+      req.getHeaders.getAll(HttpHeaders.Names.CONTENT_TYPE).asScala must_== Seq("application/json; charset=US-ASCII")
     }
 
     "Set Realm.UsePreemptiveAuth to false when WSAuthScheme.DIGEST being used" in {
