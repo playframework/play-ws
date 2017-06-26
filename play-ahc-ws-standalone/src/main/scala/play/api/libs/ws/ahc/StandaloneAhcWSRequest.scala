@@ -317,7 +317,7 @@ case class StandaloneAhcWSRequest(
     for {
       header <- updatedHeaders
       value <- header._2
-    } builder.addHeader(header._1, value)
+    } builderWithBody.addHeader(header._1, value)
 
     // Set the signature calculator.
     calc.map {
@@ -328,7 +328,7 @@ case class StandaloneAhcWSRequest(
     }
 
     // cookies
-    cookies.foreach(c => builder.addCookie(asCookie(c)))
+    cookies.foreach(c => builderWithBody.addCookie(asCookie(c)))
 
     builderWithBody.build()
   }
