@@ -600,10 +600,20 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
       req.getHeaders.getAll(HttpHeaders.Names.CONTENT_TYPE).asScala must_== Seq("application/json")
     }
 
-    "preserve the content type when setting a new body" in withClient { client =>
+    "preserve the existing content type when setting a new body" in withClient { client =>
       val req = client.url("http://playframework.com/")
         .addHttpHeaders(HttpHeaders.Names.CONTENT_TYPE -> "application/json") // override the content type
         .withBody("Hello World Body") // text/plain content type
+        .asInstanceOf[StandaloneAhcWSRequest]
+        .buildRequest()
+
+      req.getHeaders.getAll(HttpHeaders.Names.CONTENT_TYPE).asScala must_== Seq("application/json")
+    }
+
+    "preserve the existing content type when setting new headers without a new content type" in withClient { client =>
+      val req = client.url("http://playframework.com/")
+        .withContentType("application/json")
+        .withHttpHeaders("Some-Header" -> "header value")
         .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
 

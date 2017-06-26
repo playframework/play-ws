@@ -70,21 +70,20 @@ case class StandaloneAhcWSRequest(
     copy(auth = Some((username, password, scheme)))
 
   override def withHttpHeaders(hdrs: (String, String)*): Self = {
-    var newHeaders = hdrs.foldLeft(TreeMap[String, Seq[String]]()(CaseInsensitiveOrdered)) {
+    val newHeaders = hdrs.foldLeft(TreeMap[String, Seq[String]]()(CaseInsensitiveOrdered)) {
       (m, hdr) =>
         if (m.contains(hdr._1)) m.updated(hdr._1, m(hdr._1) :+ hdr._2)
         else m + (hdr._1 -> Seq(hdr._2))
     }
 
-    // preserve the content type
-    //    newHeaders = contentType match {
-    //      case Some(ct) =>
-    //        newHeaders.updated(HttpHeaders.Names.CONTENT_TYPE, Seq(ct))
-    //      case None =>
-    //        newHeaders
-    //    }
-
-    copy(headers = newHeaders)
+    // preserve the existing content type or override if the new headers contains a new one.
+    newHeaders.get(HttpHeaders.Names.CONTENT_TYPE) match {
+      case Some(_) => copy(headers = newHeaders)
+      case None =>
+        this.contentType
+          .map(ct => copy(headers = newHeaders).withContentType(ct))
+          .getOrElse(copy(headers = newHeaders))
+    }
   }
 
   override def withQueryStringParameters(parameters: (String, String)*): Self =
@@ -126,21 +125,21 @@ case class StandaloneAhcWSRequest(
   }
 
   /**
-   *
+   * performs a patch
    */
   override def patch[T: BodyWritable](body: T): Future[Response] = {
     withBody(body).execute("PATCH")
   }
 
   /**
-   *
+   * performs a post
    */
   override def post[T: BodyWritable](body: T): Future[Response] = {
     withBody(body).execute("POST")
   }
 
   /**
-   *
+   * performs a put
    */
   override def put[T: BodyWritable](body: T): Future[Response] = {
     withBody(body).execute("PUT")
