@@ -143,10 +143,21 @@ trait StandaloneWSRequest {
    * @param hdrs the headers to be added
    */
   def addHttpHeaders(hdrs: (String, String)*): Self = {
+    val contentType = hdrs.find(_._1.equalsIgnoreCase("Content-Type"))
     val newHeaders = headers.toList.flatMap { param =>
       param._2.map(p => param._1 -> p)
     } ++ hdrs
-    withHttpHeaders(newHeaders: _*)
+
+    // Content-Type is single valued:
+    // https://tools.ietf.org/html/rfc7231#section-3.1.1.5
+    //
+    // So we should undo the append made above.
+    contentType match {
+      case Some((_, contentTypeValue)) =>
+        withHttpHeaders(newHeaders: _*).withContentType(contentTypeValue)
+      case None =>
+        withHttpHeaders(newHeaders: _*)
+    }
   }
 
   /**

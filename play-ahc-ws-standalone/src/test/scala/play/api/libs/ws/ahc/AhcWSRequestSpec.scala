@@ -376,7 +376,9 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
           .withBody("HELLO WORLD") // and body is set to string (see #5221)
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
+
         (new String(req.getByteData, "UTF-8")) must be_==("HELLO WORLD") // should result in byte data.
+        req.getHeaders.getAll(HttpHeaders.Names.CONTENT_TYPE).asScala must_== Seq("application/x-www-form-urlencoded")
       }
     }
 
@@ -535,7 +537,8 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
     val consumerKey = ConsumerKey("key", "secret")
     val requestToken = RequestToken("token", "secret")
     val calc = OAuthCalculator(consumerKey, requestToken)
-    val req: AHCRequest = client.url("http://playframework.com/").withBody(Map("param1" -> Seq("value1")))
+    val req: AHCRequest = client.url("http://playframework.com/")
+      .withBody(Map("param1" -> Seq("value1")))
       .withHttpHeaders("Content-Length" -> "9001") // add a meaningless content length here...
       .sign(calc) // this is signed, so content length is no longer valid per #5221
       .asInstanceOf[StandaloneAhcWSRequest]
