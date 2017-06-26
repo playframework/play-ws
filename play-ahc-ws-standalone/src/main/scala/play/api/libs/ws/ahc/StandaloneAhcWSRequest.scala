@@ -155,10 +155,9 @@ case class StandaloneAhcWSRequest(
   }
 
   private def withBodyAndContentType(wsBody: WSBody, contentType: String): Self = {
-    if (headers.contains(HttpHeaders.Names.CONTENT_TYPE)) {
-      copy(body = wsBody)
-    } else {
-      copy(body = wsBody).addHttpHeaders(HttpHeaders.Names.CONTENT_TYPE -> contentType)
+    this.contentType match {
+      case Some(_) => copy(body = wsBody)
+      case None => copy(body = wsBody).withContentType(contentType)
     }
   }
 
@@ -227,7 +226,7 @@ case class StandaloneAhcWSRequest(
    */
   def requestQueryParams: Map[String, Seq[String]] = {
     val params: java.util.List[Param] = buildRequest().getQueryParams
-    params.asScala.toSeq.groupBy(_.getName).mapValues(_.map(_.getValue))
+    params.asScala.groupBy(_.getName).mapValues(_.map(_.getValue))
   }
 
   /**
