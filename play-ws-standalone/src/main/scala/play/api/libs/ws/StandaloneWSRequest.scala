@@ -112,6 +112,14 @@ trait StandaloneWSRequest {
   def proxyServer: Option[WSProxyServer]
 
   /**
+   * Set the Content-Type for this request.
+   *
+   * @param contentType the content type value.
+   * @return the modified request.
+   */
+  def withContentType(contentType: String): Self
+
+  /**
    * sets the signature calculator for the request
    * @param calc the signature calculator
    */

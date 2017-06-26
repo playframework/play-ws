@@ -557,4 +557,54 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
     req.getHeaders.getAll(HttpHeaders.Names.CONTENT_TYPE).asScala must_== Seq("text/plain; charset=US-ASCII")
   }
 
+  "For the Content-Type" should {
+
+    "set a new content type value" in withClient { client =>
+      val req = client.url("http://playframework.com/")
+        .withContentType("application/json")
+        .asInstanceOf[StandaloneAhcWSRequest]
+        .buildRequest()
+      req.getHeaders.getAll(HttpHeaders.Names.CONTENT_TYPE).asScala must_== Seq("application/json")
+    }
+
+    "use the given content type when setting headers" in withClient { client =>
+      val req = client.url("http://playframework.com/")
+        .withBody("Hello World Body") // text/plain content type
+        .withHttpHeaders(HttpHeaders.Names.CONTENT_TYPE -> "application/json") // override the content type
+        .asInstanceOf[StandaloneAhcWSRequest]
+        .buildRequest()
+
+      req.getHeaders.getAll(HttpHeaders.Names.CONTENT_TYPE).asScala must_== Seq("application/json")
+    }
+
+    "use the given content type when adding headers" in withClient { client =>
+      val req = client.url("http://playframework.com/")
+        .withBody("Hello World Body") // text/plain content type
+        .addHttpHeaders(HttpHeaders.Names.CONTENT_TYPE -> "application/json") // override the content type
+        .asInstanceOf[StandaloneAhcWSRequest]
+        .buildRequest()
+
+      req.getHeaders.getAll(HttpHeaders.Names.CONTENT_TYPE).asScala must_== Seq("application/json")
+    }
+
+    "use the body content type when no content type is configured" in withClient { client =>
+      val req = client.url("http://playframework.com/")
+        .withBody("Hello World Body") // text/plain content type
+        .addHttpHeaders(HttpHeaders.Names.CONTENT_TYPE -> "application/json") // override the content type
+        .asInstanceOf[StandaloneAhcWSRequest]
+        .buildRequest()
+
+      req.getHeaders.getAll(HttpHeaders.Names.CONTENT_TYPE).asScala must_== Seq("application/json")
+    }
+
+    "preserve the content type when setting a new body" in withClient { client =>
+      val req = client.url("http://playframework.com/")
+        .addHttpHeaders(HttpHeaders.Names.CONTENT_TYPE -> "application/json") // override the content type
+        .withBody("Hello World Body") // text/plain content type
+        .asInstanceOf[StandaloneAhcWSRequest]
+        .buildRequest()
+
+      req.getHeaders.getAll(HttpHeaders.Names.CONTENT_TYPE).asScala must_== Seq("application/json")
+    }
+  }
 }
