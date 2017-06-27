@@ -1,10 +1,13 @@
 import Dependencies._
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
-import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
 
 import scalariform.formatter.preferences._
+
+import com.typesafe.tools.mima.core._
+import com.typesafe.tools.mima.core.ProblemFilters._
+import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
 
 //---------------------------------------------------------------
 // Shading and Project Settings
@@ -22,7 +25,13 @@ val javacSettings = Seq(
   "-Xlint:unchecked"
 )
 
-lazy val commonSettings = mimaDefaultSettings ++ Seq(
+lazy val mimaSettingsAndFilters = mimaDefaultSettings ++ Seq(
+  mimaBinaryIssueFilters ++= Seq(
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.api.libs.ws.StandaloneWSRequest.withContentType")
+  )
+)
+
+lazy val commonSettings = mimaSettingsAndFilters ++ Seq(
   organization := "com.typesafe.play",
   scalaVersion := "2.12.2",
   crossScalaVersions := Seq("2.12.2", "2.11.11"),
