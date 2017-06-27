@@ -47,10 +47,6 @@ case class StandaloneAhcWSRequest(
   require(client != null, "A StandaloneAhcWSClient is required, but it is null")
   require(url != null, "A url is required, but it is null")
 
-  override def withContentType(contentTypes: String): StandaloneWSRequest = copy(
-    headers = this.headers.updated(HttpHeaders.Names.CONTENT_TYPE, Seq(contentTypes))
-  )
-
   override def contentType: Option[String] = this.headers.get(HttpHeaders.Names.CONTENT_TYPE).map(_.head)
 
   override lazy val uri: URI = {
@@ -68,6 +64,10 @@ case class StandaloneAhcWSRequest(
 
   override def withAuth(username: String, password: String, scheme: WSAuthScheme): Self =
     copy(auth = Some((username, password, scheme)))
+
+  override def withContentType(contentType: String): StandaloneWSRequest = copy(
+    headers = this.headers.updated(HttpHeaders.Names.CONTENT_TYPE, Seq(contentType))
+  )
 
   override def withHttpHeaders(hdrs: (String, String)*): Self = {
     val newHeaders = hdrs.foldLeft(TreeMap[String, Seq[String]]()(CaseInsensitiveOrdered)) {
