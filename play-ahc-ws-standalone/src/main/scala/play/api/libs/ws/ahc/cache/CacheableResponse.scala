@@ -113,7 +113,7 @@ case class CacheableResponse(
   }
 
   private def computeCharset(charset: Charset): Charset = {
-    Option(charset).orElse(Option(parseCharset(getContentType))).getOrElse(DEFAULT_CHARSET)
+    Option(charset).orElse(Option(getContentType).map(parseCharset)).getOrElse(DEFAULT_CHARSET)
   }
 
   @throws(classOf[IOException])
