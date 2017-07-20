@@ -25,13 +25,7 @@ val javacSettings = Seq(
   "-Xlint:unchecked"
 )
 
-lazy val mimaSettings = mimaDefaultSettings ++ Seq(
-  mimaBinaryIssueFilters ++= Seq(
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSResponse.getBodyAsSource")
-  )
-)
-
-lazy val commonSettings = mimaSettings ++ Seq(
+lazy val commonSettings = mimaDefaultSettings ++ Seq(
   organization := "com.typesafe.play",
   scalaVersion := "2.12.3",
   crossScalaVersions := Seq("2.12.3", "2.11.11"),
@@ -256,7 +250,13 @@ lazy val `play-ws-standalone` = project
   .in(file("play-ws-standalone"))
   .settings(commonSettings)
   .settings(mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ws-standalone" % "1.0.0"))
-  .settings(libraryDependencies ++= standaloneApiWSDependencies)
+  .settings(
+    libraryDependencies ++= standaloneApiWSDependencies,
+    mimaBinaryIssueFilters ++= Seq(
+      ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSResponse.getUri"),
+      ProblemFilters.exclude[ReversedMissingMethodProblem]("play.api.libs.ws.StandaloneWSResponse.uri")
+    )
+  )
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
@@ -286,12 +286,13 @@ lazy val `play-ahc-ws-standalone` = project
   .settings(SbtScalariform.scalariformSettings)
   .settings(
     fork in Test := true,
-    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v"))
+    testOptions in Test := Seq(
+      Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
+    libraryDependencies ++= standaloneAhcWSDependencies,
+    mimaBinaryIssueFilters ++= Seq(
+      ProblemFilters.exclude[DirectMissingMethodProblem](
+        "play.libs.ws.ahc.StandaloneAhcWSResponse.getBodyAsSource"))
   )
-  .settings(
-     // The scaladoc generation
-  )
-  .settings(libraryDependencies ++= standaloneAhcWSDependencies)
   .settings(shadedAhcSettings)
   .settings(shadedOAuthSettings)
   .settings(

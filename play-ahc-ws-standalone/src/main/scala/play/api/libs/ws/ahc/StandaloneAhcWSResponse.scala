@@ -13,14 +13,15 @@ import scala.collection.JavaConverters._
 /**
  * A WS HTTP response backed by org.asynchttpclient.Response.
  */
-class StandaloneAhcWSResponse(ahcResponse: AHCResponse) extends StandaloneWSResponse
-    with DefaultBodyReadables
-    with WSCookieConverter
-    with AhcUtilities {
+class StandaloneAhcWSResponse(ahcResponse: AHCResponse)
+    extends StandaloneWSResponse with DefaultBodyReadables
+    with WSCookieConverter with AhcUtilities {
 
   override lazy val headers: Map[String, Seq[String]] = headersToMap(ahcResponse.getHeaders)
 
   override def underlying[T]: T = ahcResponse.asInstanceOf[T]
+
+  override def uri = ahcResponse.getUri.toJavaNetURI
 
   override def status: Int = ahcResponse.getStatusCode
 

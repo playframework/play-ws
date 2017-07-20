@@ -106,6 +106,11 @@ public class StreamedResponse implements StandaloneWSResponse, CookieBuilder {
         return Source.fromPublisher(publisher).map(bodyPart -> ByteString.fromArray(bodyPart.getBodyPartBytes()));
     }
 
+    @Override
+    public URI getUri() {
+        return this.uri;
+    }
+
     private java.util.Map<String, List<String>> asJava(scala.collection.Map<String, Seq<String>> scalaMap) {
         return ScalaStreamSupport.stream(scalaMap).collect(toMap(f -> f._1(), f -> seqAsJavaListConverter(f._2()).asJava()));
     }

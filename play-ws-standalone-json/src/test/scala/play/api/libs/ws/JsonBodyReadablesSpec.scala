@@ -13,6 +13,8 @@ import play.api.libs.json.{ JsSuccess, JsValue }
 class JsonBodyReadablesSpec extends Specification with MustMatchers {
 
   class StubResponse(byteArray: Array[Byte]) extends StandaloneWSResponse {
+    override def uri: java.net.URI = ???
+
     override def headers: Map[String, Seq[String]] = ???
 
     override def underlying[T]: T = ???

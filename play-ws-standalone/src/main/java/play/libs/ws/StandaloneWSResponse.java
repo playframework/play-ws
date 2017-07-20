@@ -11,10 +11,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import java.net.URI;
+
 /**
  * This is the WS response from the server.
  */
 public interface StandaloneWSResponse {
+    /**
+     * Gets the response URI.
+     *
+     * @return the response URI
+     */
+    URI getUri();
 
     /**
      * @return all the headers from the response.
