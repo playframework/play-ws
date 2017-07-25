@@ -5,7 +5,6 @@ package play.libs.ws;
 
 
 import java.time.Duration;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -243,7 +242,9 @@ public interface StandaloneWSRequest {
      * @param password the basic auth password
      * @return the modified WSRequest.
      */
-    StandaloneWSRequest setAuth(String username, String password);
+    default StandaloneWSRequest setAuth(String username, String password) {
+        return setAuth(new WSAuthInfo(username, password, WSAuthScheme.BASIC));
+    }
 
     /**
      * Sets the authentication header for the current request.
@@ -253,7 +254,18 @@ public interface StandaloneWSRequest {
      * @param scheme   authentication scheme
      * @return the modified WSRequest.
      */
-    StandaloneWSRequest setAuth(String username, String password, WSAuthScheme scheme);
+    default StandaloneWSRequest setAuth(String username, String password, WSAuthScheme scheme) {
+        return setAuth(new WSAuthInfo(username, password, scheme));
+    }
+
+    /**
+     * Sets the authentication header for the current request.
+     *
+     * @param authInfo the authentication information.
+     *
+     * @return the modified request.
+     */
+    StandaloneWSRequest setAuth(WSAuthInfo authInfo);
 
     /**
      * Sets an (OAuth) signature calculator.
@@ -380,17 +392,30 @@ public interface StandaloneWSRequest {
     /**
      * @return the auth username, null if not an authenticated request.
      */
-    String getUsername();
+    default String getUsername() {
+        return getAuth().map(WSAuthInfo::getUsername).orElse(null);
+    }
 
     /**
      * @return the auth password, null if not an authenticated request
      */
-    String getPassword();
+    default String getPassword() {
+        return getAuth().map(WSAuthInfo::getPassword).orElse(null);
+    }
 
     /**
      * @return the auth scheme, null if not an authenticated request.
      */
-    WSAuthScheme getScheme();
+    default WSAuthScheme getScheme() {
+        return getAuth().map(WSAuthInfo::getScheme).orElse(null);
+    }
+
+    /**
+     * @return get auth information if present.
+     *
+     * @see WSAuthInfo
+     */
+    Optional<WSAuthInfo> getAuth();
 
     /**
      * @return the signature calculator (example: OAuth), null if none is set.
