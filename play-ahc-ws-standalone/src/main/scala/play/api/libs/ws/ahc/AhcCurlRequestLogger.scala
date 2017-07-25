@@ -11,9 +11,11 @@ import play.api.libs.ws._
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils
 import play.api.libs.ws.EmptyBody
 /**
- * Logs WSRequest and pulls information into Curl format to an SLF4J logger.
+ * Logs [[StandaloneWSRequest]] and pulls information into Curl format to an SLF4J logger.
  *
  * @param logger an SLF4J logger
+ *
+ * @see <a href="https://curl.haxx.se/">https://curl.haxx.se/</a>
  */
 class AhcCurlRequestLogger(logger: org.slf4j.Logger) extends WSRequestFilter with CurlFormat {
   def apply(executor: WSRequestExecutor): WSRequestExecutor = {
@@ -106,8 +108,3 @@ trait CurlFormat {
 
   def quote(unsafe: String): String = unsafe.replace("'", "'\\''")
 }
-
-/**
- * Java API.
- */
-object JavaCurlFormat extends CurlFormat

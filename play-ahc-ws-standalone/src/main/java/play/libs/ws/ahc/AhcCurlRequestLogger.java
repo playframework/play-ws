@@ -12,6 +12,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Optional;
 
+/**
+ * Logs {@link StandaloneWSRequest} and pulls information into Curl format to an SLF4J logger.
+ *
+ * @see <a href="https://curl.haxx.se/">https://curl.haxx.se/</a>
+ */
 public class AhcCurlRequestLogger implements WSRequestFilter {
 
     private final org.slf4j.Logger logger;
