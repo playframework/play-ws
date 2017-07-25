@@ -3,10 +3,10 @@
  */
 package play.api.libs.ws.ahc
 
+import akka.http.scaladsl.server.Route
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import org.specs2.concurrent.{ ExecutionEnv, FutureAwait }
-import org.specs2.execute.Result
 import org.specs2.matcher.FutureMatchers
 import org.specs2.mutable.Specification
 import play.AkkaServerProvider
@@ -16,20 +16,12 @@ import scala.concurrent._
 
 class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv) extends Specification
   with AkkaServerProvider
+  with StandaloneWSClientSupport
   with FutureMatchers
   with FutureAwait
   with DefaultBodyReadables {
 
-  def withClient(config: AhcWSClientConfig = AhcWSClientConfigFactory.forConfig())(block: StandaloneAhcWSClient => Result): Result = {
-    val client = StandaloneAhcWSClient(config)
-    try {
-      block(client)
-    } finally {
-      client.close()
-    }
-  }
-
-  override val routes = {
+  override val routes: Route = {
     import akka.http.scaladsl.server.Directives._
     get {
       complete("<h1>Say hello to akka-http</h1>")

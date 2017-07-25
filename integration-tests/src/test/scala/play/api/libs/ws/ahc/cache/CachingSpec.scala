@@ -17,10 +17,13 @@ import play.AkkaServerProvider
 import play.api.libs.ws.ahc._
 import play.shaded.ahc.org.asynchttpclient._
 
-import scala.collection.mutable
 import scala.concurrent.Future
 
-class CachingSpec(implicit val executionEnv: ExecutionEnv) extends Specification with AkkaServerProvider with AfterAll with FutureMatchers with Mockito {
+class CachingSpec(implicit val executionEnv: ExecutionEnv) extends Specification
+  with AkkaServerProvider
+  with AfterAll
+  with FutureMatchers
+  with Mockito {
 
   val asyncHttpClient: AsyncHttpClient = {
     val config = AhcWSClientConfigFactory.forClientConfig()

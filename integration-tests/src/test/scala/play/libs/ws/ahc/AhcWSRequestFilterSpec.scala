@@ -3,37 +3,27 @@
  */
 package play.libs.ws.ahc
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{ ContentTypes, HttpEntity }
 import akka.http.scaladsl.model.headers.RawHeader
-import akka.stream.ActorMaterializer
 import com.typesafe.config.ConfigFactory
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.matcher.FutureMatchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
+import play.AkkaServerProvider
 
 import scala.concurrent.duration._
 import scala.compat.java8.FutureConverters
 
-class AhcWSRequestFilterSpec(implicit executionEnv: ExecutionEnv) extends Specification with AfterAll with FutureMatchers {
-  val testServerPort = 49134
-
-  sequential
-
-  // Create Akka system for thread and streaming management
-  implicit val system = ActorSystem()
-  implicit val materializer = ActorMaterializer()
+class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv) extends Specification with AkkaServerProvider with AfterAll with FutureMatchers {
 
   // Create the standalone WS client with no cache
   private val client = StandaloneAhcWSClient.create(
     AhcWSClientConfigFactory.forConfig(ConfigFactory.load, this.getClass.getClassLoader),
-    null,
     materializer
   )
 
-  private val route = {
+  override val routes = {
     import akka.http.scaladsl.server.Directives._
     headerValueByName("X-Request-Id") { value =>
       respondWithHeader(RawHeader("X-Request-Id", value)) {
@@ -46,14 +36,9 @@ class AhcWSRequestFilterSpec(implicit executionEnv: ExecutionEnv) extends Specif
     }
   }
 
-  private val futureServer = {
-    Http().bindAndHandle(route, "localhost", testServerPort)
-  }
-
-  override def afterAll: Unit = {
-    futureServer.foreach(_.unbind)
+  override def afterAll = {
     client.close()
-    system.terminate()
+    super.afterAll()
   }
 
   "setRequestFilter" should {

@@ -5,37 +5,36 @@ package play.libs.ws.ahc
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
-import akka.stream.javadsl.{ Sink, Source }
+import akka.stream.javadsl.Sink
 import akka.util.ByteString
 import com.typesafe.config.ConfigFactory
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.matcher.FutureMatchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
+import play.AkkaServerProvider
 import play.libs.ws._
 
 import scala.compat.java8.FutureConverters._
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class AhcWSClientSpec(implicit executionEnv: ExecutionEnv) extends Specification with AfterAll with FutureMatchers with XMLBodyWritables with XMLBodyReadables {
-  val testServerPort = 49134
-
-  sequential
-
-  // Create Akka system for thread and streaming management
-  implicit val system = ActorSystem()
-  implicit val materializer = ActorMaterializer()
+class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv) extends Specification
+  with AkkaServerProvider
+  with AfterAll
+  with FutureMatchers
+  with XMLBodyWritables
+  with XMLBodyReadables {
 
   // Create the standalone WS client with no cache
   val client = StandaloneAhcWSClient.create(
     AhcWSClientConfigFactory.forConfig(ConfigFactory.load, this.getClass.getClassLoader),
-    null,
     materializer
   )
 
-  private val route = {
+  override val routes: Route = {
     import akka.http.scaladsl.server.Directives._
     get {
       complete("<h1>Say hello to akka-http</h1>")
@@ -47,14 +46,9 @@ class AhcWSClientSpec(implicit executionEnv: ExecutionEnv) extends Specification
       }
   }
 
-  private val futureServer = {
-    Http().bindAndHandle(route, "localhost", testServerPort)
-  }
-
   override def afterAll = {
-    futureServer.foreach(_.unbind)
     client.close()
-    system.terminate()
+    super.afterAll()
   }
 
   "play.libs.ws.ahc.StandaloneAhcWSClient" should {
