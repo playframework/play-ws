@@ -63,15 +63,3 @@ class CachingSpec(implicit val executionEnv: ExecutionEnv) extends Specification
     }
   }
 }
-
-class StubHttpCache(underlying: mutable.HashMap[EffectiveURIKey, ResponseEntry] = new mutable.HashMap()) extends Cache {
-
-  override def remove(key: EffectiveURIKey): Future[Unit] = Future.successful(underlying.remove(key))
-
-  override def put(key: EffectiveURIKey, entry: ResponseEntry): Future[Unit] = Future.successful(underlying.put(key, entry))
-
-  override def get(key: EffectiveURIKey): Future[Option[ResponseEntry]] = Future.successful(underlying.get(key))
-
-  override def close(): Unit = {}
-
-}
