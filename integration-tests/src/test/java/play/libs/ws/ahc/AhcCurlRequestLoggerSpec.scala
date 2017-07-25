@@ -132,5 +132,32 @@ class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv) extends 
         testLogger.getLoggingEvents.asScala.map(_.getMessage) must not containMatch ("--data")
       }
     }
+
+    "print complete curl command" in withClient() { client =>
+
+      val testLogger = createTestLogger
+      val curlRequestLogger = new AhcCurlRequestLogger(testLogger)
+
+      client.url(s"http://localhost:$testServerPort/")
+        .setBody(body("the-body"))
+        .addHeader("My-Header", "My-Header-Value")
+        .setAuth(new WSAuthInfo("username", "password", WSAuthScheme.BASIC))
+        .setRequestFilter(curlRequestLogger)
+        .get()
+        .toScala
+        .awaitFor(defaultTimeout)
+
+      testLogger.getLoggingEvents.get(0).getMessage must beEqualTo(
+        s"""
+           |curl \\
+           |  --verbose \\
+           |  --request GET \\
+           |  --header "Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=" \\
+           |  --header 'My-Header: My-Header-Value' \\
+           |  --header 'Content-Type: text/plain' \\
+           |  --data 'the-body' \\
+           |  'http://localhost:$testServerPort/'
+        """.stripMargin.trim)
+    }
   }
 }

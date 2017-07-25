@@ -46,14 +46,14 @@ public class AhcCurlRequestLogger implements WSRequestFilter {
         //authentication
         request.getAuth().ifPresent(auth -> {
             String encodedPasswd = Base64.getUrlEncoder().encodeToString((auth.getUsername() + ":" + auth.getPassword()).getBytes(StandardCharsets.US_ASCII));
-            b.append("  --header \"Authorization: Basic ").append(quote(encodedPasswd))
+            b.append("  --header \"Authorization: Basic ").append(quote(encodedPasswd)).append("\"")
              .append(" \\\n");
         });
 
         // headers
         request.getHeaders().forEach((name, values) ->
                 values.forEach(v ->
-                    b.append("  --header '").append(quote(name)).append(": ").append(quote(v))
+                    b.append("  --header '").append(quote(name)).append(": ").append(quote(v)).append("'")
                      .append(" \\\n")
                 )
         );
