@@ -51,11 +51,10 @@ trait CurlFormat {
 
     //authentication
     request.auth match {
-      case Some((userName, password, WSAuthScheme.BASIC)) => {
+      case Some((userName, password, WSAuthScheme.BASIC)) =>
         val encodedPassword = Base64.getUrlEncoder.encodeToString(s"$userName:$password".getBytes(StandardCharsets.US_ASCII))
         b.append(s"""  --header 'Authorization: Basic ${quote(encodedPassword)}'""")
         b.append(" \\\n")
-      }
       case _ => Unit
     }
 
@@ -102,8 +101,13 @@ trait CurlFormat {
       Option(HttpUtils.parseCharset(ct)).getOrElse {
         StandardCharsets.UTF_8
       }.name()
-    }.getOrElse(HttpUtils.parseCharset("UTF-8").name())
+    }.getOrElse(StandardCharsets.UTF_8.name())
   }
 
   def quote(unsafe: String): String = unsafe.replace("'", "'\\''")
 }
+
+/**
+ * Java API.
+ */
+object JavaCurlFormat extends CurlFormat
