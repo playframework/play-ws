@@ -20,8 +20,6 @@ import play.shaded.ahc.org.asynchttpclient.cookie.Cookie;
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils;
 
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
@@ -268,6 +266,11 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     @Override
+    public Optional<BodyWritable> getBody() {
+        return Optional.ofNullable(this.bodyWritable);
+    }
+
+    @Override
     public Map<String, List<String>> getHeaders() {
         return new HashMap<>(this.headers);
     }
@@ -382,8 +385,8 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     Request buildRequest() {
-        boolean validate = true;
-        HttpHeaders possiblyModifiedHeaders = new DefaultHttpHeaders(validate);
+        final boolean validate = true;
+        final HttpHeaders possiblyModifiedHeaders = new DefaultHttpHeaders(validate);
         this.headers.forEach(possiblyModifiedHeaders::add);
 
         RequestBuilder builder = new RequestBuilder(method);
@@ -391,9 +394,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
         builder.setUrl(url);
         builder.setQueryParams(queryParameters);
 
-        if (bodyWritable == null) {
-            // do nothing
-        } else {
+        getBody().ifPresent(bodyWritable -> {
             // Detect and maybe add content type
             String contentType = possiblyModifiedHeaders.get(CONTENT_TYPE);
             if (contentType == null) {
@@ -447,7 +448,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
             } else {
                 throw new IllegalStateException("Unknown body writable: " + bodyWritable);
             }
-        }
+        });
 
         builder.setHeaders(possiblyModifiedHeaders);
 

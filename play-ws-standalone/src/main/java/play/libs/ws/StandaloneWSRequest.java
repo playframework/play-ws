@@ -361,6 +361,11 @@ public interface StandaloneWSRequest {
     }
 
     /**
+     * @return the body of the request.
+     */
+    Optional<BodyWritable> getBody();
+
+    /**
      * @return the headers (a copy to prevent side-effects). This has not passed through an internal request builder and so will not be signed.
      */
     Map<String, List<String>> getHeaders();
