@@ -154,7 +154,6 @@ class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv) extends 
            |  --request GET \\
            |  --header "Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=" \\
            |  --header 'My-Header: My-Header-Value' \\
-           |  --header 'Content-Type: text/plain' \\
            |  --data 'the-body' \\
            |  'http://localhost:$testServerPort/'
         """.stripMargin.trim)
