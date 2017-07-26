@@ -11,7 +11,7 @@ import play.api.libs.ws._
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils
 import play.api.libs.ws.EmptyBody
 /**
- * Logs [[StandaloneWSRequest]] and pulls information into Curl format to an SLF4J logger.
+ * Logs StandaloneWSRequest and pulls information into Curl format to an SLF4J logger.
  *
  * @param logger an SLF4J logger
  *

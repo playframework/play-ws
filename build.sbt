@@ -38,7 +38,21 @@ lazy val mimaSettings = mimaDefaultSettings ++ Seq(
   mimaBinaryIssueFilters ++= Seq(
     ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSResponse.getBodyAsSource"),
     ProblemFilters.exclude[MissingClassProblem]("play.api.libs.ws.package$"),
-    ProblemFilters.exclude[MissingClassProblem]("play.api.libs.ws.package")
+    ProblemFilters.exclude[MissingClassProblem]("play.api.libs.ws.package"),
+
+    // Implemented as a default method at the interface
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSResponse.getBodyAsSource"),
+    // Added to have better parity between Java and Scala APIs
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getBody"),
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getAuth"),
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getMethod"),
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.setAuth"),
+
+    // Now have a default implementation at the interface
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSRequest.getPassword"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSRequest.getUsername"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSRequest.setAuth"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSRequest.getScheme")
   )
 )
 
