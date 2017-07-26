@@ -14,7 +14,6 @@ import play.shaded.ahc.org.asynchttpclient.HttpResponseBodyPart;
 import scala.collection.Seq;
 
 import java.net.URI;
-import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
