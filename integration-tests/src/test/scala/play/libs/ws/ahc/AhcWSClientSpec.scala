@@ -3,17 +3,12 @@
  */
 package play.libs.ws.ahc
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
-import akka.stream.ActorMaterializer
 import akka.stream.javadsl.Sink
 import akka.util.ByteString
-import com.typesafe.config.ConfigFactory
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.matcher.FutureMatchers
 import org.specs2.mutable.Specification
-import org.specs2.specification.AfterAll
 import play.AkkaServerProvider
 import play.libs.ws._
 
@@ -22,17 +17,11 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv) extends Specification
-  with AkkaServerProvider
-  with AfterAll
-  with FutureMatchers
-  with XMLBodyWritables
-  with XMLBodyReadables {
-
-  // Create the standalone WS client with no cache
-  val client = StandaloneAhcWSClient.create(
-    AhcWSClientConfigFactory.forConfig(ConfigFactory.load, this.getClass.getClassLoader),
-    materializer
-  )
+    with AkkaServerProvider
+    with StandaloneWSClientSupport
+    with FutureMatchers
+    with XMLBodyWritables
+    with XMLBodyReadables {
 
   override val routes: Route = {
     import akka.http.scaladsl.server.Directives._
@@ -46,14 +35,9 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv) extends Specifica
       }
   }
 
-  override def afterAll = {
-    client.close()
-    super.afterAll()
-  }
-
   "play.libs.ws.ahc.StandaloneAhcWSClient" should {
 
-    "get successfully" in {
+    "get successfully" in withClient() { client =>
       def someOtherMethod(string: String) = {
         new InMemoryBodyWritable(akka.util.ByteString.fromString(string), "text/plain")
       }
@@ -62,7 +46,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv) extends Specifica
       ).await(retries = 0, timeout = 5.seconds)
     }
 
-    "source successfully" in {
+    "source successfully" in withClient() { client =>
       val future = toScala(client.url(s"http://localhost:$testServerPort").stream())
       val result: Future[ByteString] = future.flatMap { response: StandaloneWSResponse =>
         toScala(response.getBodyAsSource.runWith(Sink.head(), materializer))
@@ -71,7 +55,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv) extends Specifica
       result must be_==(expected).await(retries = 0, timeout = 5.seconds)
     }
 
-    "round trip XML successfully" in {
+    "round trip XML successfully" in withClient() { client =>
       val document = XML.fromString("""<?xml version="1.0" encoding='UTF-8'?>
                                       |<note>
                                       |  <from>hello</from>
