@@ -4,16 +4,12 @@
 
 package play.libs.ws.ahc;
 
-import akka.stream.javadsl.Source;
 import akka.util.ByteString;
-import org.reactivestreams.Publisher;
 import play.libs.ws.BodyReadable;
 import play.libs.ws.StandaloneWSResponse;
 import play.libs.ws.WSCookie;
 import play.libs.ws.WSCookieBuilder;
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders;
-import play.shaded.ahc.org.asynchttpclient.HttpResponseBodyPart;
-import play.shaded.ahc.org.asynchttpclient.Response;
 import play.shaded.ahc.org.asynchttpclient.cookie.Cookie;
 
 import java.net.URI;
@@ -110,20 +106,12 @@ public class StandaloneAhcWSResponse implements StandaloneWSResponse {
         // https://tools.ietf.org/html/rfc7231#appendix-B
         // The default charset of ISO-8859-1 for text media types has been
         // removed; the default is now whatever the media type definition says.
-        Response underlying = (Response) getUnderlying();
-        return underlying.getResponseBody();
+        return this.ahcResponse.getResponseBody();
     }
 
     @Override
     public ByteString getBodyAsBytes() {
-        Response underlying = (Response) getUnderlying();
-        return ByteString.fromArray(underlying.getResponseBodyAsBytes());
-    }
-
-    @Override
-    public Source<ByteString, ?> getBodyAsSource() {
-        @SuppressWarnings("unchecked") Publisher<HttpResponseBodyPart> publisher = (Publisher<HttpResponseBodyPart>) getUnderlying();
-        return Source.fromPublisher(publisher).map(bodyPart -> ByteString.fromArray(bodyPart.getBodyPartBytes()));
+        return ByteString.fromArray(this.ahcResponse.getResponseBodyAsBytes());
     }
 
     @Override

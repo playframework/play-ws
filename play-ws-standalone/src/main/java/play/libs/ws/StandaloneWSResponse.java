@@ -122,6 +122,15 @@ public interface StandaloneWSResponse {
      *
      * Note that this is only usable with a streaming request:
      *
+     * <pre>
+     * {@code
+     * wsClient.url("https://playframework.com")
+     *         .stream() // this returns a CompletionStage<StandaloneWSResponse>
+     *         .thenApply(StandaloneWSResponse::getBodyAsSource);
+     * }
+     * </pre>
      */
-    Source<ByteString, ?> getBodyAsSource();
+    default Source<ByteString, ?> getBodyAsSource() {
+        return Source.single(getBodyAsBytes());
+    }
 }

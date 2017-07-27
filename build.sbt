@@ -1,6 +1,9 @@
 import Dependencies._
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
+
+import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
+
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
 
@@ -22,7 +25,13 @@ val javacSettings = Seq(
   "-Xlint:unchecked"
 )
 
-lazy val commonSettings = mimaDefaultSettings ++ Seq(
+lazy val mimaSettings = mimaDefaultSettings ++ Seq(
+  mimaBinaryIssueFilters ++= Seq(
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSResponse.getBodyAsSource")
+  )
+)
+
+lazy val commonSettings = mimaSettings ++ Seq(
   organization := "com.typesafe.play",
   scalaVersion := "2.12.2",
   crossScalaVersions := Seq("2.12.2", "2.11.11"),
