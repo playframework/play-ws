@@ -206,8 +206,7 @@ lazy val `shaded-oauth` = project.in(file("shaded/oauth"))
     //logLevel in assembly := Level.Debug,
     assemblyShadeRules in assembly := Seq(
       ShadeRule.rename("oauth.**" -> "play.shaded.oauth.@0").inAll,
-      ShadeRule.rename("org.apache.commons.**" -> "play.shaded.oauth.@0").inAll,
-      ShadeRule.zap("com.google.gdata.**").inAll
+      ShadeRule.rename("org.apache.commons.**" -> "play.shaded.oauth.@0").inAll
     ),
 
     // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom
