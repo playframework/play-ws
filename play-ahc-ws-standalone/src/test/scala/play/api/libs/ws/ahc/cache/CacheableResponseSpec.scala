@@ -4,7 +4,7 @@
 package play.api.libs.ws.ahc.cache
 
 import org.specs2.mutable.Specification
-import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
+import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders.Names._
 
 class CacheableResponseSpec extends Specification {
 
@@ -13,7 +13,7 @@ class CacheableResponseSpec extends Specification {
     "get body" in {
 
       "when it is text/plain" in {
-        val response = CacheableResponse(200, "https://playframework.com/", "PlayFramework Homepage").withHeaders(HttpHeaders.Names.CONTENT_TYPE -> "text/plain")
+        val response = CacheableResponse(200, "https://playframework.com/", "PlayFramework Homepage").withHeaders(CONTENT_TYPE -> "text/plain")
         response.getResponseBody must beEqualTo("PlayFramework Homepage")
         response.getContentType must beEqualTo("text/plain")
       }
