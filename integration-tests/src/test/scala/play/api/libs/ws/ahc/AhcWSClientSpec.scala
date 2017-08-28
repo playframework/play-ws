@@ -44,13 +44,13 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv) extends Specifica
   "url" should {
     "throw an exception on invalid url" in {
       withClient() { client =>
-        { client.url("localhost") } must throwAn[IllegalArgumentException]
+        { client.url("localhost") } must throwA[Throwable]
       }
     }
 
     "not throw exception on valid url" in {
       withClient() { client =>
-        { client.url(s"http://localhost:$testServerPort") } must not(throwAn[IllegalArgumentException])
+        { client.url(s"http://localhost:$testServerPort") } must not(throwA[Throwable])
       }
     }
   }
