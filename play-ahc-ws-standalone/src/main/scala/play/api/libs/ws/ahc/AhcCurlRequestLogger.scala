@@ -9,7 +9,7 @@ import java.util.Base64
 import org.slf4j.LoggerFactory
 import play.api.libs.ws._
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils
-
+import play.api.libs.ws.EmptyBody
 /**
  * Logs WSRequest and pulls information into Curl format to an SLF4J logger.
  *
@@ -76,6 +76,7 @@ trait CurlFormat {
         // XXX Need to escape any quotes within the body of the string.
         b.append(s"  --data '${quote(bodyString)}'")
         b.append(" \\\n")
+      case EmptyBody => // Do nothing.
       case other =>
         throw new UnsupportedOperationException("Unsupported body type " + other.getClass)
     }
