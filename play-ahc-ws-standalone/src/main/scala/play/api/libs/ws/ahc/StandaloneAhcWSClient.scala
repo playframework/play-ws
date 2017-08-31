@@ -18,7 +18,6 @@ import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse, _ }
 import scala.collection.immutable.TreeMap
 import scala.compat.java8.FunctionConverters
 import scala.concurrent.{ Await, Future, Promise }
-import scala.util.{ Failure, Success, Try }
 
 /**
  * A WS client backed by an AsyncHttpClient.
@@ -78,10 +77,14 @@ class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(implici
 
   private def validate(url: String): Unit = {
     // Recover from https://github.com/AsyncHttpClient/async-http-client/issues/1149
-    Try(Uri.create(url)).transform(Success(_), {
+    try {
+      Uri.create(url)
+    } catch {
+      case iae: IllegalArgumentException =>
+        throw new IllegalArgumentException(s"Invalid URL $url", iae)
       case npe: NullPointerException =>
-        Failure(new IllegalArgumentException(s"Invalid URL $url", npe))
-    }).get
+        throw new IllegalArgumentException(s"Invalid URL $url", npe)
+    }
   }
 
   private[ahc] def executeStream(request: Request): Future[StreamedResponse] = {
