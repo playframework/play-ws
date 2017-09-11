@@ -35,7 +35,7 @@ case class SourceBody(source: Source[ByteString, _]) extends WSBody
 )
 class BodyReadable[+R](val transform: StandaloneWSResponse => R)
 
-object BodyReadable {
+object BodyReadable extends DefaultBodyReadables {
   def apply[R](transform: StandaloneWSResponse => R): BodyReadable[R] = new BodyReadable[R](transform)
 }
 
@@ -49,7 +49,7 @@ class BodyWritable[-A](val transform: A => WSBody, val contentType: String) {
   def map[B](f: B => A): BodyWritable[B] = new BodyWritable(b => transform(f(b)), contentType)
 }
 
-object BodyWritable {
+object BodyWritable extends DefaultBodyWritables {
   def apply[A](transform: (A => WSBody), contentType: String): BodyWritable[A] =
     new BodyWritable(transform, contentType)
 }
