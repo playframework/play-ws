@@ -21,7 +21,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.language.implicitConversions
 
-class AhcWSRequestSpec extends Specification with Mockito with AfterAll {
+class AhcWSRequestSpec extends Specification with Mockito with AfterAll with DefaultBodyReadables with DefaultBodyWritables {
 
   sequential
 
