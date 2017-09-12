@@ -7,14 +7,14 @@ import java.nio.charset.StandardCharsets
 
 import org.specs2.mock.Mockito
 import org.specs2.mutable._
-import play.libs.ws.DefaultBodyReadables
+import play.libs.ws._
 import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
 import play.shaded.ahc.org.asynchttpclient.Response
 
 import scala.collection.JavaConverters._
 import scala.compat.java8.OptionConverters._
 
-class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReadables {
+class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReadables with DefaultBodyWritables {
 
   private val emptyMap = new java.util.HashMap[String, java.util.Collection[String]]
 
