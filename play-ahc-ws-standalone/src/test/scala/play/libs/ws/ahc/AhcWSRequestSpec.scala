@@ -17,7 +17,7 @@ import play.shaded.ahc.org.asynchttpclient.{ Request, RequestBuilderBase, Signat
 import scala.collection.JavaConverters._
 import scala.compat.java8.OptionConverters._
 
-class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyWritables {
+class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadables with DefaultBodyWritables {
 
   "AhcWSRequest" should {
 
