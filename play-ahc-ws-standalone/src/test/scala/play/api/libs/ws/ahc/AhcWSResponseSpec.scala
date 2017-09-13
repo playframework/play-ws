@@ -8,7 +8,7 @@ import java.util
 import akka.util.ByteString
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
-import play.api.libs.ws.WSCookie
+import play.api.libs.ws._
 import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
 import play.shaded.ahc.org.asynchttpclient.cookie.{ Cookie => AHCCookie }
 import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse }
@@ -16,7 +16,7 @@ import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse }
 /**
  *
  */
-class AhcWSResponseSpec extends Specification with Mockito {
+class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReadables with DefaultBodyWritables {
 
   "Ahc WS Response" should {
     "get cookies from an AHC response" in {
