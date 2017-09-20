@@ -29,7 +29,10 @@ public interface DefaultBodyReadables {
     }
 
     /**
-     * Converts a response body into a String:
+     * Converts a response body into a String.
+     *
+     * Note: this is only a best-guess effort and does not handle all content types. See
+     * {@link StandaloneWSResponse#getBody()} for more information.
      *
      * {{{
      * String string = response.body(string())

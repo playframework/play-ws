@@ -6,6 +6,7 @@ package play.libs.ws.ahc;
 import akka.stream.javadsl.Source;
 import akka.util.ByteString;
 import org.reactivestreams.Publisher;
+import play.api.libs.ws.ahc.AhcWSUtils;
 import play.libs.ws.BodyReadable;
 import play.libs.ws.StandaloneWSResponse;
 import play.libs.ws.WSCookie;
@@ -93,7 +94,7 @@ public class StreamedResponse implements StandaloneWSResponse, CookieBuilder {
 
     @Override
     public String getBody() {
-        return getBodyAsBytes().utf8String();
+        return getBodyAsBytes().decodeString(AhcWSUtils.getCharset(getContentType()));
     }
 
     @Override

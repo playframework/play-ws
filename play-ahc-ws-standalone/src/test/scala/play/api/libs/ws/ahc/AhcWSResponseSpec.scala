@@ -3,6 +3,7 @@
  */
 package play.api.libs.ws.ahc
 
+import java.nio.charset.StandardCharsets
 import java.util
 
 import akka.util.ByteString
@@ -13,9 +14,6 @@ import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
 import play.shaded.ahc.org.asynchttpclient.cookie.{ Cookie => AHCCookie }
 import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse }
 
-/**
- *
- */
 class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReadables with DefaultBodyWritables {
 
   "Ahc WS Response" should {
@@ -85,6 +83,26 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
       ahcResponse.getResponseBodyAsBytes returns bytes.toArray
       val response = StandaloneAhcWSResponse(ahcResponse)
       response.body[ByteString] must_== bytes
+    }
+
+    "get JSON body as a string from the AHC response" in {
+      val ahcResponse: AHCResponse = mock[AHCResponse]
+      val json = """{ "foo": "☺" }"""
+      val ahcHeaders = new DefaultHttpHeaders(true)
+      ahcResponse.getContentType returns "application/json"
+      ahcResponse.getHeaders returns ahcHeaders
+      ahcResponse.getResponseBody(StandardCharsets.UTF_8) returns json
+      val response = StandaloneAhcWSResponse(ahcResponse)
+      response.body must_== json
+    }
+
+    "get text body as a string from the AHC response" in {
+      val ahcResponse: AHCResponse = mock[AHCResponse]
+      val text = "Hello ☺"
+      ahcResponse.getContentType returns "text/plain"
+      ahcResponse.getResponseBody(StandardCharsets.ISO_8859_1) returns text
+      val response = StandaloneAhcWSResponse(ahcResponse)
+      response.body must_== text
     }
 
     "get headers from an AHC response in a case insensitive map" in {
