@@ -32,15 +32,8 @@ class StandaloneAhcWSResponse(ahcResponse: AHCResponse) extends StandaloneWSResp
 
   override def toString: String = s"StandaloneAhcWSResponse($status, $statusText)"
 
-  /**
-   * The response body as String.
-   */
   override lazy val body: String = {
-    // https://tools.ietf.org/html/rfc7231#section-3.1.1.3
-    // https://tools.ietf.org/html/rfc7231#appendix-B
-    // The default charset of ISO-8859-1 for text media types has been
-    // removed; the default is now whatever the media type definition says.
-    ahcResponse.getResponseBody()
+    AhcWSUtils.getResponseBody(ahcResponse)
   }
 
   /**
