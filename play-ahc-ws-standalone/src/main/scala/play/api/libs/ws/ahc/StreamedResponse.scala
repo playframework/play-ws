@@ -46,14 +46,23 @@ class StreamedResponse(
    */
   override def cookie(name: String): Option[WSCookie] = cookies.find(_.name == name)
 
-  override lazy val body: String = bodyAsBytes.utf8String
+  /**
+   * THIS IS A BLOCKING OPERATION. It should not be used in production.
+   *
+   * Note that this is not a charset aware operation, as the stream does not have access to the underlying machinery
+   * that disambiguates responses.
+   *
+   * @return the body as a String
+   */
+  override lazy val body: String = bodyAsBytes.decodeString(AhcWSUtils.getCharset(contentType))
 
   /**
-   * THIS IS A BLOCKING OPERATION.  It should not be used in production.
+   * THIS IS A BLOCKING OPERATION. It should not be used in production.
    *
-   * Note that this is not a charset aware operation, as the
-   * stream does not have access to the underlying machinery that disambiguates responses.
-   * @return a UTF-8 string constructed from the bytestring.
+   * Note that this is not a charset aware operation, as the stream does not have access to the underlying machinery
+   * that disambiguates responses.
+   *
+   * @return the body as a ByteString
    */
   override lazy val bodyAsBytes: ByteString = client.blockingToByteString(bodyAsSource)
 
