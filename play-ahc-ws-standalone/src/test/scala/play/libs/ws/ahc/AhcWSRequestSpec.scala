@@ -179,7 +179,6 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
       request.addHeader("Content-Type", "application/xml")
       request.setBody(body("HELLO WORLD")) // content type is not overwritten here as its already set before
       val req = request.buildRequest()
-      println("Headers:" + req.getHeaders)
       req.getHeaders.get("Content-Type") must be_==("application/json; charset=US-ASCII")
     }
 
