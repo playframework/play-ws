@@ -48,6 +48,17 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
         req.getStringData must be_==("HELLO WORLD")
       }
 
+      "sets content type based on a body when its not explicitly set" in {
+        val client = mock[StandaloneAhcWSClient]
+        val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
+          .setBody(body("HELLO WORLD")) // set body with a content type
+          .asInstanceOf[StandaloneAhcWSRequest]
+          .buildRequest()
+
+        req.getHeaders.get(HttpHeaders.Names.CONTENT_TYPE) must be_==("text/plain")
+        req.getStringData must be_==("HELLO WORLD")
+      }
+
       "keep existing content type when setting body" in {
         val client = mock[StandaloneAhcWSClient]
         val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
@@ -156,19 +167,19 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
       val client = mock[StandaloneAhcWSClient]
       val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
       request.setBody(body("HELLO WORLD"))
-      request.addHeader("Content-Type", "application/json")
-      request.addHeader("Content-Type", "application/xml")
+      request.addHeader("Content-Type", "application/json") // will be ignored since body already sets content type
       val req = request.buildRequest()
-      req.getHeaders.get("Content-Type") must be_==("application/json")
+      req.getHeaders.get("Content-Type") must be_==("text/plain")
     }
 
     "only send first content type header and keep the charset if it has been set manually with a charset" in {
       val client = mock[StandaloneAhcWSClient]
       val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
-      request.setBody(body("HELLO WORLD"))
       request.addHeader("Content-Type", "application/json; charset=US-ASCII")
       request.addHeader("Content-Type", "application/xml")
+      request.setBody(body("HELLO WORLD")) // content type is not overwritten here as its already set before
       val req = request.buildRequest()
+      println("Headers:" + req.getHeaders)
       req.getHeaders.get("Content-Type") must be_==("application/json; charset=US-ASCII")
     }
 
