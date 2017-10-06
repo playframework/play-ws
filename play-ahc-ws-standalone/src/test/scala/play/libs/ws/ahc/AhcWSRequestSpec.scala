@@ -167,7 +167,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
       val client = mock[StandaloneAhcWSClient]
       val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
       request.setBody(body("HELLO WORLD", null)) // content type is not set
-      request.addHeader("Content-Type", "application/json") // will be ignored since body already sets content type
+      request.addHeader("Content-Type", "application/json") // will be used as content type is not set with a body
       val req = request.buildRequest()
       req.getHeaders.get("Content-Type") must be_==("application/json")
     }
