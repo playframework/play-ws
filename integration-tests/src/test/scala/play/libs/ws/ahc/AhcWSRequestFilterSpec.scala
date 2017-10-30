@@ -27,7 +27,7 @@ class AhcWSRequestFilterSpec(implicit executionEnv: ExecutionEnv) extends Specif
   implicit val materializer = ActorMaterializer()
 
   // Create the standalone WS client with no cache
-  val client = StandaloneAhcWSClient.create(
+  private val client = StandaloneAhcWSClient.create(
     AhcWSClientConfigFactory.forConfig(ConfigFactory.load, this.getClass.getClassLoader),
     null,
     materializer
@@ -50,7 +50,7 @@ class AhcWSRequestFilterSpec(implicit executionEnv: ExecutionEnv) extends Specif
     Http().bindAndHandle(route, "localhost", testServerPort)
   }
 
-  override def afterAll = {
+  override def afterAll: Unit = {
     futureServer.foreach(_.unbind)
     client.close()
     system.terminate()
@@ -58,7 +58,7 @@ class AhcWSRequestFilterSpec(implicit executionEnv: ExecutionEnv) extends Specif
 
   "setRequestFilter" should {
 
-    "work with one request filter" in {
+    "execute with one request filter" in {
       import scala.collection.JavaConverters._
       val callList = new java.util.ArrayList[Integer]()
       val responseFuture = FutureConverters.toScala(client.url(s"http://localhost:$testServerPort")
@@ -69,7 +69,18 @@ class AhcWSRequestFilterSpec(implicit executionEnv: ExecutionEnv) extends Specif
       }.await(retries = 0, timeout = 5.seconds)
     }
 
-    "work with three request filter" in {
+    "stream with one request filter" in {
+      import scala.collection.JavaConverters._
+      val callList = new java.util.ArrayList[Integer]()
+      val responseFuture = FutureConverters.toScala(client.url(s"http://localhost:$testServerPort")
+        .setRequestFilter(new CallbackRequestFilter(callList, 1))
+        .stream())
+      responseFuture.map { _ =>
+        callList.asScala must contain(1)
+      }.await(retries = 0, timeout = 5.seconds)
+    }
+
+    "execute with three request filter" in {
       import scala.collection.JavaConverters._
       val callList = new java.util.ArrayList[Integer]()
       val responseFuture = FutureConverters.toScala(client.url(s"http://localhost:$testServerPort")
@@ -82,7 +93,20 @@ class AhcWSRequestFilterSpec(implicit executionEnv: ExecutionEnv) extends Specif
       }.await(retries = 0, timeout = 5.seconds)
     }
 
-    "should allow filters to modify the request" in {
+    "stream with three request filters" in {
+      import scala.collection.JavaConverters._
+      val callList = new java.util.ArrayList[Integer]()
+      val responseFuture = FutureConverters.toScala(client.url(s"http://localhost:$testServerPort")
+        .setRequestFilter(new CallbackRequestFilter(callList, 1))
+        .setRequestFilter(new CallbackRequestFilter(callList, 2))
+        .setRequestFilter(new CallbackRequestFilter(callList, 3))
+        .stream())
+      responseFuture.map { _ =>
+        callList.asScala must containTheSameElementsAs(Seq(1, 2, 3))
+      }.await(retries = 0, timeout = 5.seconds)
+    }
+
+    "allow filters to modify the executing request" in {
       val appendedHeader = "X-Request-Id"
       val appendedHeaderValue = "someid"
       val responseFuture = FutureConverters.toScala(client.url(s"http://localhost:$testServerPort")
@@ -93,6 +117,17 @@ class AhcWSRequestFilterSpec(implicit executionEnv: ExecutionEnv) extends Specif
         response.getHeaders.get("X-Request-Id").get(0) must be_==("someid")
       }.await(retries = 0, timeout = 5.seconds)
     }
-  }
 
+    "allow filters to modify the streaming request" in {
+      val appendedHeader = "X-Request-Id"
+      val appendedHeaderValue = "someid"
+      val responseFuture = FutureConverters.toScala(client.url(s"http://localhost:$testServerPort")
+        .setRequestFilter(new HeaderAppendingFilter(appendedHeader, appendedHeaderValue))
+        .stream())
+
+      responseFuture.map { response =>
+        response.getHeaders.get("X-Request-Id").get(0) must be_==("someid")
+      }.await(retries = 0, timeout = 5.seconds)
+    }
+  }
 }
