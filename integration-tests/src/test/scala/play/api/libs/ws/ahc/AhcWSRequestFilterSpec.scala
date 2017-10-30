@@ -39,7 +39,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv) extends Sp
     }
   }
 
-  override def afterAll = {
+  override def afterAll: Unit = {
     super.afterAll()
     client.close()
   }
@@ -95,7 +95,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv) extends Sp
         .await(retries = 0, timeout = defaultTimeout)
     }
 
-    "execute with three request filter" in {
+    "execute with three request filters" in {
       val callList = scala.collection.mutable.ArrayBuffer[Int]()
       client.url(s"http://localhost:$testServerPort")
         .withRequestFilter(new CallbackRequestFilter(callList, 1))
@@ -107,7 +107,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv) extends Sp
         .await(retries = 0, timeout = defaultTimeout)
     }
 
-    "stream with three request filter" in {
+    "stream with three request filters" in {
       val callList = scala.collection.mutable.ArrayBuffer[Int]()
       client.url(s"http://localhost:$testServerPort")
         .withRequestFilter(new CallbackRequestFilter(callList, 1))
@@ -119,7 +119,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv) extends Sp
         .await(retries = 0, timeout = defaultTimeout)
     }
 
-    "should allow filters to modify the executed request" in {
+    "allow filters to modify the executing request" in {
       val appendedHeader = "X-Request-Id"
       val appendedHeaderValue = "someid"
       client.url(s"http://localhost:$testServerPort")
@@ -130,7 +130,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv) extends Sp
         .await(retries = 0, timeout = defaultTimeout)
     }
 
-    "should allow filters to modify the streamed request" in {
+    "allow filters to modify the streaming request" in {
       val appendedHeader = "X-Request-Id"
       val appendedHeaderValue = "someid"
       client.url(s"http://localhost:$testServerPort")
