@@ -247,8 +247,8 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     /**
-     * Sets a BodyWritable directly.  See {@link DefaultBodyWritables} for common bodies.
-     * Also sets a Content-Type header if its presented in BodyWritable.
+     * Sets a BodyWritable directly. See {@link DefaultBodyWritables} for common bodies.
+     * Also sets a Content-Type header if it's not set on the request but specified in the BodyWritable.
      *
      * @param bodyWritable the bodyWritable to set.
      * @return the request with body
