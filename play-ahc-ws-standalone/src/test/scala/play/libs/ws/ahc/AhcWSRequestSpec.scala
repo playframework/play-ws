@@ -163,7 +163,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
       }
     }
 
-    "set content type explicitly if its not set with a body" in {
+    "allow adding an explicit Content-Type header if the BodyWritable doesn't set the Content-Type" in {
       val client = mock[StandaloneAhcWSClient]
       val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
       request.setBody(body("HELLO WORLD", null)) // content type is not set
@@ -172,7 +172,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
       req.getHeaders.get("Content-Type") must be_==("application/json")
     }
 
-    "only send first content type header and add charset=utf-8 to the Content-Type header if it's manually adding but lacking charset" in {
+    "ignore explicit Content-Type header if the BodyWritable already set the Content-Type" in {
       val client = mock[StandaloneAhcWSClient]
       val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
       request.setBody(body("HELLO WORLD"))
@@ -181,7 +181,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
       req.getHeaders.get("Content-Type") must be_==("text/plain")
     }
 
-    "only send first content type header and keep the charset if it has been set manually with a charset" in {
+    "only send first Content-Type header and keep the charset when setting the Content-Type multiple times" in {
       val client = mock[StandaloneAhcWSClient]
       val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
       request.addHeader("Content-Type", "application/json; charset=US-ASCII")
