@@ -19,7 +19,10 @@ final class StandaloneAkkaHttpWSResponse private (val response: HttpResponse)(im
   /**
    * Return the current headers for this response.
    */
-  override def headers: Map[String, Seq[String]] = ???
+  override def headers: Map[String, Seq[String]] =
+    response.headers
+      .groupBy(_.name)
+      .mapValues(_.map(_.value()))
 
   /**
    * Get the underlying response object.
