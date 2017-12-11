@@ -1,8 +1,11 @@
 package play.api.libs.ws.akkahttp
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.model.IllegalUriException
 import akka.stream.Materializer
 import play.api.libs.ws.{ StandaloneWSClient, StandaloneWSRequest }
+
+import scala.util.control.NonFatal
 
 object StandaloneAkkaHttpWSClient {
   def apply()(implicit sys: ActorSystem, mat: Materializer): StandaloneAkkaHttpWSClient = new StandaloneAkkaHttpWSClient()
@@ -23,7 +26,12 @@ final class StandaloneAkkaHttpWSClient private ()(implicit val sys: ActorSystem,
    * @param url The base URL to make HTTP requests to.
    * @return a request
    */
-  override def url(url: String): StandaloneWSRequest = StandaloneAkkaHttpWSRequest(url)
+  override def url(url: String): StandaloneWSRequest = try {
+    StandaloneAkkaHttpWSRequest(url)
+  } catch {
+    case ex: IllegalUriException => throw new IllegalArgumentException(ex.getMessage, ex)
+    case NonFatal(ex) => throw ex
+  }
 
   /**
    * Closes this client, and releases underlying resources.
