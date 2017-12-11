@@ -15,10 +15,13 @@ import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 
 object StandaloneAkkaHttpWSRequest {
-  def apply(url: String)(implicit sys: ActorSystem, mat: Materializer): StandaloneAkkaHttpWSRequest = new StandaloneAkkaHttpWSRequest(HttpRequest().withUri(Uri.parseAbsolute(url)))
+  def apply(url: String)(implicit sys: ActorSystem, mat: Materializer): StandaloneAkkaHttpWSRequest = new StandaloneAkkaHttpWSRequest(HttpRequest().withUri(Uri.parseAbsolute(url)), Seq.empty)
 }
 
-final class StandaloneAkkaHttpWSRequest private (val request: HttpRequest)(implicit val sys: ActorSystem, val mat: Materializer) extends StandaloneWSRequest {
+final class StandaloneAkkaHttpWSRequest private (
+    val request: HttpRequest,
+    val filters: Seq[WSRequestFilter]
+)(implicit val sys: ActorSystem, val mat: Materializer) extends StandaloneWSRequest {
 
   override type Self = StandaloneWSRequest
   override type Response = StandaloneWSResponse
@@ -159,7 +162,8 @@ final class StandaloneAkkaHttpWSRequest private (val request: HttpRequest)(impli
   /**
    * Adds a filter to the request that can transform the request for subsequent filters.
    */
-  override def withRequestFilter(filter: WSRequestFilter): Self = ???
+  override def withRequestFilter(filter: WSRequestFilter): Self =
+    copy(filters = filters :+ filter)
 
   /**
    * Sets the virtual host to use in this request
@@ -174,7 +178,10 @@ final class StandaloneAkkaHttpWSRequest private (val request: HttpRequest)(impli
   /**
    * Sets the method for this request
    */
-  override def withMethod(method: String): Self = ???
+  override def withMethod(method: String): Self =
+    copy(request = request.withMethod(
+      HttpMethods.getForKey(method)
+        .getOrElse(throw new IllegalArgumentException(s"Unknown HTTP method $method"))))
 
   /**
    * Sets the body for this request.
@@ -195,7 +202,7 @@ final class StandaloneAkkaHttpWSRequest private (val request: HttpRequest)(impli
    * Performs a GET.
    */
   override def get(): Future[Response] =
-    Http().singleRequest(request).map(StandaloneAkkaHttpWSResponse.apply)(sys.dispatcher)
+    execute()
 
   /**
    * Performs a PATCH request.
@@ -247,12 +254,21 @@ final class StandaloneAkkaHttpWSRequest private (val request: HttpRequest)(impli
   /**
    * Execute this request
    */
-  override def execute(): Future[Response] = ???
+  override def execute(): Future[Response] = {
+    val akkaExecutor = WSRequestExecutor { request =>
+      val akkaRequest = request.asInstanceOf[StandaloneAkkaHttpWSRequest].request
+      Http().singleRequest(akkaRequest).map(StandaloneAkkaHttpWSResponse.apply)(sys.dispatcher)
+    }
+
+    val execution = filters.foldRight(akkaExecutor)((filter, executor) => filter.apply(executor))
+
+    execution(this)
+  }
 
   /**
    * Execute this request and stream the response body.
    */
   override def stream(): Future[Response] = get()
 
-  private def copy(request: HttpRequest) = new StandaloneAkkaHttpWSRequest(request)
+  private def copy(request: HttpRequest = request, filters: Seq[WSRequestFilter] = filters) = new StandaloneAkkaHttpWSRequest(request, filters)
 }

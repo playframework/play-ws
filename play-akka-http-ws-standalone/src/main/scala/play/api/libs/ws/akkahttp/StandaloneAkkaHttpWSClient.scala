@@ -1,6 +1,7 @@
 package play.api.libs.ws.akkahttp
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.IllegalUriException
 import akka.stream.Materializer
 import play.api.libs.ws.{ StandaloneWSClient, StandaloneWSRequest }
@@ -36,5 +37,6 @@ final class StandaloneAkkaHttpWSClient private ()(implicit val sys: ActorSystem,
   /**
    * Closes this client, and releases underlying resources.
    */
-  override def close(): Unit = ()
+  override def close(): Unit =
+    Http().shutdownAllConnectionPools()
 }
