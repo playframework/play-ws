@@ -15,7 +15,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 
 object StandaloneAkkaHttpWSRequest {
-  def apply(url: String)(implicit sys: ActorSystem, mat: Materializer): StandaloneAkkaHttpWSRequest = new StandaloneAkkaHttpWSRequest(HttpRequest().withUri(url))
+  def apply(url: String)(implicit sys: ActorSystem, mat: Materializer): StandaloneAkkaHttpWSRequest = new StandaloneAkkaHttpWSRequest(HttpRequest().withUri(Uri.parseAbsolute(url)))
 }
 
 final class StandaloneAkkaHttpWSRequest private (val request: HttpRequest)(implicit val sys: ActorSystem, val mat: Materializer) extends StandaloneWSRequest {

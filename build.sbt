@@ -419,6 +419,7 @@ lazy val `integration-tests` = project.in(file("integration-tests"))
   .settings(shadedOAuthSettings)
   .dependsOn(
     `play-ahc-ws-standalone`,
+    `play-akka-http-ws-standalone`,
     `play-ws-standalone-json`,
     `play-ws-standalone-xml`
   )
