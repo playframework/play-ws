@@ -262,6 +262,23 @@ lazy val `play-ws-standalone` = project
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
+// WS API Tests
+//---------------------------------------------------------------
+
+lazy val `play-ws-standalone-tests` = project
+  .in(file("play-ws-standalone-tests"))
+  .settings(commonSettings)
+  .settings(disablePublishing)
+  .settings(formattingSettings)
+  .settings(SbtScalariform.scalariformSettings)
+  .settings(libraryDependencies ++= standaloneApiWSTestsDependencies)
+  .dependsOn(
+    `play-ahc-ws-standalone`,
+    `play-akka-http-ws-standalone`
+  )
+  .disablePlugins(sbtassembly.AssemblyPlugin)
+
+//---------------------------------------------------------------
 // Shaded AsyncHttpClient implementation of WS
 //---------------------------------------------------------------
 
@@ -318,6 +335,28 @@ lazy val `play-ahc-ws-standalone` = project
   ).aggregate(
     `shaded`
   ).disablePlugins(sbtassembly.AssemblyPlugin)
+
+//---------------------------------------------------------------
+// Akka Http implementation of WS
+//---------------------------------------------------------------
+
+lazy val `play-akka-http-ws-standalone` = project
+  .in(file("play-akka-http-ws-standalone"))
+  .settings(commonSettings)
+  .settings(formattingSettings)
+  .settings(SbtScalariform.scalariformSettings)
+  .settings(
+    fork in Test := true,
+    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v"))
+  )
+  .settings(
+    // The scaladoc generation
+  )
+  .settings(libraryDependencies ++= standaloneAkkaHttpWSDependencies)
+  .dependsOn(
+    `play-ws-standalone`
+  )
+  .disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
 // JSON Readables and Writables
@@ -404,7 +443,9 @@ lazy val root = project
     `play-ws-standalone`,
     `play-ws-standalone-json`,
     `play-ws-standalone-xml`,
+    `play-ws-standalone-tests`,
     `play-ahc-ws-standalone`,
+    `play-akka-http-ws-standalone`,
     `integration-tests`
   )
   .disablePlugins(sbtassembly.AssemblyPlugin)

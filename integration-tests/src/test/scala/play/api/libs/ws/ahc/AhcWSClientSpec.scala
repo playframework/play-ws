@@ -6,21 +6,18 @@ package play.api.libs.ws.ahc
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import org.specs2.concurrent.{ ExecutionEnv, FutureAwait }
-import org.specs2.execute.Result
+import org.specs2.execute.{ Result }
 import org.specs2.matcher.FutureMatchers
 import org.specs2.mutable.Specification
 import play.AkkaServerProvider
-import play.api.libs.ws.{ BodyReadable, DefaultBodyReadables }
+import play.api.libs.ws.akkahttp.StandaloneAkkaHttpWSClient
+import play.api.libs.ws.{ BodyReadable, DefaultBodyReadables, StandaloneWSClient }
 
 import scala.concurrent._
 
-class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv) extends Specification
-    with AkkaServerProvider
-    with FutureMatchers
-    with FutureAwait
-    with DefaultBodyReadables {
-
-  def withClient(config: AhcWSClientConfig = AhcWSClientConfigFactory.forConfig())(block: StandaloneAhcWSClient => Result): Result = {
+class AhcWSClientSpec(implicit override val executionEnv: ExecutionEnv) extends WSClientSpec {
+  def withClient()(block: StandaloneWSClient => Result): Result = {
+    val config = AhcWSClientConfigFactory.forConfig()
     val client = StandaloneAhcWSClient(config)
     try {
       block(client)
@@ -28,6 +25,29 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv) extends Specifica
       client.close()
     }
   }
+}
+
+class AkkaHttpWSClientSpec(implicit override val executionEnv: ExecutionEnv) extends WSClientSpec {
+  def withClient()(block: StandaloneWSClient => Result): Result = {
+    val client = StandaloneAkkaHttpWSClient()
+    try {
+      block(client)
+    } finally {
+      client.close()
+    }
+  }
+}
+
+trait WSClientSpec extends Specification
+    with AkkaServerProvider
+    with FutureMatchers
+    with FutureAwait
+    with DefaultBodyReadables
+    with AkkaHttpPending {
+
+  implicit def executionEnv: ExecutionEnv
+
+  def withClient()(block: StandaloneWSClient => Result): Result
 
   override val routes = {
     import akka.http.scaladsl.server.Directives._
@@ -45,7 +65,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv) extends Specifica
     "throw an exception on invalid url" in {
       withClient() { client =>
         { client.url("localhost") } must throwAn[IllegalArgumentException]
-      }
+      }.akkaHttpPending("Akka Http accepts hostname as URI")
     }
 
     "not throw exception on valid url" in {
@@ -68,9 +88,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv) extends Specifica
       case class Foo(body: String)
 
       implicit val fooBodyReadable = BodyReadable[Foo] { response =>
-        import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse }
-        val ahcResponse = response.asInstanceOf[StandaloneAhcWSResponse].underlying[AHCResponse]
-        Foo(ahcResponse.getResponseBody)
+        Foo(response.body)
       }
 
       withClient() { client =>
