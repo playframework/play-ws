@@ -3,6 +3,8 @@ package play.api.libs.ws.akkahttp
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import play.api.libs.ws.{ StandaloneWSResponse, WSCookie }
 
 import scala.concurrent.Await
@@ -71,10 +73,10 @@ final class StandaloneAkkaHttpWSResponse private (val response: HttpResponse)(im
   /**
    * @return The response body as ByteString.
    */
-  override def bodyAsBytes = ???
+  override def bodyAsBytes: ByteString = ???
 
   /**
    * @return the response as a source of bytes
    */
-  override def bodyAsSource = response.entity.dataBytes
+  override def bodyAsSource: Source[ByteString, _] = response.entity.dataBytes
 }
