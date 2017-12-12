@@ -202,7 +202,7 @@ final class StandaloneAkkaHttpWSRequest private (
    * Performs a GET.
    */
   override def get(): Future[Response] =
-    execute()
+    execute("GET")
 
   /**
    * Performs a PATCH request.
@@ -218,7 +218,8 @@ final class StandaloneAkkaHttpWSRequest private (
    * @param body the payload body submitted with this request
    * @return a future with the response for the POST request
    */
-  override def post[T: BodyWritable](body: T): Future[Response] = ???
+  override def post[T: BodyWritable](body: T): Future[Response] =
+    withBody(body).execute("POST")
 
   /**
    * Performs a PUT request.
@@ -249,7 +250,8 @@ final class StandaloneAkkaHttpWSRequest private (
    * @param method the HTTP method that will be executed
    * @return a future with the response for this request
    */
-  override def execute(method: String): Future[Response] = ???
+  override def execute(method: String): Future[Response] =
+    withMethod(method).execute()
 
   /**
    * Execute this request
