@@ -112,7 +112,11 @@ final class StandaloneAkkaHttpWSRequest private (
   /**
    * sets the authentication realm
    */
-  override def withAuth(username: String, password: String, scheme: WSAuthScheme): Self = ???
+  override def withAuth(username: String, password: String, scheme: WSAuthScheme): Self =
+    scheme match {
+      case WSAuthScheme.BASIC => copy(request = request.addHeader(Authorization(BasicHttpCredentials(username, password))))
+      case authScheme => throw new IllegalArgumentException(s"Authentication scheme [$scheme] not yet supported")
+    }
 
   /**
    * Returns this request with the given headers, discarding the existing ones.
