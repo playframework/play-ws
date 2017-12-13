@@ -34,7 +34,7 @@ final class StandaloneAkkaHttpWSResponse private (val response: HttpResponse)(im
   /**
    * The response status code.
    */
-  override def status: Int = ???
+  override def status: Int = response.status.intValue()
 
   /**
    * The response status message.

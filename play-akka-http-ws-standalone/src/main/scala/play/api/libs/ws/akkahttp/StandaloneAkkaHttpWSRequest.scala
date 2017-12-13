@@ -210,7 +210,8 @@ final class StandaloneAkkaHttpWSRequest private (
    * @param body the payload body submitted with this request
    * @return a future with the response for the PATCH request
    */
-  override def patch[T: BodyWritable](body: T): Future[Response] = ???
+  override def patch[T: BodyWritable](body: T): Future[Response] =
+    withBody(body).execute("PATCH")
 
   /**
    * Performs a POST request.
@@ -227,22 +228,26 @@ final class StandaloneAkkaHttpWSRequest private (
    * @param body the payload body submitted with this request
    * @return a future with the response for the PUT request
    */
-  override def put[T: BodyWritable](body: T): Future[Response] = ???
+  override def put[T: BodyWritable](body: T): Future[Response] =
+    withBody(body).execute("PUT")
 
   /**
    * Perform a DELETE on the request asynchronously.
    */
-  override def delete(): Future[Response] = ???
+  override def delete(): Future[Response] =
+    execute("DELETE")
 
   /**
    * Perform a HEAD on the request asynchronously.
    */
-  override def head(): Future[Response] = ???
+  override def head(): Future[Response] =
+    execute("HEAD")
 
   /**
    * Perform a OPTIONS on the request asynchronously.
    */
-  override def options(): Future[Response] = ???
+  override def options(): Future[Response] =
+    execute("OPTIONS")
 
   /**
    * Executes the given HTTP method.
@@ -270,7 +275,7 @@ final class StandaloneAkkaHttpWSRequest private (
   /**
    * Execute this request and stream the response body.
    */
-  override def stream(): Future[Response] = get()
+  override def stream(): Future[Response] = execute()
 
   private def copy(request: HttpRequest = request, filters: Seq[WSRequestFilter] = filters) = new StandaloneAkkaHttpWSRequest(request, filters)
 }
