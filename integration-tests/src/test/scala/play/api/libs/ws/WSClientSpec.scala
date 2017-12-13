@@ -4,6 +4,7 @@
 package play.api.libs.ws
 
 import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.directives.Credentials
 import akka.stream.scaladsl.Sink
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.execute.Result
@@ -22,6 +23,12 @@ trait WSClientSpec extends Specification
 
   def withClient()(block: StandaloneWSClient => Result): Result
 
+  private def authenticator(credentials: Credentials): Option[String] =
+    credentials match {
+      case p @ Credentials.Provided(id) if p.verify("pass") => Some(id)
+      case _ => None
+    }
+
   override val routes = {
     import akka.http.scaladsl.server.Directives._
     path("xml") {
@@ -29,6 +36,11 @@ trait WSClientSpec extends Specification
         complete(echo)
       }
     } ~
+      path("auth" / "basic") {
+        authenticateBasic(realm = "secure site", authenticator) { id =>
+          complete(s"Authenticated $id")
+        }
+      } ~
       get {
         entity(as[String]) { echo =>
           complete(s"GET $echo")
@@ -189,6 +201,17 @@ trait WSClientSpec extends Specification
           .post(document)
           .map(_.body[Elem])
           .map(_ must be_==(document))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "authenticate basic" in {
+      withClient() {
+        _.url(s"http://localhost:$testServerPort/auth/basic")
+          .withAuth("user", "pass", WSAuthScheme.BASIC)
+          .get()
+          .map(_.body)
+          .map(_ must be_==("Authenticated user"))
           .awaitFor(defaultTimeout)
       }
     }
