@@ -68,7 +68,7 @@ object AhcWSClientConfigFactory {
 }
 
 /**
- * This class creates a WSClientConfig object from configuration.
+ * This class creates a AhcWSClientConfig object from configuration.
  */
 @Singleton
 class AhcWSClientConfigParser @Inject() (
