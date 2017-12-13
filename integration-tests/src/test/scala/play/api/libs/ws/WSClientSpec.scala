@@ -3,6 +3,7 @@
  */
 package play.api.libs.ws
 
+import akka.http.scaladsl.model.StatusCodes
 import akka.stream.scaladsl.Sink
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.execute.Result
@@ -23,12 +24,42 @@ trait WSClientSpec extends Specification
 
   override val routes = {
     import akka.http.scaladsl.server.Directives._
-    get {
-      complete("<h1>Say hello to akka-http</h1>")
+    path("xml") {
+      entity(as[String]) { echo =>
+        complete(echo)
+      }
     } ~
+      get {
+        entity(as[String]) { echo =>
+          complete(s"GET $echo")
+        }
+      } ~
       post {
         entity(as[String]) { echo =>
-          complete(echo)
+          complete(s"POST $echo")
+        }
+      } ~
+      patch {
+        entity(as[String]) { echo =>
+          complete(s"PATCH $echo")
+        }
+      } ~
+      put {
+        entity(as[String]) { echo =>
+          complete(s"PUT $echo")
+        }
+      } ~
+      delete {
+        entity(as[String]) { echo =>
+          complete("DELETE")
+        }
+      } ~
+      head {
+        complete(StatusCodes.OK)
+      } ~
+      options {
+        entity(as[String]) { echo =>
+          complete("OPTIONS")
         }
       }
   }
@@ -54,7 +85,7 @@ trait WSClientSpec extends Specification
         _.url(s"http://localhost:$testServerPort/index")
           .get()
           .map(_.body[String])
-          .map(_ must beEqualTo("<h1>Say hello to akka-http</h1>"))
+          .map(_ must beEqualTo("GET "))
           .awaitFor(defaultTimeout)
       }
     }
@@ -70,7 +101,7 @@ trait WSClientSpec extends Specification
         _.url(s"http://localhost:$testServerPort/index")
           .get()
           .map(_.body[Foo])
-          .map(_ must beEqualTo(Foo("<h1>Say hello to akka-http</h1>")))
+          .map(_ must beEqualTo(Foo("GET ")))
           .awaitFor(defaultTimeout)
       }
     }
@@ -81,17 +112,64 @@ trait WSClientSpec extends Specification
           .stream()
           .map(_.bodyAsSource)
           .flatMap(_.runWith(Sink.head))
-          .map(_.utf8String must beEqualTo("<h1>Say hello to akka-http</h1>"))
+          .map(_.utf8String must beEqualTo("GET "))
           .awaitFor(defaultTimeout)
       }
     }
 
-    "post a request" in {
+    "send post request" in {
       import DefaultBodyWritables._
       withClient() {
         _.url(s"http://localhost:$testServerPort")
           .post("hello world")
-          .map(_.body must be_==("hello world"))
+          .map(_.body must be_==("POST hello world"))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "send patch request" in {
+      import DefaultBodyWritables._
+      withClient() {
+        _.url(s"http://localhost:$testServerPort")
+          .patch("hello world")
+          .map(_.body must be_==("PATCH hello world"))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "send put request" in {
+      import DefaultBodyWritables._
+      withClient() {
+        _.url(s"http://localhost:$testServerPort")
+          .put("hello world")
+          .map(_.body must be_==("PUT hello world"))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "send delete request" in {
+      withClient() {
+        _.url(s"http://localhost:$testServerPort")
+          .delete()
+          .map(_.body must be_==("DELETE"))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "send head request" in {
+      withClient() {
+        _.url(s"http://localhost:$testServerPort")
+          .head()
+          .map(_.status must be_==(200))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "send options request" in {
+      withClient() {
+        _.url(s"http://localhost:$testServerPort")
+          .options()
+          .map(_.body must be_==("OPTIONS"))
           .awaitFor(defaultTimeout)
       }
     }
@@ -107,7 +185,7 @@ trait WSClientSpec extends Specification
       import XMLBodyWritables._
       import XMLBodyReadables._
       withClient() {
-        _.url(s"http://localhost:$testServerPort")
+        _.url(s"http://localhost:$testServerPort/xml")
           .post(document)
           .map(_.body[Elem])
           .map(_ must be_==(document))
