@@ -172,7 +172,8 @@ final class StandaloneAkkaHttpWSRequest private (
   /**
    * Sets the virtual host to use in this request
    */
-  override def withVirtualHost(vh: String): Self = ???
+  override def withVirtualHost(vh: String): Self =
+    copy(request = request.addHeader(Host(vh)))
 
   /**
    * Sets the proxy server to use in this request

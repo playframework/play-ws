@@ -4,6 +4,7 @@
 package play.api.libs.ws
 
 import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.headers.Host
 import akka.http.scaladsl.server.directives.Credentials
 import akka.stream.scaladsl.Sink
 import org.specs2.concurrent.ExecutionEnv
@@ -39,6 +40,11 @@ trait WSClientSpec extends Specification
       path("auth" / "basic") {
         authenticateBasic(realm = "secure site", authenticator) { id =>
           complete(s"Authenticated $id")
+        }
+      } ~
+      path("virtualhost") {
+        extractRequest { r =>
+          complete(r.header[Host].get.host.address)
         }
       } ~
       get {
@@ -212,6 +218,16 @@ trait WSClientSpec extends Specification
           .get()
           .map(_.body)
           .map(_ must be_==("Authenticated user"))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "set host header" in {
+      withClient() {
+        _.url(s"http://localhost:$testServerPort/virtualhost")
+          .withVirtualHost("virtualhost")
+          .get()
+          .map(_.body must be_==("virtualhost"))
           .awaitFor(defaultTimeout)
       }
     }
