@@ -11,16 +11,18 @@ import akka.stream.Materializer
 import play.api.libs.ws._
 
 import scala.collection.immutable
-import scala.concurrent.Future
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.Duration.Infinite
+import scala.concurrent.{ Future, TimeoutException }
+import scala.concurrent.duration.{ Duration, FiniteDuration }
 
 object StandaloneAkkaHttpWSRequest {
-  def apply(url: String)(implicit sys: ActorSystem, mat: Materializer): StandaloneAkkaHttpWSRequest = new StandaloneAkkaHttpWSRequest(HttpRequest().withUri(Uri.parseAbsolute(url)), Seq.empty)
+  def apply(url: String)(implicit sys: ActorSystem, mat: Materializer): StandaloneAkkaHttpWSRequest = new StandaloneAkkaHttpWSRequest(HttpRequest().withUri(Uri.parseAbsolute(url)), Seq.empty, Duration.Inf)
 }
 
 final class StandaloneAkkaHttpWSRequest private (
     val request: HttpRequest,
-    val filters: Seq[WSRequestFilter]
+    val filters: Seq[WSRequestFilter],
+    val timeout: Duration
 )(implicit val sys: ActorSystem, val mat: Materializer) extends StandaloneWSRequest {
 
   override type Self = StandaloneWSRequest
@@ -161,7 +163,8 @@ final class StandaloneAkkaHttpWSRequest private (
    * Use Duration.Inf to set an infinite request timeout.
    * Warning: a stream consumption will be interrupted when this time is reached unless Duration.Inf is set.
    */
-  override def withRequestTimeout(timeout: Duration): Self = ???
+  override def withRequestTimeout(timeout: Duration): Self =
+    copy(timeout = timeout)
 
   /**
    * Adds a filter to the request that can transform the request for subsequent filters.
@@ -268,8 +271,17 @@ final class StandaloneAkkaHttpWSRequest private (
    */
   override def execute(): Future[Response] = {
     val akkaExecutor = WSRequestExecutor { request =>
+      import sys.dispatcher
       val akkaRequest = request.asInstanceOf[StandaloneAkkaHttpWSRequest].request
-      Http().singleRequest(akkaRequest).map(StandaloneAkkaHttpWSResponse.apply)(sys.dispatcher)
+      val timeoutFuture = timeout match {
+        case duration: Infinite => Seq.empty[Future[StandaloneAkkaHttpWSResponse]]
+        case duration: FiniteDuration =>
+          Seq(akka.pattern.after(duration, sys.scheduler)(Future.failed(new TimeoutException(s"Request timeout after $duration"))))
+      }
+      Future.firstCompletedOf(
+        timeoutFuture :+
+          Http().singleRequest(akkaRequest).map(StandaloneAkkaHttpWSResponse.apply)(sys.dispatcher)
+      )
     }
 
     val execution = filters.foldRight(akkaExecutor)((filter, executor) => filter.apply(executor))
@@ -282,5 +294,9 @@ final class StandaloneAkkaHttpWSRequest private (
    */
   override def stream(): Future[Response] = execute()
 
-  private def copy(request: HttpRequest = request, filters: Seq[WSRequestFilter] = filters) = new StandaloneAkkaHttpWSRequest(request, filters)
+  private def copy(
+    request: HttpRequest = request,
+    filters: Seq[WSRequestFilter] = filters,
+    timeout: Duration = timeout
+  ) = new StandaloneAkkaHttpWSRequest(request, filters, timeout)
 }

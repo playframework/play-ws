@@ -13,6 +13,8 @@ import org.specs2.matcher.FutureMatchers
 import org.specs2.mutable.Specification
 import play.AkkaServerProvider
 
+import scala.concurrent.Future
+import scala.concurrent.duration._
 import scala.xml.Elem
 
 trait WSClientSpec extends Specification
@@ -45,6 +47,11 @@ trait WSClientSpec extends Specification
       path("virtualhost") {
         extractRequest { r =>
           complete(r.header[Host].get.host.address)
+        }
+      } ~
+      path("timeout") {
+        extractActorSystem { sys =>
+          complete(akka.pattern.after(2.seconds, sys.scheduler)(Future.successful("timeout")))
         }
       } ~
       get {
@@ -228,6 +235,18 @@ trait WSClientSpec extends Specification
           .withVirtualHost("virtualhost")
           .get()
           .map(_.body must be_==("virtualhost"))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "complete after timeout" in {
+      withClient() {
+        _.url(s"http://localhost:$testServerPort/timeout")
+          .withRequestTimeout(100.millis)
+          .get()
+          .map(_.body must be_==("timeout"))
+          .failed
+          .map(_.getMessage must startWith("Request timeout"))
           .awaitFor(defaultTimeout)
       }
     }
