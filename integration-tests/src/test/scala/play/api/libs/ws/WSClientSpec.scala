@@ -17,22 +17,14 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.xml.Elem
 
-trait WSClientSpec extends Specification
-    with AkkaServerProvider
-    with FutureMatchers
-    with DefaultBodyReadables {
-
-  implicit def executionEnv: ExecutionEnv
-
-  def withClient()(block: StandaloneWSClient => Result): Result
-
+object WSClientSpec {
   private def authenticator(credentials: Credentials): Option[String] =
     credentials match {
       case p @ Credentials.Provided(id) if p.verify("pass") => Some(id)
       case _ => None
     }
 
-  override val routes = {
+  val routes = {
     import akka.http.scaladsl.server.Directives._
     path("xml") {
       entity(as[String]) { echo =>
@@ -51,6 +43,7 @@ trait WSClientSpec extends Specification
       } ~
       path("timeout") {
         extractActorSystem { sys =>
+          import sys.dispatcher
           complete(akka.pattern.after(2.seconds, sys.scheduler)(Future.successful("timeout")))
         }
       } ~
@@ -88,6 +81,18 @@ trait WSClientSpec extends Specification
         }
       }
   }
+}
+
+trait WSClientSpec extends Specification
+    with AkkaServerProvider
+    with FutureMatchers
+    with DefaultBodyReadables {
+
+  implicit def executionEnv: ExecutionEnv
+
+  def withClient()(block: StandaloneWSClient => Result): Result
+
+  override val routes = WSClientSpec.routes
 
   "url" should {
     "throw an exception on invalid url" in {
