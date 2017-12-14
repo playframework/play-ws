@@ -14,6 +14,8 @@ public interface BodyWritable<A> {
     WSBody<A> body();
 
     String contentType();
+
+
 }
 
 
