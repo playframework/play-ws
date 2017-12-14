@@ -10,16 +10,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
 
 import static scala.compat.java8.FutureConverters.toJava;
 
 public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
 
-  private final play.api.libs.ws.akkahttp.StandaloneAkkaHttpWSRequest request;
+  private final play.api.libs.ws.StandaloneWSRequest request;
 
   StandaloneAkkaHttpWSRequest(String url, ActorSystem sys, Materializer mat) {
     this.request = StandaloneAkkaHttpWSRequest$.MODULE$.apply(url, sys, mat);
+  }
+
+  private StandaloneAkkaHttpWSRequest(play.api.libs.ws.StandaloneWSRequest request) {
+    this.request = request;
   }
 
   /**
@@ -40,7 +43,8 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public CompletionStage<? extends StandaloneWSResponse> patch(BodyWritable body) {
-    return null;
+     return toJava(request.patch(null, body.toScala()))
+      .thenApply(r -> new StandaloneAkkaHttpWSResponse((play.api.libs.ws.StandaloneWSResponse)r));
   }
 
   /**
@@ -51,7 +55,8 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public CompletionStage<? extends StandaloneWSResponse> post(BodyWritable body) {
-    return null;
+    return toJava(request.post(null, body.toScala()))
+      .thenApply(r -> new StandaloneAkkaHttpWSResponse((play.api.libs.ws.StandaloneWSResponse)r));
   }
 
   /**
@@ -62,7 +67,8 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public CompletionStage<? extends StandaloneWSResponse> put(BodyWritable body) {
-    return null;
+    return toJava(request.put(null, body.toScala()))
+      .thenApply(r -> new StandaloneAkkaHttpWSResponse((play.api.libs.ws.StandaloneWSResponse)r));
   }
 
   /**
@@ -72,7 +78,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public CompletionStage<? extends StandaloneWSResponse> delete() {
-    return null;
+    return toJava(request.delete()).thenApply(StandaloneAkkaHttpWSResponse::new);
   }
 
   /**
@@ -82,7 +88,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public CompletionStage<? extends StandaloneWSResponse> head() {
-    return null;
+    return toJava(request.head()).thenApply(StandaloneAkkaHttpWSResponse::new);
   }
 
   /**
@@ -92,7 +98,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public CompletionStage<? extends StandaloneWSResponse> options() {
-    return null;
+    return toJava(request.options()).thenApply(StandaloneAkkaHttpWSResponse::new);
   }
 
   /**
@@ -282,7 +288,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public StandaloneWSRequest setAuth(String username, String password, WSAuthScheme scheme) {
-    return null;
+    return new StandaloneAkkaHttpWSRequest(request.withAuth(username, password, toScala(scheme)));
   }
 
   /**
@@ -315,7 +321,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public StandaloneWSRequest setVirtualHost(String virtualHost) {
-    return null;
+    return new StandaloneAkkaHttpWSRequest(request.withVirtualHost(virtualHost));
   }
 
   /**
@@ -347,7 +353,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public StandaloneWSRequest setRequestTimeout(Duration timeout) {
-    return null;
+    return new StandaloneAkkaHttpWSRequest(request.withRequestTimeout(toScala(timeout)));
   }
 
   /**
@@ -478,5 +484,23 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
   @Override
   public String getContentType() {
     return null;
+  }
+
+  private play.api.libs.ws.WSAuthScheme toScala(WSAuthScheme scheme) {
+    if (scheme.equals(WSAuthScheme.BASIC))
+      return play.api.libs.ws.WSAuthScheme.BASIC$.MODULE$;
+    else if (scheme.equals(WSAuthScheme.DIGEST))
+      return play.api.libs.ws.WSAuthScheme.DIGEST$.MODULE$;
+    else if (scheme.equals(WSAuthScheme.KERBEROS))
+      return play.api.libs.ws.WSAuthScheme.KERBEROS$.MODULE$;
+    else if (scheme.equals(WSAuthScheme.NTLM))
+      return play.api.libs.ws.WSAuthScheme.NTLM$.MODULE$;
+    else if (scheme.equals(WSAuthScheme.SPNEGO))
+      return play.api.libs.ws.WSAuthScheme.SPNEGO$.MODULE$;
+    else throw new IllegalArgumentException("Unknown scheme " + scheme);
+  }
+
+  private scala.concurrent.duration.Duration toScala(Duration duration) {
+    return scala.concurrent.duration.Duration.fromNanos(duration.getNano());
   }
 }

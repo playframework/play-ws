@@ -15,7 +15,7 @@ public interface BodyWritable<A> {
 
     String contentType();
 
-
+    play.api.libs.ws.BodyWritable toScala();
 }
 
 

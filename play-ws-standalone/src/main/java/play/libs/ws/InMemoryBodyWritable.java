@@ -27,6 +27,12 @@ public class InMemoryBodyWritable implements BodyWritable<ByteString> {
     public String contentType() {
         return contentType;
     }
+
+    @Override
+    public play.api.libs.ws.BodyWritable toScala() {
+      return new play.api.libs.ws.BodyWritable((b) ->
+        play.api.libs.ws.InMemoryBody$.MODULE$.apply(this.body.get()), this.contentType);
+    }
 }
 
 class InMemoryBody extends AbstractWSBody<ByteString> {

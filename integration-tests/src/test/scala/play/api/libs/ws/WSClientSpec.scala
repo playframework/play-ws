@@ -13,7 +13,7 @@ import org.specs2.matcher.FutureMatchers
 import org.specs2.mutable.Specification
 import play.AkkaServerProvider
 
-import scala.concurrent.Future
+import scala.concurrent.{ Future, TimeoutException }
 import scala.concurrent.duration._
 import scala.xml.Elem
 
@@ -249,9 +249,13 @@ trait WSClientSpec extends Specification
         _.url(s"http://localhost:$testServerPort/timeout")
           .withRequestTimeout(100.millis)
           .get()
-          .map(_.body must be_==("timeout"))
-          .failed
-          .map(_.getMessage must startWith("Request timeout"))
+          .map(_ => failure)
+          .recover {
+            case ex =>
+              ex must beAnInstanceOf[TimeoutException]
+              ex.getMessage must startWith("Request timeout")
+              success
+          }
           .awaitFor(defaultTimeout)
       }
     }
