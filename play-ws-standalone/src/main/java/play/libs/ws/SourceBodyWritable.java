@@ -42,6 +42,12 @@ public class SourceBodyWritable implements BodyWritable<Source<ByteString, ?>> {
     public String contentType() {
         return contentType;
     }
+
+    @Override
+    public play.api.libs.ws.BodyWritable toScala() {
+      return new play.api.libs.ws.BodyWritable((b) ->
+        play.api.libs.ws.SourceBody$.MODULE$.apply(this.body.get().asScala()), this.contentType);
+    }
 }
 
 class SourceBody extends AbstractWSBody<Source<ByteString, ?>> {

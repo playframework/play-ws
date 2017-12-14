@@ -1,6 +1,7 @@
 package play.libs.ws
 
 import java.net.MalformedURLException
+import java.time.Duration
 
 import akka.stream.javadsl.Sink
 import org.specs2.concurrent.ExecutionEnv
@@ -10,11 +11,13 @@ import org.specs2.mutable.Specification
 import play.AkkaServerProvider
 
 import scala.compat.java8.FutureConverters._
+import scala.concurrent.TimeoutException
 
 trait WSClientSpec extends Specification
     with AkkaServerProvider
     with FutureMatchers
-    with DefaultBodyWritables {
+    with DefaultBodyWritables
+    with XMLBodyWritables with XMLBodyReadables {
 
   implicit def executionEnv: ExecutionEnv
 
@@ -90,59 +93,117 @@ trait WSClientSpec extends Specification
           .awaitFor(defaultTimeout)
       }
     }
+
+    "send patch request" in {
+      withClient() {
+        _.url(s"http://localhost:$testServerPort")
+          .patch(body("hello world"))
+          .toScala
+          .map(_.getBody must be_==("PATCH hello world"))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "send put request" in {
+      withClient() {
+        _.url(s"http://localhost:$testServerPort")
+          .put(body("hello world"))
+          .toScala
+          .map(_.getBody must be_==("PUT hello world"))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "send delete request" in {
+      withClient() {
+        _.url(s"http://localhost:$testServerPort")
+          .delete()
+          .toScala
+          .map(_.getBody must be_==("DELETE"))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "send head request" in {
+      withClient() {
+        _.url(s"http://localhost:$testServerPort")
+          .head()
+          .toScala
+          .map(_.getStatus must be_==(200))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "send options request" in {
+      withClient() {
+        _.url(s"http://localhost:$testServerPort")
+          .options()
+          .toScala
+          .map(_.getBody must be_==("OPTIONS"))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "round trip XML" in {
+      val document = XML.fromString(
+        """<?xml version="1.0" encoding='UTF-8'?>
+          |<note>
+          |  <from>hello</from>
+          |  <to>world</to>
+          |</note>""".stripMargin)
+      document.normalizeDocument()
+
+      withClient() {
+        _.url(s"http://localhost:$testServerPort/xml")
+          .post(body(document))
+          .toScala
+          .map(_.getBody(xml()))
+          .map(_.isEqualNode(document) must be_==(true))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "authenticate basic" in {
+      withClient() {
+        _.url(s"http://localhost:$testServerPort/auth/basic")
+          .setAuth("user", "pass", WSAuthScheme.BASIC)
+          .get()
+          .toScala
+          .map(_.getBody)
+          .map(_ must be_==("Authenticated user"))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "set host header" in {
+      withClient() {
+        _.url(s"http://localhost:$testServerPort/virtualhost")
+          .setVirtualHost("virtualhost")
+          .get()
+          .toScala
+          .map(_.getBody must be_==("virtualhost"))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "complete after timeout" in {
+      withClient() {
+        _.url(s"http://localhost:$testServerPort/timeout")
+          .setRequestTimeout(Duration.ofMillis(100))
+          .get()
+          .toScala
+          .map(_ => failure)
+          .recover {
+            case ex =>
+              // due to java/scala conversions of future, the exception
+              // gets wrapped in CompletionException which we here unwrap
+              val e = if (ex.getCause != null) ex.getCause else ex
+              e must beAnInstanceOf[TimeoutException]
+              e.getMessage must startWith("Request timeout")
+              success
+          }
+          .awaitFor(defaultTimeout)
+      }
+    }
   }
-
-  //  "play.libs.ws.ahc.StandaloneAhcWSClient" should {
-  //
-  //    "get successfully" in {
-  //      def someOtherMethod(string: String) = {
-  //        new InMemoryBodyWritable(akka.util.ByteString.fromString(string), "text/plain")
-  //      }
-  //
-  //      withClient() {
-  //        _.url(s"http://localhost:$testServerPort")
-  //          .post(someOtherMethod("hello world"))
-  //          .toScala
-  //          .map(_.getBody() must be_==("hello world"))
-  //          .awaitFor(defaultTimeout)
-  //      }
-  //    }
-  //
-  //    "source successfully" in {
-  //      withClient() {
-  //        _.url(s"http://localhost:$testServerPort")
-  //          .stream()
-  //          .toScala
-  //          .flatMap(_.getBodyAsSource.runWith(Sink.head(), materializer).toScala)
-  //          .map(_ must be_== (ByteString.fromString("<h1>Say hello to akka-http</h1>")))
-  //      }
-  //    }
-
-  //    "round trip XML successfully" in {
-  //      val document = XML.fromString("""<?xml version="1.0" encoding='UTF-8'?>
-  //                                      |<note>
-  //                                      |  <from>hello</from>
-  //                                      |  <to>world</to>
-  //                                      |</note>""".stripMargin)
-  //      document.normalizeDocument()
-  //
-  //      toScala {
-  //        client.url(s"http://localhost:$testServerPort").post(body(document))
-  //      }.map { response =>
-  //        import javax.xml.parsers.DocumentBuilderFactory
-  //        val dbf = DocumentBuilderFactory.newInstance
-  //        dbf.setNamespaceAware(true)
-  //        dbf.setCoalescing(true)
-  //        dbf.setIgnoringElementContentWhitespace(true)
-  //        dbf.setIgnoringComments(true)
-  //        val db = dbf.newDocumentBuilder
-  //
-  //        val responseXml = response.getBody(xml())
-  //        responseXml.normalizeDocument()
-  //
-  //        responseXml.isEqualNode(document) must beTrue
-  //      }.await(retries = 0, timeout = 5.seconds)
-  //    }
-
-  //}
 }
