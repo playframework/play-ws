@@ -1,21 +1,35 @@
 package play.libs.ws.akkahttp;
 
+import akka.http.javadsl.model.HttpResponse;
+import akka.http.javadsl.unmarshalling.StringUnmarshallers;
+import akka.http.javadsl.unmarshalling.Unmarshaller;
+import akka.stream.Materializer;
+import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
 import akka.util.ByteString;
 import play.libs.ws.BodyReadable;
 import play.libs.ws.StandaloneWSResponse;
 import play.libs.ws.WSCookie;
 
+import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 public final class StandaloneAkkaHttpWSResponse implements StandaloneWSResponse {
 
-  private final play.api.libs.ws.StandaloneWSResponse response;
+  final Duration UNMARSHAL_TIMEOUT = Duration.ofSeconds(1);
 
-  StandaloneAkkaHttpWSResponse(play.api.libs.ws.StandaloneWSResponse response) {
+  private final HttpResponse response;
+
+  private final Materializer mat;
+
+  StandaloneAkkaHttpWSResponse(HttpResponse response, Materializer mat) {
     this.response = response;
+    this.mat = mat;
   }
 
   /**
@@ -39,7 +53,7 @@ public final class StandaloneAkkaHttpWSResponse implements StandaloneWSResponse 
    */
   @Override
   public int getStatus() {
-    return response.status();
+    return response.status().intValue();
   }
 
   /**
@@ -112,7 +126,7 @@ public final class StandaloneAkkaHttpWSResponse implements StandaloneWSResponse 
    */
   @Override
   public <T> T getBody(BodyReadable<T> readable) {
-    return response.body(new play.api.libs.ws.BodyReadable<T>(r -> readable.apply(new StandaloneAkkaHttpWSResponse(r))));
+    return readable.apply(this);
   }
 
   /**
@@ -131,7 +145,16 @@ public final class StandaloneAkkaHttpWSResponse implements StandaloneWSResponse 
    */
   @Override
   public String getBody() {
-    return response.body();
+    try {
+      return response.entity().getDataBytes()
+        .runWith(Sink.fold(ByteString.empty(), (b1, b2) -> b1.concat(b2)), mat)
+        .thenApply(ByteString::utf8String)
+        .toCompletableFuture()
+        .get(UNMARSHAL_TIMEOUT.toNanos(), TimeUnit.NANOSECONDS);
+    }
+    catch (Exception ex) {
+      throw new RuntimeException(ex);
+    }
   }
 
   @Override
@@ -141,6 +164,6 @@ public final class StandaloneAkkaHttpWSResponse implements StandaloneWSResponse 
 
   @Override
   public Source<ByteString, ?> getBodyAsSource() {
-    return response.bodyAsSource().asJava();
+    return response.entity().getDataBytes();
   }
 }
