@@ -28,7 +28,8 @@ trait WSClientSpec extends Specification
   "url" should {
     "throw an exception on invalid url" in {
       withClient() { client =>
-        { client.url("localhost") } must (throwAn[RuntimeException] like {
+        // akka http parses no scheme properly
+        { client.url("httt://localhost") } must (throwAn[RuntimeException] like {
           case ex: RuntimeException =>
             ex.getCause must beAnInstanceOf[MalformedURLException]
         })

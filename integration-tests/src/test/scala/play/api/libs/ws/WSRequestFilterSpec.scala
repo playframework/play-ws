@@ -16,14 +16,9 @@ import play.AkkaServerProvider
 
 import scala.collection.mutable
 
-trait WSRequestFilterSpec extends Specification with AkkaServerProvider with AfterAll with FutureMatchers {
-  import DefaultBodyReadables._
+object WSRequestFilterSpec {
 
-  implicit def executionEnv: ExecutionEnv
-
-  def withClient()(block: StandaloneWSClient => Result): Result
-
-  override val routes: Route = {
+  val routes: Route = {
     import akka.http.scaladsl.server.Directives._
     headerValueByName("X-Request-Id") { value =>
       respondWithHeader(RawHeader("X-Request-Id", value)) {
@@ -39,6 +34,17 @@ trait WSRequestFilterSpec extends Specification with AkkaServerProvider with Aft
       }
     }
   }
+
+}
+
+trait WSRequestFilterSpec extends Specification with AkkaServerProvider with AfterAll with FutureMatchers {
+  import DefaultBodyReadables._
+
+  implicit def executionEnv: ExecutionEnv
+
+  def withClient()(block: StandaloneWSClient => Result): Result
+
+  override val routes = WSRequestFilterSpec.routes
 
   "with request filters" should {
 

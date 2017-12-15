@@ -1,0 +1,94 @@
+package play.libs.ws
+
+import org.specs2.concurrent.ExecutionEnv
+import org.specs2.execute.Result
+import org.specs2.matcher.FutureMatchers
+import org.specs2.mutable.Specification
+import play.AkkaServerProvider
+import play.libs.ws.ahc.{ CallbackRequestFilter, HeaderAppendingFilter }
+
+import scala.compat.java8.FutureConverters._
+import scala.collection.JavaConverters._
+
+trait WSRequestFilterSpec extends Specification
+    with AkkaServerProvider
+    with FutureMatchers {
+
+  implicit def executionEnv: ExecutionEnv
+
+  def withClient()(block: StandaloneWSClient => Result): Result
+
+  override val routes = play.api.libs.ws.WSRequestFilterSpec.routes
+
+  "with request filters" should {
+
+    "execute with one request filter" in {
+      val callList = new java.util.ArrayList[Integer]()
+      withClient() {
+        _.url(s"http://localhost:$testServerPort")
+          .setRequestFilter(new CallbackRequestFilter(callList, 1))
+          .get()
+          .toScala
+          .map(_ => callList.asScala must contain(1))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "stream with one request filter" in {
+      val callList = new java.util.ArrayList[Integer]()
+      withClient() {
+        _.url(s"http://localhost:$testServerPort")
+          .setRequestFilter(new CallbackRequestFilter(callList, 1))
+          .setMethod("GET")
+          .stream()
+          .toScala
+          .map(_ => callList.asScala must contain(1))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "execute with three request filters" in {
+      val callList = new java.util.ArrayList[Integer]()
+      withClient() {
+        _.url(s"http://localhost:$testServerPort")
+          .setRequestFilter(new CallbackRequestFilter(callList, 1))
+          .setRequestFilter(new CallbackRequestFilter(callList, 2))
+          .setRequestFilter(new CallbackRequestFilter(callList, 3))
+          .get()
+          .toScala
+          .map(_ => callList.asScala must containTheSameElementsAs(Seq(1, 2, 3)))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "stream with three request filters" in {
+      val callList = new java.util.ArrayList[Integer]()
+      withClient() {
+        _.url(s"http://localhost:$testServerPort")
+          .setRequestFilter(new CallbackRequestFilter(callList, 1))
+          .setRequestFilter(new CallbackRequestFilter(callList, 2))
+          .setRequestFilter(new CallbackRequestFilter(callList, 3))
+          .setMethod("GET")
+          .stream()
+          .toScala
+          .map(_ => callList.asScala must containTheSameElementsAs(Seq(1, 2, 3)))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "allow filters to modify the executing request" in {
+      val appendedHeader = "X-Request-Id"
+      val appendedHeaderValue = "someid"
+      withClient() {
+        _.url(s"http://localhost:$testServerPort")
+          .setRequestFilter(new HeaderAppendingFilter(appendedHeader, appendedHeaderValue))
+          .get()
+          .toScala
+          .map(_.getSingleHeader(appendedHeader) must be_==(appendedHeaderValue))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+  }
+
+}

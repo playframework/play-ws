@@ -1,13 +1,18 @@
 package play.libs.ws.akkahttp;
 
 import akka.actor.ActorSystem;
+import akka.http.impl.util.JavaMapping;
 import akka.http.scaladsl.model.IllegalUriException;
+import akka.http.scaladsl.model.Uri;
+import akka.http.scaladsl.model.Uri$;
+import akka.parboiled2.ParserInput$;
 import akka.stream.Materializer;
 import play.libs.ws.StandaloneWSClient;
 import play.libs.ws.StandaloneWSRequest;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.charset.Charset;
 
 public final class StandaloneAkkaHttpWSClient implements StandaloneWSClient {
 
@@ -42,7 +47,7 @@ public final class StandaloneAkkaHttpWSClient implements StandaloneWSClient {
     try {
       return new StandaloneAkkaHttpWSRequest(url, sys, mat);
     }
-    catch (IllegalUriException ex) {
+    catch (IllegalArgumentException ex) {
       throw new RuntimeException(new MalformedURLException(ex.getMessage()));
     }
   }
