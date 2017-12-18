@@ -19,6 +19,7 @@ private[akkahttp] object StandaloneAkkaHttpWSResponse {
 
 final class StandaloneAkkaHttpWSResponse private (val response: HttpResponse)(implicit val mat: Materializer) extends StandaloneWSResponse {
 
+  // FIXME make configurable
   final val UnmarshalTimeout = 1.second
 
   /**

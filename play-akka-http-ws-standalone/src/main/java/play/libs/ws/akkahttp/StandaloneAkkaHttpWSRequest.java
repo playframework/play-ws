@@ -390,7 +390,8 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public StandaloneWSRequest setFollowRedirects(boolean followRedirects) {
-    return null;
+    // FIXME https://github.com/playframework/play-ws/issues/207
+    throw new RuntimeException("Implementation is missing");
   }
 
   /**
@@ -557,6 +558,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public boolean getFollowRedirects() {
+    // FIXME https://github.com/playframework/play-ws/issues/207
     return false;
   }
 

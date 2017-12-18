@@ -90,7 +90,9 @@ final class StandaloneAkkaHttpWSRequest private (
   /**
    * Whether this request should follow redirects
    */
-  override def followRedirects: Option[Boolean] = ???
+  override def followRedirects: Option[Boolean] =
+    // FIXME https://github.com/playframework/play-ws/issues/207
+    Some(false)
 
   /**
    * The timeout for the request
@@ -105,7 +107,9 @@ final class StandaloneAkkaHttpWSRequest private (
   /**
    * The proxy server this request will use
    */
-  override def proxyServer: Option[WSProxyServer] = ???
+  override def proxyServer: Option[WSProxyServer] =
+    // FIXME https://github.com/playframework/play-ws/issues/207
+    None
 
   /**
    * sets the signature calculator for the request
@@ -159,7 +163,9 @@ final class StandaloneAkkaHttpWSRequest private (
   /**
    * Sets whether redirects (301, 302) should be followed automatically
    */
-  override def withFollowRedirects(follow: Boolean): Self = ???
+  override def withFollowRedirects(follow: Boolean): Self =
+    // FIXME https://github.com/playframework/play-ws/issues/207
+    ???
 
   /**
    * Sets the maximum time you expect the request to take.
@@ -184,7 +190,9 @@ final class StandaloneAkkaHttpWSRequest private (
   /**
    * Sets the proxy server to use in this request
    */
-  override def withProxyServer(proxyServer: WSProxyServer): Self = ???
+  override def withProxyServer(proxyServer: WSProxyServer): Self =
+    // FIXME https://github.com/playframework/play-ws/issues/207
+    ???
 
   /**
    * Sets the method for this request
