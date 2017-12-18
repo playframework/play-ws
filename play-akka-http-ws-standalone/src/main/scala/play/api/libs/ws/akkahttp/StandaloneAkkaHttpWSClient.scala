@@ -22,7 +22,7 @@ final class StandaloneAkkaHttpWSClient private ()(implicit val sys: ActorSystem,
    * @tparam T the type you are expecting (i.e. isInstanceOf)
    * @return the backing class.
    */
-  override def underlying[T]: T = ???
+  override def underlying[T]: T = Http().asInstanceOf[T]
 
   /**
    * Generates a request.  Throws IllegalArgumentException if the URL is invalid.

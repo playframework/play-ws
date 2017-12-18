@@ -5,8 +5,6 @@ package play.libs.ws.akkahttp;
 
 import akka.http.javadsl.model.HttpHeader;
 import akka.http.javadsl.model.HttpResponse;
-import akka.http.javadsl.unmarshalling.StringUnmarshallers;
-import akka.http.javadsl.unmarshalling.Unmarshaller;
 import akka.stream.Materializer;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
@@ -15,11 +13,9 @@ import play.libs.ws.BodyReadable;
 import play.libs.ws.StandaloneWSResponse;
 import play.libs.ws.WSCookie;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 public final class StandaloneAkkaHttpWSResponse implements StandaloneWSResponse {
 
@@ -56,7 +52,7 @@ public final class StandaloneAkkaHttpWSResponse implements StandaloneWSResponse 
    */
   @Override
   public Object getUnderlying() {
-    return null;
+    return response;
   }
 
   /**

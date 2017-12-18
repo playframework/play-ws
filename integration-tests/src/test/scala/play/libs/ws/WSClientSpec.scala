@@ -48,6 +48,27 @@ trait WSClientSpec extends Specification
 
   "WSClient" should {
 
+    "return underlying implementations" in {
+      withClient() { client =>
+        client.getUnderlying.getClass.getName must beOneOf(
+          "play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClient",
+          "akka.http.javadsl.Http"
+        )
+
+        client
+          .url(s"http://localhost:$testServerPort/index")
+          .get()
+          .toScala
+          .map {
+            _.getUnderlying.getClass.getName must beOneOf(
+              "play.shaded.ahc.org.asynchttpclient.netty.NettyResponse",
+              "akka.http.scaladsl.model.HttpResponse"
+            )
+          }
+          .awaitFor(defaultTimeout)
+      }
+    }
+
     "request a url as an in memory string" in {
       withClient() {
         _.url(s"http://localhost:$testServerPort/index")

@@ -32,7 +32,7 @@ final class StandaloneAkkaHttpWSResponse private (val response: HttpResponse)(im
   /**
    * Get the underlying response object.
    */
-  override def underlying[T]: T = ???
+  override def underlying[T]: T = response.asInstanceOf[T]
 
   /**
    * The response status code.
