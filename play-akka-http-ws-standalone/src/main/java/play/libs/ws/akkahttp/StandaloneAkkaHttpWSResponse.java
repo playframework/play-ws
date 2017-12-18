@@ -69,7 +69,7 @@ public final class StandaloneAkkaHttpWSResponse implements StandaloneWSResponse 
    */
   @Override
   public String getStatusText() {
-    return null;
+    return response.status().reason();
   }
 
   /**

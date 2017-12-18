@@ -230,5 +230,15 @@ trait WSClientSpec extends Specification
           .awaitFor(defaultTimeout)
       }
     }
+
+    "provide response status text" in {
+      withClient() {
+        _.url(s"http://localhost:$testServerPort/204")
+          .get()
+          .toScala
+          .map(_.getStatusText must be_==("No Content"))
+          .awaitFor(defaultTimeout)
+      }
+    }
   }
 }
