@@ -240,5 +240,18 @@ trait WSClientSpec extends Specification
           .awaitFor(defaultTimeout)
       }
     }
+
+    "allow access body more than one time" in {
+      withClient() {
+        _.url(s"http://localhost:$testServerPort/stream")
+          .get()
+          .toScala
+          .map { resp =>
+            resp.getBody must beEqualTo("streamed")
+            resp.getBody must beEqualTo("streamed")
+          }
+          .awaitFor(defaultTimeout)
+      }
+    }
   }
 }
