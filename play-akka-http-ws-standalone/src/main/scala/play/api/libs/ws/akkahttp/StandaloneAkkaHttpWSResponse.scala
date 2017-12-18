@@ -3,6 +3,7 @@
  */
 package play.api.libs.ws.akkahttp
 
+import akka.actor.ActorSystem
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
@@ -14,13 +15,15 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 
 private[akkahttp] object StandaloneAkkaHttpWSResponse {
-  def apply(resp: HttpResponse)(implicit mat: Materializer) = new StandaloneAkkaHttpWSResponse(resp)
+  def apply(resp: HttpResponse)(implicit sys: ActorSystem, mat: Materializer) = new StandaloneAkkaHttpWSResponse(resp)
 }
 
-final class StandaloneAkkaHttpWSResponse private (val response: HttpResponse)(implicit val mat: Materializer) extends StandaloneWSResponse {
+final class StandaloneAkkaHttpWSResponse private (val response: HttpResponse)(implicit val sys: ActorSystem, val mat: Materializer) extends StandaloneWSResponse {
 
   // FIXME make configurable
   final val UnmarshalTimeout = 1.second
+
+  private lazy val strictResponse = response.toStrict(UnmarshalTimeout)(sys.dispatcher, mat)
 
   /**
    * Return the current headers for this response.
@@ -69,15 +72,17 @@ final class StandaloneAkkaHttpWSResponse private (val response: HttpResponse)(im
    *
    * @return the response body parsed as a String using the above algorithm.
    */
-  override def body: String = {
-    import akka.http.scaladsl.unmarshalling.PredefinedFromEntityUnmarshallers.stringUnmarshaller
-    Await.result(Unmarshal(response).to[String], UnmarshalTimeout)
-  }
+  override def body: String =
+    bodyAsBytes.utf8String
 
   /**
    * @return The response body as ByteString.
    */
-  override def bodyAsBytes: ByteString = ???
+  override def bodyAsBytes: ByteString = {
+    import sys.dispatcher
+    import akka.http.scaladsl.unmarshalling.PredefinedFromEntityUnmarshallers.byteStringUnmarshaller
+    Await.result(strictResponse.flatMap(Unmarshal(_).to[ByteString]), UnmarshalTimeout)
+  }
 
   /**
    * @return the response as a source of bytes

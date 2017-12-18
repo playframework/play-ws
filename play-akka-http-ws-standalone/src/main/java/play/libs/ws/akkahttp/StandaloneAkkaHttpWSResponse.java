@@ -5,6 +5,7 @@ package play.libs.ws.akkahttp;
 
 import akka.http.javadsl.model.HttpHeader;
 import akka.http.javadsl.model.HttpResponse;
+import akka.http.javadsl.model.ResponseEntity;
 import akka.stream.Materializer;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
@@ -23,8 +24,9 @@ public final class StandaloneAkkaHttpWSResponse implements StandaloneWSResponse 
   final Duration UNMARSHAL_TIMEOUT = Duration.ofSeconds(1);
 
   private final HttpResponse response;
-
   private final Materializer mat;
+
+  private HttpResponse strickResponse = null;
 
   StandaloneAkkaHttpWSResponse(HttpResponse response, Materializer mat) {
     this.response = response;
@@ -153,10 +155,15 @@ public final class StandaloneAkkaHttpWSResponse implements StandaloneWSResponse 
    */
   @Override
   public String getBody() {
+    return getBodyAsBytes().utf8String();
+  }
+
+  @Override
+  public ByteString getBodyAsBytes() {
     try {
-      return response.entity().getDataBytes()
+      // FIXME no Unmarshalling Java API in Akka Http
+      return getStrictResponse().entity().getDataBytes()
         .runWith(Sink.fold(ByteString.empty(), (b1, b2) -> b1.concat(b2)), mat)
-        .thenApply(ByteString::utf8String)
         .toCompletableFuture()
         .get(UNMARSHAL_TIMEOUT.toNanos(), TimeUnit.NANOSECONDS);
     }
@@ -166,12 +173,27 @@ public final class StandaloneAkkaHttpWSResponse implements StandaloneWSResponse 
   }
 
   @Override
-  public ByteString getBodyAsBytes() {
-    return null;
-  }
-
-  @Override
   public Source<ByteString, ?> getBodyAsSource() {
     return response.entity().getDataBytes();
+  }
+
+  private synchronized HttpResponse getStrictResponse() {
+    if (strickResponse != null) {
+      return strickResponse;
+    }
+    else {
+      try {
+        final ResponseEntity strictEntity = response.entity()
+          .toStrict(UNMARSHAL_TIMEOUT.toMillis(), mat)
+          .toCompletableFuture()
+          .get(UNMARSHAL_TIMEOUT.toNanos(), TimeUnit.NANOSECONDS);
+        // FIXME no toStrict Java API in Akka Http
+        this.strickResponse = response.withEntity(strictEntity);
+        return this.strickResponse;
+      }
+      catch (Exception ex) {
+        throw new RuntimeException(ex);
+      }
+    }
   }
 }

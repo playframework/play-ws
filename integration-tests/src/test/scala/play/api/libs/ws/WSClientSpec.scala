@@ -3,10 +3,12 @@
  */
 package play.api.libs.ws
 
-import akka.http.scaladsl.model.StatusCodes
+import akka.NotUsed
+import akka.http.scaladsl.model.{ ContentTypes, HttpEntity, StatusCodes }
 import akka.http.scaladsl.model.headers.Host
 import akka.http.scaladsl.server.directives.Credentials
-import akka.stream.scaladsl.Sink
+import akka.stream.scaladsl.{ Sink, Source }
+import akka.util.ByteString
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.execute.Result
 import org.specs2.matcher.FutureMatchers
@@ -26,6 +28,7 @@ object WSClientSpec {
 
   val routes = {
     import akka.http.scaladsl.server.Directives._
+    import akka.http.scaladsl.marshalling.Marshaller._
     path("xml") {
       entity(as[String]) { echo =>
         complete(echo)
@@ -49,6 +52,11 @@ object WSClientSpec {
       } ~
       path("204") {
         complete(StatusCodes.NoContent)
+      } ~
+      path("stream") {
+        val source = Source("streamed".toIndexedSeq).map(c => ByteString(c.toString))
+        val httpEntity = HttpEntity(ContentTypes.`application/octet-stream`, source)
+        complete(httpEntity)
       } ~
       get {
         entity(as[String]) { echo =>
@@ -288,6 +296,18 @@ trait WSClientSpec extends Specification
         _.url(s"http://localhost:$testServerPort/204")
           .get()
           .map(_.statusText must be_==("No Content"))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "allow access body more than one time" in {
+      withClient() {
+        _.url(s"http://localhost:$testServerPort/stream")
+          .get()
+          .map { resp =>
+            resp.body[String] must beEqualTo("streamed")
+            resp.body[String] must beEqualTo("streamed")
+          }
           .awaitFor(defaultTimeout)
       }
     }
