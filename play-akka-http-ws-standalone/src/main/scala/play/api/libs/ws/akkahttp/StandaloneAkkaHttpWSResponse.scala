@@ -43,7 +43,7 @@ final class StandaloneAkkaHttpWSResponse private (val response: HttpResponse)(im
   /**
    * The response status message.
    */
-  override def statusText: String = ???
+  override def statusText: String = response.status.reason
 
   /**
    * Get all the cookies.

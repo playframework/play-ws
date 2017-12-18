@@ -47,6 +47,9 @@ object WSClientSpec {
           complete(akka.pattern.after(2.seconds, sys.scheduler)(Future.successful("timeout")))
         }
       } ~
+      path("204") {
+        complete(StatusCodes.NoContent)
+      } ~
       get {
         entity(as[String]) { echo =>
           complete(s"GET $echo")
@@ -276,6 +279,15 @@ trait WSClientSpec extends Specification
               ex.getMessage must startWith("Request timeout")
               success
           }
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "provide response status text" in {
+      withClient() {
+        _.url(s"http://localhost:$testServerPort/204")
+          .get()
+          .map(_.statusText must be_==("No Content"))
           .awaitFor(defaultTimeout)
       }
     }
