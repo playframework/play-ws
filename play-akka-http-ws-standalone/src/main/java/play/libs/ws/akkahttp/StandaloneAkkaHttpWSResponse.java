@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 public final class StandaloneAkkaHttpWSResponse implements StandaloneWSResponse {
 
+  // FIXME make configurable
   final Duration UNMARSHAL_TIMEOUT = Duration.ofSeconds(1);
 
   private final HttpResponse response;
