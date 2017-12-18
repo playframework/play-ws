@@ -22,6 +22,33 @@ trait WSRequestFilterSpec extends Specification
 
   "with request filters" should {
 
+    "execute with adhoc request filter" in {
+      withClient() {
+        _.url(s"http://localhost:$testServerPort")
+          .setRequestFilter((ex) => (r: StandaloneWSRequest) =>
+            ex.apply(r.addQueryParameter("key", "some string"))
+          )
+          .get()
+          .toScala
+          .map(_.getBody must contain("some string"))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "stream with adhoc request filter" in {
+      withClient() {
+        _.url(s"http://localhost:$testServerPort")
+          .setRequestFilter((ex) => (r: StandaloneWSRequest) =>
+            ex.apply(r.addQueryParameter("key", "some string"))
+          )
+          .setMethod("GET")
+          .stream()
+          .toScala
+          .map(_.getBody must contain("some string"))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
     "execute with one request filter" in {
       val callList = new java.util.ArrayList[Integer]()
       withClient() {
@@ -84,7 +111,21 @@ trait WSRequestFilterSpec extends Specification
           .setRequestFilter(new HeaderAppendingFilter(appendedHeader, appendedHeaderValue))
           .get()
           .toScala
-          .map(_.getSingleHeader(appendedHeader) must be_==(appendedHeaderValue))
+          .map(_.getSingleHeader(appendedHeader).get must be_==(appendedHeaderValue))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "allow filters to modify the streaming request" in {
+      val appendedHeader = "X-Request-Id"
+      val appendedHeaderValue = "someid"
+      withClient() {
+        _.url(s"http://localhost:$testServerPort")
+          .setRequestFilter(new HeaderAppendingFilter(appendedHeader, appendedHeaderValue))
+          .setMethod("GET")
+          .stream()
+          .toScala
+          .map(_.getSingleHeader(appendedHeader).get must be_==(appendedHeaderValue))
           .awaitFor(defaultTimeout)
       }
     }

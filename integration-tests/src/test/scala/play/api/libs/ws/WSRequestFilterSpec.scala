@@ -34,7 +34,6 @@ object WSRequestFilterSpec {
       }
     }
   }
-
 }
 
 trait WSRequestFilterSpec extends Specification with AkkaServerProvider with AfterAll with FutureMatchers {

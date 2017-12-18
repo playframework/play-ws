@@ -1,23 +1,32 @@
 package play.libs.ws.akkahttp;
 
 import akka.actor.ActorSystem;
+import akka.http.impl.model.parser.HeaderParser$;
 import akka.http.javadsl.Http;
 import akka.http.javadsl.model.*;
 import akka.http.javadsl.model.headers.BasicHttpCredentials;
+import akka.http.scaladsl.model.HttpHeader;
+import akka.http.scaladsl.model.HttpHeader$;
+import akka.pattern.PatternsCS;
 import akka.stream.Materializer;
 import play.libs.ws.*;
+import scala.concurrent.duration.FiniteDuration;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
 
   private final HttpRequest request;
   private final List<WSRequestFilter> filters;
+  private final Duration timeout;
 
   private final ActorSystem sys;
   private final Materializer mat;
@@ -25,13 +34,15 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
   StandaloneAkkaHttpWSRequest(String url, ActorSystem sys, Materializer mat) {
     this.request = HttpRequest.create(url);
     this.filters = new ArrayList<>();
+    this.timeout = Duration.ZERO;
     this.sys = sys;
     this.mat = mat;
   }
 
-  private StandaloneAkkaHttpWSRequest(HttpRequest request, List<WSRequestFilter> filters, ActorSystem sys, Materializer mat) {
+  private StandaloneAkkaHttpWSRequest(HttpRequest request, List<WSRequestFilter> filters, Duration timeout, ActorSystem sys, Materializer mat) {
     this.request = request;
     this.filters = filters;
+    this.timeout = timeout;
     this.sys = sys;
     this.mat = mat;
   }
@@ -128,9 +139,28 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
   @Override
   public CompletionStage<? extends StandaloneWSResponse> execute() {
     final WSRequestExecutor akkaExecutor = (request) -> {
-      return Http.get(sys)
-        .singleRequest(((StandaloneAkkaHttpWSRequest)request).request)
-        .thenApply((r) -> new StandaloneAkkaHttpWSResponse(r, mat));
+      final CompletableFuture<StandaloneAkkaHttpWSResponse> resultFuture =
+        Http.get(sys)
+          .singleRequest(((StandaloneAkkaHttpWSRequest)request).request)
+          .thenApply((r) -> new StandaloneAkkaHttpWSResponse(r, mat))
+          .toCompletableFuture();
+
+      if (timeout.equals(Duration.ZERO)) {
+        return resultFuture.thenApply((response) -> (StandaloneWSResponse)response);
+      }
+      else {
+        final CompletableFuture<StandaloneAkkaHttpWSResponse> timeoutException = new CompletableFuture<>();
+        timeoutException.completeExceptionally(new TimeoutException("Request timeout after " + timeout));
+
+        final CompletableFuture<StandaloneAkkaHttpWSResponse> timeoutFuture =
+          PatternsCS.after(
+            FiniteDuration.apply(timeout.toNanos(), TimeUnit.NANOSECONDS),
+            sys.scheduler(), sys.dispatcher(),
+            timeoutException
+          ).toCompletableFuture();
+
+        return CompletableFuture.anyOf(resultFuture, timeoutFuture).thenApply((response) -> (StandaloneWSResponse)response);
+      }
     };
 
     return filters.stream()
@@ -210,7 +240,15 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public StandaloneWSRequest addHeader(String name, String value) {
-    return null;
+    final HttpHeader.ParsingResult result =
+      HttpHeader$.MODULE$.parse(name, value, HeaderParser$.MODULE$.DefaultSettings());
+
+    if (result instanceof akka.http.scaladsl.model.HttpHeader$ParsingResult$Ok) {
+      return copy(request.addHeader(((akka.http.scaladsl.model.HttpHeader$ParsingResult$Ok)result).header()));
+    }
+    else {
+      throw new IllegalArgumentException("Unable to parse header [" + name + "] with value [" + value + "]");
+    }
   }
 
   /**
@@ -234,7 +272,10 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public StandaloneWSRequest addQueryParameter(String name, String value) {
-    return null;
+    return copy(
+      request.withUri(
+        request.getUri().query(
+          request.getUri().query().withParam(name, value))));
   }
 
   /**
@@ -389,7 +430,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public StandaloneWSRequest setRequestTimeout(Duration timeout) {
-    return null;
+    return copy(timeout);
   }
 
   /**
@@ -525,11 +566,15 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
   }
 
   private StandaloneWSRequest copy(HttpRequest request) {
-    return new StandaloneAkkaHttpWSRequest(request, this.filters, this.sys, this.mat);
+    return new StandaloneAkkaHttpWSRequest(request, this.filters, this.timeout, this.sys, this.mat);
   }
 
   private StandaloneWSRequest copy(List<WSRequestFilter> filters) {
-    return new StandaloneAkkaHttpWSRequest(this.request, filters, this.sys, this.mat);
+    return new StandaloneAkkaHttpWSRequest(this.request, filters, this.timeout, this.sys, this.mat);
+  }
+
+  private StandaloneWSRequest copy(Duration timeout) {
+    return new StandaloneAkkaHttpWSRequest(this.request, this.filters, timeout, this.sys, this.mat);
   }
 
 }
