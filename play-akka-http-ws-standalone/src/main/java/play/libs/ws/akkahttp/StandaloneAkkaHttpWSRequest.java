@@ -8,12 +8,15 @@ import akka.http.impl.model.parser.HeaderParser$;
 import akka.http.javadsl.Http;
 import akka.http.javadsl.model.*;
 import akka.http.javadsl.model.headers.BasicHttpCredentials;
+import akka.http.scaladsl.model.ContentType;
+import akka.http.scaladsl.model.ErrorInfo;
 import akka.http.scaladsl.model.HttpHeader;
 import akka.http.scaladsl.model.HttpHeader$;
 import akka.pattern.PatternsCS;
 import akka.stream.Materializer;
 import play.libs.ws.*;
 import scala.concurrent.duration.FiniteDuration;
+import scala.util.Either;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -57,7 +60,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public CompletionStage<? extends StandaloneWSResponse> get() {
-    return execute("GET");
+    return execute(HttpMethods.GET.value());
   }
 
   /**
@@ -68,7 +71,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public CompletionStage<? extends StandaloneWSResponse> patch(BodyWritable body) {
-    return setBody(body).execute("PATCH");
+    return setBody(body).execute(HttpMethods.PATCH.value());
   }
 
   /**
@@ -79,7 +82,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public CompletionStage<? extends StandaloneWSResponse> post(BodyWritable body) {
-    return setBody(body).execute("POST");
+    return setBody(body).execute(HttpMethods.POST.value());
   }
 
   /**
@@ -90,7 +93,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public CompletionStage<? extends StandaloneWSResponse> put(BodyWritable body) {
-    return setBody(body).execute("PUT");
+    return setBody(body).execute(HttpMethods.PUT.value());
   }
 
   /**
@@ -100,7 +103,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public CompletionStage<? extends StandaloneWSResponse> delete() {
-    return execute("DELETE");
+    return execute(HttpMethods.DELETE.value());
   }
 
   /**
@@ -110,7 +113,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public CompletionStage<? extends StandaloneWSResponse> head() {
-    return execute("HEAD");
+    return execute(HttpMethods.HEAD.value());
   }
 
   /**
@@ -120,7 +123,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public CompletionStage<? extends StandaloneWSResponse> options() {
-    return execute("OPTIONS");
+    return execute(HttpMethods.OPTIONS.value());
   }
 
   /**
@@ -211,7 +214,14 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
     }
     else if (body instanceof SourceBodyWritable) {
       final SourceBodyWritable writable = (SourceBodyWritable)body;
-      entity = HttpEntities.create(null, writable.body().get());
+      // FIXME JAVA API missing ContentType.parse Java API in Akka Http
+      final Either<scala.collection.immutable.List<ErrorInfo>, ContentType> contentType = akka.http.scaladsl.model.ContentType$.MODULE$.parse(writable.contentType());
+      if (contentType.isRight()) {
+        entity = HttpEntities.create(contentType.right().get(), writable.body().get());
+      }
+      else {
+        throw new IllegalArgumentException("Unable to parse Content Type: " + writable.contentType());
+      }
     }
     else {
       throw new IllegalArgumentException("Unsupported BodyWritable: " + body);
@@ -243,6 +253,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public StandaloneWSRequest addHeader(String name, String value) {
+    // FIXME JAVA API missing HttpHeader.parse Java API in Akka Http
     final HttpHeader.ParsingResult result =
       HttpHeader$.MODULE$.parse(name, value, HeaderParser$.MODULE$.DefaultSettings());
 

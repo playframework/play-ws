@@ -161,7 +161,7 @@ public final class StandaloneAkkaHttpWSResponse implements StandaloneWSResponse 
   @Override
   public ByteString getBodyAsBytes() {
     try {
-      // FIXME no Unmarshalling Java API in Akka Http
+      // FIXME JAVA API no Unmarshalling Java API in Akka Http
       return getStrictResponse().entity().getDataBytes()
         .runWith(Sink.fold(ByteString.empty(), (b1, b2) -> b1.concat(b2)), mat)
         .toCompletableFuture()
@@ -187,7 +187,7 @@ public final class StandaloneAkkaHttpWSResponse implements StandaloneWSResponse 
           .toStrict(UNMARSHAL_TIMEOUT.toMillis(), mat)
           .toCompletableFuture()
           .get(UNMARSHAL_TIMEOUT.toNanos(), TimeUnit.NANOSECONDS);
-        // FIXME no toStrict Java API in Akka Http
+        // FIXME JAVA API no toStrict Java API in Akka Http
         this.strickResponse = response.withEntity(strictEntity);
         return this.strickResponse;
       }
