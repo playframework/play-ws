@@ -1,5 +1,6 @@
 package play.libs.ws.akkahttp;
 
+import akka.http.javadsl.model.HttpHeader;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.unmarshalling.StringUnmarshallers;
 import akka.http.javadsl.unmarshalling.Unmarshaller;
@@ -13,9 +14,7 @@ import play.libs.ws.WSCookie;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -37,7 +36,16 @@ public final class StandaloneAkkaHttpWSResponse implements StandaloneWSResponse 
    */
   @Override
   public Map<String, List<String>> getHeaders() {
-    return null;
+    final Map<String, List<String>> headers = new HashMap<>();
+    for (final HttpHeader header: response.getHeaders()) {
+      if (headers.containsKey(header.name())) {
+        headers.get(header.name()).add(header.value());
+      }
+      else {
+        headers.put(header.name(), new ArrayList<>(Collections.singletonList(header.value())));
+      }
+    }
+    return headers;
   }
 
   /**

@@ -8,7 +8,7 @@ import org.specs2.concurrent.ExecutionEnv
 import org.specs2.execute.Result
 import play.api.libs.ws._
 
-class AkkaHttpWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv) extends WSRequestFilterSpec {
+class AkkaHttpWSRequestFilterSpec(implicit override val executionEnv: ExecutionEnv) extends WSRequestFilterSpec {
   def withClient()(block: StandaloneWSClient => Result): Result = {
     val client = StandaloneAkkaHttpWSClient()
     try {
