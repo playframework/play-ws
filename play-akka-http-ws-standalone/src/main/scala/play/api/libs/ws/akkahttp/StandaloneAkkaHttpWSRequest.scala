@@ -221,7 +221,7 @@ final class StandaloneAkkaHttpWSRequest private (
    * Performs a GET.
    */
   override def get(): Future[Response] =
-    execute("GET")
+    execute(HttpMethods.GET.value)
 
   /**
    * Performs a PATCH request.
@@ -230,7 +230,7 @@ final class StandaloneAkkaHttpWSRequest private (
    * @return a future with the response for the PATCH request
    */
   override def patch[T: BodyWritable](body: T): Future[Response] =
-    withBody(body).execute("PATCH")
+    withBody(body).execute(HttpMethods.PATCH.value)
 
   /**
    * Performs a POST request.
@@ -239,7 +239,7 @@ final class StandaloneAkkaHttpWSRequest private (
    * @return a future with the response for the POST request
    */
   override def post[T: BodyWritable](body: T): Future[Response] =
-    withBody(body).execute("POST")
+    withBody(body).execute(HttpMethods.POST.value)
 
   /**
    * Performs a PUT request.
@@ -248,25 +248,25 @@ final class StandaloneAkkaHttpWSRequest private (
    * @return a future with the response for the PUT request
    */
   override def put[T: BodyWritable](body: T): Future[Response] =
-    withBody(body).execute("PUT")
+    withBody(body).execute(HttpMethods.PUT.value)
 
   /**
    * Perform a DELETE on the request asynchronously.
    */
   override def delete(): Future[Response] =
-    execute("DELETE")
+    execute(HttpMethods.DELETE.value)
 
   /**
    * Perform a HEAD on the request asynchronously.
    */
   override def head(): Future[Response] =
-    execute("HEAD")
+    execute(HttpMethods.HEAD.value)
 
   /**
    * Perform a OPTIONS on the request asynchronously.
    */
   override def options(): Future[Response] =
-    execute("OPTIONS")
+    execute(HttpMethods.OPTIONS.value)
 
   /**
    * Executes the given HTTP method.
