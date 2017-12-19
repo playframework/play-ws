@@ -28,9 +28,11 @@ trait WSRequestFilterSpec extends Specification
     "execute with adhoc request filter" in {
       withClient() {
         _.url(s"http://localhost:$testServerPort")
-          .setRequestFilter((ex) => (r: StandaloneWSRequest) =>
-            ex.apply(r.addQueryParameter("key", "some string"))
-          )
+          .setRequestFilter(new WSRequestFilter {
+            override def apply(ex: WSRequestExecutor) = new WSRequestExecutor {
+              override def apply(r: StandaloneWSRequest) = ex.apply(r.addQueryParameter("key", "some string"))
+            }
+          })
           .get()
           .toScala
           .map(_.getBody must contain("some string"))
@@ -41,9 +43,11 @@ trait WSRequestFilterSpec extends Specification
     "stream with adhoc request filter" in {
       withClient() {
         _.url(s"http://localhost:$testServerPort")
-          .setRequestFilter((ex) => (r: StandaloneWSRequest) =>
-            ex.apply(r.addQueryParameter("key", "some string"))
-          )
+          .setRequestFilter(new WSRequestFilter {
+            override def apply(ex: WSRequestExecutor) = new WSRequestExecutor {
+              override def apply(r: StandaloneWSRequest) = ex.apply(r.addQueryParameter("key", "some string"))
+            }
+          })
           .setMethod("GET")
           .stream()
           .toScala
