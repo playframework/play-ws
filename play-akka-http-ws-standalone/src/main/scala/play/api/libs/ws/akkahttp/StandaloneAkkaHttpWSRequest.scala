@@ -97,7 +97,10 @@ final class StandaloneAkkaHttpWSRequest private (
   /**
    * The timeout for the request
    */
-  override def requestTimeout: Option[Int] = ???
+  override def requestTimeout: Option[Int] = timeout match {
+    case duration: FiniteDuration => Some(duration.toMillis.toInt)
+    case duration: Infinite => None
+  }
 
   /**
    * The virtual host this request will use

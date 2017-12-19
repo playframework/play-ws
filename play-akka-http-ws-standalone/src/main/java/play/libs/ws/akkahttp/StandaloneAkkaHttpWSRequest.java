@@ -563,7 +563,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public Duration getRequestTimeoutDuration() {
-    return null;
+    return timeout;
   }
 
   /**

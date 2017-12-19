@@ -284,9 +284,15 @@ trait WSClientSpec extends Specification
     }
 
     "complete after timeout" in {
-      withClient() {
-        _.url(s"http://localhost:$testServerPort/timeout")
+      withClient() { client =>
+        val requestWithoutTimeout = client.url(s"http://localhost:$testServerPort/timeout")
+        requestWithoutTimeout.requestTimeout must beNone
+
+        val requestWithTimeout = requestWithoutTimeout
           .withRequestTimeout(100.millis)
+        requestWithTimeout.requestTimeout must beSome(100)
+
+        requestWithTimeout
           .get()
           .map(_ => failure)
           .recover {
