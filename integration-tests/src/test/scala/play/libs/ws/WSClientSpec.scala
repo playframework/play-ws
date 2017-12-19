@@ -14,6 +14,8 @@ import org.specs2.mutable.Specification
 import play.AkkaServerProvider
 
 import scala.compat.java8.FutureConverters._
+import scala.compat.java8.OptionConverters._
+import scala.collection.JavaConverters._
 import scala.concurrent.TimeoutException
 
 trait WSClientSpec extends Specification
@@ -249,6 +251,29 @@ trait WSClientSpec extends Specification
           .map { resp =>
             resp.getBody must beEqualTo("streamed")
             resp.getBody must beEqualTo("streamed")
+          }
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "send and receive cookies" in {
+      val cookie1 = new WSCookieBuilder().setName("cookie1").setValue("cookie1").build()
+      val cookie2 = new WSCookieBuilder().setName("cookie2").setValue("cookie2").build()
+      val cookie3 = new WSCookieBuilder().setName("cookie3").setValue("cookie3").build()
+      val cookie4 = new WSCookieBuilder().setName("cookie4").setValue("cookie4").build()
+      val cookie5 = new WSCookieBuilder().setName("cookie5").setValue("cookie5").build()
+      def toTuple(c: WSCookie) = (c.getName, c.getValue)
+      withClient() {
+        _.url(s"http://localhost:$testServerPort/cookies")
+          .addCookie(cookie5)
+          .setCookies(Seq(cookie1).asJava)
+          .addCookie(cookie2)
+          .addCookies(cookie4)
+          .get()
+          .toScala
+          .map { resp =>
+            resp.getCookies.asScala.map(toTuple) must containTheSameElementsAs(Seq(cookie1, cookie2, cookie3, cookie4).map(toTuple))
+            resp.getCookie(cookie1.getName).asScala.map(toTuple) must be_==(Some(cookie1).map(toTuple))
           }
           .awaitFor(defaultTimeout)
       }

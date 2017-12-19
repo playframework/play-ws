@@ -5,11 +5,12 @@ package play.api.libs.ws.akkahttp
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.model.headers.{ Cookie, HttpCookie, `Set-Cookie` }
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import play.api.libs.ws.{ StandaloneWSResponse, WSCookie }
+import play.api.libs.ws.{ DefaultWSCookie, StandaloneWSResponse, WSCookie }
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -51,12 +52,14 @@ final class StandaloneAkkaHttpWSResponse private (val response: HttpResponse)(im
   /**
    * Get all the cookies.
    */
-  override def cookies: Seq[WSCookie] = ???
+  override def cookies: Seq[WSCookie] = response.headers.collect {
+    case `Set-Cookie`(cookie) => DefaultWSCookie(cookie.name, cookie.value)
+  }
 
   /**
    * Get only one cookie, using the cookie name.
    */
-  override def cookie(name: String): Option[WSCookie] = ???
+  override def cookie(name: String): Option[WSCookie] = cookies.find(_.name == name)
 
   /**
    * The response body decoded as String, using a simple algorithm to guess the encoding.

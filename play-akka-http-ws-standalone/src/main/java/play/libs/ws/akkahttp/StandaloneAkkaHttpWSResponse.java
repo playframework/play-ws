@@ -6,6 +6,7 @@ package play.libs.ws.akkahttp;
 import akka.http.javadsl.model.HttpHeader;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.ResponseEntity;
+import akka.http.javadsl.model.headers.SetCookie;
 import akka.stream.Materializer;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
@@ -13,10 +14,13 @@ import akka.util.ByteString;
 import play.libs.ws.BodyReadable;
 import play.libs.ws.StandaloneWSResponse;
 import play.libs.ws.WSCookie;
+import play.libs.ws.WSCookieBuilder;
 
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public final class StandaloneAkkaHttpWSResponse implements StandaloneWSResponse {
 
@@ -79,7 +83,13 @@ public final class StandaloneAkkaHttpWSResponse implements StandaloneWSResponse 
    */
   @Override
   public List<WSCookie> getCookies() {
-    return null;
+    return StreamSupport.stream(response.getHeaders().spliterator(), false)
+      .filter((h) -> h instanceof SetCookie)
+      .map((h) -> {
+        final SetCookie c = (SetCookie)h;
+        return new WSCookieBuilder().setName(c.cookie().name()).setValue(c.cookie().value()).build();
+      })
+      .collect(Collectors.toList());
   }
 
   /**
@@ -88,7 +98,7 @@ public final class StandaloneAkkaHttpWSResponse implements StandaloneWSResponse 
    */
   @Override
   public Optional<WSCookie> getCookie(String name) {
-    return Optional.empty();
+    return getCookies().stream().filter((c) -> c.getName().equals(name)).findFirst();
   }
 
   /**
