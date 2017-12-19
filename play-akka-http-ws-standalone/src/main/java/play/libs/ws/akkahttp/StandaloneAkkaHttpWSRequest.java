@@ -9,16 +9,14 @@ import akka.http.javadsl.Http;
 import akka.http.javadsl.model.*;
 import akka.http.javadsl.model.headers.BasicHttpCredentials;
 import akka.http.javadsl.model.headers.Cookie;
-import akka.http.scaladsl.model.ContentType;
-import akka.http.scaladsl.model.ErrorInfo;
-import akka.http.scaladsl.model.HttpHeader;
-import akka.http.scaladsl.model.HttpHeader$;
+import akka.parboiled2.ParserInput$;
 import akka.pattern.PatternsCS;
 import akka.stream.Materializer;
 import play.libs.ws.*;
 import scala.concurrent.duration.FiniteDuration;
 import scala.util.Either;
 
+import java.nio.charset.Charset;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -214,7 +212,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
     else if (body instanceof SourceBodyWritable) {
       final SourceBodyWritable writable = (SourceBodyWritable)body;
       // FIXME JAVA API missing ContentType.parse Java API in Akka Http
-      final Either<scala.collection.immutable.List<ErrorInfo>, ContentType> contentType = akka.http.scaladsl.model.ContentType$.MODULE$.parse(writable.contentType());
+      final Either<scala.collection.immutable.List<akka.http.scaladsl.model.ErrorInfo>, akka.http.scaladsl.model.ContentType> contentType = akka.http.scaladsl.model.ContentType$.MODULE$.parse(writable.contentType());
       if (contentType.isRight()) {
         entity = HttpEntities.create(contentType.right().get(), writable.body().get());
       }
@@ -253,8 +251,8 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
   @Override
   public StandaloneWSRequest addHeader(String name, String value) {
     // FIXME JAVA API missing HttpHeader.parse Java API in Akka Http
-    final HttpHeader.ParsingResult result =
-      HttpHeader$.MODULE$.parse(name, value, HeaderParser$.MODULE$.DefaultSettings());
+    final akka.http.scaladsl.model.HttpHeader.ParsingResult result =
+      akka.http.scaladsl.model.HttpHeader$.MODULE$.parse(name, value, HeaderParser$.MODULE$.DefaultSettings());
 
     if (result instanceof akka.http.scaladsl.model.HttpHeader$ParsingResult$Ok) {
       return copy(request.addHeader(((akka.http.scaladsl.model.HttpHeader$ParsingResult$Ok)result).header()));
@@ -415,7 +413,12 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public StandaloneWSRequest setVirtualHost(String virtualHost) {
-    return copy(request.addHeader(akka.http.javadsl.model.headers.Host.create(virtualHost)));
+    // FIXME JAVA API missing Host.create(Authority) Java Api in Akka Http
+    return copy(request.addHeader(akka.http.scaladsl.model.headers.Host.apply(
+      akka.http.scaladsl.model.Uri.Authority$.MODULE$.parse(
+        ParserInput$.MODULE$.apply(virtualHost),
+        Charset.forName("UTF8"),
+        akka.http.scaladsl.model.Uri$ParsingMode$Relaxed$.MODULE$))));
   }
 
   /**
