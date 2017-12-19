@@ -5,7 +5,7 @@ package play.api.libs.ws
 
 import akka.NotUsed
 import akka.http.scaladsl.model.{ ContentTypes, HttpEntity, StatusCodes }
-import akka.http.scaladsl.model.headers.Host
+import akka.http.scaladsl.model.headers.{ Host, HttpCookie }
 import akka.http.scaladsl.server.directives.Credentials
 import akka.stream.scaladsl.{ Sink, Source }
 import akka.util.ByteString
@@ -57,6 +57,14 @@ object WSClientSpec {
         val source = Source("streamed".toIndexedSeq).map(c => ByteString(c.toString))
         val httpEntity = HttpEntity(ContentTypes.`application/octet-stream`, source)
         complete(httpEntity)
+      } ~
+      path("cookies") {
+        extractRequest { r =>
+          val cookies = r.cookies.map(c => HttpCookie(c.name, c.value)) :+ HttpCookie("cookie3", "cookie3")
+          setCookie(cookies.head, cookies.tail: _*) {
+            complete("OK")
+          }
+        }
       } ~
       get {
         entity(as[String]) { echo =>
@@ -307,6 +315,31 @@ trait WSClientSpec extends Specification
           .map { resp =>
             resp.body[String] must beEqualTo("streamed")
             resp.body[String] must beEqualTo("streamed")
+          }
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "send and receive cookies" in {
+      withClient() { client =>
+        val cookie1 = DefaultWSCookie("cookie1", "cookie1")
+        val cookie2 = DefaultWSCookie("cookie2", "cookie2")
+        val cookie3 = DefaultWSCookie("cookie3", "cookie3")
+
+        val request = client
+          .url(s"http://localhost:$testServerPort/cookies")
+          .addCookies(cookie1)
+
+        request.cookies must containTheSameElementsAs(Seq(cookie1))
+
+        request.withCookies(cookie2).cookies must containTheSameElementsAs(Seq(cookie2))
+
+        request
+          .addCookies(cookie2)
+          .get()
+          .map { resp =>
+            resp.cookies must containTheSameElementsAs(Seq(cookie1, cookie2, cookie3))
+            resp.cookie(cookie1.name) must be_==(Some(cookie1))
           }
           .awaitFor(defaultTimeout)
       }

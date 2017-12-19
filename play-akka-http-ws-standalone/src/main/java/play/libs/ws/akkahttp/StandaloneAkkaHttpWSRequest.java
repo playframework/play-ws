@@ -8,6 +8,7 @@ import akka.http.impl.model.parser.HeaderParser$;
 import akka.http.javadsl.Http;
 import akka.http.javadsl.model.*;
 import akka.http.javadsl.model.headers.BasicHttpCredentials;
+import akka.http.javadsl.model.headers.Cookie;
 import akka.http.scaladsl.model.ContentType;
 import akka.http.scaladsl.model.ErrorInfo;
 import akka.http.scaladsl.model.HttpHeader;
@@ -19,14 +20,12 @@ import scala.concurrent.duration.FiniteDuration;
 import scala.util.Either;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
 
@@ -313,7 +312,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public StandaloneWSRequest addCookie(WSCookie cookie) {
-    return null;
+    return addCookies(cookie);
   }
 
   /**
@@ -326,7 +325,10 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public StandaloneWSRequest addCookies(WSCookie... cookies) {
-    return null;
+    return copy(request.addHeaders(
+      Arrays.stream(cookies)
+        .map((c) -> Cookie.create(c.getName(), c.getValue()))
+        .collect(Collectors.toList())));
   }
 
   /**
@@ -337,7 +339,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public StandaloneWSRequest setCookies(List<WSCookie> cookies) {
-    return null;
+    return copy(request.removeHeader("Cookie")).addCookies(cookies.toArray(new WSCookie[cookies.size()]));
   }
 
   /**
