@@ -8,6 +8,7 @@ import java.net.URI
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpHeader.ParsingResult
+import akka.http.scaladsl.model.Uri.Authority
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
 import akka.stream.Materializer
@@ -80,7 +81,9 @@ final class StandaloneAkkaHttpWSRequest private (
   /**
    * A calculator of the signature for this request
    */
-  override def calc: Option[WSSignatureCalculator] = ???
+  override def calc: Option[WSSignatureCalculator] =
+    // FIXME https://github.com/playframework/play-ws/issues/207
+    None
 
   /**
    * The authentication this request should use
@@ -105,7 +108,7 @@ final class StandaloneAkkaHttpWSRequest private (
   /**
    * The virtual host this request will use
    */
-  override def virtualHost: Option[String] = ???
+  override def virtualHost: Option[String] = request.header[Host].map(h => h.host.address + ":" + h.port)
 
   /**
    * The proxy server this request will use
@@ -119,7 +122,9 @@ final class StandaloneAkkaHttpWSRequest private (
    *
    * @param calc the signature calculator
    */
-  override def sign(calc: WSSignatureCalculator): Self = ???
+  override def sign(calc: WSSignatureCalculator): Self =
+    // FIXME https://github.com/playframework/play-ws/issues/207
+    ???
 
   /**
    * sets the authentication realm
@@ -188,7 +193,7 @@ final class StandaloneAkkaHttpWSRequest private (
    * Sets the virtual host to use in this request
    */
   override def withVirtualHost(vh: String): Self =
-    copy(request = request.addHeader(Host(vh)))
+    copy(request = request.addHeader(Host(Authority.parse(vh))))
 
   /**
    * Sets the proxy server to use in this request

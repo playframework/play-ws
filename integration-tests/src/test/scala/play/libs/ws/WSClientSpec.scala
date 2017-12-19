@@ -205,10 +205,10 @@ trait WSClientSpec extends Specification
     "set host header" in {
       withClient() {
         _.url(s"http://localhost:$testServerPort/virtualhost")
-          .setVirtualHost("virtualhost")
+          .setVirtualHost("virtualhost:1337")
           .get()
           .toScala
-          .map(_.getBody must be_==("virtualhost"))
+          .map(_.getBody must be_==("virtualhost:1337"))
           .awaitFor(defaultTimeout)
       }
     }

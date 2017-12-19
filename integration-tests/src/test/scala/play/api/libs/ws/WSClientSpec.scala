@@ -41,7 +41,8 @@ object WSClientSpec {
       } ~
       path("virtualhost") {
         extractRequest { r =>
-          complete(r.header[Host].get.host.address)
+          val vh = r.header[Host].get
+          complete(vh.host.address + ":" + vh.port)
         }
       } ~
       path("timeout") {
@@ -274,11 +275,17 @@ trait WSClientSpec extends Specification
     }
 
     "set host header" in {
-      withClient() {
-        _.url(s"http://localhost:$testServerPort/virtualhost")
-          .withVirtualHost("virtualhost")
+      withClient() { client =>
+        val requestWithoutVirtualHost = client.url(s"http://localhost:$testServerPort/virtualhost")
+        requestWithoutVirtualHost.virtualHost must beNone
+
+        val requestWithVirtualHost = requestWithoutVirtualHost
+          .withVirtualHost("virtualhost:1337")
+        requestWithVirtualHost.virtualHost must beSome("virtualhost:1337")
+
+        requestWithVirtualHost
           .get()
-          .map(_.body must be_==("virtualhost"))
+          .map(_.body must be_==("virtualhost:1337"))
           .awaitFor(defaultTimeout)
       }
     }
