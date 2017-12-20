@@ -30,7 +30,7 @@ public final class StandaloneAkkaHttpWSResponse implements StandaloneWSResponse 
   private final HttpResponse response;
   private final Materializer mat;
 
-  private HttpResponse strickResponse = null;
+  private HttpResponse strictResponse = null;
 
   StandaloneAkkaHttpWSResponse(HttpResponse response, Materializer mat) {
     this.response = response;
@@ -188,8 +188,8 @@ public final class StandaloneAkkaHttpWSResponse implements StandaloneWSResponse 
   }
 
   private synchronized HttpResponse getStrictResponse() {
-    if (strickResponse != null) {
-      return strickResponse;
+    if (strictResponse != null) {
+      return strictResponse;
     }
     else {
       try {
@@ -198,8 +198,8 @@ public final class StandaloneAkkaHttpWSResponse implements StandaloneWSResponse 
           .toCompletableFuture()
           .get(UNMARSHAL_TIMEOUT.toNanos(), TimeUnit.NANOSECONDS);
         // FIXME JAVA API no toStrict Java API in Akka Http
-        this.strickResponse = response.withEntity(strictEntity);
-        return this.strickResponse;
+        this.strictResponse = response.withEntity(strictEntity);
+        return this.strictResponse;
       }
       catch (Exception ex) {
         throw new RuntimeException(ex);
