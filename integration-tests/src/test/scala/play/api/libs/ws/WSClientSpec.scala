@@ -3,7 +3,7 @@
  */
 package play.api.libs.ws
 
-import akka.http.scaladsl.model.{ ContentTypes, HttpEntity, StatusCodes }
+import akka.http.scaladsl.model.{ ContentTypes, HttpEntity, HttpHeader, StatusCodes }
 import akka.http.scaladsl.model.headers.{ Host, HttpCookie }
 import akka.http.scaladsl.server.directives.Credentials
 import akka.stream.scaladsl.{ Sink, Source }
@@ -113,7 +113,7 @@ trait WSClientSpec extends Specification
 
   override val routes = WSClientSpec.routes
 
-  "url" should {
+  "WSClient" should {
     "throw an exception on invalid url" in {
       withClient() { client =>
         { client.url("localhost") } must throwAn[IllegalArgumentException]
@@ -145,9 +145,81 @@ trait WSClientSpec extends Specification
         streamRequest.body must beAnInstanceOf[SourceBody]
       }
     }
-  }
 
-  "WSClient" should {
+    "correctly URL-encode the query string part" in {
+      withClient() {
+        _.url("http://example.com")
+          .withQueryStringParameters("&" -> "=")
+          .uri
+          .toString must equalTo("http://example.com?%26=%3D")
+      }
+    }
+
+    "discard old query parameters when setting new ones" in {
+      withClient() {
+        _.url("http://example.com")
+          .withQueryStringParameters("bar" -> "baz")
+          .withQueryStringParameters("bar" -> "bah")
+          .uri.toString must equalTo("http://example.com?bar=bah")
+      }
+    }
+
+    "add query string param" in {
+      withClient() {
+        _.url("http://example.com")
+          .withQueryStringParameters("bar" -> "baz")
+          .addQueryStringParameters("bar" -> "bah")
+          .uri.toString must equalTo("http://example.com?bar=bah&bar=baz")
+      }
+    }
+
+    "support adding several query string values for a parameter" in {
+      withClient() { client =>
+        val request = client
+          .url("http://example.com")
+          .withQueryStringParameters("play" -> "foo1", "play" -> "foo2")
+          .addQueryStringParameters("play" -> "foo3", "play" -> "foo4")
+
+        request.queryString.get("play") must beSome
+          .which(_ must containTheSameElementsAs(Seq("foo1", "foo2", "foo3", "foo4")))
+      }
+    }
+
+    "support adding headers" in {
+      withClient() { client =>
+        val request = client.url("http://playframework.com/")
+          .withHttpHeaders("key" -> "value1")
+          .addHttpHeaders("key" -> "value2")
+
+        request.header("key") must beSome("value1")
+        request.headers("key") must containTheSameElementsAs(Seq("value1", "value2"))
+
+        request.headerValues("raktas") must beEmpty
+        request.header("raktas") must beNone
+
+        request
+          .withHttpHeaders("key" -> "value1")
+          .headers("key") must containTheSameElementsAs(Seq("value1"))
+      }
+    }
+
+    "not make Content-Type header if there is Content-Type in headers already" in {
+      import DefaultBodyWritables._
+      withClient() {
+        _.url("http://playframework.com/")
+          .withHttpHeaders("Content-Type" -> "fake/contenttype; charset=utf-8")
+          .withBody("I am a text/plain body")
+          .header("Content-Type").map(_.toLowerCase) must beSome("fake/contenttype; charset=utf-8")
+      }
+    }
+
+    "treat headers as case insensitive" in {
+      withClient() {
+        _.url("http://playframework.com/")
+          .withHttpHeaders("key" -> "value1", "KEY" -> "value2")
+          .headers("key") must containTheSameElementsAs(Seq("value1", "value2"))
+      }
+    }
 
     "return underlying implementations" in {
       withClient() { client =>

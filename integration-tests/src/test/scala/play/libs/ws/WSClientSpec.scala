@@ -30,7 +30,7 @@ trait WSClientSpec extends Specification
 
   override val routes = play.api.libs.ws.WSClientSpec.routes
 
-  "url" should {
+  "WSClient" should {
     "throw an exception on invalid url" in {
       withClient() { client =>
         // akka http parses no scheme properly
@@ -56,6 +56,11 @@ trait WSClientSpec extends Specification
 
         client
           .url(s"http://localhost:$testServerPort")
+          .setContentType("text/plain")
+          .getContentType must be_==("text/plain")
+
+        client
+          .url(s"http://localhost:$testServerPort")
           .setBody(body("text"))
           .getContentType must be_==("text/plain")
 
@@ -65,9 +70,93 @@ trait WSClientSpec extends Specification
           .getContentType must be_==("application/octet-stream")
       }
     }
-  }
 
-  "WSClient" should {
+    "correctly URL-encode the query string part" in {
+      withClient() { client =>
+        val request = client.url("http://example.com")
+          .setQueryString(Map("&" -> Seq("=").asJava).asJava)
+
+        request.getUrl must equalTo("http://example.com")
+        request.getQueryParameters.asScala.mapValues(_.asScala) must be_==(Map("&" -> Seq("=")))
+      }
+    }
+
+    "discard old query parameters when setting new ones" in {
+      withClient() {
+        _.url("http://example.com")
+          .setQueryString(Map("bar" -> Seq("baz").asJava).asJava)
+          .setQueryString(Map("bar" -> Seq("bah").asJava).asJava)
+          .getQueryParameters.asScala.mapValues(_.asScala) must be_==(Map("bar" -> Seq("bah")))
+      }
+    }
+
+    "add query string param" in {
+      withClient() {
+        _.url("http://example.com")
+          .setQueryString("bar=baz")
+          .addQueryParameter("bar", "bah")
+          .getQueryParameters.asScala.mapValues(_.asScala) must be_==(Map("bar" -> Seq("baz", "bah")))
+      }
+    }
+
+    "support adding several query string values for a parameter" in {
+      // need to pass in mutable list,
+      // as the AHC implementation stores the passed in list
+      // and then adds elements to it from other API calls
+      val list = new java.util.ArrayList[String]().asInstanceOf[java.util.List[String]]
+      list.add("foo1")
+      list.add("foo2")
+      withClient() { client =>
+        val request = client
+          .url("http://example.com")
+          .setQueryString(Map("play" -> list).asJava)
+          .addQueryParameter("play", "foo3")
+
+        request.getQueryParameters.get("play").asScala must containTheSameElementsAs(Seq("foo1", "foo2", "foo3"))
+      }
+    }
+
+    "support adding headers" in {
+      // need to pass in mutable list,
+      // as the AHC implementation stores the passed in list
+      // and then adds elements to it from other API calls
+      val list = new java.util.ArrayList[String]().asInstanceOf[java.util.List[String]]
+      list.add("value1")
+      withClient() { client =>
+        val request = client.url("http://playframework.com/")
+          .setHeaders(Map("key" -> list).asJava)
+          .addHeader("key", "value2")
+
+        request.getHeaders.get("key").asScala must containTheSameElementsAs(Seq("value1", "value2"))
+        request.getHeaderValues("key").asScala must containTheSameElementsAs(Seq("value1", "value2"))
+        request.getHeader("key").asScala must beSome("value1")
+
+        request.getHeaderValues("raktas").asScala must beEmpty
+        request.getHeader("raktas").asScala must beNone
+
+        request
+          .setHeaders(Map("key" -> Seq("value1").asJava).asJava)
+          .getHeaders.get("key").asScala must containTheSameElementsAs(Seq("value1"))
+      }
+    }
+
+    "not make Content-Type header if there is Content-Type in headers already" in {
+      withClient() {
+        _.url("http://playframework.com/")
+          .addHeader("Content-Type", "fake/contenttype; charset=utf-8")
+          .setBody(body("I am a text/plain body"))
+          .getHeader("Content-Type").asScala.map(_.toLowerCase) must beSome("fake/contenttype; charset=utf-8")
+      }
+    }
+
+    // FIXME this is different from Scala API but this is how AHC implementation is
+    "treat headers as case sensitive" in {
+      withClient() {
+        _.url("http://playframework.com/")
+          .setHeaders(Map("key" -> Seq("value1").asJava, "KEY" -> Seq("value2").asJava).asJava)
+          .getHeaderValues("key").asScala must be_==(Seq("value1"))
+      }
+    }
 
     "return underlying implementations" in {
       withClient() { client =>

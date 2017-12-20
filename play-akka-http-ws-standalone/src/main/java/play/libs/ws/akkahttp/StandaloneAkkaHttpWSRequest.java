@@ -10,6 +10,7 @@ import akka.http.javadsl.model.*;
 import akka.http.javadsl.model.headers.Authorization;
 import akka.http.javadsl.model.headers.BasicHttpCredentials;
 import akka.http.javadsl.model.headers.Cookie;
+import akka.japi.Pair;
 import akka.parboiled2.ParserInput$;
 import akka.pattern.PatternsCS;
 import akka.stream.Materializer;
@@ -205,30 +206,19 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public StandaloneWSRequest setBody(BodyWritable body) {
-    RequestEntity entity;
-    ContentType contentType;
-
-    // FIXME JAVA API missing ContentType.parse Java API in Akka Http
-    final Either<scala.collection.immutable.List<akka.http.scaladsl.model.ErrorInfo>, akka.http.scaladsl.model.ContentType> contentTypeEither = akka.http.scaladsl.model.ContentType$.MODULE$.parse(body.contentType());
-    if (contentTypeEither.isRight()) {
-      contentType = contentTypeEither.right().get();
-    }
-    else {
-      throw new IllegalArgumentException("Unknown content type: " + body.contentType());
-    }
-
     if (body instanceof InMemoryBodyWritable) {
       final InMemoryBodyWritable writable = (InMemoryBodyWritable)body;
-      entity = HttpEntities.create(contentType, writable.body().get());
+      return copy(request.withEntity(
+        HttpEntities.create(parseContentType(body.contentType()), writable.body().get())));
     }
     else if (body instanceof SourceBodyWritable) {
       final SourceBodyWritable writable = (SourceBodyWritable)body;
-      entity = HttpEntities.create(contentType, writable.body().get());
+      return copy(request.withEntity(
+        HttpEntities.create(parseContentType(body.contentType()), writable.body().get())));
     }
     else {
       throw new IllegalArgumentException("Unsupported BodyWritable: " + body);
     }
-    return copy(request.withEntity(entity));
   }
 
   /**
@@ -241,7 +231,18 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public StandaloneWSRequest setHeaders(Map<String, List<String>> headers) {
-    return null;
+    // FIXME JAVA API no Java Api to replace headers on a request
+    HttpRequest requestNoHeaders = request;
+    for (HttpHeader h: request.getHeaders()) {
+      requestNoHeaders = requestNoHeaders.removeHeader(h.name());
+    }
+
+    return copy(
+      requestNoHeaders.addHeaders(
+        headers.entrySet().stream().flatMap(
+          (h) -> h.getValue().stream().map((v) -> parseHeader(h.getKey(), v))
+        ).collect(Collectors.toList()))
+    );
   }
 
   /**
@@ -255,16 +256,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public StandaloneWSRequest addHeader(String name, String value) {
-    // FIXME JAVA API missing HttpHeader.parse Java API in Akka Http
-    final akka.http.scaladsl.model.HttpHeader.ParsingResult result =
-      akka.http.scaladsl.model.HttpHeader$.MODULE$.parse(name, value, HeaderParser$.MODULE$.DefaultSettings());
-
-    if (result instanceof akka.http.scaladsl.model.HttpHeader$ParsingResult$Ok) {
-      return copy(request.addHeader(((akka.http.scaladsl.model.HttpHeader$ParsingResult$Ok)result).header()));
-    }
-    else {
-      throw new IllegalArgumentException("Unable to parse header [" + name + "] with value [" + value + "]");
-    }
+    return copy(request.addHeader(parseHeader(name, value)));
   }
 
   /**
@@ -275,7 +267,10 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public StandaloneWSRequest setQueryString(String query) {
-    return null;
+    return copy(
+      request.withUri(
+        request.getUri().query(
+          Query.create(query))));
   }
 
   /**
@@ -302,7 +297,12 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public StandaloneWSRequest setQueryString(Map<String, List<String>> params) {
-    return null;
+    return copy(
+      request.withUri(
+        request.getUri().query(
+          Query.create(params.entrySet().stream().flatMap(
+            (entry) -> entry.getValue().stream().map((value) -> Pair.create(entry.getKey(), value))
+          ).collect(Collectors.toList())))));
   }
 
   /**
@@ -395,7 +395,8 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public StandaloneWSRequest sign(WSSignatureCalculator calculator) {
-    return null;
+    // FIXME https://github.com/playframework/play-ws/issues/207
+    throw new UnsupportedOperationException("Implementation is missing");
   }
 
   /**
@@ -407,7 +408,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
   @Override
   public StandaloneWSRequest setFollowRedirects(boolean followRedirects) {
     // FIXME https://github.com/playframework/play-ws/issues/207
-    throw new RuntimeException("Implementation is missing");
+    throw new UnsupportedOperationException("Implementation is missing");
   }
 
   /**
@@ -480,7 +481,10 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public StandaloneWSRequest setContentType(String contentType) {
-    return null;
+    // FIXME JAVA API entity.withContentType is missing in Java Api of Akka Http
+    return copy(request.withEntity(
+      ((RequestEntity)((akka.http.scaladsl.model.HttpEntity)request.entity()).withContentType((akka.http.scaladsl.model.ContentType)parseContentType(contentType)))
+    ));
   }
 
   /**
@@ -488,7 +492,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public String getUrl() {
-    return request.getUri().toString();
+    return request.getUri().query(Query.EMPTY).toString();
   }
 
   /**
@@ -496,7 +500,16 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public Map<String, List<String>> getHeaders() {
-    return null;
+    final Map<String, List<String>> headers = new HashMap<>();
+    for (final HttpHeader header: request.getHeaders()) {
+      if (headers.containsKey(header.name())) {
+        headers.get(header.name()).add(header.value());
+      }
+      else {
+        headers.put(header.name(), new ArrayList<>(Collections.singletonList(header.value())));
+      }
+    }
+    return headers;
   }
 
   /**
@@ -508,7 +521,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public List<String> getHeaderValues(String name) {
-    return null;
+    return getHeaders().getOrDefault(name, new ArrayList<>());
   }
 
   /**
@@ -521,7 +534,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public Optional<String> getHeader(String name) {
-    return Optional.empty();
+    return getHeaderValues(name).stream().findFirst();
   }
 
   /**
@@ -529,7 +542,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public Map<String, List<String>> getQueryParameters() {
-    return null;
+    return request.getUri().query().toMultiMap();
   }
 
   /**
@@ -572,7 +585,8 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public WSSignatureCalculator getCalculator() {
-    return null;
+    // FIXME https://github.com/playframework/play-ws/issues/207
+    throw new UnsupportedOperationException("Implementation is missing");
   }
 
   /**
@@ -602,6 +616,30 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
     // FIXME JAVA API no CotentTypes.NoContentType Java Api in Akka Http
     return request.entity().getContentType()
       .equals(akka.http.scaladsl.model.ContentTypes.NoContentType()) ? null : request.entity().getContentType().toString();
+  }
+
+  private HttpHeader parseHeader(String name, String value) {
+    // FIXME JAVA API missing HttpHeader.parse Java API in Akka Http
+    final akka.http.scaladsl.model.HttpHeader.ParsingResult result =
+      akka.http.scaladsl.model.HttpHeader$.MODULE$.parse(name, value, HeaderParser$.MODULE$.DefaultSettings());
+
+    if (result instanceof akka.http.scaladsl.model.HttpHeader$ParsingResult$Ok) {
+      return ((akka.http.scaladsl.model.HttpHeader$ParsingResult$Ok)result).header();
+    }
+    else {
+      throw new IllegalArgumentException("Unable to parse header [" + name + "] with value [" + value + "]");
+    }
+  }
+
+  private ContentType parseContentType(String contentType) {
+    // FIXME JAVA API missing ContentType.parse Java API in Akka Http
+    final Either<scala.collection.immutable.List<akka.http.scaladsl.model.ErrorInfo>, akka.http.scaladsl.model.ContentType> contentTypeEither = akka.http.scaladsl.model.ContentType$.MODULE$.parse(contentType);
+    if (contentTypeEither.isRight()) {
+      return contentTypeEither.right().get();
+    }
+    else {
+      throw new IllegalArgumentException("Unable to parse content type: " + contentType);
+    }
   }
 
   private StandaloneWSRequest copy(HttpRequest request) {
