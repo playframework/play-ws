@@ -203,6 +203,10 @@ trait WSClientSpec extends Specification
         _.url(s"http://localhost:$testServerPort/xml")
           .post(body(document))
           .toScala
+          .map { resp =>
+            resp.getContentType must be_==("text/plain; charset=UTF-8")
+            resp
+          }
           .map(_.getBody(xml()))
           .map(_.isEqualNode(document) must be_==(true))
           .awaitFor(defaultTimeout)

@@ -599,6 +599,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public String getContentType() {
+    // FIXME JAVA API no CotentTypes.NoContentType Java Api in Akka Http
     return request.entity().getContentType()
       .equals(akka.http.scaladsl.model.ContentTypes.NoContentType()) ? null : request.entity().getContentType().toString();
   }
