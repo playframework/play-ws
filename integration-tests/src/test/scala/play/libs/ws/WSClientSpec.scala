@@ -191,9 +191,20 @@ trait WSClientSpec extends Specification
     }
 
     "authenticate basic" in {
-      withClient() {
-        _.url(s"http://localhost:$testServerPort/auth/basic")
+      withClient() { client =>
+        val requestWithoutAuth = client.url(s"http://localhost:$testServerPort/auth/basic")
+        requestWithoutAuth.getUsername must beNull
+        requestWithoutAuth.getPassword must beNull
+        requestWithoutAuth.getScheme must beNull
+
+        val requestWithAuth = requestWithoutAuth
           .setAuth("user", "pass", WSAuthScheme.BASIC)
+
+        requestWithAuth.getUsername must be_==("user")
+        requestWithAuth.getPassword must be_==("pass")
+        requestWithAuth.getScheme must be_==(WSAuthScheme.BASIC)
+
+        requestWithAuth
           .get()
           .toScala
           .map(_.getBody)

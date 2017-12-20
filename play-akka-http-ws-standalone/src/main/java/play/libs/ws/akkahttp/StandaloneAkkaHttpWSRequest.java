@@ -7,6 +7,7 @@ import akka.actor.ActorSystem;
 import akka.http.impl.model.parser.HeaderParser$;
 import akka.http.javadsl.Http;
 import akka.http.javadsl.model.*;
+import akka.http.javadsl.model.headers.Authorization;
 import akka.http.javadsl.model.headers.BasicHttpCredentials;
 import akka.http.javadsl.model.headers.Cookie;
 import akka.parboiled2.ParserInput$;
@@ -532,7 +533,11 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public String getUsername() {
-    return null;
+    return request.getHeader(Authorization.class)
+      .filter((a) -> a.credentials() instanceof BasicHttpCredentials)
+      .map((a) -> (BasicHttpCredentials)a.credentials())
+      .map(BasicHttpCredentials::username)
+      .orElseGet(() -> null);
   }
 
   /**
@@ -540,7 +545,11 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public String getPassword() {
-    return null;
+    return request.getHeader(Authorization.class)
+      .filter((a) -> a.credentials() instanceof BasicHttpCredentials)
+      .map((a) -> (BasicHttpCredentials)a.credentials())
+      .map(BasicHttpCredentials::password)
+      .orElseGet(() -> null);
   }
 
   /**
@@ -548,7 +557,10 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public WSAuthScheme getScheme() {
-    return null;
+    return request.getHeader(Authorization.class)
+      .filter((a) -> a.credentials() instanceof BasicHttpCredentials)
+      .map((a) -> WSAuthScheme.BASIC)
+      .orElseGet(() -> null);
   }
 
   /**

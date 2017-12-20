@@ -88,7 +88,11 @@ final class StandaloneAkkaHttpWSRequest private (
   /**
    * The authentication this request should use
    */
-  override def auth: Option[(String, String, WSAuthScheme)] = ???
+  override def auth: Option[(String, String, WSAuthScheme)] =
+    request.header[Authorization].map(_.credentials).collect {
+      case BasicHttpCredentials(username, password) => (username, password, WSAuthScheme.BASIC)
+      case other => throw new IllegalArgumentException(s"Authorization [$other] not yet supported")
+    }
 
   /**
    * Whether this request should follow redirects
