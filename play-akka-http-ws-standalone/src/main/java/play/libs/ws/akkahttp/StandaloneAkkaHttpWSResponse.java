@@ -30,7 +30,7 @@ public final class StandaloneAkkaHttpWSResponse implements StandaloneWSResponse 
   private final HttpResponse response;
   private final Materializer mat;
 
-  private HttpResponse strictResponse = null;
+  private HttpResponse strictResponse;
 
   StandaloneAkkaHttpWSResponse(HttpResponse response, Materializer mat) {
     this.response = response;
@@ -106,7 +106,9 @@ public final class StandaloneAkkaHttpWSResponse implements StandaloneWSResponse 
    */
   @Override
   public String getContentType() {
-    return null;
+    // FIXME JAVA API no CotentTypes.NoContentType Java Api in Akka Http
+    return response.entity().getContentType()
+      .equals(akka.http.scaladsl.model.ContentTypes.NoContentType()) ? null : response.entity().getContentType().toString();
   }
 
   /**
