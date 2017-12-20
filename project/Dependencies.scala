@@ -55,7 +55,7 @@ object Dependencies {
 
   val standaloneApiWSDependencies = javaxInject ++ sslConfigCore ++ akkaStreams ++ testDependencies
 
-  val standaloneAhcWSDependencies = scalaJava8Compat ++ cachecontrol ++ slf4jApi ++ reactiveStreams ++ akkaHttp ++ testDependencies
+  val standaloneAhcWSDependencies = scalaJava8Compat ++ cachecontrol ++ slf4jApi ++ reactiveStreams ++ testDependencies
 
   val standaloneAkkaHttpWSDependencies = akkaHttp
 
