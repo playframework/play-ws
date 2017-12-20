@@ -72,6 +72,10 @@ final class StandaloneAkkaHttpWSRequest private (
    */
   override def headers: Map[String, Seq[String]] =
     request.headers
+      .map(h => HttpHeader.parse(h.name().toLowerCase, h.value()))
+      .collect {
+        case ParsingResult.Ok(header, _) => header
+      }
       .groupBy(_.name)
       .mapValues(_.map(_.value()))
 

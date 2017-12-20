@@ -263,23 +263,6 @@ lazy val `play-ws-standalone` = project
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
-// WS API Tests
-//---------------------------------------------------------------
-
-lazy val `play-ws-standalone-tests` = project
-  .in(file("play-ws-standalone-tests"))
-  .settings(commonSettings)
-  .settings(disablePublishing)
-  .settings(formattingSettings)
-  .settings(SbtScalariform.scalariformSettings)
-  .settings(libraryDependencies ++= standaloneApiWSTestsDependencies)
-  .dependsOn(
-    `play-ahc-ws-standalone`,
-    `play-akka-http-ws-standalone`
-  )
-  .disablePlugins(sbtassembly.AssemblyPlugin)
-
-//---------------------------------------------------------------
 // Shaded AsyncHttpClient implementation of WS
 //---------------------------------------------------------------
 
@@ -441,7 +424,6 @@ lazy val root = project
     `play-ws-standalone`,
     `play-ws-standalone-json`,
     `play-ws-standalone-xml`,
-    `play-ws-standalone-tests`,
     `play-ahc-ws-standalone`,
     `play-akka-http-ws-standalone`,
     `integration-tests`
