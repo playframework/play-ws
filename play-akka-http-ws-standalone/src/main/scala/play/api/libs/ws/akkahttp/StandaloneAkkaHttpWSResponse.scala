@@ -5,7 +5,7 @@ package play.api.libs.ws.akkahttp
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.HttpResponse
-import akka.http.scaladsl.model.headers.{ Cookie, HttpCookie, `Set-Cookie` }
+import akka.http.scaladsl.model.headers.`Set-Cookie`
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
