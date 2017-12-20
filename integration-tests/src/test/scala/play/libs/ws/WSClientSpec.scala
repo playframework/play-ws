@@ -6,7 +6,7 @@ package play.libs.ws
 import java.net.MalformedURLException
 import java.time.Duration
 
-import akka.stream.javadsl.Sink
+import akka.stream.javadsl.{ Sink, Source }
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.execute.Result
 import org.specs2.matcher.FutureMatchers
@@ -44,6 +44,21 @@ trait WSClientSpec extends Specification
     "not throw exception on valid url" in {
       withClient() { client =>
         { client.url(s"http://localhost:$testServerPort") } must not(throwAn[IllegalArgumentException])
+      }
+    }
+
+    "set the basic request parameters" in {
+      withClient() { client =>
+        val request = client.url(s"http://localhost:$testServerPort")
+
+        request.getUrl must be_==(s"http://localhost:$testServerPort")
+        request.getContentType must beNull
+
+        val textRequest = request.setBody(body("text"))
+        textRequest.getContentType must be_==("text/plain")
+
+        val streamRequest = request.setBody(body(Source.empty()))
+        streamRequest.getContentType must be_==("application/octet-stream")
       }
     }
   }

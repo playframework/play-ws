@@ -35,7 +35,7 @@ final class StandaloneAkkaHttpWSRequest private (
   /**
    * The base URL for this request
    */
-  override def url: String = ???
+  override def url: String = request.uri.toString
 
   /**
    * The URI for this request
@@ -47,17 +47,25 @@ final class StandaloneAkkaHttpWSRequest private (
   /**
    * The content type for this request, if any is defined.
    */
-  override def contentType: Option[String] = ???
+  override def contentType: Option[String] = request.entity.contentType match {
+    case ContentTypes.NoContentType => None
+    case contentType => Some(contentType.toString)
+  }
 
   /**
    * The method for this request
    */
-  override def method: String = ???
+  override def method: String = request.method.value
 
   /**
    * The body of this request
    */
-  override def body: WSBody = ???
+  override def body: WSBody = request.entity match {
+    case HttpEntity.Empty => EmptyBody
+    case HttpEntity.Strict(_, data) => InMemoryBody(data)
+    case e: HttpEntity.Chunked => SourceBody(e.dataBytes)
+    case other => throw new IllegalArgumentException(s"Unknown request body type [${request.entity}]")
+  }
 
   /**
    * The headers for this request
@@ -219,10 +227,14 @@ final class StandaloneAkkaHttpWSRequest private (
    */
   override def withBody[T: BodyWritable](body: T): Self = {
     val writable = implicitly[BodyWritable[T]]
+    val contentType = ContentType.parse(writable.contentType) match {
+      case Left(_) => throw new IllegalArgumentException(s"Unknown content type [${writable.contentType}]")
+      case Right(ct) => ct
+    }
 
     val requestWithEntity = request.withEntity(writable.transform(body) match {
-      case InMemoryBody(bytes) => HttpEntity(bytes)
-      case SourceBody(source) => HttpEntity(ContentType.parse(writable.contentType).right.get, source)
+      case InMemoryBody(bytes) => HttpEntity(contentType, bytes)
+      case SourceBody(source) => HttpEntity(contentType, source)
       case EmptyBody => HttpEntity.Empty
     })
 

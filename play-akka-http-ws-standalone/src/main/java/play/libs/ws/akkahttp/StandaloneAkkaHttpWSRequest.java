@@ -206,20 +206,24 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
   @Override
   public StandaloneWSRequest setBody(BodyWritable body) {
     RequestEntity entity;
+    ContentType contentType;
+
+    // FIXME JAVA API missing ContentType.parse Java API in Akka Http
+    final Either<scala.collection.immutable.List<akka.http.scaladsl.model.ErrorInfo>, akka.http.scaladsl.model.ContentType> contentTypeEither = akka.http.scaladsl.model.ContentType$.MODULE$.parse(body.contentType());
+    if (contentTypeEither.isRight()) {
+      contentType = contentTypeEither.right().get();
+    }
+    else {
+      throw new IllegalArgumentException("Unknown content type: " + body.contentType());
+    }
+
     if (body instanceof InMemoryBodyWritable) {
       final InMemoryBodyWritable writable = (InMemoryBodyWritable)body;
-      entity = HttpEntities.create(writable.body().get());
+      entity = HttpEntities.create(contentType, writable.body().get());
     }
     else if (body instanceof SourceBodyWritable) {
       final SourceBodyWritable writable = (SourceBodyWritable)body;
-      // FIXME JAVA API missing ContentType.parse Java API in Akka Http
-      final Either<scala.collection.immutable.List<akka.http.scaladsl.model.ErrorInfo>, akka.http.scaladsl.model.ContentType> contentType = akka.http.scaladsl.model.ContentType$.MODULE$.parse(writable.contentType());
-      if (contentType.isRight()) {
-        entity = HttpEntities.create(contentType.right().get(), writable.body().get());
-      }
-      else {
-        throw new IllegalArgumentException("Unable to parse Content Type: " + writable.contentType());
-      }
+      entity = HttpEntities.create(contentType, writable.body().get());
     }
     else {
       throw new IllegalArgumentException("Unsupported BodyWritable: " + body);
@@ -484,7 +488,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public String getUrl() {
-    return null;
+    return request.getUri().toString();
   }
 
   /**
@@ -595,7 +599,8 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public String getContentType() {
-    return null;
+    return request.entity().getContentType()
+      .equals(akka.http.scaladsl.model.ContentTypes.NoContentType()) ? null : request.entity().getContentType().toString();
   }
 
   private StandaloneWSRequest copy(HttpRequest request) {

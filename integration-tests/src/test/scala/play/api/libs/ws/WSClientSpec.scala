@@ -3,7 +3,6 @@
  */
 package play.api.libs.ws
 
-import akka.NotUsed
 import akka.http.scaladsl.model.{ ContentTypes, HttpEntity, StatusCodes }
 import akka.http.scaladsl.model.headers.{ Host, HttpCookie }
 import akka.http.scaladsl.server.directives.Credentials
@@ -124,6 +123,26 @@ trait WSClientSpec extends Specification
     "not throw exception on valid url" in {
       withClient() { client =>
         { client.url(s"http://localhost:$testServerPort") } must not(throwAn[IllegalArgumentException])
+      }
+    }
+
+    "set the basic request parameters" in {
+      withClient() { client =>
+        val request = client.url(s"http://localhost:$testServerPort")
+
+        request.url must be_==(s"http://localhost:$testServerPort")
+        request.method must be_==("GET")
+        request.contentType must beNone
+        request.body must be_==(EmptyBody)
+
+        import DefaultBodyWritables._
+        val textRequest = request.withBody("text")
+        textRequest.contentType must beSome("text/plain")
+        textRequest.body must beAnInstanceOf[InMemoryBody]
+
+        val streamRequest = request.withBody(Source.empty[ByteString])
+        streamRequest.contentType must beSome("application/octet-stream")
+        streamRequest.body must beAnInstanceOf[SourceBody]
       }
     }
   }
