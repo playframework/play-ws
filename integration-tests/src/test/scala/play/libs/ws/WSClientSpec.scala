@@ -54,11 +54,15 @@ trait WSClientSpec extends Specification
         request.getUrl must be_==(s"http://localhost:$testServerPort")
         request.getContentType must beNull
 
-        val textRequest = request.setBody(body("text"))
-        textRequest.getContentType must be_==("text/plain")
+        client
+          .url(s"http://localhost:$testServerPort")
+          .setBody(body("text"))
+          .getContentType must be_==("text/plain")
 
-        val streamRequest = request.setBody(body(Source.empty()))
-        streamRequest.getContentType must be_==("application/octet-stream")
+        client
+          .url(s"http://localhost:$testServerPort")
+          .setBody(body(Source.empty()))
+          .getContentType must be_==("application/octet-stream")
       }
     }
   }
