@@ -6,6 +6,7 @@ package play.libs.ws.akkahttp;
 import akka.actor.ActorSystem;
 import akka.http.impl.model.parser.HeaderParser$;
 import akka.http.javadsl.Http;
+import akka.http.javadsl.HttpsConnectionContext;
 import akka.http.javadsl.model.*;
 import akka.http.javadsl.model.headers.Authorization;
 import akka.http.javadsl.model.headers.BasicHttpCredentials;
@@ -35,21 +36,19 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
 
   private final ActorSystem sys;
   private final Materializer mat;
+  private final HttpsConnectionContext ctx;
 
-  StandaloneAkkaHttpWSRequest(String url, ActorSystem sys, Materializer mat) {
-    this.request = HttpRequest.create(url);
-    this.filters = new ArrayList<>();
-    this.timeout = Duration.ZERO;
-    this.sys = sys;
-    this.mat = mat;
+  StandaloneAkkaHttpWSRequest(String url, ActorSystem sys, Materializer mat, HttpsConnectionContext ctx) {
+    this(HttpRequest.create(url), new ArrayList<>(), Duration.ZERO, sys, mat, ctx);
   }
 
-  private StandaloneAkkaHttpWSRequest(HttpRequest request, List<WSRequestFilter> filters, Duration timeout, ActorSystem sys, Materializer mat) {
+  private StandaloneAkkaHttpWSRequest(HttpRequest request, List<WSRequestFilter> filters, Duration timeout, ActorSystem sys, Materializer mat, HttpsConnectionContext ctx) {
     this.request = request;
     this.filters = filters;
     this.timeout = timeout;
     this.sys = sys;
     this.mat = mat;
+    this.ctx = ctx;
   }
 
   /**
@@ -146,7 +145,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
     final WSRequestExecutor akkaExecutor = (request) -> {
       final CompletableFuture<StandaloneAkkaHttpWSResponse> resultFuture =
         Http.get(sys)
-          .singleRequest(((StandaloneAkkaHttpWSRequest)request).request)
+          .singleRequest(((StandaloneAkkaHttpWSRequest)request).request, ctx)
           .thenApply((r) -> new StandaloneAkkaHttpWSResponse(r, mat))
           .toCompletableFuture();
 
@@ -643,15 +642,15 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
   }
 
   private StandaloneWSRequest copy(HttpRequest request) {
-    return new StandaloneAkkaHttpWSRequest(request, this.filters, this.timeout, this.sys, this.mat);
+    return new StandaloneAkkaHttpWSRequest(request, this.filters, this.timeout, this.sys, this.mat, this.ctx);
   }
 
   private StandaloneWSRequest copy(List<WSRequestFilter> filters) {
-    return new StandaloneAkkaHttpWSRequest(this.request, filters, this.timeout, this.sys, this.mat);
+    return new StandaloneAkkaHttpWSRequest(this.request, filters, this.timeout, this.sys, this.mat, this.ctx);
   }
 
   private StandaloneWSRequest copy(Duration timeout) {
-    return new StandaloneAkkaHttpWSRequest(this.request, this.filters, timeout, this.sys, this.mat);
+    return new StandaloneAkkaHttpWSRequest(this.request, this.filters, timeout, this.sys, this.mat, this.ctx);
   }
 
 }

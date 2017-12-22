@@ -5,6 +5,7 @@ package play.libs.ws.akkahttp;
 
 import akka.actor.ActorSystem;
 import akka.http.javadsl.Http;
+import akka.http.javadsl.HttpsConnectionContext;
 import akka.stream.Materializer;
 import play.libs.ws.StandaloneWSClient;
 import play.libs.ws.StandaloneWSRequest;
@@ -16,17 +17,23 @@ public final class StandaloneAkkaHttpWSClient implements StandaloneWSClient {
 
   private final ActorSystem sys;
   private final Materializer mat;
+  private final HttpsConnectionContext ctx;
 
   public StandaloneAkkaHttpWSClient(ActorSystem sys, Materializer mat) {
-    this.sys = sys;
-    this.mat = mat;
+    this(sys, mat, Http.get(sys).defaultClientHttpsContext());
   }
 
-  /**
-   * The underlying implementation of the client, if any.  You must cast the returned value to the type you want.
-   *
-   * @return the backing class.
-   */
+  public StandaloneAkkaHttpWSClient(ActorSystem sys, Materializer mat, HttpsConnectionContext ctx) {
+    this.sys = sys;
+    this.mat = mat;
+    this.ctx = ctx;
+  }
+
+    /**
+     * The underlying implementation of the client, if any.  You must cast the returned value to the type you want.
+     *
+     * @return the backing class.
+     */
   @Override
   public Object getUnderlying() {
     return Http.get(sys);
@@ -43,7 +50,7 @@ public final class StandaloneAkkaHttpWSClient implements StandaloneWSClient {
   @Override
   public StandaloneWSRequest url(String url) {
     try {
-      return new StandaloneAkkaHttpWSRequest(url, sys, mat);
+      return new StandaloneAkkaHttpWSRequest(url, sys, mat, ctx);
     }
     catch (IllegalArgumentException ex) {
       throw new RuntimeException(new MalformedURLException(ex.getMessage()));

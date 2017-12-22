@@ -4,7 +4,7 @@
 package play.api.libs.ws.akkahttp
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
+import akka.http.scaladsl.{ Http, HttpsConnectionContext }
 import akka.http.scaladsl.model.IllegalUriException
 import akka.stream.Materializer
 import play.api.libs.ws.{ StandaloneWSClient, StandaloneWSRequest }
@@ -12,10 +12,17 @@ import play.api.libs.ws.{ StandaloneWSClient, StandaloneWSRequest }
 import scala.util.control.NonFatal
 
 object StandaloneAkkaHttpWSClient {
-  def apply()(implicit sys: ActorSystem, mat: Materializer): StandaloneAkkaHttpWSClient = new StandaloneAkkaHttpWSClient()
+  def apply()(implicit sys: ActorSystem, mat: Materializer): StandaloneWSClient =
+    apply(Http().defaultClientHttpsContext)(sys, mat)
+
+  def apply(ctx: HttpsConnectionContext)(implicit sys: ActorSystem, mat: Materializer): StandaloneWSClient =
+    new StandaloneAkkaHttpWSClient()(sys, mat, ctx)
 }
 
-final class StandaloneAkkaHttpWSClient private ()(implicit val sys: ActorSystem, val mat: Materializer) extends StandaloneWSClient {
+final class StandaloneAkkaHttpWSClient private ()(
+    implicit
+    val sys: ActorSystem, val mat: Materializer, val ctx: HttpsConnectionContext
+) extends StandaloneWSClient {
   /**
    * The underlying implementation of the client, if any.  You must cast explicitly to the type you want.
    *
