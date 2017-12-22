@@ -66,6 +66,11 @@ object WSClientSpec {
           }
         }
       } ~
+      path("scheme") {
+        extractRequest { r =>
+          complete(r.uri.scheme)
+        }
+      } ~
       get {
         entity(as[String]) { echo =>
           complete(s"GET $echo")
@@ -274,6 +279,16 @@ trait WSClientSpec extends Specification
           .map(_.bodyAsSource)
           .flatMap(_.runWith(Sink.head))
           .map(_.utf8String must beEqualTo("GET "))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "request a https url" in {
+      withClient() {
+        _.url(s"https://akka.example.org:$testServerPortHttps/scheme")
+          .get()
+          .map(_.body[String])
+          .map(_ must beEqualTo("https"))
           .awaitFor(defaultTimeout)
       }
     }

@@ -219,6 +219,17 @@ trait WSClientSpec extends Specification
       }
     }
 
+    "request a https url" in {
+      withClient() {
+        _.url(s"https://akka.example.org:$testServerPortHttps/scheme")
+          .get()
+          .toScala
+          .map(_.getBody)
+          .map(_ must beEqualTo("https"))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
     "send post request" in {
       withClient() {
         _.url(s"http://localhost:$testServerPort")

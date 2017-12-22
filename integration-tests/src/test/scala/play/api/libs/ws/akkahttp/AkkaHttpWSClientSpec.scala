@@ -9,7 +9,7 @@ import play.api.libs.ws.{ StandaloneWSClient, WSClientSpec }
 
 class AkkaHttpWSClientSpec(implicit override val executionEnv: ExecutionEnv) extends WSClientSpec {
   def withClient()(block: StandaloneWSClient => Result): Result = {
-    val client = StandaloneAkkaHttpWSClient()
+    val client = StandaloneAkkaHttpWSClient(clientHttpsContext())(system, materializer)
     try {
       block(client)
     } finally {

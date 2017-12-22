@@ -10,7 +10,7 @@ import play.api.libs.ws._
 
 class AkkaHttpWSRequestFilterSpec(implicit override val executionEnv: ExecutionEnv) extends WSRequestFilterSpec {
   def withClient()(block: StandaloneWSClient => Result): Result = {
-    val client = StandaloneAkkaHttpWSClient()
+    val client = StandaloneAkkaHttpWSClient()(system, materializer)
     try {
       block(client)
     } finally {

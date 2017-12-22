@@ -6,7 +6,7 @@ package play.api.libs.ws.akkahttp
 import java.net.URI
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
+import akka.http.scaladsl.{ Http, HttpsConnectionContext }
 import akka.http.scaladsl.model.HttpHeader.ParsingResult
 import akka.http.scaladsl.model.Uri.Authority
 import akka.http.scaladsl.model._
@@ -20,14 +20,14 @@ import scala.concurrent.{ Future, TimeoutException }
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 
 object StandaloneAkkaHttpWSRequest {
-  def apply(url: String)(implicit sys: ActorSystem, mat: Materializer): StandaloneAkkaHttpWSRequest = new StandaloneAkkaHttpWSRequest(HttpRequest().withUri(Uri.parseAbsolute(url)), Seq.empty, Duration.Inf)
+  def apply(url: String)(implicit sys: ActorSystem, mat: Materializer, ctx: HttpsConnectionContext): StandaloneAkkaHttpWSRequest = new StandaloneAkkaHttpWSRequest(HttpRequest().withUri(Uri.parseAbsolute(url)), Seq.empty, Duration.Inf)
 }
 
 final class StandaloneAkkaHttpWSRequest private (
     val request: HttpRequest,
     val filters: Seq[WSRequestFilter],
     val timeout: Duration
-)(implicit val sys: ActorSystem, val mat: Materializer) extends StandaloneWSRequest {
+)(implicit val sys: ActorSystem, val mat: Materializer, val ctx: HttpsConnectionContext) extends StandaloneWSRequest {
 
   override type Self = StandaloneWSRequest
   override type Response = StandaloneWSResponse
@@ -319,7 +319,7 @@ final class StandaloneAkkaHttpWSRequest private (
       }
       Future.firstCompletedOf(
         timeoutFuture :+
-          Http().singleRequest(akkaRequest).map(StandaloneAkkaHttpWSResponse.apply)(sys.dispatcher)
+          Http().singleRequest(akkaRequest, connectionContext = ctx).map(StandaloneAkkaHttpWSResponse.apply)(sys.dispatcher)
       )
     }
 
