@@ -47,7 +47,7 @@ object Dependencies {
 
   val akkaVersion = "2.5.3"
   val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion)
-  val akkaHttp = Seq("com.typesafe.akka" %% "akka-http" % "10.0.8")
+  val akkaHttp = Seq("com.typesafe.akka" %% "akka-http" % "10.0.11")
 
   val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.0")
 
@@ -56,6 +56,8 @@ object Dependencies {
   val standaloneApiWSDependencies = javaxInject ++ sslConfigCore ++ akkaStreams ++ testDependencies
 
   val standaloneAhcWSDependencies = scalaJava8Compat ++ cachecontrol ++ slf4jApi ++ reactiveStreams ++ testDependencies
+
+  val standaloneAkkaHttpWSDependencies = akkaHttp
 
   val standaloneAhcWSJsonDependencies = playJson ++ testDependencies
 

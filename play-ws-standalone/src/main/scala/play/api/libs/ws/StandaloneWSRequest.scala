@@ -161,7 +161,7 @@ trait StandaloneWSRequest {
   }
 
   /**
-   * Returns this request with the given query string parameters, discarding the existing ones.
+   * Returns this request with the given cookies, discarding the existing ones.
    *
    * @param cookies the cookies to be used
    */
