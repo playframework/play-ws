@@ -416,7 +416,7 @@ sonatypeProfileName := "com.typesafe"
 
 val publishSignedCommand: State => State =
     (state: State) =>
-      state.copy(remainingCommands = Exec("some-command", None) +: state.remainingCommands)
+      state.copy(remainingCommands = Exec("publishSigned", None) +: state.remainingCommands)
 
 val sonatypeReleaseAllCommand: State => State =
     (state: State) =>
