@@ -15,10 +15,10 @@ import play.api.libs.ws.{ BodyReadable, DefaultBodyReadables }
 import scala.concurrent._
 
 class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv) extends Specification
-    with AkkaServerProvider
-    with FutureMatchers
-    with FutureAwait
-    with DefaultBodyReadables {
+  with AkkaServerProvider
+  with FutureMatchers
+  with FutureAwait
+  with DefaultBodyReadables {
 
   def withClient(config: AhcWSClientConfig = AhcWSClientConfigFactory.forConfig())(block: StandaloneAhcWSClient => Result): Result = {
     val client = StandaloneAhcWSClient(config)
