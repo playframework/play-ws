@@ -100,8 +100,7 @@ trait DefaultBodyWritables {
     BodyWritable(
       formData =>
         InMemoryBody(ByteString.fromString(formData.flatMap(item => item._2.map(c => s"${item._1}=${URLEncoder.encode(c, "UTF-8")}")).mkString("&"))),
-      "application/x-www-form-urlencoded"
-    )
+      "application/x-www-form-urlencoded")
   }
 
   implicit val writeableOf_urlEncodedSimpleForm: BodyWritable[Map[String, String]] = {
