@@ -45,7 +45,7 @@ object Dependencies {
   val asyncHttpClientVersion = "2.0.36"
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % asyncHttpClientVersion)
 
-  val akkaVersion = "2.5.8"
+  val akkaVersion = "2.5.9"
   val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion)
   val akkaHttp = Seq("com.typesafe.akka" %% "akka-http" % "10.0.11")
 
