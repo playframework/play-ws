@@ -20,8 +20,6 @@ import play.shaded.ahc.org.asynchttpclient.cookie.Cookie;
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils;
 
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;

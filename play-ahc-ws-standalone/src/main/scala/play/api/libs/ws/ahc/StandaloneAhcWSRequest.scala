@@ -227,7 +227,7 @@ case class StandaloneAhcWSRequest(
    */
   def requestQueryParams: Map[String, Seq[String]] = {
     val params: java.util.List[Param] = buildRequest().getQueryParams
-    params.asScala.toSeq.groupBy(_.getName).mapValues(_.map(_.getValue))
+    params.asScala.groupBy(_.getName).mapValues(_.map(_.getValue))
   }
 
   /**
@@ -274,7 +274,7 @@ case class StandaloneAhcWSRequest(
           if (ct.contains(HttpHeaders.Values.APPLICATION_X_WWW_FORM_URLENCODED) && calc.isDefined) {
             // If we are taking responsibility for setting the request body, we should block any
             // externally defined Content-Length field (see #5221 for the details)
-            val filteredHeaders = this.headers.filterNot { case (k, v) => k.equalsIgnoreCase(HttpHeaders.Names.CONTENT_LENGTH) }
+            val filteredHeaders = this.headers.filterNot { case (k, _) => k.equalsIgnoreCase(HttpHeaders.Names.CONTENT_LENGTH) }
 
             // extract the content type and the charset
             val charsetOption = Option(HttpUtils.parseCharset(ct))
@@ -308,7 +308,7 @@ case class StandaloneAhcWSRequest(
         // else every content would be Transfer-Encoding: chunked
         // If the Content-Length is -1 Async-Http-Client sets a Transfer-Encoding: chunked
         // If the Content-Length is great than -1 Async-Http-Client will use the correct Content-Length
-        val filteredHeaders = this.headers.filterNot { case (k, v) => k.equalsIgnoreCase(HttpHeaders.Names.CONTENT_LENGTH) }
+        val filteredHeaders = this.headers.filterNot { case (k, _) => k.equalsIgnoreCase(HttpHeaders.Names.CONTENT_LENGTH) }
         val contentLength = this.headers.find { case (k, _) => k.equalsIgnoreCase(HttpHeaders.Names.CONTENT_LENGTH) }.map(_._2.head.toLong)
 
         (builder.setBody(source.map(_.toByteBuffer).runWith(Sink.asPublisher(false)), contentLength.getOrElse(-1L)), filteredHeaders)

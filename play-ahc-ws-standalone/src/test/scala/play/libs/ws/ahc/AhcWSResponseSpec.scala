@@ -16,8 +16,6 @@ import scala.compat.java8.OptionConverters._
 
 class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReadables with DefaultBodyWritables {
 
-  private val emptyMap = new java.util.HashMap[String, java.util.Collection[String]]
-
   "getUnderlying" should {
 
     "return the underlying response" in {

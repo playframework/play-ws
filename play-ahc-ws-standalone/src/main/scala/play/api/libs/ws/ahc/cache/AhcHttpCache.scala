@@ -136,7 +136,7 @@ class AhcHttpCache(underlying: Cache, heuristicsEnabled: Boolean = false)(implic
     response.getStatusCode match {
       case 500 | 502 | 503 | 504 =>
         true
-      case other =>
+      case _ =>
         false
     }
   }
@@ -148,7 +148,7 @@ class AhcHttpCache(underlying: Cache, heuristicsEnabled: Boolean = false)(implic
     request.getMethod match {
       case "GET" | "HEAD" | "OPTIONS" | "TRACE" =>
         false
-      case other =>
+      case _ =>
         true
     }
   }
@@ -235,7 +235,7 @@ class AhcHttpCache(underlying: Cache, heuristicsEnabled: Boolean = false)(implic
         true
       case redirect if redirect >= 300 && redirect < 400 =>
         true
-      case other =>
+      case _ =>
         false
     }
   }
@@ -287,13 +287,13 @@ class AhcHttpCache(underlying: Cache, heuristicsEnabled: Boolean = false)(implic
    */
   def isUncachedResponse(any: Any): Boolean = {
     any match {
-      case chrs: CacheableHttpResponseStatus =>
+      case _: CacheableHttpResponseStatus =>
         false
-      case headers: CacheableHttpResponseHeaders =>
+      case _: CacheableHttpResponseHeaders =>
         false
-      case bodyPart: CacheableHttpResponseBodyPart =>
+      case _: CacheableHttpResponseBodyPart =>
         false
-      case response: CacheableResponse =>
+      case _: CacheableResponse =>
         false
       case _ =>
         true
@@ -443,6 +443,6 @@ class AhcHttpCache(underlying: Cache, heuristicsEnabled: Boolean = false)(implic
   }
 
   override def toString: String = {
-    s"AhcHttpCache(${underlying})"
+    s"AhcHttpCache($underlying)"
   }
 }

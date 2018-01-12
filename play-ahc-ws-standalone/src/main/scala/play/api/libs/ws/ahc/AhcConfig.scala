@@ -76,7 +76,7 @@ class AhcWSClientConfigParser @Inject() (
     configuration: Config,
     classLoader: ClassLoader) extends Provider[AhcWSClientConfig] {
 
-  def get = parse()
+  def get: AhcWSClientConfig = parse()
 
   def parse(): AhcWSClientConfig = {
 
@@ -84,7 +84,7 @@ class AhcWSClientConfigParser @Inject() (
       try {
         Duration(configuration.getString(key))
       } catch {
-        case e: ConfigException.Null =>
+        case _: ConfigException.Null =>
           default
       }
     }
@@ -162,8 +162,8 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
   def modifyUnderlying(
     modify: DefaultAsyncHttpClientConfig.Builder => DefaultAsyncHttpClientConfig.Builder): AhcConfigBuilder = {
     new AhcConfigBuilder(ahcConfig) {
-      override val addCustomSettings = modify compose AhcConfigBuilder.this.addCustomSettings
-      override val builder = AhcConfigBuilder.this.builder
+      override val addCustomSettings: DefaultAsyncHttpClientConfig.Builder => DefaultAsyncHttpClientConfig.Builder = modify compose AhcConfigBuilder.this.addCustomSettings
+      override val builder: DefaultAsyncHttpClientConfig.Builder = AhcConfigBuilder.this.builder
     }
   }
 
@@ -215,7 +215,7 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
 
       case None =>
         // Otherwise, we return the default protocols in the given list.
-        Protocols.recommendedProtocols.filter(existingProtocols.contains).toArray
+        Protocols.recommendedProtocols.filter(existingProtocols.contains)
     }
 
     if (!sslConfig.loose.allowWeakProtocols) {
@@ -253,7 +253,7 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
   /**
    * Configures the SSL.  Can use the system SSLContext.getDefault() if "ws.ssl.default" is set.
    */
-  def configureSSL(sslConfig: SSLConfigSettings) {
+  def configureSSL(sslConfig: SSLConfigSettings): Unit = {
 
     // context!
     val sslContext = if (sslConfig.default) {
@@ -299,7 +299,7 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
     new DefaultTrustManagerFactoryWrapper(ssl.trustManagerConfig.algorithm)
   }
 
-  def validateDefaultTrustManager(sslConfig: SSLConfigSettings) {
+  def validateDefaultTrustManager(sslConfig: SSLConfigSettings): Unit = {
     // If we are using a default SSL context, we can't filter out certificates with weak algorithms
     // We ALSO don't have access to the trust manager from the SSLContext without doing horrible things
     // with reflection.

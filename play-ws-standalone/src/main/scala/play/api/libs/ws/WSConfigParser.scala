@@ -39,7 +39,7 @@ class WSConfigParser @Inject() (config: Config, classLoader: ClassLoader) extend
       try {
         Some(wsConfig.getString("useragent"))
       } catch {
-        case e: ConfigException.Null =>
+        case _: ConfigException.Null =>
           None
       }
     }

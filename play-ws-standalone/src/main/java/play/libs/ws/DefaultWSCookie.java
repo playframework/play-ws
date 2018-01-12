@@ -10,13 +10,13 @@ import java.util.Optional;
  * The implementation of a WS cookie.
  */
 public class DefaultWSCookie implements WSCookie {
-    private String name;
-    private String value;
-    private String domain;
-    private String path;
-    private Long maxAge;
-    private boolean secure = false;
-    private boolean httpOnly = false;
+    private final String name;
+    private final String value;
+    private final String domain;
+    private final String path;
+    private final Long maxAge;
+    private final boolean secure;
+    private final boolean httpOnly;
 
     public DefaultWSCookie(String name, String value, String domain, String path, Long maxAge, boolean secure, boolean httpOnly) {
         this.name = name;
@@ -50,7 +50,7 @@ public class DefaultWSCookie implements WSCookie {
 
     @Override
     public Optional<Long> getMaxAge() {
-        if (maxAge != null && maxAge.longValue() > -1L) {
+        if (maxAge != null && maxAge > -1L) {
             return Optional.of(maxAge);
         } else {
             return Optional.ofNullable(maxAge);

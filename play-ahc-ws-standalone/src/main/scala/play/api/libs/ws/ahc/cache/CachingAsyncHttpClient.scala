@@ -19,7 +19,7 @@ trait TimeoutResponse {
   def generateTimeoutResponse(request: Request): CacheableResponse = {
     val uri = request.getUri
     val status = new CacheableHttpResponseStatus(uri, 504, "Gateway Timeout", "")
-    val headers = CacheableHttpResponseHeaders(false, new DefaultHttpHeaders())
+    val headers = CacheableHttpResponseHeaders(trailingHeaders = false, new DefaultHttpHeaders())
     val bodyParts = java.util.Collections.emptyList[CacheableHttpResponseBodyPart]()
     CacheableResponse(status, headers, bodyParts)
   }
@@ -161,9 +161,7 @@ class CachingAsyncHttpClient(
     logger.trace(s"executeFromCache: handler = ${debug(handler)}, request = ${debug(request)}, response = ${debug(response)}")
 
     val cacheFuture = new CacheFuture[T](handler)
-    ec.execute(new Runnable {
-      override def run(): Unit = new AsyncCacheableConnection[T](handler, request, response, cacheFuture).call()
-    })
+    ec.execute(() => new AsyncCacheableConnection[T](handler, request, response, cacheFuture).call())
     cacheFuture
   }
 

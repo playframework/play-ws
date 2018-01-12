@@ -35,7 +35,7 @@ class XMLRequestSpec extends Specification with Mockito with AfterAll {
 
     val xml = XML.parser.loadString("<hello><test></test></hello>")
     val client = mock[StandaloneAhcWSClient]
-    val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
+    val req = StandaloneAhcWSRequest(client, "http://playframework.com/", null)
       .withBody(xml)
       .asInstanceOf[StandaloneAhcWSRequest]
       .buildRequest()
@@ -48,7 +48,7 @@ class XMLRequestSpec extends Specification with Mockito with AfterAll {
     import XMLBodyReadables._
 
     val ahcResponse = mock[AHCResponse]
-    ahcResponse.getContentType() returns "application/xml"
+    ahcResponse.getContentType returns "application/xml"
     ahcResponse.getResponseBody(StandardCharsets.UTF_8) returns "<hello><test></test></hello>"
     val response = new StandaloneAhcWSResponse(ahcResponse)
 

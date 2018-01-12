@@ -12,6 +12,7 @@ import play.libs.ws.StandaloneWSResponse;
 import play.libs.ws.WSCookie;
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders;
 import play.shaded.ahc.org.asynchttpclient.HttpResponseBodyPart;
+import scala.Tuple2;
 import scala.collection.Seq;
 
 import java.net.URI;
@@ -108,7 +109,7 @@ public class StreamedResponse implements StandaloneWSResponse, CookieBuilder {
     }
 
     private java.util.Map<String, List<String>> asJava(scala.collection.Map<String, Seq<String>> scalaMap) {
-        return ScalaStreamSupport.stream(scalaMap).collect(toMap(f -> f._1(), f -> seqAsJavaListConverter(f._2()).asJava()));
+        return ScalaStreamSupport.stream(scalaMap).collect(toMap(Tuple2::_1, f -> seqAsJavaListConverter(f._2()).asJava()));
     }
 
 }

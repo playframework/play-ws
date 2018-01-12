@@ -31,7 +31,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
       val client = mock[StandaloneAhcWSClient]
       val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
       request.setVirtualHost("foo.com")
-      val actual = request.buildRequest().getVirtualHost()
+      val actual = request.buildRequest().getVirtualHost
       actual must beEqualTo("foo.com")
     }
 
@@ -39,7 +39,6 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
 
       "set text/plain content-types for text bodies" in {
         val client = mock[StandaloneAhcWSClient]
-        val formEncoding = java.net.URLEncoder.encode("param1=value1", "UTF-8")
 
         val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
           .setBody(body("HELLO WORLD"))
@@ -131,7 +130,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
           called = true
         }
       }
-      val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
+      val _ = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
         .sign(calc)
         .buildRequest()
       called must beTrue
@@ -400,7 +399,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
         val client = mock[StandaloneAhcWSClient]
         val request = new StandaloneAhcWSRequest(client, "http://example.com?bar=F%3Dma", /*materializer*/ null)
         val queryParams = request.buildRequest().getQueryParams.asScala
-        val p = queryParams(0)
+        val p = queryParams.head
 
         p.getName must beEqualTo("bar")
         p.getValue must beEqualTo("F%253Dma")
@@ -478,7 +477,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
     val client = mock[StandaloneAhcWSClient]
     val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
     request.setRequestTimeout(timeout)
-    request.buildRequest().getRequestTimeout()
+    request.buildRequest().getRequestTimeout
   }
 
   def requestWithQueryString(query: String) = {

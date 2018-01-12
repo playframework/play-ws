@@ -121,7 +121,7 @@ class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(implici
 object StandaloneAhcWSClient {
 
   import scala.concurrent.duration._
-  val blockingTimeout = 50.milliseconds
+  val blockingTimeout: FiniteDuration = 50.milliseconds
   val elementLimit = 13 // 13 8192k blocks is roughly 100k
   private val logger = org.slf4j.LoggerFactory.getLogger(this.getClass)
 

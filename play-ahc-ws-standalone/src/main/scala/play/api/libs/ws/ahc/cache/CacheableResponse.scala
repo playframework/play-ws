@@ -19,6 +19,8 @@ import play.shaded.ahc.org.asynchttpclient.cookie.Cookie
 import play.shaded.ahc.org.asynchttpclient.uri.Uri
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils._
 
+import scala.collection.JavaConverters._
+
 class CacheableResponseBuilder {
 
   private var bodyParts: List[CacheableHttpResponseBodyPart] = Nil
@@ -49,7 +51,7 @@ class CacheableResponseBuilder {
     this
   }
 
-  def reset() = {
+  def reset(): Unit = {
     headers = None
     status = None
     bodyParts = Nil
@@ -200,16 +202,16 @@ case class CacheableResponse(
   }
 
   private def buildCookies: util.List[Cookie] = {
-    import play.shaded.ahc.org.asynchttpclient.util.MiscUtils.isNonEmpty
-    import play.shaded.ahc.org.asynchttpclient.cookie.CookieDecoder
     import java.util.Collections
+
+    import play.shaded.ahc.org.asynchttpclient.cookie.CookieDecoder
+    import play.shaded.ahc.org.asynchttpclient.util.MiscUtils.isNonEmpty
 
     var setCookieHeaders = headers.getHeaders.getAll(SET_COOKIE2)
     if (!isNonEmpty(setCookieHeaders)) setCookieHeaders = headers.getHeaders.getAll(SET_COOKIE)
     if (isNonEmpty(setCookieHeaders)) {
       val cookies = new util.ArrayList[Cookie](1)
-      import scala.collection.JavaConversions._
-      for (value <- setCookieHeaders) {
+      for (value <- setCookieHeaders.asScala) {
         val c = CookieDecoder.decode(value)
         if (c != null) cookies.add(c)
       }
@@ -282,7 +284,7 @@ class CacheableHttpResponseStatus(
   //    new CacheableResponse(this, headers.asInstanceOf[CacheableHttpResponseHeaders], bodyParts.asInstanceOf[util.List[CacheableHttpResponseBodyPart]])
   //  }
 
-  override def toString = {
+  override def toString: String = {
     s"CacheableHttpResponseStatus(code = $statusCode, text = $statusText)"
   }
 
@@ -304,6 +306,6 @@ class CacheableHttpResponseBodyPart(chunk: Array[Byte], last: Boolean) extends H
   override def length(): Int = if (chunk != null) chunk.length else 0
 
   override def toString: String = {
-    s"CacheableHttpResponseBodyPart(last = $last, chunk size = ${chunk.size})"
+    s"CacheableHttpResponseBodyPart(last = $last, chunk size = ${chunk.length})"
   }
 }

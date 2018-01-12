@@ -30,7 +30,7 @@ object AhcCurlRequestLogger {
 
   private val instance = new AhcCurlRequestLogger(logger)
 
-  def apply() = instance
+  def apply(): AhcCurlRequestLogger = instance
 
   def apply(logger: org.slf4j.Logger): AhcCurlRequestLogger = {
     new AhcCurlRequestLogger(logger)
@@ -51,11 +51,10 @@ trait CurlFormat {
 
     //authentication
     request.auth match {
-      case Some((userName, password, WSAuthScheme.BASIC)) => {
+      case Some((userName, password, WSAuthScheme.BASIC)) =>
         val encodedPassword = Base64.getUrlEncoder.encodeToString(s"$userName:$password".getBytes(StandardCharsets.US_ASCII))
         b.append(s"""  --header "Authorization: Basic ${quote(encodedPassword)}""")
         b.append(" \\\n")
-      }
       case _ => Unit
     }
 

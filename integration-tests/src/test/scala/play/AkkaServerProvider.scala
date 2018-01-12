@@ -40,9 +40,7 @@ trait AkkaServerProvider extends BeforeAfterAll {
 
   override def beforeAll(): Unit = {
     val portFuture = futureServer.map(_.localAddress.getPort)(executionEnv.executionContext)
-    portFuture.onSuccess {
-      case port => testServerPort = port
-    }(executionEnv.executionContext)
+    portFuture.foreach(port => testServerPort = port)(executionEnv.executionContext)
     Await.ready(portFuture, defaultTimeout)
   }
 

@@ -3,8 +3,6 @@
  */
 package play.libs.ws;
 
-import java.util.function.Supplier;
-
 /**
  * Writes out a {@code WSBody<A>}
  *
