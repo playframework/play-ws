@@ -14,10 +14,10 @@ import uk.org.lidalia.slf4jtest.{ TestLogger, TestLoggerFactory }
 import scala.collection.JavaConverters._
 
 class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv) extends Specification
-    with AkkaServerProvider
-    with StandaloneWSClientSupport
-    with FutureAwait
-    with DefaultBodyWritables {
+  with AkkaServerProvider
+  with StandaloneWSClientSupport
+  with FutureAwait
+  with DefaultBodyWritables {
 
   override def routes: Route = {
     import akka.http.scaladsl.server.Directives._

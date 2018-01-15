@@ -17,10 +17,10 @@ import scala.collection.JavaConverters._
 import scala.compat.java8.FutureConverters._
 
 class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv) extends Specification
-    with AkkaServerProvider
-    with StandaloneWSClientSupport
-    with FutureAwait
-    with DefaultBodyWritables {
+  with AkkaServerProvider
+  with StandaloneWSClientSupport
+  with FutureAwait
+  with DefaultBodyWritables {
 
   override def routes: Route = {
     import akka.http.scaladsl.server.Directives._
@@ -154,6 +154,7 @@ class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv) extends 
            |  --request GET \\
            |  --header "Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=" \\
            |  --header 'My-Header: My-Header-Value' \\
+           |  --header 'Content-Type: text/plain' \\
            |  --data 'the-body' \\
            |  'http://localhost:$testServerPort/'
         """.stripMargin.trim)

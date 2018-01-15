@@ -17,11 +17,11 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv) extends Specification
-    with AkkaServerProvider
-    with StandaloneWSClientSupport
-    with FutureMatchers
-    with XMLBodyWritables
-    with XMLBodyReadables {
+  with AkkaServerProvider
+  with StandaloneWSClientSupport
+  with FutureMatchers
+  with XMLBodyWritables
+  with XMLBodyReadables {
 
   override val routes: Route = {
     import akka.http.scaladsl.server.Directives._

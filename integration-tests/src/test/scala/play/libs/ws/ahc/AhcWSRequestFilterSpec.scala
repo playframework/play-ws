@@ -91,7 +91,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv) extends Sp
       }.await(retries = 0, timeout = 5.seconds)
     }
 
-    "allow filters to modify the streaming request" in {
+    "allow filters to modify the streaming request" in withClient() { client =>
       val appendedHeader = "X-Request-Id"
       val appendedHeaderValue = "someid"
       val responseFuture = FutureConverters.toScala(client.url(s"http://localhost:$testServerPort")
