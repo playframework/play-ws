@@ -13,8 +13,8 @@ import play.libs.ws.WSSignatureCalculator;
 
 public class OAuth {
 
-    private ServiceInfo info;
-    private OAuthProvider provider;
+    private final ServiceInfo info;
+    private final OAuthProvider provider;
 
     public OAuth(ServiceInfo info) {
         this(info, true);
@@ -86,8 +86,8 @@ public class OAuth {
      * A consumer key / consumer secret pair that the OAuth provider gave you, to identify your application.
      */
     public static class ConsumerKey {
-        public String key;
-        public String secret;
+        public final String key;
+        public final String secret;
 
         public ConsumerKey(String key, String secret) {
             this.key = key;
@@ -99,8 +99,8 @@ public class OAuth {
      * A request token / token secret pair, to be used for a specific user.
      */
     public static class RequestToken {
-        public String token;
-        public String secret;
+        public final String token;
+        public final String secret;
 
         public RequestToken(String token, String secret) {
             this.token = token;
@@ -112,10 +112,10 @@ public class OAuth {
      * The information identifying a oauth provider: URLs and the consumer key / consumer secret pair.
      */
     public static class ServiceInfo {
-        public String requestTokenURL;
-        public String accessTokenURL;
-        public String authorizationURL;
-        public ConsumerKey key;
+        public final String requestTokenURL;
+        public final String accessTokenURL;
+        public final String authorizationURL;
+        public final ConsumerKey key;
 
         public ServiceInfo(String requestTokenURL, String accessTokenURL, String authorizationURL, ConsumerKey key) {
             this.requestTokenURL = requestTokenURL;
@@ -135,7 +135,7 @@ public class OAuth {
      */
     public static class OAuthCalculator implements WSSignatureCalculator {
 
-        private OAuthSignatureCalculator calculator;
+        private final OAuthSignatureCalculator calculator;
 
         public OAuthCalculator(ConsumerKey consumerKey, RequestToken token) {
             play.shaded.ahc.org.asynchttpclient.oauth.ConsumerKey ahcConsumerKey = new play.shaded.ahc.org.asynchttpclient.oauth.ConsumerKey(consumerKey.key, consumerKey.secret);

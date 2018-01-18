@@ -33,7 +33,7 @@ public final class AhcWSClientConfigFactory {
      * Creates a AhcWSClientConfig with defaults from a WSClientConfig configuration object.
      *
      * @param config the basic WSClientConfig configuration object.
-     * @return
+     * @return a AhcWSClientConfig configuration object.
      */
     public static AhcWSClientConfig forClientConfig(WSClientConfig config) {
         return play.api.libs.ws.ahc.AhcWSClientConfigFactory$.MODULE$.forClientConfig(config);

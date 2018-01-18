@@ -81,7 +81,7 @@ class CacheFuture[T](handler: AsyncHandler[T]) extends ListenableFuture[T] {
 
   private var innerFuture: java.util.concurrent.CompletableFuture[T] = _
 
-  def setInnerFuture(future: java.util.concurrent.CompletableFuture[T]) = {
+  def setInnerFuture(future: java.util.concurrent.CompletableFuture[T]): Unit = {
     innerFuture = future
   }
 
@@ -120,9 +120,7 @@ class CacheFuture[T](handler: AsyncHandler[T]) extends ListenableFuture[T] {
   override def toCompletableFuture: CompletableFuture[T] = innerFuture
 
   override def addListener(listener: Runnable, executor: Executor): ListenableFuture[T] = {
-    innerFuture.whenCompleteAsync(new BiConsumer[T, Throwable]() {
-      override def accept(t: T, u: Throwable): Unit = listener.run()
-    }, executor)
+    innerFuture.whenCompleteAsync((_: T, _: Throwable) => listener.run(), executor)
     this
   }
 }

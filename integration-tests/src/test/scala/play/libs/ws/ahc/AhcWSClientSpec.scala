@@ -94,7 +94,6 @@ class AhcWSClientSpec(implicit executionEnv: ExecutionEnv) extends Specification
         dbf.setCoalescing(true)
         dbf.setIgnoringElementContentWhitespace(true)
         dbf.setIgnoringComments(true)
-        val db = dbf.newDocumentBuilder
 
         val responseXml = response.getBody(xml())
         responseXml.normalizeDocument()

@@ -32,10 +32,10 @@ object CleanShadedPlugin extends AutoPlugin {
       }).?
 
     private def parseOrg: Parser[String] =
-      (Space ~> token(StringBasic.examples("\"organization\"")))
+      Space ~> token(StringBasic.examples("\"organization\""))
 
     private def parseName: Parser[String] =
-      (Space ~> token(token("%") ~> Space ~> StringBasic.examples("\"name\"")))
+      Space ~> token(token("%") ~> Space ~> StringBasic.examples("\"name\""))
 
     def query(base: File, param: Option[ModuleParam], org: String, name: String): Seq[File] =
       (param match {

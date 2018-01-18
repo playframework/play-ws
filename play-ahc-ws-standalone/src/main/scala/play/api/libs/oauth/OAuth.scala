@@ -36,7 +36,7 @@ case class OAuth(info: ServiceInfo, use10a: Boolean = true) {
     val consumer = new DefaultOAuthConsumer(info.key.key, info.key.secret)
     try {
       provider.retrieveRequestToken(consumer, callbackURL)
-      Right(RequestToken(consumer.getToken(), consumer.getTokenSecret()))
+      Right(RequestToken(consumer.getToken, consumer.getTokenSecret))
     } catch {
       case e: OAuthException => Left(e)
     }
@@ -54,7 +54,7 @@ case class OAuth(info: ServiceInfo, use10a: Boolean = true) {
     consumer.setTokenWithSecret(token.token, token.secret)
     try {
       provider.retrieveAccessToken(consumer, verifier)
-      Right(RequestToken(consumer.getToken(), consumer.getTokenSecret()))
+      Right(RequestToken(consumer.getToken, consumer.getTokenSecret))
     } catch {
       case e: OAuthException => Left(e)
     }
@@ -68,7 +68,7 @@ case class OAuth(info: ServiceInfo, use10a: Boolean = true) {
   def redirectUrl(token: String): String = {
     import play.shaded.oauth.oauth.signpost.{ OAuth => O }
     O.addQueryParameters(
-      provider.getAuthorizationWebsiteUrl(),
+      provider.getAuthorizationWebsiteUrl,
       O.OAUTH_TOKEN,
       token
     )

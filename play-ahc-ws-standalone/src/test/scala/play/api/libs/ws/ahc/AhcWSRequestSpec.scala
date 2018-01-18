@@ -356,14 +356,13 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
 
     "Have form body for content type text/plain" in {
       withClient { client =>
-        val formEncoding = java.net.URLEncoder.encode("param1=value1", "UTF-8")
         val req: AHCRequest = client.url("http://playframework.com/")
           .withHttpHeaders(HttpHeaders.Names.CONTENT_TYPE -> "text/plain")
           .withBody("HELLO WORLD")
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
 
-        (new String(req.getByteData, "UTF-8")) must be_==("HELLO WORLD")
+        new String(req.getByteData, "UTF-8") must be_==("HELLO WORLD")
         val headers = req.getHeaders
         headers.get("Content-Length") must beNull
       }
@@ -453,7 +452,7 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
         }
       }
       withClient { client =>
-        val req = client.url("http://playframework.com/").sign(calc)
+        val _ = client.url("http://playframework.com/").sign(calc)
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
         called must beTrue
@@ -518,13 +517,12 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
   "Not remove a user defined content length header" in withClient { client =>
     val consumerKey = ConsumerKey("key", "secret")
     val requestToken = RequestToken("token", "secret")
-    val calc = OAuthCalculator(consumerKey, requestToken)
     val req: AHCRequest = client.url("http://playframework.com/").withBody(Map("param1" -> Seq("value1")))
       .withHttpHeaders("Content-Length" -> "9001") // add a meaningless content length here...
       .asInstanceOf[StandaloneAhcWSRequest]
       .buildRequest()
 
-    (new String(req.getByteData, "UTF-8")) must be_==("param1=value1") // should result in byte data.
+    new String(req.getByteData, "UTF-8") must be_==("param1=value1") // should result in byte data.
 
     val headers = req.getHeaders
     headers.get("Content-Length") must_== ("9001")

@@ -11,7 +11,7 @@ object Dependencies {
   val awaitility = Seq("org.awaitility" % "awaitility" % "3.0.0")
 
   val specsVersion = "3.8.6"
-  val specsBuild = Seq(
+  val specsBuild: Seq[ModuleID] = Seq(
     "specs2-core",
     "specs2-junit",
     "specs2-mock"
@@ -51,14 +51,14 @@ object Dependencies {
 
   val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.0")
 
-  val testDependencies = (specsBuild ++ junitInterface ++ assertj ++ awaitility ++ slf4jtest ++ logback).map(_ % Test)
+  val testDependencies: Seq[ModuleID] = (specsBuild ++ junitInterface ++ assertj ++ awaitility ++ slf4jtest ++ logback).map(_ % Test)
 
-  val standaloneApiWSDependencies = javaxInject ++ sslConfigCore ++ akkaStreams ++ testDependencies
+  val standaloneApiWSDependencies: Seq[ModuleID] = javaxInject ++ sslConfigCore ++ akkaStreams ++ testDependencies
 
-  val standaloneAhcWSDependencies = scalaJava8Compat ++ cachecontrol ++ slf4jApi ++ reactiveStreams ++ testDependencies
+  val standaloneAhcWSDependencies: Seq[ModuleID] = scalaJava8Compat ++ cachecontrol ++ slf4jApi ++ reactiveStreams ++ testDependencies
 
-  val standaloneAhcWSJsonDependencies = playJson ++ testDependencies
+  val standaloneAhcWSJsonDependencies: Seq[ModuleID] = playJson ++ testDependencies
 
-  val standaloneAhcWSXMLDependencies = scalaXml ++ testDependencies
+  val standaloneAhcWSXMLDependencies: Seq[ModuleID] = scalaXml ++ testDependencies
 
 }

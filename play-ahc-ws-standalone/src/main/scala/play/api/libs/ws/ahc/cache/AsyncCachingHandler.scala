@@ -133,9 +133,9 @@ class AsyncCachingHandler[T](
       //stored response (see Section 4.2.4).
 
       maybeAction match {
-        case Some(Validate(reason, staleIfError)) if staleIfError =>
+        case Some(Validate(_, staleIfError)) if staleIfError =>
           processStaleResponse(response)
-        case other =>
+        case _ =>
           processFullResponse(response)
       }
     } else {
@@ -223,7 +223,7 @@ class AsyncCachingHandler[T](
     handler.onCompleted(fullResponse)
   }
 
-  override def toString = {
+  override def toString: String = {
     s"CacheAsyncHandler(key = $key, requestTime = $requestTime, builder = $builder, asyncHandler = ${debug(handler)}})"
   }
 
