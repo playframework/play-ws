@@ -40,7 +40,7 @@ final class StandaloneAkkaHttpWSRequest private (
     val filters: Seq[WSRequestFilter],
     val timeout: Duration
 )(implicit
-  val sys: ActorSystem,
+    val sys: ActorSystem,
     val mat: Materializer,
     val ctx: HttpsConnectionContext,
     val config: WSClientConfig) extends StandaloneWSRequest {

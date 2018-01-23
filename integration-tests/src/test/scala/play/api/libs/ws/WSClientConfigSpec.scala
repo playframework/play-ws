@@ -30,7 +30,7 @@ object WSClientConfigSpec {
 }
 
 trait WSClientConfigSpec extends Specification
-    with AkkaServerProvider {
+  with AkkaServerProvider {
 
   implicit def executionEnv: ExecutionEnv
 

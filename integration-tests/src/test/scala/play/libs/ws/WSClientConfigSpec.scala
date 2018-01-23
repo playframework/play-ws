@@ -13,7 +13,7 @@ import play.api.libs.ws.WSClientConfig
 import scala.compat.java8.FutureConverters._
 
 trait WSClientConfigSpec extends Specification
-    with AkkaServerProvider {
+  with AkkaServerProvider {
 
   implicit def executionEnv: ExecutionEnv
 
