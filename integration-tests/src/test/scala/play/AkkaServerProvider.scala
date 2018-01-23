@@ -13,9 +13,9 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.{ Http, HttpsConnectionContext }
 import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
+import com.typesafe.config.ConfigFactory
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.specification.BeforeAfterAll
-import sun.net.spi.nameservice.NameService
 
 import scala.concurrent.duration._
 import scala.concurrent.{ Await, Future }
@@ -37,13 +37,14 @@ trait AkkaServerProvider extends BeforeAfterAll {
   val defaultTimeout: FiniteDuration = 5.seconds
 
   // Create Akka system for thread and streaming management
-  implicit val system = ActorSystem()
+  implicit val system = ActorSystem("AkkaServerProvider", ConfigFactory.parseString(
+    s"""
+       |akka.io.dns.inet-address.provider-object = ${classOf[akka.io.AkkaExampleOrgToLocalhostDnsProvider].getName}
+     """.stripMargin).withFallback(ConfigFactory.load()))
   implicit val materializer = ActorMaterializer()
 
   lazy val futureServer: Future[Seq[Http.ServerBinding]] = {
     implicit val ec = executionEnv.executionContext
-
-    customNameserver()
 
     // Using 0 (zero) means that a random free port will be used.
     // So our tests can run in parallel and won't mess with each other.
@@ -107,22 +108,4 @@ trait AkkaServerProvider extends BeforeAfterAll {
 
   private def loadX509Certificate(resourceName: String) =
     CertificateFactory.getInstance("X.509").generateCertificate(resourceStream(resourceName))
-
-  class MyHostNameService extends NameService {
-    override def lookupAllHostAddr(hostname: String) =
-      if (hostname == "akka.example.org") {
-        val arrayOfByte = sun.net.util.IPAddressUtil.textToNumericFormatV4("127.0.0.1")
-        val address = InetAddress.getByAddress(hostname, arrayOfByte)
-        Array[InetAddress](address)
-      } else throw new UnknownHostException(hostname);
-
-    override def getHostByAddr(paramArrayOfByte: Array[Byte]) = throw new UnknownHostException(paramArrayOfByte.toString)
-  }
-
-  private def customNameserver() = {
-    val field = classOf[InetAddress].getDeclaredField("nameServices")
-    field.setAccessible(true)
-    val nameServices = field.get(null).asInstanceOf[java.util.List[sun.net.spi.nameservice.NameService]]
-    nameServices.add(new MyHostNameService)
-  }
 }
