@@ -20,10 +20,10 @@ import scala.collection.JavaConverters._
 import scala.concurrent.TimeoutException
 
 trait WSClientSpec extends Specification
-    with AkkaServerProvider
-    with FutureMatchers
-    with DefaultBodyWritables
-    with XMLBodyWritables with XMLBodyReadables {
+  with AkkaServerProvider
+  with FutureMatchers
+  with DefaultBodyWritables
+  with XMLBodyWritables with XMLBodyReadables {
 
   implicit def executionEnv: ExecutionEnv
 

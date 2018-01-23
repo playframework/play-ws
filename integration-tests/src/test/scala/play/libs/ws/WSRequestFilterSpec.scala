@@ -14,8 +14,8 @@ import scala.compat.java8.FutureConverters._
 import scala.collection.JavaConverters._
 
 trait WSRequestFilterSpec extends Specification
-    with AkkaServerProvider
-    with FutureMatchers {
+  with AkkaServerProvider
+  with FutureMatchers {
 
   implicit def executionEnv: ExecutionEnv
 

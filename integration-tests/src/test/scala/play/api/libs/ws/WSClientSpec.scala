@@ -109,9 +109,9 @@ object WSClientSpec {
 }
 
 trait WSClientSpec extends Specification
-    with AkkaServerProvider
-    with FutureMatchers
-    with DefaultBodyReadables {
+  with AkkaServerProvider
+  with FutureMatchers
+  with DefaultBodyReadables {
 
   implicit def executionEnv: ExecutionEnv
 
