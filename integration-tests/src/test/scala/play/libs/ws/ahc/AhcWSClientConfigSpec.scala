@@ -1,3 +1,7 @@
+/*
+ * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
+ */
+
 package play.libs.ws.ahc
 
 import org.specs2.concurrent.ExecutionEnv

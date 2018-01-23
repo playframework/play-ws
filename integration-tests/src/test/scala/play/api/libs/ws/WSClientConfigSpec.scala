@@ -1,3 +1,7 @@
+/*
+ * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
+ */
+
 package play.api.libs.ws
 
 import akka.http.scaladsl.coding.{ Deflate, Gzip }
