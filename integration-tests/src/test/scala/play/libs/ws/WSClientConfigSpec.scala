@@ -28,6 +28,17 @@ trait WSClientConfigSpec extends Specification
           .awaitFor(defaultTimeout)
       }
     }
+
+    "uncompress when compression enabled" in {
+      withClient(_.copy(compressionEnabled = true)) {
+        _.url(s"http://localhost:$testServerPort/compression")
+          .get()
+          .toScala
+          .map(_.getBody)
+          .map(_ must beEqualTo("gzip,deflate"))
+          .awaitFor(defaultTimeout)
+      }
+    }
   }
 
 }

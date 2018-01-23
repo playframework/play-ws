@@ -7,11 +7,10 @@ import akka.actor.ActorSystem;
 import akka.http.impl.model.parser.HeaderParser$;
 import akka.http.javadsl.Http;
 import akka.http.javadsl.HttpsConnectionContext;
+import akka.http.javadsl.coding.Coder;
 import akka.http.javadsl.model.*;
-import akka.http.javadsl.model.headers.Authorization;
-import akka.http.javadsl.model.headers.BasicHttpCredentials;
-import akka.http.javadsl.model.headers.Cookie;
-import akka.http.javadsl.model.headers.UserAgent;
+import akka.http.javadsl.model.ContentType;
+import akka.http.javadsl.model.headers.*;
 import akka.http.scaladsl.model.headers.ProductVersion;
 import akka.japi.Pair;
 import akka.parboiled2.ParserInput$;
@@ -29,6 +28,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
@@ -47,19 +47,31 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
   }
 
   private StandaloneAkkaHttpWSRequest(HttpRequest request, List<WSRequestFilter> filters, Duration timeout, ActorSystem sys, Materializer mat, HttpsConnectionContext ctx, WSClientConfig config) {
-    this.request = config.userAgent().fold(
-      () -> request,
-      (ua) -> request.addHeader(UserAgent.create(
-        // FIXME JAVA API expose ProductVersion.parseMultiple in Java API
-        scala.collection.JavaConverters.seqAsJavaList(ProductVersion.parseMultiple(ua)).toArray(new ProductVersion[0])
-      ))
+
+    final List<Function<HttpRequest, HttpRequest>> requestTransformations = Arrays.asList(
+      (req) -> config.userAgent().fold(
+        () -> req,
+        (ua) -> req.addHeader(UserAgent.create(
+          // FIXME JAVA API expose ProductVersion.parseMultiple in Java API
+          scala.collection.JavaConverters.seqAsJavaList(ProductVersion.parseMultiple(ua)).toArray(new ProductVersion[0])
+        ))
+      ),
+      (req) -> {
+        if (!config.compressionEnabled()) return req;
+        else return req.addHeader(AcceptEncoding.create(
+          HttpEncodingRange.create(HttpEncodings.GZIP), HttpEncodingRange.create(HttpEncodings.DEFLATE))
+        );
+      }
     );
+
+    this.request = requestTransformations.stream().reduce(request, (req, f) -> f.apply(req), (r1, r2) -> r2);
     this.filters = filters;
     this.timeout = timeout;
     this.sys = sys;
     this.mat = mat;
     this.ctx = ctx;
     this.config = config;
+
   }
 
   /**
@@ -157,6 +169,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
       final CompletableFuture<StandaloneAkkaHttpWSResponse> resultFuture =
         Http.get(sys)
           .singleRequest(((StandaloneAkkaHttpWSRequest)request).request, ctx)
+          .thenApply(StandaloneAkkaHttpWSRequest::decodeResponse)
           .thenApply((r) -> new StandaloneAkkaHttpWSResponse(r, mat))
           .toCompletableFuture();
 
@@ -664,4 +677,13 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
     return new StandaloneAkkaHttpWSRequest(this.request, this.filters, timeout, this.sys, this.mat, this.ctx, this.config);
   }
 
+  private static HttpResponse decodeResponse(HttpResponse response) {
+    Coder coder = Coder.NoCoding;
+    if (response.encoding().equals(HttpEncodings.GZIP)) {
+      coder = Coder.Gzip;
+    } else if (response.encoding().equals(HttpEncodings.DEFLATE)) {
+      coder = Coder.Deflate;
+    }
+    return coder.decodeMessage(response);
+  }
 }

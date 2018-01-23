@@ -1,6 +1,7 @@
 package play.api.libs.ws
 
-import akka.http.scaladsl.model.headers.`User-Agent`
+import akka.http.scaladsl.coding.{ Deflate, Gzip }
+import akka.http.scaladsl.model.headers.{ `Accept-Encoding`, `User-Agent` }
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.execute.Result
 import org.specs2.mutable.Specification
@@ -13,7 +14,14 @@ object WSClientConfigSpec {
       headerValueByType[`User-Agent`]() { ua =>
         complete(ua.products.head.toString())
       }
-    }
+    } ~
+      path("compression") {
+        headerValueByType[`Accept-Encoding`]() { enc =>
+          encodeResponseWith(Gzip, Deflate) {
+            complete(enc.encodings.mkString(","))
+          }
+        }
+      }
   }
 }
 
@@ -33,6 +41,16 @@ trait WSClientConfigSpec extends Specification
           .get()
           .map(_.body)
           .map(_ must beEqualTo("custom-user-agent"))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "uncompress when compression enabled" in {
+      withClient(_.copy(compressionEnabled = true)) {
+        _.url(s"http://localhost:$testServerPort/compression")
+          .get()
+          .map(_.body)
+          .map(_ must beEqualTo("gzip,deflate"))
           .awaitFor(defaultTimeout)
       }
     }
