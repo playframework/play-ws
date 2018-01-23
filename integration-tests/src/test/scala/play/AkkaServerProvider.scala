@@ -14,6 +14,7 @@ import akka.http.scaladsl.{ Http, HttpsConnectionContext }
 import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
 import com.typesafe.config.ConfigFactory
+import com.typesafe.sslconfig.akka.AkkaSSLConfig
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.specification.BeforeAfterAll
 
@@ -83,7 +84,7 @@ trait AkkaServerProvider extends BeforeAfterAll {
     new HttpsConnectionContext(context)
   }
 
-  def clientHttpsContext() = {
+  def clientHttpsContext(akkaSslConfig: Option[AkkaSSLConfig] = None): HttpsConnectionContext = {
     val certStore = KeyStore.getInstance(KeyStore.getDefaultType)
     certStore.load(null, null)
     // only do this if you want to accept a custom root CA. Understand what you are doing!
@@ -97,7 +98,10 @@ trait AkkaServerProvider extends BeforeAfterAll {
 
     val params = new SSLParameters()
     params.setEndpointIdentificationAlgorithm("https")
-    new HttpsConnectionContext(context, sslParameters = Some(params))
+    new HttpsConnectionContext(
+      context,
+      sslConfig = akkaSslConfig,
+      sslParameters = Some(params))
   }
 
   private def resourceStream(resourceName: String): InputStream = {

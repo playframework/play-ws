@@ -11,10 +11,13 @@ import akka.http.javadsl.model.*;
 import akka.http.javadsl.model.headers.Authorization;
 import akka.http.javadsl.model.headers.BasicHttpCredentials;
 import akka.http.javadsl.model.headers.Cookie;
+import akka.http.javadsl.model.headers.UserAgent;
+import akka.http.scaladsl.model.headers.ProductVersion;
 import akka.japi.Pair;
 import akka.parboiled2.ParserInput$;
 import akka.pattern.PatternsCS;
 import akka.stream.Materializer;
+import play.api.libs.ws.WSClientConfig;
 import play.libs.ws.*;
 import scala.concurrent.duration.FiniteDuration;
 import scala.util.Either;
@@ -37,18 +40,26 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
   private final ActorSystem sys;
   private final Materializer mat;
   private final HttpsConnectionContext ctx;
+  private final WSClientConfig config;
 
-  StandaloneAkkaHttpWSRequest(String url, ActorSystem sys, Materializer mat, HttpsConnectionContext ctx) {
-    this(HttpRequest.create(url), new ArrayList<>(), Duration.ZERO, sys, mat, ctx);
+  StandaloneAkkaHttpWSRequest(String url, ActorSystem sys, Materializer mat, HttpsConnectionContext ctx, WSClientConfig config) {
+    this(HttpRequest.create(url), new ArrayList<>(), Duration.ZERO, sys, mat, ctx, config);
   }
 
-  private StandaloneAkkaHttpWSRequest(HttpRequest request, List<WSRequestFilter> filters, Duration timeout, ActorSystem sys, Materializer mat, HttpsConnectionContext ctx) {
-    this.request = request;
+  private StandaloneAkkaHttpWSRequest(HttpRequest request, List<WSRequestFilter> filters, Duration timeout, ActorSystem sys, Materializer mat, HttpsConnectionContext ctx, WSClientConfig config) {
+    this.request = config.userAgent().fold(
+      () -> request,
+      (ua) -> request.addHeader(UserAgent.create(
+        // FIXME JAVA API expose ProductVersion.parseMultiple in Java API
+        scala.collection.JavaConverters.seqAsJavaList(ProductVersion.parseMultiple(ua)).toArray(new ProductVersion[0])
+      ))
+    );
     this.filters = filters;
     this.timeout = timeout;
     this.sys = sys;
     this.mat = mat;
     this.ctx = ctx;
+    this.config = config;
   }
 
   /**
@@ -642,15 +653,15 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
   }
 
   private StandaloneWSRequest copy(HttpRequest request) {
-    return new StandaloneAkkaHttpWSRequest(request, this.filters, this.timeout, this.sys, this.mat, this.ctx);
+    return new StandaloneAkkaHttpWSRequest(request, this.filters, this.timeout, this.sys, this.mat, this.ctx, this.config);
   }
 
   private StandaloneWSRequest copy(List<WSRequestFilter> filters) {
-    return new StandaloneAkkaHttpWSRequest(this.request, filters, this.timeout, this.sys, this.mat, this.ctx);
+    return new StandaloneAkkaHttpWSRequest(this.request, filters, this.timeout, this.sys, this.mat, this.ctx, this.config);
   }
 
   private StandaloneWSRequest copy(Duration timeout) {
-    return new StandaloneAkkaHttpWSRequest(this.request, this.filters, timeout, this.sys, this.mat, this.ctx);
+    return new StandaloneAkkaHttpWSRequest(this.request, this.filters, timeout, this.sys, this.mat, this.ctx, this.config);
   }
 
 }
