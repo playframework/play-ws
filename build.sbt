@@ -327,7 +327,6 @@ lazy val `play-akka-http-ws-standalone` = project
   .in(file("play-akka-http-ws-standalone"))
   .settings(commonSettings)
   .settings(formattingSettings)
-  .settings(SbtScalariform.scalariformSettings)
   .settings(
     fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v"))
