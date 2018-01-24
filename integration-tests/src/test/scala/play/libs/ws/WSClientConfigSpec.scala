@@ -4,6 +4,7 @@
 
 package play.libs.ws
 
+import akka.http.scaladsl.model.StatusCodes
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.execute.Result
 import org.specs2.mutable.Specification
@@ -55,6 +56,17 @@ trait WSClientConfigSpec extends Specification
             .map(_ must beEqualTo("OK"))
             .awaitFor(defaultTimeout)
         }
+      }
+    }
+
+    "do not follow redirects" in {
+      withClient(_.copy(followRedirects = false)) {
+        _.url(s"http://localhost:$testServerPort/redirect")
+          .get()
+          .toScala
+          .map(_.getStatus)
+          .map(_ must beEqualTo(StatusCodes.MovedPermanently.intValue))
+          .awaitFor(defaultTimeout)
       }
     }
 

@@ -691,7 +691,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
       final CompletableFuture<HttpResponse> exception = new CompletableFuture<>();
       exception.completeExceptionally(new TimeoutException("Maximum redirect reached: " + MAX_REDIRECTS));
       return exception;
-    } else if (response.status().isRedirection()) {
+    } else if (response.status().isRedirection() && config.followRedirects()) {
       final Uri location = response.getHeader(Location.class).get().getUri();
       Uri redirectUri = location;
       if (location.isRelative()) {

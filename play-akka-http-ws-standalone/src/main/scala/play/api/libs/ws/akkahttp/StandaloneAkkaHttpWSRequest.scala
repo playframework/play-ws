@@ -334,7 +334,7 @@ final class StandaloneAkkaHttpWSRequest private (
     def handleRedirects(redirectsLeft: Int, request: HttpRequest)(response: HttpResponse): Future[HttpResponse] = {
       if (redirectsLeft < 1) {
         Future.failed(new IllegalStateException("Maximum redirect reached: " + MaxRedirects))
-      } else if (response.status.isRedirection()) {
+      } else if (response.status.isRedirection() && config.followRedirects) {
         val location = response.header[Location].get.uri
         val redirectUri =
           if (location.isRelative)

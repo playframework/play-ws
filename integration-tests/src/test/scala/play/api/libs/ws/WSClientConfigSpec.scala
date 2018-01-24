@@ -79,6 +79,16 @@ trait WSClientConfigSpec extends Specification
       }
     }
 
+    "do not follow redirects" in {
+      withClient(_.copy(followRedirects = false)) {
+        _.url(s"http://localhost:$testServerPort/redirect")
+          .get()
+          .map(_.status)
+          .map(_ must beEqualTo(MovedPermanently.intValue))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
     "eventually stop following perpetual redirecting" in {
       withClient(_.copy(followRedirects = true)) {
         _.url(s"http://localhost:$testServerPort/redirect-always")
