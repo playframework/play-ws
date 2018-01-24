@@ -49,13 +49,14 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
   private StandaloneAkkaHttpWSRequest(HttpRequest request, List<WSRequestFilter> filters, Duration timeout, ActorSystem sys, Materializer mat, HttpsConnectionContext ctx, WSClientConfig config) {
 
     final List<Function<HttpRequest, HttpRequest>> requestTransformations = Arrays.asList(
-      (req) -> config.userAgent().fold(
-        () -> req,
-        (ua) -> req.addHeader(UserAgent.create(
+      (req) -> {
+        if (!config.userAgent().isDefined()) return req;
+        else return req.addHeader(UserAgent.create(
           // FIXME JAVA API expose ProductVersion.parseMultiple in Java API
-          scala.collection.JavaConverters.seqAsJavaList(ProductVersion.parseMultiple(ua)).toArray(new ProductVersion[0])
-        ))
-      ),
+          scala.collection.JavaConversions.seqAsJavaList(ProductVersion.parseMultiple(
+            config.userAgent().get())).toArray(new ProductVersion[0])
+        ));
+      },
       (req) -> {
         if (!config.compressionEnabled()) return req;
         else return req.addHeader(AcceptEncoding.create(
