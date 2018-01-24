@@ -48,6 +48,9 @@ final class StandaloneAkkaHttpWSRequest private (
   override type Self = StandaloneWSRequest
   override type Response = StandaloneWSResponse
 
+  // FIXME make configurable
+  final val MaxRedirects = 5
+
   /**
    * The base URL for this request
    */
@@ -325,6 +328,27 @@ final class StandaloneAkkaHttpWSRequest private (
    * Execute this request
    */
   override def execute(): Future[Response] = {
+    def requestToResponse(request: HttpRequest): Future[HttpResponse] =
+      Http().singleRequest(request, connectionContext = ctx)
+
+    def handleRedirects(redirectsLeft: Int, request: HttpRequest)(response: HttpResponse): Future[HttpResponse] = {
+      if (redirectsLeft < 1) {
+        Future.failed(new IllegalStateException("Maximum redirect reached: " + MaxRedirects))
+      } else if (response.status.isRedirection()) {
+        val location = response.header[Location].get.uri
+        val redirectUri =
+          if (location.isRelative)
+            if (location.path.startsWithSlash)
+              request.uri.withPath(location.path)
+            else
+              request.uri.withPath(request.uri.path ++ location.path)
+          else location
+        requestToResponse(request.withUri(redirectUri)).flatMap(handleRedirects(redirectsLeft - 1, request))(sys.dispatcher)
+      } else {
+        Future.successful(response)
+      }
+    }
+
     def decodeResponse(response: HttpResponse): HttpResponse = {
       val decoder = response.encoding match {
         case HttpEncodings.gzip ⇒
@@ -347,7 +371,8 @@ final class StandaloneAkkaHttpWSRequest private (
       }
       Future.firstCompletedOf(
         timeoutFuture :+
-          Http().singleRequest(akkaRequest, connectionContext = ctx)
+          requestToResponse(akkaRequest)
+          .flatMap(handleRedirects(MaxRedirects, akkaRequest))
           .map(decodeResponse)
           .map(StandaloneAkkaHttpWSResponse.apply)(sys.dispatcher)
       )

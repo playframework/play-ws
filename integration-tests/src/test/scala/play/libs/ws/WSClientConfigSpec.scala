@@ -57,6 +57,23 @@ trait WSClientConfigSpec extends Specification
         }
       }
     }
+
+    "eventually stop following perpetual redirecting" in {
+      withClient(_.copy(followRedirects = true)) { client =>
+        pendingFor(Ahc(client), "Java Api does not follow redirects") {
+          client.url(s"http://localhost:$testServerPort/redirect-always")
+            .get()
+            .toScala
+            .map(_ => failure)
+            .recover {
+              case ex =>
+                ex.getMessage must contain("Maximum redirect reached")
+                success
+            }
+            .awaitFor(defaultTimeout)
+        }
+      }
+    }
   }
 
 }

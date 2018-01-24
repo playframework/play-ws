@@ -28,7 +28,10 @@ object WSClientConfigSpec {
         }
       } ~
       path("redirect") {
-        redirect("redirected", MovedPermanently)
+        redirect("/redirected", MovedPermanently)
+      } ~
+      path("redirect-always") {
+        redirect("/redirect-always", MovedPermanently)
       } ~
       path("redirected") {
         complete("OK")
@@ -72,6 +75,20 @@ trait WSClientConfigSpec extends Specification
           .get()
           .map(_.body)
           .map(_ must beEqualTo("OK"))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "eventually stop following perpetual redirecting" in {
+      withClient(_.copy(followRedirects = true)) {
+        _.url(s"http://localhost:$testServerPort/redirect-always")
+          .get()
+          .map(_ => failure)
+          .recover {
+            case ex =>
+              ex.getMessage must contain("Maximum redirect reached")
+              success
+          }
           .awaitFor(defaultTimeout)
       }
     }

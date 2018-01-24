@@ -42,6 +42,9 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
   private final HttpsConnectionContext ctx;
   private final WSClientConfig config;
 
+  // FIXME make configurable
+  private final static Integer MAX_REDIRECTS = 5;
+
   StandaloneAkkaHttpWSRequest(String url, ActorSystem sys, Materializer mat, HttpsConnectionContext ctx, WSClientConfig config) {
     this(HttpRequest.create(url), new ArrayList<>(), Duration.ZERO, sys, mat, ctx, config);
   }
@@ -167,9 +170,10 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
   @Override
   public CompletionStage<? extends StandaloneWSResponse> execute() {
     final WSRequestExecutor akkaExecutor = (request) -> {
+      final HttpRequest akkaRequest = ((StandaloneAkkaHttpWSRequest)request).request;
       final CompletableFuture<StandaloneAkkaHttpWSResponse> resultFuture =
-        Http.get(sys)
-          .singleRequest(((StandaloneAkkaHttpWSRequest)request).request, ctx)
+        requestToResponse(akkaRequest)
+          .thenComposeAsync((resp) -> handleRedirects(MAX_REDIRECTS, akkaRequest, resp))
           .thenApply(StandaloneAkkaHttpWSRequest::decodeResponse)
           .thenApply((r) -> new StandaloneAkkaHttpWSResponse(r, mat))
           .toCompletableFuture();
@@ -676,6 +680,34 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
 
   private StandaloneWSRequest copy(Duration timeout) {
     return new StandaloneAkkaHttpWSRequest(this.request, this.filters, timeout, this.sys, this.mat, this.ctx, this.config);
+  }
+
+  private CompletionStage<HttpResponse> requestToResponse(HttpRequest request) {
+    return Http.get(sys).singleRequest(request, ctx);
+  }
+
+  private CompletableFuture<HttpResponse> handleRedirects(Integer redirectsLeft, HttpRequest request, HttpResponse response) {
+    if (redirectsLeft < 1) {
+      final CompletableFuture<HttpResponse> exception = new CompletableFuture<>();
+      exception.completeExceptionally(new TimeoutException("Maximum redirect reached: " + MAX_REDIRECTS));
+      return exception;
+    } else if (response.status().isRedirection()) {
+      final Uri location = response.getHeader(Location.class).get().getUri();
+      Uri redirectUri = location;
+      if (location.isRelative()) {
+        if (location.path().startsWith("/")) {
+          redirectUri = request.getUri().path(location.path());
+        }
+        else {
+          redirectUri = request.getUri().path(request.getUri().path() + location.path());
+        }
+      }
+      return requestToResponse(request.withUri(redirectUri))
+        .thenComposeAsync((resp) -> handleRedirects(redirectsLeft - 1, request, resp))
+        .toCompletableFuture();
+    } else {
+      return CompletableFuture.completedFuture(response);
+    }
   }
 
   private static HttpResponse decodeResponse(HttpResponse response) {

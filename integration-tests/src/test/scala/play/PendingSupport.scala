@@ -26,8 +26,8 @@ trait PendingSupport { self: Specification =>
   }
 
   def pendingFor(backend: Backend, reason: String)(test: => Result): Result = backend match {
-    case Ahc(true) => pending(s"!!! PENDING !!! because AHC backend $reason")
-    case AkkaHttp(true) => pending(s"!!! PENDING !!! because Akka Http backend $reason")
+    case Ahc(true) => pending(s"!!! PENDING !!! AHC backend $reason")
+    case AkkaHttp(true) => pending(s"!!! PENDING !!! Akka Http backend $reason")
     case _ => test
   }
 
