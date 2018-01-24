@@ -7,6 +7,7 @@ import akka.actor.ActorSystem;
 import akka.http.javadsl.Http;
 import akka.http.javadsl.HttpsConnectionContext;
 import akka.stream.Materializer;
+import play.api.libs.ws.WSClientConfig;
 import play.libs.ws.StandaloneWSClient;
 import play.libs.ws.StandaloneWSRequest;
 
@@ -18,15 +19,21 @@ public final class StandaloneAkkaHttpWSClient implements StandaloneWSClient {
   private final ActorSystem sys;
   private final Materializer mat;
   private final HttpsConnectionContext ctx;
+  private final WSClientConfig config;
 
   public StandaloneAkkaHttpWSClient(ActorSystem sys, Materializer mat) {
-    this(sys, mat, Http.get(sys).defaultClientHttpsContext());
+    this(sys, mat, Http.get(sys).defaultClientHttpsContext(), WSClientConfig.forConfig());
   }
 
   public StandaloneAkkaHttpWSClient(ActorSystem sys, Materializer mat, HttpsConnectionContext ctx) {
+    this(sys, mat, ctx, WSClientConfig.forConfig());
+  }
+
+  public StandaloneAkkaHttpWSClient(ActorSystem sys, Materializer mat, HttpsConnectionContext ctx, WSClientConfig config) {
     this.sys = sys;
     this.mat = mat;
     this.ctx = ctx;
+    this.config = config;
   }
 
     /**
@@ -50,7 +57,7 @@ public final class StandaloneAkkaHttpWSClient implements StandaloneWSClient {
   @Override
   public StandaloneWSRequest url(String url) {
     try {
-      return new StandaloneAkkaHttpWSRequest(url, sys, mat, ctx);
+      return new StandaloneAkkaHttpWSRequest(url, sys, mat, ctx, config);
     }
     catch (IllegalArgumentException ex) {
       throw new RuntimeException(new MalformedURLException(ex.getMessage()));

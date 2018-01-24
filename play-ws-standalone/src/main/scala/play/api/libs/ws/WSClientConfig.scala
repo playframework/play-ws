@@ -3,6 +3,7 @@
  */
 package play.api.libs.ws
 
+import com.typesafe.config.{ Config, ConfigFactory }
 import com.typesafe.sslconfig.ssl.SSLConfigSettings
 
 import scala.concurrent.duration._
@@ -28,4 +29,25 @@ case class WSClientConfig(
   userAgent: Option[String] = None,
   compressionEnabled: Boolean = false,
   ssl: SSLConfigSettings = SSLConfigSettings())
+
+object WSClientConfig {
+
+  /**
+   * Creates WSClientConfig from the default application configuration.
+   *
+   * @return a WSClientConfig configuration object.
+   */
+  def forConfig(): WSClientConfig =
+    forConfig(ConfigFactory.load(), this.getClass.getClassLoader)
+
+  /**
+   * Creates a WSClientConfig from a Typesafe Config object.
+   *
+   * @param config the config file containing settings for WSConfigParser
+   * @param classLoader the classloader
+   * @return a WSClientConfig configuration object.
+   */
+  def forConfig(config: Config, classLoader: ClassLoader): WSClientConfig =
+    new WSConfigParser(config, classLoader).parse()
+}
 

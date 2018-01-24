@@ -6,6 +6,7 @@ package play.api.libs.ws.akkahttp
 import java.net.URI
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.coding.{ Deflate, Gzip, NoCoding }
 import akka.http.scaladsl.{ Http, HttpsConnectionContext }
 import akka.http.scaladsl.model.HttpHeader.ParsingResult
 import akka.http.scaladsl.model.Uri.Authority
@@ -20,14 +21,29 @@ import scala.concurrent.{ Future, TimeoutException }
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 
 object StandaloneAkkaHttpWSRequest {
-  def apply(url: String)(implicit sys: ActorSystem, mat: Materializer, ctx: HttpsConnectionContext): StandaloneAkkaHttpWSRequest = new StandaloneAkkaHttpWSRequest(HttpRequest().withUri(Uri.parseAbsolute(url)), Seq.empty, Duration.Inf)
+  def apply(url: String)(implicit sys: ActorSystem, mat: Materializer, ctx: HttpsConnectionContext, config: WSClientConfig): StandaloneAkkaHttpWSRequest = {
+
+    val requestTransformations = Seq(
+      (req: HttpRequest) => config.userAgent.fold(req)(ua => req.withHeaders(`User-Agent`(ua))),
+      (req: HttpRequest) => if (!config.compressionEnabled) req else req.withHeaders(`Accept-Encoding`(HttpEncodings.gzip, HttpEncodings.deflate))
+    )
+
+    new StandaloneAkkaHttpWSRequest(
+      requestTransformations.foldLeft(HttpRequest().withUri(Uri.parseAbsolute(url)))((req, f) => f(req)),
+      Seq.empty, Duration.Inf
+    )
+  }
 }
 
 final class StandaloneAkkaHttpWSRequest private (
     val request: HttpRequest,
     val filters: Seq[WSRequestFilter],
     val timeout: Duration
-)(implicit val sys: ActorSystem, val mat: Materializer, val ctx: HttpsConnectionContext) extends StandaloneWSRequest {
+)(implicit
+    val sys: ActorSystem,
+    val mat: Materializer,
+    val ctx: HttpsConnectionContext,
+    val config: WSClientConfig) extends StandaloneWSRequest {
 
   override type Self = StandaloneWSRequest
   override type Response = StandaloneWSResponse
@@ -309,6 +325,18 @@ final class StandaloneAkkaHttpWSRequest private (
    * Execute this request
    */
   override def execute(): Future[Response] = {
+    def decodeResponse(response: HttpResponse): HttpResponse = {
+      val decoder = response.encoding match {
+        case HttpEncodings.gzip ⇒
+          Gzip
+        case HttpEncodings.deflate ⇒
+          Deflate
+        case _ ⇒
+          NoCoding
+      }
+      decoder.decodeMessage(response)
+    }
+
     val akkaExecutor = WSRequestExecutor { request =>
       import sys.dispatcher
       val akkaRequest = request.asInstanceOf[StandaloneAkkaHttpWSRequest].request
@@ -319,7 +347,9 @@ final class StandaloneAkkaHttpWSRequest private (
       }
       Future.firstCompletedOf(
         timeoutFuture :+
-          Http().singleRequest(akkaRequest, connectionContext = ctx).map(StandaloneAkkaHttpWSResponse.apply)(sys.dispatcher)
+          Http().singleRequest(akkaRequest, connectionContext = ctx)
+          .map(decodeResponse)
+          .map(StandaloneAkkaHttpWSResponse.apply)(sys.dispatcher)
       )
     }
 
