@@ -129,8 +129,7 @@ final class StandaloneAkkaHttpWSRequest private (
    * Whether this request should follow redirects
    */
   override def followRedirects: Option[Boolean] =
-    // FIXME https://github.com/playframework/play-ws/issues/207
-    Some(false)
+    Some(config.followRedirects)
 
   /**
    * The timeout for the request
@@ -207,8 +206,7 @@ final class StandaloneAkkaHttpWSRequest private (
    * Sets whether redirects (301, 302) should be followed automatically
    */
   override def withFollowRedirects(follow: Boolean): Self =
-    // FIXME https://github.com/playframework/play-ws/issues/207
-    ???
+    copy(config = config.copy(followRedirects = follow))
 
   /**
    * Sets the maximum time you expect the request to take.
@@ -391,6 +389,7 @@ final class StandaloneAkkaHttpWSRequest private (
   private def copy(
     request: HttpRequest = request,
     filters: Seq[WSRequestFilter] = filters,
-    timeout: Duration = timeout
-  ) = new StandaloneAkkaHttpWSRequest(request, filters, timeout)
+    timeout: Duration = timeout,
+    config: WSClientConfig = config
+  ) = new StandaloneAkkaHttpWSRequest(request, filters, timeout)(sys, mat, ctx, config)
 }

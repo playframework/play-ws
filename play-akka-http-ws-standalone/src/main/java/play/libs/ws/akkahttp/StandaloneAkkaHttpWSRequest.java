@@ -435,8 +435,16 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public StandaloneWSRequest setFollowRedirects(boolean followRedirects) {
-    // FIXME https://github.com/playframework/play-ws/issues/207
-    throw new UnsupportedOperationException("Implementation is missing");
+    return copy(config.copy(
+      config.connectionTimeout(),
+      config.idleTimeout(),
+      config.requestTimeout(),
+      followRedirects,
+      config.useProxyProperties(),
+      config.userAgent(),
+      config.compressionEnabled(),
+      config.ssl()
+    ));
   }
 
   /**
@@ -632,8 +640,7 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
    */
   @Override
   public boolean getFollowRedirects() {
-    // FIXME https://github.com/playframework/play-ws/issues/207
-    return false;
+    return config.followRedirects();
   }
 
   /**
@@ -680,6 +687,10 @@ public final class StandaloneAkkaHttpWSRequest implements StandaloneWSRequest {
 
   private StandaloneWSRequest copy(Duration timeout) {
     return new StandaloneAkkaHttpWSRequest(this.request, this.filters, timeout, this.sys, this.mat, this.ctx, this.config);
+  }
+
+  private StandaloneWSRequest copy(WSClientConfig config) {
+    return new StandaloneAkkaHttpWSRequest(this.request, this.filters, this.timeout, this.sys, this.mat, this.ctx, config);
   }
 
   private CompletionStage<HttpResponse> requestToResponse(HttpRequest request) {

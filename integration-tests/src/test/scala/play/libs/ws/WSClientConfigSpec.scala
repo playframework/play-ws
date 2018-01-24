@@ -4,7 +4,7 @@
 
 package play.libs.ws
 
-import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.StatusCodes.MovedPermanently
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.execute.Result
 import org.specs2.mutable.Specification
@@ -46,6 +46,20 @@ trait WSClientConfigSpec extends Specification
       }
     }
 
+    "follow redirects by default" in {
+      withClient(identity) { client =>
+        val request = client.url(s"http://localhost:$testServerPort/redirect")
+        request.getFollowRedirects must beTrue
+
+        request
+          .get()
+          .toScala
+          .map(_.getBody)
+          .map(_ must beEqualTo("OK"))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
     "follow redirects" in {
       withClient(_.copy(followRedirects = true)) { client =>
         pendingFor(Ahc(client), "Java Api does not follow redirects") {
@@ -65,7 +79,31 @@ trait WSClientConfigSpec extends Specification
           .get()
           .toScala
           .map(_.getStatus)
-          .map(_ must beEqualTo(StatusCodes.MovedPermanently.intValue))
+          .map(_ must beEqualTo(MovedPermanently.intValue))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "follow redirects (request building trumps config)" in {
+      withClient(_.copy(followRedirects = false)) {
+        _.url(s"http://localhost:$testServerPort/redirect")
+          .setFollowRedirects(true)
+          .get()
+          .toScala
+          .map(_.getBody)
+          .map(_ must beEqualTo("OK"))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "do not follow redirects (request building trumps config)" in {
+      withClient(_.copy(followRedirects = true)) {
+        _.url(s"http://localhost:$testServerPort/redirect")
+          .setFollowRedirects(false)
+          .get()
+          .toScala
+          .map(_.getStatus)
+          .map(_ must beEqualTo(MovedPermanently.intValue))
           .awaitFor(defaultTimeout)
       }
     }

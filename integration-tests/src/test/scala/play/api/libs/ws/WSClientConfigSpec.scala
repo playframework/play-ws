@@ -69,6 +69,19 @@ trait WSClientConfigSpec extends Specification
       }
     }
 
+    "follow redirects by default" in {
+      withClient(identity) { client =>
+        val request = client.url(s"http://localhost:$testServerPort/redirect")
+        request.followRedirects must beSome(true)
+
+        request
+          .get()
+          .map(_.body)
+          .map(_ must beEqualTo("OK"))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
     "follow redirects" in {
       withClient(_.copy(followRedirects = true)) {
         _.url(s"http://localhost:$testServerPort/redirect")
@@ -82,6 +95,28 @@ trait WSClientConfigSpec extends Specification
     "do not follow redirects" in {
       withClient(_.copy(followRedirects = false)) {
         _.url(s"http://localhost:$testServerPort/redirect")
+          .get()
+          .map(_.status)
+          .map(_ must beEqualTo(MovedPermanently.intValue))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "follow redirects (request building trumps config)" in {
+      withClient(_.copy(followRedirects = false)) {
+        _.url(s"http://localhost:$testServerPort/redirect")
+          .withFollowRedirects(true)
+          .get()
+          .map(_.body)
+          .map(_ must beEqualTo("OK"))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "do not follow redirects (request building trumps config)" in {
+      withClient(_.copy(followRedirects = true)) {
+        _.url(s"http://localhost:$testServerPort/redirect")
+          .withFollowRedirects(false)
           .get()
           .map(_.status)
           .map(_ must beEqualTo(MovedPermanently.intValue))
