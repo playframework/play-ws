@@ -1,0 +1,2 @@
+#213 Add WSClientConfig support to the Akka Http backend
+ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.WSClientConfig$")

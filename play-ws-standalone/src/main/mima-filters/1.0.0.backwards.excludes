@@ -1,0 +1,2 @@
+ProblemFilters.exclude[MissingClassProblem]("play.api.libs.ws.package$")
+ProblemFilters.exclude[MissingClassProblem]("play.api.libs.ws.package")
