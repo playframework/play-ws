@@ -25,7 +25,7 @@ import java.util.stream.StreamSupport;
 public final class StandaloneAkkaHttpWSResponse implements StandaloneWSResponse {
 
   // FIXME make configurable
-  final Duration UNMARSHAL_TIMEOUT = Duration.ofSeconds(1);
+  private final static Duration UNMARSHAL_TIMEOUT = Duration.ofSeconds(1);
 
   private final HttpResponse response;
   private final Materializer mat;

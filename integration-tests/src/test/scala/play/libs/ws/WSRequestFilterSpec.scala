@@ -23,7 +23,7 @@ trait WSRequestFilterSpec extends Specification
 
   override val routes = play.api.libs.ws.WSRequestFilterSpec.routes
 
-  "with request filters" should {
+  "Java Api WSClient with request filters" should {
 
     "execute with adhoc request filter" in {
       withClient() {

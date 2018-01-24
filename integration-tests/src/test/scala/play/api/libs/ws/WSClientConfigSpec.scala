@@ -5,11 +5,12 @@
 package play.api.libs.ws
 
 import akka.http.scaladsl.coding.{ Deflate, Gzip }
+import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.headers.{ `Accept-Encoding`, `User-Agent` }
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.execute.Result
 import org.specs2.mutable.Specification
-import play.AkkaServerProvider
+import play.{ AkkaServerProvider, PendingSupport }
 
 object WSClientConfigSpec {
   val routes = {
@@ -25,12 +26,22 @@ object WSClientConfigSpec {
             complete(enc.encodings.mkString(","))
           }
         }
+      } ~
+      path("redirect") {
+        redirect("/redirected", MovedPermanently)
+      } ~
+      path("redirect-always") {
+        redirect("/redirect-always", MovedPermanently)
+      } ~
+      path("redirected") {
+        complete("OK")
       }
   }
 }
 
 trait WSClientConfigSpec extends Specification
-  with AkkaServerProvider {
+  with AkkaServerProvider
+  with PendingSupport {
 
   implicit def executionEnv: ExecutionEnv
 
@@ -38,7 +49,7 @@ trait WSClientConfigSpec extends Specification
 
   override val routes = WSClientConfigSpec.routes
 
-  "WSClient" should {
+  "Scala Api WSClient" should {
     "use user agent from config" in {
       withClient(_.copy(userAgent = Some("custom-user-agent"))) {
         _.url(s"http://localhost:$testServerPort/user-agent")
@@ -55,6 +66,77 @@ trait WSClientConfigSpec extends Specification
           .get()
           .map(_.body)
           .map(_ must beEqualTo("gzip,deflate"))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "follow redirects by default" in {
+      withClient(identity) { client =>
+        pendingFor(Ahc(client), "does not set builder followRedirects from config") {
+          val request = client.url(s"http://localhost:$testServerPort/redirect")
+          request.followRedirects must beSome(true)
+
+          request
+            .get()
+            .map(_.body)
+            .map(_ must beEqualTo("OK"))
+            .awaitFor(defaultTimeout)
+        }
+      }
+    }
+
+    "follow redirects" in {
+      withClient(_.copy(followRedirects = true)) {
+        _.url(s"http://localhost:$testServerPort/redirect")
+          .get()
+          .map(_.body)
+          .map(_ must beEqualTo("OK"))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "do not follow redirects" in {
+      withClient(_.copy(followRedirects = false)) {
+        _.url(s"http://localhost:$testServerPort/redirect")
+          .get()
+          .map(_.status)
+          .map(_ must beEqualTo(MovedPermanently.intValue))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "follow redirects (request building trumps config)" in {
+      withClient(_.copy(followRedirects = false)) {
+        _.url(s"http://localhost:$testServerPort/redirect")
+          .withFollowRedirects(true)
+          .get()
+          .map(_.body)
+          .map(_ must beEqualTo("OK"))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "do not follow redirects (request building trumps config)" in {
+      withClient(_.copy(followRedirects = true)) {
+        _.url(s"http://localhost:$testServerPort/redirect")
+          .withFollowRedirects(false)
+          .get()
+          .map(_.status)
+          .map(_ must beEqualTo(MovedPermanently.intValue))
+          .awaitFor(defaultTimeout)
+      }
+    }
+
+    "eventually stop following perpetual redirecting" in {
+      withClient(_.copy(followRedirects = true)) {
+        _.url(s"http://localhost:$testServerPort/redirect-always")
+          .get()
+          .map(_ => failure)
+          .recover {
+            case ex =>
+              ex.getMessage must contain("Maximum redirect reached")
+              success
+          }
           .awaitFor(defaultTimeout)
       }
     }
