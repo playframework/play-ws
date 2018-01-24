@@ -48,21 +48,23 @@ trait WSClientConfigSpec extends Specification
 
     "follow redirects by default" in {
       withClient(identity) { client =>
-        val request = client.url(s"http://localhost:$testServerPort/redirect")
-        request.getFollowRedirects must beTrue
+        pendingFor(Ahc(client), "does not set builder followRedirects from config") {
+          val request = client.url(s"http://localhost:$testServerPort/redirect")
+          request.getFollowRedirects must beTrue
 
-        request
-          .get()
-          .toScala
-          .map(_.getBody)
-          .map(_ must beEqualTo("OK"))
-          .awaitFor(defaultTimeout)
+          request
+            .get()
+            .toScala
+            .map(_.getBody)
+            .map(_ must beEqualTo("OK"))
+            .awaitFor(defaultTimeout)
+        }
       }
     }
 
     "follow redirects" in {
       withClient(_.copy(followRedirects = true)) { client =>
-        pendingFor(Ahc(client), "Java Api does not follow redirects") {
+        pendingFor(Ahc(client), "Java Api does not follow redirects by default") {
           client.url(s"http://localhost:$testServerPort/redirect")
             .get()
             .toScala
