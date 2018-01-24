@@ -7,13 +7,14 @@ package play.libs.ws
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.execute.Result
 import org.specs2.mutable.Specification
-import play.AkkaServerProvider
+import play.{ AkkaServerProvider, PendingSupport }
 import play.api.libs.ws.WSClientConfig
 
 import scala.compat.java8.FutureConverters._
 
 trait WSClientConfigSpec extends Specification
-  with AkkaServerProvider {
+  with AkkaServerProvider
+  with PendingSupport {
 
   implicit def executionEnv: ExecutionEnv
 
@@ -21,7 +22,7 @@ trait WSClientConfigSpec extends Specification
 
   override val routes = play.api.libs.ws.WSClientConfigSpec.routes
 
-  "WSClient" should {
+  "Java Api WSClient" should {
     "use user agent from config" in {
       withClient(_.copy(userAgent = Some("custom-user-agent"))) {
         _.url(s"http://localhost:$testServerPort/user-agent")
@@ -41,6 +42,19 @@ trait WSClientConfigSpec extends Specification
           .map(_.getBody)
           .map(_ must beEqualTo("gzip,deflate"))
           .awaitFor(defaultTimeout)
+      }
+    }
+
+    "follow redirects" in {
+      withClient(_.copy(followRedirects = true)) { client =>
+        pendingFor(Ahc(client), "Java Api does not follow redirects") {
+          client.url(s"http://localhost:$testServerPort/redirect")
+            .get()
+            .toScala
+            .map(_.getBody)
+            .map(_ must beEqualTo("OK"))
+            .awaitFor(defaultTimeout)
+        }
       }
     }
   }

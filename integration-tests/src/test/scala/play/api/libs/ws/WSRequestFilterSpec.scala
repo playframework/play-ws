@@ -45,7 +45,7 @@ trait WSRequestFilterSpec extends Specification with AkkaServerProvider with Aft
 
   override val routes = WSRequestFilterSpec.routes
 
-  "with request filters" should {
+  "Scala Api WSClient with request filters" should {
 
     class CallbackRequestFilter(callList: mutable.Buffer[Int], value: Int) extends WSRequestFilter {
       override def apply(executor: WSRequestExecutor): WSRequestExecutor = {

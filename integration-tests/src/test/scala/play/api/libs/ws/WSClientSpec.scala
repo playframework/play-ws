@@ -12,7 +12,7 @@ import org.specs2.concurrent.ExecutionEnv
 import org.specs2.execute.Result
 import org.specs2.matcher.FutureMatchers
 import org.specs2.mutable.Specification
-import play.AkkaServerProvider
+import play.{ AkkaServerProvider, PendingSupport }
 import play.api.libs.ws.ahc.StandaloneAhcWSClient
 
 import scala.concurrent.{ Future, TimeoutException }
@@ -110,6 +110,7 @@ object WSClientSpec {
 
 trait WSClientSpec extends Specification
   with AkkaServerProvider
+  with PendingSupport
   with FutureMatchers
   with DefaultBodyReadables {
 
@@ -119,7 +120,7 @@ trait WSClientSpec extends Specification
 
   override val routes = WSClientSpec.routes
 
-  "WSClient" should {
+  "Scala Api WSClient" should {
     "throw an exception on invalid url" in {
       withClient() { client =>
         { client.url("localhost") } must throwAn[IllegalArgumentException]
@@ -286,15 +287,13 @@ trait WSClientSpec extends Specification
 
     "request a https url" in {
       withClient() { client =>
-        // FIXME configure ssl context with custom cert and enable SSL test for AHC
-        if (client.isInstanceOf[StandaloneAhcWSClient])
-          success
-        else
+        pendingFor(Ahc(client), "needs a configured ssl context with custom cert") { // FIXME
           client.url(s"https://akka.example.org:$testServerPortHttps/scheme")
             .get()
             .map(_.body[String])
             .map(_ must beEqualTo("https"))
             .awaitFor(defaultTimeout)
+        }
       }
     }
 
