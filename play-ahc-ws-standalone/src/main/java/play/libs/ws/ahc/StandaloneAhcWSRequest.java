@@ -271,6 +271,16 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     @Override
+    public String getMethod() {
+        return this.method;
+    }
+
+    @Override
+    public List<WSCookie> getCookies() {
+        return new ArrayList<>(cookies);
+    }
+
+    @Override
     public Map<String, List<String>> getHeaders() {
         return new HashMap<>(this.headers);
     }

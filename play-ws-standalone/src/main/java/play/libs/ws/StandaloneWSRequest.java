@@ -335,6 +335,20 @@ public interface StandaloneWSRequest {
     String getUrl();
 
     /**
+     * @return the HTTP method of the request.
+     */
+    default String getMethod() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @return the cookies (a copy to prevent side-effects).
+     */
+    default List<WSCookie> getCookies() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
      * @return the headers (a copy to prevent side-effects). This has not passed through an internal request builder and so will not be signed.
      */
     Map<String, List<String>> getHeaders();
