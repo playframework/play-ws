@@ -57,6 +57,8 @@ object Dependencies {
 
   val standaloneAhcWSDependencies = scalaJava8Compat ++ cachecontrol ++ slf4jApi ++ reactiveStreams ++ testDependencies
 
+  val standaloneAkkaHttpWSDependencies = akkaHttp
+
   val standaloneAhcWSJsonDependencies = playJson ++ testDependencies
 
   val standaloneAhcWSXMLDependencies = scalaXml ++ testDependencies

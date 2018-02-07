@@ -1,17 +1,15 @@
 /*
  * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
  */
-
-package play.api.libs.ws.ahc
+package play.libs.ws.akkahttp
 
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.execute.Result
-import play.api.libs.ws._
+import play.libs.ws.{ StandaloneWSClient, WSClientSpec }
 
-class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv) extends WSRequestFilterSpec {
+class AkkaHttpWSClientSpec(implicit override val executionEnv: ExecutionEnv) extends WSClientSpec {
   def withClient()(block: StandaloneWSClient => Result): Result = {
-    val config = AhcWSClientConfigFactory.forConfig()
-    val client = StandaloneAhcWSClient(config)
+    val client = new StandaloneAkkaHttpWSClient(system, materializer, clientHttpsContext())
     try {
       block(client)
     } finally {

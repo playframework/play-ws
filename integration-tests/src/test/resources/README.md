@@ -1,0 +1,1 @@
+The `rootCA.crt` and `server.p12` have been taken from [Akka Http Tls Tests Keys](https://github.com/akka/akka-http/tree/v10.0.11/akka-http-core/src/test/resources/keys).
