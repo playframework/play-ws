@@ -53,7 +53,7 @@ trait CurlFormat {
     request.auth match {
       case Some((userName, password, WSAuthScheme.BASIC)) => {
         val encodedPassword = Base64.getUrlEncoder.encodeToString(s"$userName:$password".getBytes(StandardCharsets.US_ASCII))
-        b.append(s"""  --header "Authorization: Basic ${quote(encodedPassword)}""")
+        b.append(s"""  --header 'Authorization: Basic ${quote(encodedPassword)}'""")
         b.append(" \\\n")
       }
       case _ => Unit
