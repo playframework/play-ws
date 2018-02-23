@@ -13,6 +13,9 @@ import scalariform.formatter.preferences._
 // Shading and Project Settings
 //---------------------------------------------------------------
 
+val scala211 = "2.11.12"
+val scala212 = "2.12.4"
+
 val previousVersion = None
 
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
@@ -35,8 +38,8 @@ lazy val mimaSettings = mimaDefaultSettings ++ Seq(
 
 lazy val commonSettings = mimaSettings ++ Seq(
   organization := "com.typesafe.play",
-  scalaVersion := "2.12.4",
-  crossScalaVersions := Seq("2.12.4", "2.11.12"),
+  scalaVersion := scala212,
+  crossScalaVersions := Seq(scala212, scala211),
   scalacOptions in (Compile, doc) ++= Seq(
     "-target:jvm-1.8",
     "-deprecation",
@@ -106,6 +109,7 @@ val disablePublishing = Seq[Setting[_]](
 )
 
 lazy val shadeAssemblySettings = commonSettings ++ Seq(
+  crossScalaVersions := Seq(scala212),
   assemblyOption in assembly ~= (_.copy(includeScala = false)),
   test in assembly := {},
   assemblyOption in assembly ~= {
