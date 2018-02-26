@@ -3,7 +3,7 @@ import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 
 import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
-
+import java.io.File
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
 
@@ -178,13 +178,16 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
   .settings(
     logLevel in assembly := Level.Error,
     assemblyMergeStrategy in assembly := {
-      case "META-INF/io.netty.versions.properties" =>
-        MergeStrategy.first
-      case "ahc-default.properties" =>
-        ahcMerge
-      case x =>
-        val oldStrategy = (assemblyMergeStrategy in assembly).value
-        oldStrategy(x)
+      val NettyPropertiesPath = "META-INF" + File.separator + "io.netty.versions.properties"
+      ({
+        case NettyPropertiesPath =>
+          MergeStrategy.first
+        case "ahc-default.properties" =>
+          ahcMerge
+        case x =>
+          val oldStrategy = (assemblyMergeStrategy in assembly).value
+          oldStrategy(x)
+      }: String => MergeStrategy)
     },
     //logLevel in assembly := Level.Debug,
     assemblyShadeRules in assembly := Seq(
