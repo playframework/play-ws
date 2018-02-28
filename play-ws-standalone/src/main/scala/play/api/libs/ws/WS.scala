@@ -73,7 +73,8 @@ case class DefaultWSCookie(
   path: Option[String] = None,
   maxAge: Option[Long] = None,
   secure: Boolean = false,
-  httpOnly: Boolean = false) extends WSCookie
+  httpOnly: Boolean = false
+) extends WSCookie
 
 /**
  * A WS proxy.
@@ -126,7 +127,8 @@ case class DefaultWSProxyServer(
   /* The realm's charset. */
   encoding: Option[String] = None,
 
-  nonProxyHosts: Option[Seq[String]] = None) extends WSProxyServer
+  nonProxyHosts: Option[Seq[String]] = None
+) extends WSProxyServer
 
 /**
  * Sign a WS call with OAuth.

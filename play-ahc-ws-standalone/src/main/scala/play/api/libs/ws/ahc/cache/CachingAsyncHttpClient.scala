@@ -29,11 +29,11 @@ trait TimeoutResponse {
  * A provider that pulls a response from the cache.
  */
 class CachingAsyncHttpClient(
-    underlying: AsyncHttpClient,
-    ahcHttpCache: AhcHttpCache)
-  extends AsyncHttpClient
-  with TimeoutResponse
-  with Debug {
+  underlying: AsyncHttpClient,
+  ahcHttpCache: AhcHttpCache)
+    extends AsyncHttpClient
+    with TimeoutResponse
+    with Debug {
 
   import com.typesafe.play.cachecontrol.ResponseSelectionActions._
   import com.typesafe.play.cachecontrol.ResponseServeActions._

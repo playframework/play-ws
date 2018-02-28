@@ -56,7 +56,8 @@ class WSConfigParser @Inject() (config: Config, classLoader: ClassLoader) extend
       useProxyProperties = useProxyProperties,
       userAgent = userAgent,
       compressionEnabled = compressionEnabled,
-      ssl = sslConfig)
+      ssl = sslConfig
+    )
   }
 
   override lazy val get: WSClientConfig = parse()

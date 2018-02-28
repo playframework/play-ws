@@ -84,13 +84,12 @@ lazy val commonSettings = mimaSettings ++ Seq(
 )
 
 val formattingSettings = Seq(
-  scalariformAutoformat := true,
   ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference(SpacesAroundMultiImports, true)
     .setPreference(SpaceInsideParentheses, false)
     .setPreference(DanglingCloseParenthesis, Preserve)
     .setPreference(PreserveSpaceBeforeArguments, true)
-    .setPreference(DoubleIndentConstructorArguments, true)
+    .setPreference(DoubleIndentClassDeclaration, true)
 )
 
 val disableDocs = Seq[Setting[_]](
@@ -194,7 +193,7 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
 
     // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom
     // Remove dependencies from the POM because we have a FAT jar here.
-    makePomConfiguration := makePomConfiguration.value.withProcess(process = dependenciesFilter),
+    makePomConfiguration := makePomConfiguration.value.copy(process = dependenciesFilter),
     //ivyXML := <dependencies></dependencies>,
     //ivyLoggingLevel := UpdateLogging.Full,
     //logLevel := Level.Debug,
@@ -223,7 +222,7 @@ lazy val `shaded-oauth` = project.in(file("shaded/oauth"))
 
     // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom
     // Remove dependencies from the POM because we have a FAT jar here.
-    makePomConfiguration := makePomConfiguration.value.withProcess(process = dependenciesFilter),
+    makePomConfiguration := makePomConfiguration.value.copy(process = dependenciesFilter),
 
     assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeBin = false, includeScala = false),
     packageBin in Compile := assembly.value
@@ -286,6 +285,7 @@ lazy val `play-ahc-ws-standalone` = project
   .settings(commonSettings)
   .settings(formattingSettings)
   .settings(mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ahc-ws-standalone" % "1.0.0"))
+  .settings(SbtScalariform.scalariformSettings)
   .settings(
     fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v"))
@@ -328,6 +328,7 @@ lazy val `play-ws-standalone-json` = project
   .settings(commonSettings)
   .settings(formattingSettings)
   .settings(mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ws-standalone-json" % "1.0.0"))
+  .settings(SbtScalariform.scalariformSettings)
   .settings(
     fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v"))
@@ -349,6 +350,7 @@ lazy val `play-ws-standalone-xml` = project
   .settings(commonSettings)
   .settings(formattingSettings)
   .settings(mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ws-standalone-xml" % "1.0.0"))
+  .settings(SbtScalariform.scalariformSettings)
   .settings(
     fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v"))
@@ -370,6 +372,7 @@ lazy val `integration-tests` = project.in(file("integration-tests"))
   .settings(formattingSettings)
   .settings(disableDocs)
   .settings(disablePublishing)
+  .settings(SbtScalariform.scalariformSettings)
   .settings(
     fork in Test := true,
     concurrentRestrictions += Tags.limitAll(1), // only one integration test at a time
@@ -414,14 +417,6 @@ import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
 // otherwise same as orgname, and "sonatypeList" says "No staging profile is found for com.typesafe.play"
 sonatypeProfileName := "com.typesafe"
 
-val publishSignedCommand: State => State =
-    (state: State) =>
-      state.copy(remainingCommands = Exec("publishSigned", None) +: state.remainingCommands)
-
-val sonatypeReleaseAllCommand: State => State =
-    (state: State) =>
-      state.copy(remainingCommands = Exec("sonatypeReleaseAll", None) +: state.remainingCommands)
-
 releaseProcess := Seq[ReleaseStep](
   checkSnapshotDependencies,
   inquireVersions,
@@ -430,9 +425,9 @@ releaseProcess := Seq[ReleaseStep](
   setReleaseVersion,
   commitReleaseVersion,
   tagRelease,
-  ReleaseStep(action = publishSignedCommand, enableCrossBuild = true),
+  ReleaseStep(action = Command.process("publishSigned", _), enableCrossBuild = true),
   setNextVersion,
   commitNextVersion,
-  ReleaseStep(action = sonatypeReleaseAllCommand, enableCrossBuild = true),
+  ReleaseStep(action = Command.process("sonatypeReleaseAll", _), enableCrossBuild = true),
   pushChanges
 )

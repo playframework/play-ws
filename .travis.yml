@@ -13,7 +13,7 @@ cache:
   - "$HOME/.ivy2/cache"
   - "$HOME/.sbt/boot/"
 script:
-- sbt ++$TRAVIS_SCALA_VERSION 'testOnly -- xonly timefactor 5' mimaReportBinaryIssues doc 
+- sbt ++$TRAVIS_SCALA_VERSION 'test-only -- xonly timefactor 5' mimaReportBinaryIssues doc 
 before_cache:
 - find $HOME/.ivy2/cache -name "ivydata-*.properties" | xargs rm
 notifications:

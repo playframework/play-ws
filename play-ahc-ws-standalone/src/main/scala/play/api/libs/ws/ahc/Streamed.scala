@@ -13,11 +13,11 @@ import play.shaded.ahc.org.asynchttpclient.handler.StreamedAsyncHandler
 import scala.concurrent.Promise
 
 case class StreamedState(
-    statusCode: Int = -1,
-    statusText: String = "",
-    uriOption: Option[URI] = None,
-    responseHeaders: Map[String, Seq[String]] = Map.empty,
-    publisher: Publisher[HttpResponseBodyPart] = EmptyPublisher
+  statusCode: Int = -1,
+  statusText: String = "",
+  uriOption: Option[URI] = None,
+  responseHeaders: Map[String, Seq[String]] = Map.empty,
+  publisher: Publisher[HttpResponseBodyPart] = EmptyPublisher
 )
 
 class DefaultStreamedAsyncHandler[T](f: java.util.function.Function[StreamedState, T], promise: Promise[T]) extends StreamedAsyncHandler[Unit] with AhcUtilities {
