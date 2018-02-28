@@ -412,11 +412,15 @@ lazy val root = project
 import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
 
 // otherwise same as orgname, and "sonatypeList" says "No staging profile is found for com.typesafe.play"
-sonatypeProfileName in ThisBuild := "com.typesafe"
+sonatypeProfileName := "com.typesafe"
 
-// This automatically selects the snapshots or staging repository
-// according to the version value.
-publishTo in ThisBuild := Some(sonatypeDefaultResolver.value)
+val publishSignedCommand: State => State =
+    (state: State) =>
+      state.copy(remainingCommands = Exec("publishSigned", None) +: state.remainingCommands)
+
+val sonatypeReleaseAllCommand: State => State =
+    (state: State) =>
+      state.copy(remainingCommands = Exec("sonatypeReleaseAll", None) +: state.remainingCommands)
 
 releaseProcess := Seq[ReleaseStep](
   checkSnapshotDependencies,
@@ -426,9 +430,9 @@ releaseProcess := Seq[ReleaseStep](
   setReleaseVersion,
   commitReleaseVersion,
   tagRelease,
-  releaseStepCommandAndRemaining("+publishSigned"),
+  ReleaseStep(action = publishSignedCommand, enableCrossBuild = true),
   setNextVersion,
   commitNextVersion,
-  releaseStepCommand("+sonatypeReleaseAll"),
+  ReleaseStep(action = sonatypeReleaseAllCommand, enableCrossBuild = true),
   pushChanges
 )
