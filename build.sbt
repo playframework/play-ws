@@ -3,7 +3,7 @@ import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 
 import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
-
+import java.io.File
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
 
@@ -39,7 +39,6 @@ lazy val mimaSettings = mimaDefaultSettings ++ Seq(
 lazy val commonSettings = mimaSettings ++ Seq(
   organization := "com.typesafe.play",
   scalaVersion := scala212,
-  crossScalaVersions := Seq(scala212, scala211),
   scalacOptions in (Compile, doc) ++= Seq(
     "-target:jvm-1.8",
     "-deprecation",
@@ -86,6 +85,10 @@ lazy val commonSettings = mimaSettings ++ Seq(
   javacOptions in IntegrationTest ++= javacSettings
 )
 
+lazy val crossBuildSettings = Seq(
+  crossScalaVersions := Seq(scala212, scala211)
+)
+
 val formattingSettings = Seq(
   scalariformAutoformat := true,
   ScalariformKeys.preferences := ScalariformKeys.preferences.value
@@ -108,8 +111,7 @@ val disablePublishing = Seq[Setting[_]](
   publishLocal := {}
 )
 
-lazy val shadeAssemblySettings = commonSettings ++ Seq(
-  crossScalaVersions := Seq(scala212),
+lazy val shadeAssemblySettings = Seq(
   assemblyOption in assembly ~= (_.copy(includeScala = false)),
   test in assembly := {},
   assemblyOption in assembly ~= {
@@ -131,7 +133,13 @@ lazy val shadeAssemblySettings = commonSettings ++ Seq(
         sys.error("Cannot find valid scala version!")
     }
   },
-  crossPaths := false // only useful for Java
+  // Since these are Java libraries, disable some Scala and cross-building settings
+  // Note we can't add crossScalaPaths = None or Seq("2.12.4")  here due to
+  // https://github.com/sbt/sbt-release/issues/219. Instead we have to have it as
+  // a separate setting.
+  releaseCrossBuild := false,
+  crossPaths := false,
+  autoScalaLibrary := false
 )
 
 val ahcMerge: MergeStrategy = new MergeStrategy {
@@ -173,18 +181,19 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
   .settings(shadeAssemblySettings)
   .settings(
     libraryDependencies ++= asyncHttpClient,
-    name := "shaded-asynchttpclient"
-  )
-  .settings(
+    name := "shaded-asynchttpclient",
     logLevel in assembly := Level.Error,
     assemblyMergeStrategy in assembly := {
-      case "META-INF/io.netty.versions.properties" =>
-        MergeStrategy.first
-      case "ahc-default.properties" =>
-        ahcMerge
-      case x =>
-        val oldStrategy = (assemblyMergeStrategy in assembly).value
-        oldStrategy(x)
+      val NettyPropertiesPath = "META-INF" + File.separator + "io.netty.versions.properties"
+      ({
+        case NettyPropertiesPath =>
+          MergeStrategy.first
+        case "ahc-default.properties" =>
+          ahcMerge
+        case x =>
+          val oldStrategy = (assemblyMergeStrategy in assembly).value
+          oldStrategy(x)
+      }: String => MergeStrategy)
     },
     //logLevel in assembly := Level.Debug,
     assemblyShadeRules in assembly := Seq(
@@ -216,9 +225,7 @@ lazy val `shaded-oauth` = project.in(file("shaded/oauth"))
   .settings(shadeAssemblySettings)
   .settings(
     libraryDependencies ++= oauth,
-    name := "shaded-oauth"
-  )
-  .settings(
+    name := "shaded-oauth",
     //logLevel in assembly := Level.Debug,
     assemblyShadeRules in assembly := Seq(
       ShadeRule.rename("oauth.**" -> "play.shaded.oauth.@0").inAll,
@@ -262,8 +269,11 @@ lazy val shaded = Project(id = "shaded", base = file("shaded") )
 lazy val `play-ws-standalone` = project
   .in(file("play-ws-standalone"))
   .settings(commonSettings)
-  .settings(mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ws-standalone" % "1.0.0"))
-  .settings(libraryDependencies ++= standaloneApiWSDependencies)
+  .settings(crossBuildSettings)
+  .settings(
+    mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ws-standalone" % "1.0.0"),
+    libraryDependencies ++= standaloneApiWSDependencies
+  )
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
@@ -288,14 +298,12 @@ def addShadedDeps(deps: Seq[xml.Node], node: xml.Node): xml.Node = {
 lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
   .settings(commonSettings)
+  .settings(crossBuildSettings)
   .settings(formattingSettings)
   .settings(mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ahc-ws-standalone" % "1.0.0"))
   .settings(
     fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v"))
-  )
-  .settings(
-     // The scaladoc generation
   )
   .settings(libraryDependencies ++= standaloneAhcWSDependencies)
   .settings(shadedAhcSettings)
@@ -330,14 +338,12 @@ lazy val `play-ahc-ws-standalone` = project
 lazy val `play-ws-standalone-json` = project
   .in(file("play-ws-standalone-json"))
   .settings(commonSettings)
+  .settings(crossBuildSettings)
   .settings(formattingSettings)
   .settings(mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ws-standalone-json" % "1.0.0"))
   .settings(
     fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v"))
-  )
-  .settings(
-    // The scaladoc generation
   )
   .settings(libraryDependencies ++= standaloneAhcWSJsonDependencies)
   .dependsOn(
@@ -351,16 +357,14 @@ lazy val `play-ws-standalone-json` = project
 lazy val `play-ws-standalone-xml` = project
   .in(file("play-ws-standalone-xml"))
   .settings(commonSettings)
+  .settings(crossBuildSettings)
   .settings(formattingSettings)
   .settings(mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ws-standalone-xml" % "1.0.0"))
   .settings(
     fork in Test := true,
-    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v"))
+    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
+    libraryDependencies ++= standaloneAhcWSXMLDependencies
   )
-  .settings(
-    // The scaladoc generation
-  )
-  .settings(libraryDependencies ++= standaloneAhcWSXMLDependencies)
   .dependsOn(
     `play-ws-standalone`
   ).disablePlugins(sbtassembly.AssemblyPlugin)
@@ -371,6 +375,7 @@ lazy val `play-ws-standalone-xml` = project
 
 lazy val `integration-tests` = project.in(file("integration-tests"))
   .settings(commonSettings)
+  .settings(crossBuildSettings)
   .settings(formattingSettings)
   .settings(disableDocs)
   .settings(disablePublishing)
@@ -397,6 +402,7 @@ lazy val root = project
   .in(file("."))
   .settings(name := "play-ws-standalone-root")
   .settings(commonSettings)
+  .settings(crossBuildSettings)
   .settings(formattingSettings)
   .settings(disableDocs)
   .settings(disablePublishing)
