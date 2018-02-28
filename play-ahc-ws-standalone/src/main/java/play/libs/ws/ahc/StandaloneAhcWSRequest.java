@@ -47,7 +47,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     private final String url;
     private String method = "GET";
     private final Map<String, List<String>> headers = new HashMap<>();
-    private final Map<String, List<String>> queryParameters = new HashMap<>();
+    private final Map<String, List<String>> queryParameters = new LinkedHashMap<>();
 
     private final List<WSCookie> cookies = new ArrayList<>();
 
@@ -287,7 +287,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
     @Override
     public Map<String, List<String>> getQueryParameters() {
-        return new HashMap<>(this.queryParameters);
+        return new LinkedHashMap<>(this.queryParameters);
     }
 
     @Override

@@ -333,6 +333,38 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
         request.getUrl must contain("p1=v1")
       }
 
+      "deterministic query param order a" in {
+        val client = mock[StandaloneAhcWSClient]
+        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+          .addQueryParameter("p1", "v1")
+          .addQueryParameter("p2", "v2")
+          .buildRequest()
+
+        request.getUrl must contain("p1=v1&p2=v2")
+      }
+
+      "deterministic query param order b" in {
+        val client = mock[StandaloneAhcWSClient]
+        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+          .addQueryParameter("p2", "v2")
+          .addQueryParameter("p1", "v1")
+          .buildRequest()
+
+        request.getUrl must contain("p2=v2&p1=v1")
+      }
+
+      "deterministic query param order for duplicate keys" in {
+        val client = mock[StandaloneAhcWSClient]
+        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+          .addQueryParameter("p1", "v1")
+          .addQueryParameter("p2", "v2")
+          .addQueryParameter("p1", "v3")
+          .addQueryParameter("p1", "v4")
+          .buildRequest()
+
+        request.getUrl must contain("p1=v1&p1=v3&p1=v4&p2=v2")
+      }
+
       "add new value for existing parameter" in {
         val client = mock[StandaloneAhcWSClient]
         val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
