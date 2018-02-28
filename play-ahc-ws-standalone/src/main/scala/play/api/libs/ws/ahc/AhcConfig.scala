@@ -35,15 +35,15 @@ import scala.concurrent.duration._
  * @param keepAlive keeps thread pool active, replaces allowPoolingConnection and allowSslConnectionPool
  */
 case class AhcWSClientConfig(
-    wsClientConfig: WSClientConfig = WSClientConfig(),
-    maxConnectionsPerHost: Int = -1,
-    maxConnectionsTotal: Int = -1,
-    maxConnectionLifetime: Duration = Duration.Inf,
-    idleConnectionInPoolTimeout: Duration = 1.minute,
-    maxNumberOfRedirects: Int = 5,
-    maxRequestRetry: Int = 5,
-    disableUrlEncoding: Boolean = false,
-    keepAlive: Boolean = true)
+  wsClientConfig: WSClientConfig = WSClientConfig(),
+  maxConnectionsPerHost: Int = -1,
+  maxConnectionsTotal: Int = -1,
+  maxConnectionLifetime: Duration = Duration.Inf,
+  idleConnectionInPoolTimeout: Duration = 1.minute,
+  maxNumberOfRedirects: Int = 5,
+  maxRequestRetry: Int = 5,
+  disableUrlEncoding: Boolean = false,
+  keepAlive: Boolean = true)
 
 /**
  * Factory for creating AhcWSClientConfig, for use from Java.

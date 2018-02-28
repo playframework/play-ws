@@ -17,13 +17,13 @@ import scala.concurrent.duration.Duration
  * An async handler that accumulates response data to place in cache with the given key.
  */
 class AsyncCachingHandler[T](
-    request: Request,
-    handler: AsyncCompletionHandler[T],
-    cache: AhcHttpCache,
-    maybeAction: Option[ResponseServeAction])
-  extends AsyncHandler[T]
-  with TimeoutResponse
-  with Debug {
+  request: Request,
+  handler: AsyncCompletionHandler[T],
+  cache: AhcHttpCache,
+  maybeAction: Option[ResponseServeAction])
+    extends AsyncHandler[T]
+    with TimeoutResponse
+    with Debug {
 
   private val DATE = "Date"
 

@@ -14,9 +14,9 @@ import scala.collection.JavaConverters._
  * A WS HTTP response backed by org.asynchttpclient.Response.
  */
 class StandaloneAhcWSResponse(ahcResponse: AHCResponse) extends StandaloneWSResponse
-  with DefaultBodyReadables
-  with WSCookieConverter
-  with AhcUtilities {
+    with DefaultBodyReadables
+    with WSCookieConverter
+    with AhcUtilities {
 
   override lazy val headers: Map[String, Seq[String]] = headersToMap(ahcResponse.getHeaders)
 
