@@ -395,7 +395,12 @@ lazy val `integration-tests` = project.in(file("integration-tests"))
 
 lazy val root = project
   .in(file("."))
-  .settings(name := "play-ws-standalone-root")
+  .settings(
+    name := "play-ws-standalone-root",
+    // otherwise same as orgname, and "sonatypeList"
+    // says "No staging profile is found for com.typesafe.play"
+    sonatypeProfileName := "com.typesafe"
+  )
   .settings(commonSettings)
   .settings(formattingSettings)
   .settings(disableDocs)
@@ -414,9 +419,6 @@ lazy val root = project
 // Release
 //---------------------------------------------------------------
 import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
-
-// otherwise same as orgname, and "sonatypeList" says "No staging profile is found for com.typesafe.play"
-sonatypeProfileName in ThisBuild := "com.typesafe"
 
 // This automatically selects the snapshots or staging repository
 // according to the version value.
