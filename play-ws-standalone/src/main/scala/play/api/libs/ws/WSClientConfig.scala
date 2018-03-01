@@ -27,6 +27,5 @@ case class WSClientConfig(
   useProxyProperties: Boolean = true,
   userAgent: Option[String] = None,
   compressionEnabled: Boolean = false,
-  ssl: SSLConfigSettings = SSLConfigSettings()
-)
+  ssl: SSLConfigSettings = SSLConfigSettings())
 
