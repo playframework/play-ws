@@ -103,9 +103,8 @@ val disableDocs = Seq[Setting[_]](
 
 val disablePublishing = Seq[Setting[_]](
   publishArtifact := false,
-  // The above is enough for Maven repos but it doesn't prevent publishing of ivy.xml files
-  publish := {},
-  publishLocal := {}
+  skip in publish := true,
+  crossScalaVersions := Seq(scala212)
 )
 
 lazy val shadeAssemblySettings = commonSettings ++ Seq(
@@ -247,12 +246,14 @@ val shadedOAuthSettings = Seq(
 //---------------------------------------------------------------
 
 lazy val shaded = Project(id = "shaded", base = file("shaded") )
-  .settings(disableDocs)
-  .settings(disablePublishing)
   .aggregate(
     `shaded-asynchttpclient`,
     `shaded-oauth`
   ).disablePlugins(sbtassembly.AssemblyPlugin)
+  .settings(
+    disableDocs,
+    disablePublishing,
+  )
 
 //---------------------------------------------------------------
 // WS API
@@ -319,8 +320,6 @@ lazy val `play-ahc-ws-standalone` = project
   )
   .dependsOn(
     `play-ws-standalone`
-  ).aggregate(
-    `shaded`
   ).disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
@@ -375,6 +374,7 @@ lazy val `integration-tests` = project.in(file("integration-tests"))
   .settings(disableDocs)
   .settings(disablePublishing)
   .settings(
+    crossScalaVersions := Seq(scala212, scala211),
     fork in Test := true,
     concurrentRestrictions += Tags.limitAll(1), // only one integration test at a time
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
