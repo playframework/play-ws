@@ -61,7 +61,7 @@ lazy val commonSettings = mimaSettings ++ Seq(
   // Work around 2.12 bug which prevents javadoc in nested java classes from compiling.
   scalacOptions in (Compile, doc) ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, v)) if v == 12 =>
+      case Some((2, v)) if v >= 12 =>
         Seq("-no-java-comments")
       case _ =>
         Nil
