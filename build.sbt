@@ -3,7 +3,7 @@ import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 
 import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
-
+import java.io.File
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
 
@@ -172,18 +172,19 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
   .settings(shadeAssemblySettings)
   .settings(
     libraryDependencies ++= asyncHttpClient,
-    name := "shaded-asynchttpclient"
-  )
-  .settings(
+    name := "shaded-asynchttpclient",
     logLevel in assembly := Level.Error,
     assemblyMergeStrategy in assembly := {
-      case "META-INF/io.netty.versions.properties" =>
-        MergeStrategy.first
-      case "ahc-default.properties" =>
-        ahcMerge
-      case x =>
-        val oldStrategy = (assemblyMergeStrategy in assembly).value
-        oldStrategy(x)
+      val NettyPropertiesPath = "META-INF" + File.separator + "io.netty.versions.properties"
+      ({
+        case NettyPropertiesPath =>
+          MergeStrategy.first
+        case "ahc-default.properties" =>
+          ahcMerge
+        case x =>
+          val oldStrategy = (assemblyMergeStrategy in assembly).value
+          oldStrategy(x)
+      }: String => MergeStrategy)
     },
     //logLevel in assembly := Level.Debug,
     assemblyShadeRules in assembly := Seq(
@@ -215,9 +216,7 @@ lazy val `shaded-oauth` = project.in(file("shaded/oauth"))
   .settings(shadeAssemblySettings)
   .settings(
     libraryDependencies ++= oauth,
-    name := "shaded-oauth"
-  )
-  .settings(
+    name := "shaded-oauth",
     //logLevel in assembly := Level.Debug,
     assemblyShadeRules in assembly := Seq(
       ShadeRule.rename("oauth.**" -> "play.shaded.oauth.@0").inAll,
@@ -295,9 +294,6 @@ lazy val `play-ahc-ws-standalone` = project
     fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v"))
   )
-  .settings(
-     // The scaladoc generation
-  )
   .settings(libraryDependencies ++= standaloneAhcWSDependencies)
   .settings(shadedAhcSettings)
   .settings(shadedOAuthSettings)
@@ -335,9 +331,6 @@ lazy val `play-ws-standalone-json` = project
     fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v"))
   )
-  .settings(
-    // The scaladoc generation
-  )
   .settings(libraryDependencies ++= standaloneAhcWSJsonDependencies)
   .dependsOn(
     `play-ws-standalone`
@@ -354,12 +347,9 @@ lazy val `play-ws-standalone-xml` = project
   .settings(mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ws-standalone-xml" % "1.0.0"))
   .settings(
     fork in Test := true,
-    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v"))
+    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
+    libraryDependencies ++= standaloneAhcWSXMLDependencies
   )
-  .settings(
-    // The scaladoc generation
-  )
-  .settings(libraryDependencies ++= standaloneAhcWSXMLDependencies)
   .dependsOn(
     `play-ws-standalone`
   ).disablePlugins(sbtassembly.AssemblyPlugin)
