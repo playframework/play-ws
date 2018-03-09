@@ -51,7 +51,7 @@ public class AhcCurlRequestLogger implements WSRequestFilter {
         //authentication
         request.getAuth().ifPresent(auth -> {
             String encodedPasswd = Base64.getUrlEncoder().encodeToString((auth.getUsername() + ":" + auth.getPassword()).getBytes(StandardCharsets.US_ASCII));
-            b.append("  --header \"Authorization: Basic ").append(quote(encodedPasswd)).append("\"")
+            b.append("  --header 'Authorization: Basic ").append(quote(encodedPasswd)).append("'")
              .append(" \\\n");
         });
 

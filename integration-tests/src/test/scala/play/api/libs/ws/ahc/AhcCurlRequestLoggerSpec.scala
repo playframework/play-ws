@@ -90,7 +90,7 @@ class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv) extends 
         .get()
         .awaitFor(defaultTimeout)
 
-      testLogger.getLoggingEvents.asScala.map(_.getMessage) must containMatch("""--header "Authorization: Basic""")
+      testLogger.getLoggingEvents.asScala.map(_.getMessage) must containMatch("""--header 'Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ='""")
     }
 
     "handle body" in {
@@ -142,7 +142,7 @@ class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv) extends 
           |curl \\
           |  --verbose \\
           |  --request GET \\
-          |  --header "Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=" \\
+          |  --header 'Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=' \\
           |  --header 'My-Header: My-Header-Value' \\
           |  --header 'Content-Type: text/plain' \\
           |  --data 'the-body' \\
