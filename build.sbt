@@ -15,6 +15,7 @@ import scalariform.formatter.preferences._
 
 val scala211 = "2.11.12"
 val scala212 = "2.12.4"
+val scala213 = "2.13.0-M3"
 
 val previousVersion = None
 
@@ -39,7 +40,7 @@ lazy val mimaSettings = mimaDefaultSettings ++ Seq(
 lazy val commonSettings = mimaSettings ++ Seq(
   organization := "com.typesafe.play",
   scalaVersion := scala212,
-  crossScalaVersions := Seq(scala212, scala211),
+  crossScalaVersions := Seq(scala213, scala212, scala211),
   scalacOptions in (Compile, doc) ++= Seq(
     "-target:jvm-1.8",
     "-deprecation",
@@ -364,7 +365,7 @@ lazy val `integration-tests` = project.in(file("integration-tests"))
   .settings(disableDocs)
   .settings(disablePublishing)
   .settings(
-    crossScalaVersions := Seq(scala212, scala211),
+    crossScalaVersions := Seq(scala213, scala212, scala211),
     fork in Test := true,
     concurrentRestrictions += Tags.limitAll(1), // only one integration test at a time
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
