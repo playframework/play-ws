@@ -15,6 +15,7 @@ import scalariform.formatter.preferences._
 
 val scala211 = "2.11.12"
 val scala212 = "2.12.4"
+val scala213 = "2.13.0-M3"
 
 val previousVersion = None
 
@@ -28,6 +29,11 @@ val javacSettings = Seq(
   "-Xlint:unchecked"
 )
 
+def mimaPreviousArtifactFor(scalaV: String, module: ModuleID): Set[ModuleID] = scalaV match {
+  case sv if sv == scala213 => Set.empty
+  case _ => Set(module)
+}
+
 lazy val mimaSettings = mimaDefaultSettings ++ Seq(
   mimaBinaryIssueFilters ++= Seq(
     ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSResponse.getBodyAsSource"),
@@ -39,7 +45,7 @@ lazy val mimaSettings = mimaDefaultSettings ++ Seq(
 lazy val commonSettings = mimaSettings ++ Seq(
   organization := "com.typesafe.play",
   scalaVersion := scala212,
-  crossScalaVersions := Seq(scala212, scala211),
+  crossScalaVersions := Seq(scala213, scala212, scala211),
   scalacOptions in (Compile, doc) ++= Seq(
     "-target:jvm-1.8",
     "-deprecation",
@@ -55,7 +61,7 @@ lazy val commonSettings = mimaSettings ++ Seq(
   // Work around 2.12 bug which prevents javadoc in nested java classes from compiling.
   scalacOptions in (Compile, doc) ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, v)) if v == 12 =>
+      case Some((2, v)) if v >= 12 =>
         Seq("-no-java-comments")
       case _ =>
         Nil
@@ -262,7 +268,7 @@ lazy val shaded = Project(id = "shaded", base = file("shaded") )
 lazy val `play-ws-standalone` = project
   .in(file("play-ws-standalone"))
   .settings(commonSettings)
-  .settings(mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ws-standalone" % "1.0.0"))
+  .settings(mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ws-standalone" % "1.0.0"))
   .settings(libraryDependencies ++= standaloneApiWSDependencies)
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
@@ -289,7 +295,7 @@ lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
   .settings(commonSettings)
   .settings(formattingSettings)
-  .settings(mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ahc-ws-standalone" % "1.0.0"))
+  .settings(mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.0.0"))
   .settings(
     fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v"))
@@ -326,7 +332,7 @@ lazy val `play-ws-standalone-json` = project
   .in(file("play-ws-standalone-json"))
   .settings(commonSettings)
   .settings(formattingSettings)
-  .settings(mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ws-standalone-json" % "1.0.0"))
+  .settings(mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ws-standalone-json" % "1.0.0"))
   .settings(
     fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v"))
@@ -344,7 +350,7 @@ lazy val `play-ws-standalone-xml` = project
   .in(file("play-ws-standalone-xml"))
   .settings(commonSettings)
   .settings(formattingSettings)
-  .settings(mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ws-standalone-xml" % "1.0.0"))
+  .settings(mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ws-standalone-xml" % "1.0.0"))
   .settings(
     fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
@@ -364,7 +370,7 @@ lazy val `integration-tests` = project.in(file("integration-tests"))
   .settings(disableDocs)
   .settings(disablePublishing)
   .settings(
-    crossScalaVersions := Seq(scala212, scala211),
+    crossScalaVersions := Seq(scala213, scala212, scala211),
     fork in Test := true,
     concurrentRestrictions += Tags.limitAll(1), // only one integration test at a time
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
