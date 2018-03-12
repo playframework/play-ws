@@ -39,7 +39,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv) extends Sp
     }
   }
 
-  override def afterAll = {
+  override def afterAll: Unit = {
     super.afterAll()
     client.close()
   }
@@ -59,7 +59,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv) extends Sp
       }
     }
 
-    "work with adhoc request filter" in {
+    "execute with adhoc request filter" in {
       client.url(s"http://localhost:$testServerPort").withRequestFilter(WSRequestFilter { e =>
         WSRequestExecutor(r => e.apply(r.withQueryStringParameters("key" -> "some string")))
       }).get().map { response =>
@@ -67,7 +67,15 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv) extends Sp
       }.await(retries = 0, timeout = defaultTimeout)
     }
 
-    "work with one request filter" in {
+    "stream with adhoc request filter" in {
+      client.url(s"http://localhost:$testServerPort").withRequestFilter(WSRequestFilter { e =>
+        WSRequestExecutor(r => e.apply(r.withQueryStringParameters("key" -> "some string")))
+      }).withMethod("GET").stream().map { response =>
+        response.body[String] must contain("some string")
+      }.await(retries = 0, timeout = defaultTimeout)
+    }
+
+    "execute with one request filter" in {
       val callList = scala.collection.mutable.ArrayBuffer[Int]()
       client.url(s"http://localhost:$testServerPort")
         .withRequestFilter(new CallbackRequestFilter(callList, 1))
@@ -77,7 +85,17 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv) extends Sp
         .await(retries = 0, timeout = defaultTimeout)
     }
 
-    "work with three request filter" in {
+    "stream with one request filter" in {
+      val callList = scala.collection.mutable.ArrayBuffer[Int]()
+      client.url(s"http://localhost:$testServerPort")
+        .withRequestFilter(new CallbackRequestFilter(callList, 1))
+        .withMethod("GET").stream().map { _ =>
+          callList must contain(1)
+        }
+        .await(retries = 0, timeout = defaultTimeout)
+    }
+
+    "execute with three request filters" in {
       val callList = scala.collection.mutable.ArrayBuffer[Int]()
       client.url(s"http://localhost:$testServerPort")
         .withRequestFilter(new CallbackRequestFilter(callList, 1))
@@ -89,12 +107,35 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv) extends Sp
         .await(retries = 0, timeout = defaultTimeout)
     }
 
-    "should allow filters to modify the request" in {
+    "stream with three request filters" in {
+      val callList = scala.collection.mutable.ArrayBuffer[Int]()
+      client.url(s"http://localhost:$testServerPort")
+        .withRequestFilter(new CallbackRequestFilter(callList, 1))
+        .withRequestFilter(new CallbackRequestFilter(callList, 2))
+        .withRequestFilter(new CallbackRequestFilter(callList, 3))
+        .withMethod("GET").stream().map { _ =>
+          callList must containTheSameElementsAs(Seq(1, 2, 3))
+        }
+        .await(retries = 0, timeout = defaultTimeout)
+    }
+
+    "allow filters to modify the executing request" in {
       val appendedHeader = "X-Request-Id"
       val appendedHeaderValue = "someid"
       client.url(s"http://localhost:$testServerPort")
         .withRequestFilter(new HeaderAppendingFilter(appendedHeader, appendedHeaderValue))
         .get().map { response ⇒
+          response.headers("X-Request-Id").head must be_==("someid")
+        }
+        .await(retries = 0, timeout = defaultTimeout)
+    }
+
+    "allow filters to modify the streaming request" in {
+      val appendedHeader = "X-Request-Id"
+      val appendedHeaderValue = "someid"
+      client.url(s"http://localhost:$testServerPort")
+        .withRequestFilter(new HeaderAppendingFilter(appendedHeader, appendedHeaderValue))
+        .withMethod("GET").stream().map { response ⇒
           response.headers("X-Request-Id").head must be_==("someid")
         }
         .await(retries = 0, timeout = defaultTimeout)

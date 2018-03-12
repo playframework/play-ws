@@ -47,7 +47,7 @@ class CachingSpec(implicit val executionEnv: ExecutionEnv) extends Specification
 
     "work once" in {
       val cache = mock[Cache]
-      cache.get(any) returns Future.successful(None)
+      cache.get(any()) returns Future.successful(None)
 
       val cachingAsyncHttpClient = new CachingAsyncHttpClient(asyncHttpClient, new AhcHttpCache(cache))
       val ws = new StandaloneAhcWSClient(cachingAsyncHttpClient)

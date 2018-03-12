@@ -121,6 +121,20 @@ public interface StandaloneWSResponse {
      */
     <T> T getBody(BodyReadable<T> readable);
 
+    /**
+     * The response body decoded as String, using a simple algorithm to guess the encoding.
+     *
+     * This decodes the body to a string representation based on the following algorithm:
+     *
+     *  1. Look for a "charset" parameter on the Content-Type. If it exists, set `charset` to its value and goto step 3.
+     *  2. If the Content-Type is of type "text", set $charset to "ISO-8859-1"; else set `charset` to "UTF-8".
+     *  3. Decode the raw bytes of the body using `charset`.
+     *
+     * Note that this does not take into account any special cases for specific content types. For example, for
+     * application/json, we do not support encoding autodetection and will trust the charset parameter if provided.
+     *
+     * @return the response body parsed as a String using the above algorithm.
+     */
     String getBody();
 
     ByteString getBodyAsBytes();

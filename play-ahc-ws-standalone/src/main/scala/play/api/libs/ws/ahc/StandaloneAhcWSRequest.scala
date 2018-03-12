@@ -198,7 +198,11 @@ case class StandaloneAhcWSRequest(
   }
 
   override def stream(): Future[Response] = {
-    client.executeStream(buildRequest())
+    val executor = filterWSRequestExecutor(WSRequestExecutor { request =>
+      client.executeStream(request.asInstanceOf[StandaloneAhcWSRequest].buildRequest())
+    })
+
+    executor(this)
   }
 
   /**

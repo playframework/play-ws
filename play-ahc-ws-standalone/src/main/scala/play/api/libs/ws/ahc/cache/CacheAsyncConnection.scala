@@ -16,11 +16,11 @@ import play.shaded.ahc.org.asynchttpclient.handler.ProgressAsyncHandler
  * Calls the relevant methods on the async handler, providing it with the cached response.
  */
 class AsyncCacheableConnection[T](
-  asyncHandler: AsyncHandler[T],
-  request: Request,
-  response: CacheableResponse,
-  future: ListenableFuture[T])
-    extends Callable[T] with Debug {
+    asyncHandler: AsyncHandler[T],
+    request: Request,
+    response: CacheableResponse,
+    future: ListenableFuture[T])
+  extends Callable[T] with Debug {
 
   import AsyncCacheableConnection._
 

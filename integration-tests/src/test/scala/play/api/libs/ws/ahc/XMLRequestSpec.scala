@@ -4,6 +4,8 @@
 
 package play.api.libs.ws.ahc
 
+import java.nio.charset.StandardCharsets
+
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.util.ByteString
@@ -46,7 +48,8 @@ class XMLRequestSpec extends Specification with Mockito with AfterAll {
     import XMLBodyReadables._
 
     val ahcResponse = mock[AHCResponse]
-    ahcResponse.getResponseBody returns "<hello><test></test></hello>"
+    ahcResponse.getContentType() returns "application/xml"
+    ahcResponse.getResponseBody(StandardCharsets.UTF_8) returns "<hello><test></test></hello>"
     val response = new StandaloneAhcWSResponse(ahcResponse)
 
     val expected = XML.parser.loadString("<hello><test></test></hello>")

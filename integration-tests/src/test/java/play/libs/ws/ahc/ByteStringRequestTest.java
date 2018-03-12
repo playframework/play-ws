@@ -17,6 +17,7 @@ import org.junit.Test;
 import play.libs.ws.DefaultBodyReadables;
 import play.shaded.ahc.org.asynchttpclient.Response;
 
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 
@@ -30,11 +31,37 @@ public class ByteStringRequestTest implements DefaultBodyReadables {
         final Response ahcResponse = mock(Response.class);
         final StandaloneAhcWSResponse response = new StandaloneAhcWSResponse(ahcResponse);
         when(ahcResponse.getContentType()).thenReturn(null);
-        when(ahcResponse.getResponseBody()).thenReturn("wsBody");
+        when(ahcResponse.getResponseBody(StandardCharsets.UTF_8)).thenReturn("wsBody");
 
         final String body = response.getBody();
-        verify(ahcResponse, times(1)).getResponseBody();
+        verify(ahcResponse, times(1)).getResponseBody(any());
         assertThat(body).isEqualTo("wsBody");
+    }
+
+    @Test
+    public void testGetBodyAsString_applicationJson() {
+        final Response ahcResponse = mock(Response.class);
+        final String bodyString = "{\"foo\": \"☺\"}";
+        final StandaloneAhcWSResponse response = new StandaloneAhcWSResponse(ahcResponse);
+        when(ahcResponse.getContentType()).thenReturn("application/json");
+        when(ahcResponse.getResponseBody(StandardCharsets.UTF_8)).thenReturn(bodyString);
+
+        final String body = response.getBody();
+        verify(ahcResponse, times(1)).getResponseBody(any());
+        assertThat(body).isEqualTo("{\"foo\": \"☺\"}");
+    }
+
+    @Test
+    public void testGetBodyAsString_textHtml() {
+        final Response ahcResponse = mock(Response.class);
+        final StandaloneAhcWSResponse response = new StandaloneAhcWSResponse(ahcResponse);
+        final String bodyString = "<html><body>☺</body></html>";
+        when(ahcResponse.getContentType()).thenReturn("text/html");
+        when(ahcResponse.getResponseBody(StandardCharsets.ISO_8859_1)).thenReturn(bodyString);
+
+        final String body = response.getBody();
+        verify(ahcResponse, times(1)).getResponseBody(any());
+        assertThat(body).isEqualTo(bodyString);
     }
 
     @Test

@@ -247,7 +247,8 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     /**
-     * Sets a BodyWritable directly.  See {@link DefaultBodyWritables} for common bodies.
+     * Sets a BodyWritable directly. See {@link DefaultBodyWritables} for common bodies.
+     * Also sets a Content-Type header if it's not set on the request but specified in the BodyWritable.
      *
      * @param bodyWritable the bodyWritable to set.
      * @return the request with body
@@ -255,6 +256,12 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     @Override
     public StandaloneAhcWSRequest setBody(BodyWritable bodyWritable) {
         this.bodyWritable = bodyWritable;
+
+        String contentType = bodyWritable.contentType();
+        if (!headers.containsKey(HttpHeaders.Names.CONTENT_TYPE) && contentType != null) {
+            this.addHeader(HttpHeaders.Names.CONTENT_TYPE, bodyWritable.contentType());
+        }
+
         return this;
     }
 

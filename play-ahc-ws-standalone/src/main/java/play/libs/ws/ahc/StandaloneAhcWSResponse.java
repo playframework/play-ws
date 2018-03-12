@@ -6,6 +6,7 @@ package play.libs.ws.ahc;
 
 import akka.util.ByteString;
 
+import play.api.libs.ws.ahc.AhcWSUtils;
 import play.libs.ws.BodyReadable;
 import play.libs.ws.StandaloneWSResponse;
 import play.libs.ws.WSCookie;
@@ -105,11 +106,7 @@ public class StandaloneAhcWSResponse implements StandaloneWSResponse {
 
     @Override
     public String getBody() {
-        // https://tools.ietf.org/html/rfc7231#section-3.1.1.3
-        // https://tools.ietf.org/html/rfc7231#appendix-B
-        // The default charset of ISO-8859-1 for text media types has been
-        // removed; the default is now whatever the media type definition says.
-        return this.ahcResponse.getResponseBody();
+        return AhcWSUtils.getResponseBody(ahcResponse);
     }
 
     @Override

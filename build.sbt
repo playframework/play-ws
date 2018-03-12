@@ -3,7 +3,7 @@ import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 
 import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
-
+import java.io.File
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
 
@@ -12,6 +12,10 @@ import scalariform.formatter.preferences._
 //---------------------------------------------------------------
 // Shading and Project Settings
 //---------------------------------------------------------------
+
+val scala211 = "2.11.12"
+val scala212 = "2.12.4"
+val scala213 = "2.13.0-M3"
 
 val previousVersion = None
 
@@ -25,6 +29,11 @@ val javacSettings = Seq(
   "-Xlint:unchecked"
 )
 
+def mimaPreviousArtifactFor(scalaV: String, module: ModuleID): Set[ModuleID] = scalaV match {
+  case sv if sv == scala213 => Set.empty
+  case _ => Set(module)
+}
+
 lazy val mimaSettings = mimaDefaultSettings ++ Seq(
   mimaBinaryIssueFilters ++= Seq(
     ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSResponse.getBodyAsSource"),
@@ -35,8 +44,8 @@ lazy val mimaSettings = mimaDefaultSettings ++ Seq(
 
 lazy val commonSettings = mimaSettings ++ Seq(
   organization := "com.typesafe.play",
-  scalaVersion := "2.12.3",
-  crossScalaVersions := Seq("2.12.3", "2.11.11"),
+  scalaVersion := scala212,
+  crossScalaVersions := Seq(scala213, scala212, scala211),
   scalacOptions in (Compile, doc) ++= Seq(
     "-target:jvm-1.8",
     "-deprecation",
@@ -52,7 +61,7 @@ lazy val commonSettings = mimaSettings ++ Seq(
   // Work around 2.12 bug which prevents javadoc in nested java classes from compiling.
   scalacOptions in (Compile, doc) ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, v)) if v == 12 =>
+      case Some((2, v)) if v >= 12 =>
         Seq("-no-java-comments")
       case _ =>
         Nil
@@ -84,12 +93,13 @@ lazy val commonSettings = mimaSettings ++ Seq(
 )
 
 val formattingSettings = Seq(
+  scalariformAutoformat := true,
   ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference(SpacesAroundMultiImports, true)
     .setPreference(SpaceInsideParentheses, false)
     .setPreference(DanglingCloseParenthesis, Preserve)
     .setPreference(PreserveSpaceBeforeArguments, true)
-    .setPreference(DoubleIndentClassDeclaration, true)
+    .setPreference(DoubleIndentConstructorArguments, true)
 )
 
 val disableDocs = Seq[Setting[_]](
@@ -99,12 +109,12 @@ val disableDocs = Seq[Setting[_]](
 
 val disablePublishing = Seq[Setting[_]](
   publishArtifact := false,
-  // The above is enough for Maven repos but it doesn't prevent publishing of ivy.xml files
-  publish := {},
-  publishLocal := {}
+  skip in publish := true,
+  crossScalaVersions := Seq(scala212)
 )
 
 lazy val shadeAssemblySettings = commonSettings ++ Seq(
+  crossScalaVersions := Seq(scala212),
   assemblyOption in assembly ~= (_.copy(includeScala = false)),
   test in assembly := {},
   assemblyOption in assembly ~= {
@@ -168,18 +178,19 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
   .settings(shadeAssemblySettings)
   .settings(
     libraryDependencies ++= asyncHttpClient,
-    name := "shaded-asynchttpclient"
-  )
-  .settings(
+    name := "shaded-asynchttpclient",
     logLevel in assembly := Level.Error,
     assemblyMergeStrategy in assembly := {
-      case "META-INF/io.netty.versions.properties" =>
-        MergeStrategy.first
-      case "ahc-default.properties" =>
-        ahcMerge
-      case x =>
-        val oldStrategy = (assemblyMergeStrategy in assembly).value
-        oldStrategy(x)
+      val NettyPropertiesPath = "META-INF" + File.separator + "io.netty.versions.properties"
+      ({
+        case NettyPropertiesPath =>
+          MergeStrategy.first
+        case "ahc-default.properties" =>
+          ahcMerge
+        case x =>
+          val oldStrategy = (assemblyMergeStrategy in assembly).value
+          oldStrategy(x)
+      }: String => MergeStrategy)
     },
     //logLevel in assembly := Level.Debug,
     assemblyShadeRules in assembly := Seq(
@@ -193,7 +204,7 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
 
     // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom
     // Remove dependencies from the POM because we have a FAT jar here.
-    makePomConfiguration := makePomConfiguration.value.copy(process = dependenciesFilter),
+    makePomConfiguration := makePomConfiguration.value.withProcess(process = dependenciesFilter),
     //ivyXML := <dependencies></dependencies>,
     //ivyLoggingLevel := UpdateLogging.Full,
     //logLevel := Level.Debug,
@@ -211,9 +222,7 @@ lazy val `shaded-oauth` = project.in(file("shaded/oauth"))
   .settings(shadeAssemblySettings)
   .settings(
     libraryDependencies ++= oauth,
-    name := "shaded-oauth"
-  )
-  .settings(
+    name := "shaded-oauth",
     //logLevel in assembly := Level.Debug,
     assemblyShadeRules in assembly := Seq(
       ShadeRule.rename("oauth.**" -> "play.shaded.oauth.@0").inAll,
@@ -222,7 +231,7 @@ lazy val `shaded-oauth` = project.in(file("shaded/oauth"))
 
     // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom
     // Remove dependencies from the POM because we have a FAT jar here.
-    makePomConfiguration := makePomConfiguration.value.copy(process = dependenciesFilter),
+    makePomConfiguration := makePomConfiguration.value.withProcess(process = dependenciesFilter),
 
     assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeBin = false, includeScala = false),
     packageBin in Compile := assembly.value
@@ -242,12 +251,14 @@ val shadedOAuthSettings = Seq(
 //---------------------------------------------------------------
 
 lazy val shaded = Project(id = "shaded", base = file("shaded") )
-  .settings(disableDocs)
-  .settings(disablePublishing)
   .aggregate(
     `shaded-asynchttpclient`,
     `shaded-oauth`
   ).disablePlugins(sbtassembly.AssemblyPlugin)
+  .settings(
+    disableDocs,
+    disablePublishing,
+  )
 
 //---------------------------------------------------------------
 // WS API
@@ -256,14 +267,14 @@ lazy val shaded = Project(id = "shaded", base = file("shaded") )
 // WS API, no play dependencies
 lazy val `play-ws-standalone` = project
   .in(file("play-ws-standalone"))
-  .settings(commonSettings)
-  .settings(mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ws-standalone" % "1.0.0"))
-  .settings(
+  .settings(commonSettings ++ Seq(
+    mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ws-standalone" % "1.0.0")),
     libraryDependencies ++= standaloneApiWSDependencies,
     mimaBinaryIssueFilters ++= Seq(
       ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSResponse.getUri"),
       ProblemFilters.exclude[ReversedMissingMethodProblem]("play.api.libs.ws.StandaloneWSResponse.uri")
-    )
+    ),
+    mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ws-standalone" % "1.0.0")
   )
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
@@ -288,22 +299,15 @@ def addShadedDeps(deps: Seq[xml.Node], node: xml.Node): xml.Node = {
 // Standalone implementation using AsyncHttpClient
 lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
-  .settings(commonSettings)
-  .settings(formattingSettings)
-  .settings(mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ahc-ws-standalone" % "1.0.0"))
-  .settings(SbtScalariform.scalariformSettings)
-  .settings(
+  .settings(commonSettings ++ formattingSettings ++ shadedAhcSettings ++ shadedOAuthSettings ++ Seq(
     fork in Test := true,
     testOptions in Test := Seq(
       Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
     libraryDependencies ++= standaloneAhcWSDependencies,
+    mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.0.0"),
     mimaBinaryIssueFilters ++= Seq(
       ProblemFilters.exclude[DirectMissingMethodProblem](
-        "play.libs.ws.ahc.StandaloneAhcWSResponse.getBodyAsSource"))
-  )
-  .settings(shadedAhcSettings)
-  .settings(shadedOAuthSettings)
-  .settings(
+        "play.libs.ws.ahc.StandaloneAhcWSResponse.getBodyAsSource")),
     // This will not work if you do a publishLocal, because that uses ivy...
     pomPostProcess := {
       (node: xml.Node) => addShadedDeps(List(
@@ -322,8 +326,6 @@ lazy val `play-ahc-ws-standalone` = project
   )
   .dependsOn(
     `play-ws-standalone`
-  ).aggregate(
-    `shaded`
   ).disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
@@ -334,14 +336,10 @@ lazy val `play-ws-standalone-json` = project
   .in(file("play-ws-standalone-json"))
   .settings(commonSettings)
   .settings(formattingSettings)
-  .settings(mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ws-standalone-json" % "1.0.0"))
-  .settings(SbtScalariform.scalariformSettings)
+  .settings(mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ws-standalone-json" % "1.0.0"))
   .settings(
     fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v"))
-  )
-  .settings(
-    // The scaladoc generation
   )
   .settings(libraryDependencies ++= standaloneAhcWSJsonDependencies)
   .dependsOn(
@@ -356,16 +354,12 @@ lazy val `play-ws-standalone-xml` = project
   .in(file("play-ws-standalone-xml"))
   .settings(commonSettings)
   .settings(formattingSettings)
-  .settings(mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ws-standalone-xml" % "1.0.0"))
-  .settings(SbtScalariform.scalariformSettings)
+  .settings(mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ws-standalone-xml" % "1.0.0"))
   .settings(
     fork in Test := true,
-    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v"))
+    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
+    libraryDependencies ++= standaloneAhcWSXMLDependencies
   )
-  .settings(
-    // The scaladoc generation
-  )
-  .settings(libraryDependencies ++= standaloneAhcWSXMLDependencies)
   .dependsOn(
     `play-ws-standalone`
   ).disablePlugins(sbtassembly.AssemblyPlugin)
@@ -379,8 +373,8 @@ lazy val `integration-tests` = project.in(file("integration-tests"))
   .settings(formattingSettings)
   .settings(disableDocs)
   .settings(disablePublishing)
-  .settings(SbtScalariform.scalariformSettings)
   .settings(
+    crossScalaVersions := Seq(scala213, scala212, scala211),
     fork in Test := true,
     concurrentRestrictions += Tags.limitAll(1), // only one integration test at a time
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
@@ -401,7 +395,12 @@ lazy val `integration-tests` = project.in(file("integration-tests"))
 
 lazy val root = project
   .in(file("."))
-  .settings(name := "play-ws-standalone-root")
+  .settings(
+    name := "play-ws-standalone-root",
+    // otherwise same as orgname, and "sonatypeList"
+    // says "No staging profile is found for com.typesafe.play"
+    sonatypeProfileName := "com.typesafe"
+  )
   .settings(commonSettings)
   .settings(formattingSettings)
   .settings(disableDocs)
@@ -421,8 +420,9 @@ lazy val root = project
 //---------------------------------------------------------------
 import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
 
-// otherwise same as orgname, and "sonatypeList" says "No staging profile is found for com.typesafe.play"
-sonatypeProfileName := "com.typesafe"
+// This automatically selects the snapshots or staging repository
+// according to the version value.
+publishTo in ThisBuild := Some(sonatypeDefaultResolver.value)
 
 releaseProcess := Seq[ReleaseStep](
   checkSnapshotDependencies,
@@ -432,9 +432,9 @@ releaseProcess := Seq[ReleaseStep](
   setReleaseVersion,
   commitReleaseVersion,
   tagRelease,
-  ReleaseStep(action = Command.process("publishSigned", _), enableCrossBuild = true),
+  releaseStepCommandAndRemaining("+publishSigned"),
   setNextVersion,
   commitNextVersion,
-  ReleaseStep(action = Command.process("sonatypeReleaseAll", _), enableCrossBuild = true),
+  releaseStepCommand("sonatypeRelease"),
   pushChanges
 )

@@ -6,11 +6,11 @@ import sbt._
 object Dependencies {
   val logback = Seq("ch.qos.logback" % "logback-core" % "1.2.3")
 
-  val assertj = Seq("org.assertj" % "assertj-core" % "3.8.0")
+  val assertj = Seq("org.assertj" % "assertj-core" % "3.9.1")
 
-  val awaitility = Seq("org.awaitility" % "awaitility" % "3.0.0")
+  val awaitility = Seq("org.awaitility" % "awaitility" % "3.1.0")
 
-  val specsVersion = "3.8.6"
+  val specsVersion = "4.0.3"
   val specsBuild = Seq(
     "specs2-core",
     "specs2-junit",
@@ -23,7 +23,7 @@ object Dependencies {
 
   val scalaJava8Compat = Seq("org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0")
 
-  val playJsonVersion = "2.6.0"
+  val playJsonVersion = "2.6.9"
   val playJson = Seq("com.typesafe.play" %% "play-json" % playJsonVersion)
 
   val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "1.7.25")
@@ -33,23 +33,23 @@ object Dependencies {
   val sslConfigVersion = "0.2.2"
   val sslConfigCore = Seq("com.typesafe" %% "ssl-config-core" % sslConfigVersion)
 
-  val scalaXmlVersion = "1.0.6"
+  val scalaXmlVersion = "1.1.0"
   val scalaXml = Seq("org.scala-lang.modules" %% "scala-xml" % scalaXmlVersion)
 
   val signpostVersion = "1.2.1.2"
   val oauth = Seq("oauth.signpost" % "signpost-core" % signpostVersion)
 
-  val cachecontrolVersion = "1.1.2"
+  val cachecontrolVersion = "1.1.3"
   val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % cachecontrolVersion)
 
-  val asyncHttpClientVersion = "2.0.35"
+  val asyncHttpClientVersion = "2.0.39"
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % asyncHttpClientVersion)
 
-  val akkaVersion = "2.5.3"
+  val akkaVersion = "2.5.11"
   val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion)
-  val akkaHttp = Seq("com.typesafe.akka" %% "akka-http" % "10.0.8")
+  val akkaHttp = Seq("com.typesafe.akka" %% "akka-http" % "10.1.0")
 
-  val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.0")
+  val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.2")
 
   val testDependencies = (specsBuild ++ junitInterface ++ assertj ++ awaitility ++ slf4jtest ++ logback).map(_ % Test)
 

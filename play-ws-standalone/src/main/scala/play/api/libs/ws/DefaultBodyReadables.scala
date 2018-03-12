@@ -24,7 +24,10 @@ trait DefaultBodyReadables {
   implicit val readableAsByteString: BodyReadable[ByteString] = BodyReadable(_.bodyAsBytes)
 
   /**
-   * Converts a response body into a String:
+   * Converts a response body into a String.
+   *
+   * Note: this is only a best-guess effort and does not handle all content types. See
+   * [[StandaloneWSResponse.body:String*]] for more information.
    *
    * {{{
    * val string = response.body[String]
