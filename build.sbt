@@ -323,7 +323,7 @@ lazy val `play-ahc-ws-standalone` = project
         </dependency>
       ), node)
     }
-  )
+  ))
   .dependsOn(
     `play-ws-standalone`
   ).disablePlugins(sbtassembly.AssemblyPlugin)
