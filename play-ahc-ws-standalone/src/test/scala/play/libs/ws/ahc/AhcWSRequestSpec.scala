@@ -6,7 +6,6 @@ package play.libs.ws.ahc
 import java.time.Duration
 import java.util.Collections
 
-import akka.util.ByteString
 import org.specs2.mock.Mockito
 import org.specs2.mutable._
 import play.libs.oauth.OAuth
@@ -15,6 +14,7 @@ import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import play.shaded.ahc.org.asynchttpclient.{ Request, RequestBuilderBase, SignatureCalculator }
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 import scala.compat.java8.OptionConverters._
 
 class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadables with DefaultBodyWritables {
@@ -24,6 +24,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
     "Have GET method as the default" in {
       val client = mock[StandaloneAhcWSClient]
       val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+      request.getMethod must be_==("GET")
       request.buildRequest().getMethod must be_==("GET")
     }
 
@@ -36,6 +37,14 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
     }
 
     "For POST requests" in {
+
+      "get method" in {
+        val client = mock[StandaloneAhcWSClient]
+        val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
+            .setMethod("POST")
+
+        req.getMethod must be_==("POST")
+      }
 
       "set text/plain content-types for text bodies" in {
         val client = mock[StandaloneAhcWSClient]
@@ -447,6 +456,18 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
 
       def cookie(name: String, value: String): WSCookie = {
         new WSCookieBuilder().setName(name).setValue(value).build()
+      }
+
+      "get existing cookies" in {
+        val client = mock[StandaloneAhcWSClient]
+        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+          .addCookie(cookie("cookie1", "value1"))
+
+        val cookiesInRequest: mutable.Buffer[WSCookie] = request.getCookies.asScala
+        cookiesInRequest.size must beEqualTo(1)
+        val cookieInRequest: WSCookie = cookiesInRequest.head
+        cookieInRequest.getName must beEqualTo("cookie1")
+        cookieInRequest.getValue must beEqualTo("value1")
       }
 
       "add a new cookie" in {
