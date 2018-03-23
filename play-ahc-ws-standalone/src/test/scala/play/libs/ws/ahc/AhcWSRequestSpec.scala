@@ -41,7 +41,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
       "get method" in {
         val client = mock[StandaloneAhcWSClient]
         val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
-            .setMethod("POST")
+          .setMethod("POST")
 
         req.getMethod must be_==("POST")
       }

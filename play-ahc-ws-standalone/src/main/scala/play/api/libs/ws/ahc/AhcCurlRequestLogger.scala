@@ -69,6 +69,12 @@ trait CurlFormat {
         }
     }
 
+    // cookies
+    request.cookies.foreach { cookie =>
+      b.append(s"""  --cookie '${cookie.name}=${cookie.value}'""")
+      b.append(" \\\n")
+    }
+
     // body (note that this has only been checked for text, not binary)
     request.body match {
       case (InMemoryBody(byteString)) =>

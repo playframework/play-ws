@@ -26,7 +26,7 @@ public class AhcCurlRequestLogger implements WSRequestFilter {
     }
 
     public AhcCurlRequestLogger() {
-        this(org.slf4j.LoggerFactory.getLogger("play.libs.ws.ahc.AhcCurlRequestLogger"));
+        this(org.slf4j.LoggerFactory.getLogger(AhcCurlRequestLogger.class));
     }
 
     @Override
@@ -61,6 +61,12 @@ public class AhcCurlRequestLogger implements WSRequestFilter {
                     b.append("  --header '").append(quote(name)).append(": ").append(quote(v)).append("'")
                      .append(" \\\n")
                 )
+        );
+
+        // cookies
+        request.getCookies().forEach(cookie ->
+                b.append("  --cookie '").append(cookie.getName()).append("=").append(cookie.getValue()).append("'")
+                 .append(" \\\n")
         );
 
         // body

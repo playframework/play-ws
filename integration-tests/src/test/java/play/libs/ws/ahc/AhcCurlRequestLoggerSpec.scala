@@ -6,10 +6,8 @@ package play.libs.ws.ahc
 import akka.http.scaladsl.server.Route
 import org.specs2.concurrent.{ ExecutionEnv, FutureAwait }
 import org.specs2.mutable.Specification
-
 import play.AkkaServerProvider
-import play.libs.ws.{ DefaultBodyWritables, WSAuthScheme, WSAuthInfo }
-
+import play.libs.ws.{ DefaultBodyWritables, DefaultWSCookie, WSAuthInfo, WSAuthScheme }
 import uk.org.lidalia.slf4jext.Level
 import uk.org.lidalia.slf4jtest.{ TestLogger, TestLoggerFactory }
 
@@ -67,8 +65,24 @@ class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv) extends 
 
       val messages = testLogger.getLoggingEvents.asScala.map(_.getMessage)
 
-      messages must containMatch("My-Header")
-      messages must containMatch("My-Header-Value")
+      messages must containMatch("--header 'My-Header: My-Header-Value'")
+    }
+
+    "add all cookies" in withClient() { client =>
+
+      val testLogger = createTestLogger
+      val curlRequestLogger = new AhcCurlRequestLogger(testLogger)
+
+      client.url(s"http://localhost:$testServerPort/")
+        .addCookie(new DefaultWSCookie("cookie1", "value1", "localhost", "path", 10L, true, true))
+        .setRequestFilter(curlRequestLogger)
+        .get()
+        .toScala
+        .awaitFor(defaultTimeout)
+
+      val messages = testLogger.getLoggingEvents.asScala.map(_.getMessage)
+
+      messages must containMatch("""--cookie 'cookie1=value1'""")
     }
 
     "add method" in withClient() { client =>
