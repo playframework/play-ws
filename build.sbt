@@ -273,7 +273,7 @@ lazy val `play-ws-standalone` = project
       ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSResponse.getUri"),
       ProblemFilters.exclude[ReversedMissingMethodProblem]("play.api.libs.ws.StandaloneWSResponse.uri")
     ),
-    mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ws-standalone" % "1.0.0")
+    mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ws-standalone" % "1.0.0"))
   )
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
