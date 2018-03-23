@@ -99,10 +99,11 @@ class AhcWSClientSpec(implicit executionEnv: ExecutionEnv) extends Specification
         val responseXml = response.getBody(xml())
         responseXml.normalizeDocument()
 
-        responseXml.isEqualNode(document) must beTrue
+        responseXml.isEqualNode(document) must beTrue and {
+          response.getUri must beEqualTo(new java.net.URI(
+            s"http://localhost:$testServerPort"))
+        }
       }.await(retries = 0, timeout = 5.seconds)
     }
-
   }
-
 }

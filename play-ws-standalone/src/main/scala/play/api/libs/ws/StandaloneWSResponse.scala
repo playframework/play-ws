@@ -10,9 +10,14 @@ import akka.util.ByteString
  * A WS HTTP response.
  */
 trait StandaloneWSResponse {
+  /**
+   * Returns the URI for this response, which can differ from the request one
+   * in case of redirection.
+   */
+  def uri: java.net.URI
 
   /**
-   * Return the current headers for this response.
+   * Returns the current headers for this response.
    */
   def headers: Map[String, Seq[String]]
 

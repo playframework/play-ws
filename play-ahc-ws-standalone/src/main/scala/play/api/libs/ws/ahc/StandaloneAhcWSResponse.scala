@@ -22,6 +22,8 @@ class StandaloneAhcWSResponse(ahcResponse: AHCResponse) extends StandaloneWSResp
 
   override def underlying[T]: T = ahcResponse.asInstanceOf[T]
 
+  override def uri = ahcResponse.getUri.toJavaNetURI
+
   override def status: Int = ahcResponse.getStatusCode
 
   override def statusText: String = ahcResponse.getStatusText

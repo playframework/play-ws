@@ -267,9 +267,14 @@ lazy val shaded = Project(id = "shaded", base = file("shaded") )
 // WS API, no play dependencies
 lazy val `play-ws-standalone` = project
   .in(file("play-ws-standalone"))
-  .settings(commonSettings)
-  .settings(mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ws-standalone" % "1.0.0"))
-  .settings(libraryDependencies ++= standaloneApiWSDependencies)
+  .settings(commonSettings ++ Seq(
+    libraryDependencies ++= standaloneApiWSDependencies,
+    mimaBinaryIssueFilters ++= Seq(
+      ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSResponse.getUri"),
+      ProblemFilters.exclude[ReversedMissingMethodProblem]("play.api.libs.ws.StandaloneWSResponse.uri")
+    ),
+    mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ws-standalone" % "1.0.0"))
+  )
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
@@ -293,17 +298,15 @@ def addShadedDeps(deps: Seq[xml.Node], node: xml.Node): xml.Node = {
 // Standalone implementation using AsyncHttpClient
 lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
-  .settings(commonSettings)
-  .settings(formattingSettings)
-  .settings(mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.0.0"))
-  .settings(
+  .settings(commonSettings ++ formattingSettings ++ shadedAhcSettings ++ shadedOAuthSettings ++ Seq(
     fork in Test := true,
-    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v"))
-  )
-  .settings(libraryDependencies ++= standaloneAhcWSDependencies)
-  .settings(shadedAhcSettings)
-  .settings(shadedOAuthSettings)
-  .settings(
+    testOptions in Test := Seq(
+      Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
+    libraryDependencies ++= standaloneAhcWSDependencies,
+    mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.0.0"),
+    mimaBinaryIssueFilters ++= Seq(
+      ProblemFilters.exclude[DirectMissingMethodProblem](
+        "play.libs.ws.ahc.StandaloneAhcWSResponse.getBodyAsSource")),
     // This will not work if you do a publishLocal, because that uses ivy...
     pomPostProcess := {
       (node: xml.Node) => addShadedDeps(List(
@@ -319,7 +322,7 @@ lazy val `play-ahc-ws-standalone` = project
         </dependency>
       ), node)
     }
-  )
+  ))
   .dependsOn(
     `play-ws-standalone`
   ).disablePlugins(sbtassembly.AssemblyPlugin)
