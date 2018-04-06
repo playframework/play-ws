@@ -99,10 +99,10 @@ trait CurlFormat {
 
   protected def findCharset(request: StandaloneAhcWSRequest): String = {
     request.contentType.map { ct =>
-      Option(HttpUtils.parseCharset(ct)).getOrElse {
+      Option(HttpUtils.extractCharset(ct)).getOrElse {
         StandardCharsets.UTF_8
       }.name()
-    }.getOrElse(HttpUtils.parseCharset("UTF-8").name())
+    }.getOrElse(HttpUtils.extractCharset("UTF-8").name())
   }
 
   def quote(unsafe: String): String = unsafe.replace("'", "'\\''")
