@@ -14,11 +14,11 @@ trait JsonBodyWritables {
    * Creates an InMemoryBody with "application/json" content type, using the static ObjectMapper.
    */
   implicit val writeableOf_JsValue: BodyWritable[JsValue] = {
-    BodyWritable(a => InMemoryBody(ByteString.fromString(Json.stringify(a))), "application/json")
+    BodyWritable(a => InMemoryBody(ByteString.fromArrayUnsafe(Json.toBytes(a))), "application/json")
   }
 
   def body(objectMapper: ObjectMapper): BodyWritable[JsonNode] = BodyWritable(json =>
-    InMemoryBody(ByteString.fromString(objectMapper.writer.writeValueAsString(json))), "application/json")
+    InMemoryBody(ByteString.fromArrayUnsafe(objectMapper.writer.writeValueAsBytes(json))), "application/json")
 }
 
 object JsonBodyWritables extends JsonBodyWritables
