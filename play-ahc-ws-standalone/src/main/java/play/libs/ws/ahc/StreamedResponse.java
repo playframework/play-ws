@@ -13,15 +13,15 @@ import play.libs.ws.WSCookie;
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders;
 import play.shaded.ahc.org.asynchttpclient.HttpResponseBodyPart;
 import scala.collection.Seq;
+import scala.compat.java8.ScalaStreamSupport;
 
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
-import scala.compat.java8.ScalaStreamSupport;
 
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.toMap;
 import static scala.collection.JavaConverters.seqAsJavaListConverter;
 
 public class StreamedResponse implements StandaloneWSResponse, CookieBuilder {
@@ -112,7 +112,7 @@ public class StreamedResponse implements StandaloneWSResponse, CookieBuilder {
         return this.uri;
     }
 
-    private java.util.Map<String, List<String>> asJava(scala.collection.Map<String, Seq<String>> scalaMap) {
+    private static java.util.Map<String, List<String>> asJava(scala.collection.Map<String, Seq<String>> scalaMap) {
         return ScalaStreamSupport.stream(scalaMap).collect(toMap(f -> f._1(), f -> seqAsJavaListConverter(f._2()).asJava()));
     }
 

@@ -3,7 +3,10 @@
  */
 package play.libs.ws.ahc;
 
-import play.libs.ws.*;
+import play.libs.ws.InMemoryBodyWritable;
+import play.libs.ws.StandaloneWSRequest;
+import play.libs.ws.WSRequestExecutor;
+import play.libs.ws.WSRequestFilter;
 import play.shaded.ahc.org.asynchttpclient.Request;
 import play.shaded.ahc.org.asynchttpclient.proxy.ProxyServer;
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils;
@@ -11,6 +14,8 @@ import play.shaded.ahc.org.asynchttpclient.util.HttpUtils;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Logs {@link StandaloneWSRequest} and pulls information into Curl format to an SLF4J logger.
@@ -28,6 +33,8 @@ public class AhcCurlRequestLogger implements WSRequestFilter {
     public AhcCurlRequestLogger() {
         this(org.slf4j.LoggerFactory.getLogger(AhcCurlRequestLogger.class));
     }
+
+    private static final Pattern SINGLE_QUOTE_REPLACE = Pattern.compile("'", Pattern.LITERAL);
 
     @Override
     public WSRequestExecutor apply(WSRequestExecutor requestExecutor) {
@@ -50,22 +57,22 @@ public class AhcCurlRequestLogger implements WSRequestFilter {
 
         //authentication
         request.getAuth().ifPresent(auth -> {
-            String encodedPasswd = Base64.getUrlEncoder().encodeToString((auth.getUsername() + ":" + auth.getPassword()).getBytes(StandardCharsets.US_ASCII));
-            b.append("  --header 'Authorization: Basic ").append(quote(encodedPasswd)).append("'")
+            String encodedPasswd = Base64.getUrlEncoder().encodeToString((auth.getUsername() + ':' + auth.getPassword()).getBytes(StandardCharsets.US_ASCII));
+            b.append("  --header 'Authorization: Basic ").append(quote(encodedPasswd)).append('\'')
              .append(" \\\n");
         });
 
         // headers
         request.getHeaders().forEach((name, values) ->
                 values.forEach(v ->
-                    b.append("  --header '").append(quote(name)).append(": ").append(quote(v)).append("'")
+                    b.append("  --header '").append(quote(name)).append(": ").append(quote(v)).append('\'')
                      .append(" \\\n")
                 )
         );
 
         // cookies
         request.getCookies().forEach(cookie ->
-                b.append("  --cookie '").append(cookie.getName()).append("=").append(cookie.getValue()).append("'")
+                b.append("  --cookie '").append(cookie.getName()).append('=').append(cookie.getValue()).append('\'')
                  .append(" \\\n")
         );
 
@@ -77,7 +84,7 @@ public class AhcCurlRequestLogger implements WSRequestFilter {
                 String charset = findCharset(request);
                 String bodyString = inMemoryBody.body().get().decodeString(charset);
 
-                b.append("  --data '").append(quote(bodyString)).append("'")
+                b.append("  --data '").append(quote(bodyString)).append('\'')
                  .append(" \\\n");
             } else {
                 throw new UnsupportedOperationException("Unsupported body type " + requestBody.getClass());
@@ -89,23 +96,25 @@ public class AhcCurlRequestLogger implements WSRequestFilter {
         Request ahcRequest = request.buildRequest();
         ProxyServer proxyServer = ahcRequest.getProxyServer();
         if (proxyServer != null) {
-            b.append("  --proxy ").append(proxyServer.getHost()).append(":").append(proxyServer.getPort())
+            b.append("  --proxy ").append(proxyServer.getHost()).append(':').append(proxyServer.getPort())
              .append(" \\\n");
         }
 
         // url
-        b.append("  '").append(quote(ahcRequest.getUrl())).append("'");
+        b.append("  '").append(quote(ahcRequest.getUrl())).append('\'');
         return b.toString();
     }
 
-    private String findCharset(StandaloneAhcWSRequest request) {
+    private static String findCharset(StandaloneAhcWSRequest request) {
         return Optional.ofNullable(request.getContentType())
                 .flatMap(contentType -> contentType.map(HttpUtils::parseCharset))
                 .orElse(StandardCharsets.UTF_8).name();
     }
 
-    private String quote(String unsafe) {
-        return unsafe.replace("'", "'\\''");
+    private static String quote(String unsafe) {
+        return SINGLE_QUOTE_REPLACE.matcher(
+                unsafe
+        ).replaceAll(Matcher.quoteReplacement("'\\''"));
     }
 
 }

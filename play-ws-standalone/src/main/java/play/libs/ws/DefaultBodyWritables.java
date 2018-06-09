@@ -150,11 +150,11 @@ public interface DefaultBodyWritables {
      */
     default BodyWritable<ByteString> body(Map<String, String> formData) {
         try {
-            List<String> values = new ArrayList<>();
+            List<String> values = new ArrayList<>(formData.size());
             for (Map.Entry<String, String> item : formData.entrySet()) {
                 String key = URLEncoder.encode(item.getKey(), "UTF-8");
                 String value = URLEncoder.encode(item.getValue(), "UTF-8");
-                values.add(key + "=" + value);
+                values.add(key + '=' + value);
             }
             String s = values.stream().collect(joining("&"));
             ByteString byteString = ByteString.fromString(s);
