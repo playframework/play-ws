@@ -354,6 +354,21 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
       }
     }
 
+    "Parse no params for empty params map" in {
+      withClient { client =>
+        val consumerKey = ConsumerKey("key", "secret")
+        val requestToken = RequestToken("token", "secret")
+        val calc = OAuthCalculator(consumerKey, requestToken)
+        val reqEmptyParams: AHCRequest = client.url("http://playframework.com/")
+          .withBody(Map.empty[String, Seq[String]])
+          .sign(calc)
+          .asInstanceOf[StandaloneAhcWSRequest]
+          .buildRequest()
+
+        reqEmptyParams.getFormParams.asScala must beEmpty
+      }
+    }
+
     "Have form body for content type text/plain" in {
       withClient { client =>
         val formEncoding = java.net.URLEncoder.encode("param1=value1", "UTF-8")
