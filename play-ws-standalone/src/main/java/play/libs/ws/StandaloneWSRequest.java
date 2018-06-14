@@ -395,24 +395,24 @@ public interface StandaloneWSRequest {
     Map<String, List<String>> getQueryParameters();
 
     /**
-     * @return the auth username, null if not an authenticated request.
+     * @return the auth username, Optional.empty() if not an authenticated request.
      */
-    default String getUsername() {
-        return getAuth().map(WSAuthInfo::getUsername).orElse(null);
+    default Optional<String> getUsername() {
+        return getAuth().map(WSAuthInfo::getUsername);
     }
 
     /**
-     * @return the auth password, null if not an authenticated request
+     * @return the auth password, Optional.empty() if not an authenticated request
      */
-    default String getPassword() {
-        return getAuth().map(WSAuthInfo::getPassword).orElse(null);
+    default Optional<String> getPassword() {
+        return getAuth().map(WSAuthInfo::getPassword);
     }
 
     /**
-     * @return the auth scheme, null if not an authenticated request.
+     * @return the auth scheme, Optional.empty() if not an authenticated request.
      */
-    default WSAuthScheme getScheme() {
-        return getAuth().map(WSAuthInfo::getScheme).orElse(null);
+    default Optional<WSAuthScheme> getScheme() {
+        return getAuth().map(WSAuthInfo::getScheme);
     }
 
     /**
@@ -423,24 +423,24 @@ public interface StandaloneWSRequest {
     Optional<WSAuthInfo> getAuth();
 
     /**
-     * @return the signature calculator (example: OAuth), null if none is set.
+     * @return the signature calculator (example: OAuth), or Optional.empty() if none is set.
      */
-    WSSignatureCalculator getCalculator();
+    Optional<WSSignatureCalculator> getCalculator();
 
     /**
      * Gets the original request timeout duration, passed into the request as input.
      *
      * @return the timeout duration.
      */
-    Duration getRequestTimeoutDuration();
+    Optional<Duration> getRequestTimeout();
 
     /**
-     * @return true if the request is configure to follow redirect, false if it is configure not to, null if nothing is configured and the global client preference should be used instead.
+     * @return true if the request is configure to follow redirect, false if it is configure not to, Optional.empty() if nothing is configured and the global client preference should be used instead.
      */
-    boolean getFollowRedirects();
+    Optional<Boolean> getFollowRedirects();
 
     /**
-     * @return the content type, if any, or null.
+     * @return the content type, if any, or Optional.empty() if no content type is found.
      */
-    String getContentType();
+    Optional<String> getContentType();
 }

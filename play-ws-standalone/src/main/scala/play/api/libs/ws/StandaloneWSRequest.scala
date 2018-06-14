@@ -99,7 +99,7 @@ trait StandaloneWSRequest {
   /**
    * The timeout for the request
    */
-  def requestTimeout: Option[Int]
+  def requestTimeout: Option[Duration]
 
   /**
    * The virtual host this request will use

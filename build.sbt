@@ -57,7 +57,24 @@ lazy val mimaSettings = mimaDefaultSettings ++ Seq(
 
     // Add getUri method
     ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSResponse.getUri"),
-    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.api.libs.ws.StandaloneWSResponse.uri")
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.api.libs.ws.StandaloneWSResponse.uri"),
+
+    // Using Optional and Duration for Java APIs
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSRequest.getRequestTimeoutDuration"),
+    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.libs.ws.ahc.StandaloneAhcWSRequest.getFollowRedirects"),
+    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.libs.ws.ahc.StandaloneAhcWSRequest.getCalculator"),
+    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.libs.ws.ahc.StandaloneAhcWSRequest.getContentType"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getRequestTimeoutDuration"),
+    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.libs.ws.StandaloneWSRequest.getFollowRedirects"),
+    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.libs.ws.StandaloneWSRequest.getPassword"),
+    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.libs.ws.StandaloneWSRequest.getCalculator"),
+    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.libs.ws.StandaloneWSRequest.getUsername"),
+    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.libs.ws.StandaloneWSRequest.getContentType"),
+    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.libs.ws.StandaloneWSRequest.getScheme"),
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getRequestTimeout"),
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getFollowRedirects"),
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getCalculator"),
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getContentType")
   )
 )
 
