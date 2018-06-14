@@ -11,9 +11,11 @@ import play.api.libs.ws._
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils
 import play.api.libs.ws.EmptyBody
 /**
- * Logs WSRequest and pulls information into Curl format to an SLF4J logger.
+ * Logs StandaloneWSRequest and pulls information into Curl format to an SLF4J logger.
  *
  * @param logger an SLF4J logger
+ *
+ * @see <a href="https://curl.haxx.se/">https://curl.haxx.se/</a>
  */
 class AhcCurlRequestLogger(logger: org.slf4j.Logger) extends WSRequestFilter with CurlFormat {
   def apply(executor: WSRequestExecutor): WSRequestExecutor = {
@@ -51,11 +53,10 @@ trait CurlFormat {
 
     //authentication
     request.auth match {
-      case Some((userName, password, WSAuthScheme.BASIC)) => {
+      case Some((userName, password, WSAuthScheme.BASIC)) =>
         val encodedPassword = Base64.getUrlEncoder.encodeToString(s"$userName:$password".getBytes(StandardCharsets.US_ASCII))
         b.append(s"""  --header 'Authorization: Basic ${quote(encodedPassword)}'""")
         b.append(" \\\n")
-      }
       case _ => Unit
     }
 
@@ -66,6 +67,12 @@ trait CurlFormat {
           b.append(s"  --header '${quote(k)}: ${quote(v)}'")
           b.append(" \\\n")
         }
+    }
+
+    // cookies
+    request.cookies.foreach { cookie =>
+      b.append(s"""  --cookie '${cookie.name}=${cookie.value}'""")
+      b.append(" \\\n")
     }
 
     // body (note that this has only been checked for text, not binary)
@@ -102,7 +109,7 @@ trait CurlFormat {
       Option(HttpUtils.parseCharset(ct)).getOrElse {
         StandardCharsets.UTF_8
       }.name()
-    }.getOrElse(HttpUtils.parseCharset("UTF-8").name())
+    }.getOrElse(StandardCharsets.UTF_8.name())
   }
 
   def quote(unsafe: String): String = unsafe.replace("'", "'\\''")

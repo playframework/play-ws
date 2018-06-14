@@ -7,7 +7,9 @@ package play.libs.ws;
 import akka.util.ByteString;
 
 /**
- * A body writable that takes a bytestring with InMemoryBody.
+ * A body writable that takes a ByteString with InMemoryBody.
+ *
+ * @see ByteString
  */
 public class InMemoryBodyWritable implements BodyWritable<ByteString> {
     private final InMemoryBody body;

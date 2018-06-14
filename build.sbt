@@ -38,7 +38,26 @@ lazy val mimaSettings = mimaDefaultSettings ++ Seq(
   mimaBinaryIssueFilters ++= Seq(
     ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSResponse.getBodyAsSource"),
     ProblemFilters.exclude[MissingClassProblem]("play.api.libs.ws.package$"),
-    ProblemFilters.exclude[MissingClassProblem]("play.api.libs.ws.package")
+    ProblemFilters.exclude[MissingClassProblem]("play.api.libs.ws.package"),
+
+    // Implemented as a default method at the interface
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSResponse.getBodyAsSource"),
+
+    // Added to have better parity between Java and Scala APIs
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getBody"),
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getAuth"),
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getMethod"),
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.setAuth"),
+
+    // Now have a default implementation at the interface
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSRequest.getPassword"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSRequest.getUsername"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSRequest.setAuth"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSRequest.getScheme"),
+
+    // Add getUri method
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSResponse.getUri"),
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.api.libs.ws.StandaloneWSResponse.uri")
   )
 )
 
@@ -269,10 +288,6 @@ lazy val `play-ws-standalone` = project
   .in(file("play-ws-standalone"))
   .settings(commonSettings ++ Seq(
     libraryDependencies ++= standaloneApiWSDependencies,
-    mimaBinaryIssueFilters ++= Seq(
-      ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSResponse.getUri"),
-      ProblemFilters.exclude[ReversedMissingMethodProblem]("play.api.libs.ws.StandaloneWSResponse.uri")
-    ),
     mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ws-standalone" % "1.0.0"))
   )
   .disablePlugins(sbtassembly.AssemblyPlugin)
@@ -304,9 +319,6 @@ lazy val `play-ahc-ws-standalone` = project
       Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
     libraryDependencies ++= standaloneAhcWSDependencies,
     mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.0.0"),
-    mimaBinaryIssueFilters ++= Seq(
-      ProblemFilters.exclude[DirectMissingMethodProblem](
-        "play.libs.ws.ahc.StandaloneAhcWSResponse.getBodyAsSource")),
     // This will not work if you do a publishLocal, because that uses ivy...
     pomPostProcess := {
       (node: xml.Node) => addShadedDeps(List(

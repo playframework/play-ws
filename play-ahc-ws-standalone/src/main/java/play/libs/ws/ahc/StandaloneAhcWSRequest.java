@@ -20,8 +20,6 @@ import play.shaded.ahc.org.asynchttpclient.cookie.Cookie;
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils;
 
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
@@ -51,9 +49,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
     private final List<WSCookie> cookies = new ArrayList<>();
 
-    private String username;
-    private String password;
-    private WSAuthScheme scheme;
+    private WSAuthInfo auth;
     private WSSignatureCalculator calculator;
     private final StandaloneAhcWSClient client;
 
@@ -165,8 +161,6 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
     @Override
     public StandaloneAhcWSRequest setAuth(String userInfo) {
-        this.scheme = WSAuthScheme.BASIC;
-
         if (userInfo.equals("")) {
             throw new RuntimeException(new MalformedURLException("userInfo should not be empty"));
         }
@@ -174,32 +168,23 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
         int split = userInfo.indexOf(":");
 
         if (split == 0) { // We only have a password without user
-            this.username = "";
-            this.password = userInfo.substring(1);
+            this.auth = new WSAuthInfo("", userInfo.substring(1), WSAuthScheme.BASIC);
         } else if (split == -1) { // We only have a username without password
-            this.username = userInfo;
-            this.password = "";
+            this.auth = new WSAuthInfo(userInfo, "", WSAuthScheme.BASIC);
         } else {
-            this.username = userInfo.substring(0, split);
-            this.password = userInfo.substring(split + 1);
+            this.auth = new WSAuthInfo(
+                userInfo.substring(0, split),
+                userInfo.substring(split + 1),
+                WSAuthScheme.BASIC
+            );
         }
 
         return this;
     }
 
     @Override
-    public StandaloneAhcWSRequest setAuth(String username, String password) {
-        this.username = username;
-        this.password = password;
-        this.scheme = WSAuthScheme.BASIC;
-        return this;
-    }
-
-    @Override
-    public StandaloneAhcWSRequest setAuth(String username, String password, WSAuthScheme scheme) {
-        this.username = username;
-        this.password = password;
-        this.scheme = scheme;
+    public StandaloneAhcWSRequest setAuth(WSAuthInfo auth) {
+        this.auth = auth;
         return this;
     }
 
@@ -281,6 +266,11 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     @Override
+    public Optional<BodyWritable> getBody() {
+        return Optional.ofNullable(this.bodyWritable);
+    }
+
+    @Override
     public Map<String, List<String>> getHeaders() {
         return new HashMap<>(this.headers);
     }
@@ -301,18 +291,8 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     @Override
-    public String getUsername() {
-        return this.username;
-    }
-
-    @Override
-    public String getPassword() {
-        return this.password;
-    }
-
-    @Override
-    public WSAuthScheme getScheme() {
-        return this.scheme;
+    public Optional<WSAuthInfo> getAuth() {
+        return Optional.ofNullable(this.auth);
     }
 
     @Override
@@ -405,8 +385,8 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     Request buildRequest() {
-        boolean validate = true;
-        HttpHeaders possiblyModifiedHeaders = new DefaultHttpHeaders(validate);
+        final boolean validate = true;
+        final HttpHeaders possiblyModifiedHeaders = new DefaultHttpHeaders(validate);
         this.headers.forEach(possiblyModifiedHeaders::add);
 
         RequestBuilder builder = new RequestBuilder(method);
@@ -414,9 +394,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
         builder.setUrl(url);
         builder.setQueryParams(queryParameters);
 
-        if (bodyWritable == null) {
-            // do nothing
-        } else {
+        getBody().ifPresent(bodyWritable -> {
             // Detect and maybe add content type
             String contentType = possiblyModifiedHeaders.get(CONTENT_TYPE);
             if (contentType == null) {
@@ -470,7 +448,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
             } else {
                 throw new IllegalStateException("Unknown body writable: " + bodyWritable);
             }
-        }
+        });
 
         builder.setHeaders(possiblyModifiedHeaders);
 
@@ -486,9 +464,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
             builder.setVirtualHost(this.virtualHost);
         }
 
-        if (this.username != null && this.password != null && this.scheme != null) {
-            builder.setRealm(auth(this.username, this.password, this.scheme));
-        }
+        this.getAuth().ifPresent(auth -> builder.setRealm(auth(auth.getUsername(), auth.getPassword(), auth.getScheme())));
 
         if (this.calculator != null) {
             if (this.calculator instanceof OAuth.OAuthCalculator) {
@@ -532,7 +508,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
     Realm auth(String username, String password, WSAuthScheme scheme) {
         Realm.AuthScheme authScheme = Realm.AuthScheme.valueOf(scheme.name());
-        Boolean usePreemptiveAuth = !(this.scheme != null && this.scheme == WSAuthScheme.DIGEST);
+        Boolean usePreemptiveAuth = scheme != WSAuthScheme.DIGEST;
         return (new Realm.Builder(username, password))
                 .setScheme(authScheme)
                 .setUsePreemptiveAuth(usePreemptiveAuth)
