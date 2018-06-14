@@ -7,14 +7,15 @@ package play.api.libs.ws.ahc.cache
 
 import play.shaded.ahc.org.asynchttpclient._
 import com.typesafe.play.cachecontrol.ResponseCachingActions.{ DoCacheResponse, DoNotCacheResponse }
-import org.slf4j.{ LoggerFactory, Logger }
+import org.slf4j.{ Logger, LoggerFactory }
+import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 
 import scala.concurrent.Await
 
 /**
  * An async handler that accumulates a response and stores it to cache in the background.
  */
-class BackgroundAsyncHandler[T](request: Request, cache: AhcHttpCache)
+class BackgroundAsyncHandler[T](request: Request, cache: AhcHttpCache, ahcConfig: AsyncHttpClientConfig)
   extends AsyncHandler[T]
   with Debug {
 
@@ -22,7 +23,7 @@ class BackgroundAsyncHandler[T](request: Request, cache: AhcHttpCache)
 
   private val timeout = scala.concurrent.duration.Duration(1, "second")
 
-  private val builder = new CacheableResponseBuilder
+  private val builder = new CacheableResponseBuilder(ahcConfig)
 
   private val key = EffectiveURIKey(request)
 
@@ -40,7 +41,7 @@ class BackgroundAsyncHandler[T](request: Request, cache: AhcHttpCache)
   }
 
   @throws(classOf[Exception])
-  def onHeadersReceived(headers: HttpResponseHeaders): AsyncHandler.State = {
+  def onHeadersReceived(headers: HttpHeaders): AsyncHandler.State = {
     builder.accumulate(headers)
     AsyncHandler.State.CONTINUE
   }

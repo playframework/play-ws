@@ -14,8 +14,8 @@ import play.api.libs.oauth.{ ConsumerKey, OAuthCalculator, RequestToken }
 import play.api.libs.ws._
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
-import play.shaded.ahc.org.asynchttpclient.cookie.{ Cookie => AHCCookie }
-import play.shaded.ahc.org.asynchttpclient.{ Param, Request => AHCRequest }
+import play.shaded.ahc.io.netty.handler.codec.http.cookie.{ Cookie => AHCCookie }
+import play.shaded.ahc.org.asynchttpclient.{ Param, RequestBuilderBase, SignatureCalculator, Request => AHCRequest }
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
@@ -123,8 +123,8 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
           .buildRequest()
 
         req.getCookies.asScala must size(1)
-        req.getCookies.asScala.head.getName must beEqualTo("cookie1")
-        req.getCookies.asScala.head.getValue must beEqualTo("value1")
+        req.getCookies.asScala.head.name must beEqualTo("cookie1")
+        req.getCookies.asScala.head.value must beEqualTo("value1")
       }
     }
 
@@ -137,11 +137,11 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
           .buildRequest()
 
         req.getCookies.asScala must size(2)
-        req.getCookies.asScala.head.getName must beEqualTo("cookie1")
-        req.getCookies.asScala.head.getValue must beEqualTo("value1")
+        req.getCookies.asScala.head.name must beEqualTo("cookie1")
+        req.getCookies.asScala.head.value must beEqualTo("value1")
 
-        req.getCookies.asScala(1).getName must beEqualTo("cookie2")
-        req.getCookies.asScala(1).getValue must beEqualTo("value2")
+        req.getCookies.asScala(1).name must beEqualTo("cookie2")
+        req.getCookies.asScala(1).value must beEqualTo("value2")
       }
     }
 
@@ -155,11 +155,11 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
           .buildRequest()
 
         req.getCookies.asScala must size(2)
-        req.getCookies.asScala.head.getName must beEqualTo("cookie1")
-        req.getCookies.asScala.head.getValue must beEqualTo("value1")
+        req.getCookies.asScala.head.name must beEqualTo("cookie1")
+        req.getCookies.asScala.head.value must beEqualTo("value1")
 
-        req.getCookies.asScala(1).getName must beEqualTo("cookie2")
-        req.getCookies.asScala(1).getValue must beEqualTo("value2")
+        req.getCookies.asScala(1).name must beEqualTo("cookie2")
+        req.getCookies.asScala(1).value must beEqualTo("value2")
       }
     }
 
@@ -173,11 +173,11 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
           .buildRequest()
 
         req.getCookies.asScala must size(2)
-        req.getCookies.asScala.head.getName must beEqualTo("cookie3")
-        req.getCookies.asScala.head.getValue must beEqualTo("value3")
+        req.getCookies.asScala.head.name must beEqualTo("cookie3")
+        req.getCookies.asScala.head.value must beEqualTo("value3")
 
-        req.getCookies.asScala(1).getName must beEqualTo("cookie4")
-        req.getCookies.asScala(1).getValue must beEqualTo("value4")
+        req.getCookies.asScala(1).name must beEqualTo("cookie4")
+        req.getCookies.asScala(1).value must beEqualTo("value4")
       }
     }
 
@@ -460,7 +460,7 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
 
     "a custom signature calculator" in {
       var called = false
-      val calc = new play.shaded.ahc.org.asynchttpclient.SignatureCalculator with WSSignatureCalculator {
+      val calc = new SignatureCalculator with WSSignatureCalculator {
         override def calculateAndAddSignature(
           request: play.shaded.ahc.org.asynchttpclient.Request,
           requestBuilder: play.shaded.ahc.org.asynchttpclient.RequestBuilderBase[_]): Unit = {

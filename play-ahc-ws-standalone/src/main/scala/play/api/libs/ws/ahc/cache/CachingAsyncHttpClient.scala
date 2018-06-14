@@ -5,6 +5,7 @@
 package play.api.libs.ws.ahc.cache
 
 import java.io._
+import java.util.function.Predicate
 
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -16,12 +17,12 @@ import scala.concurrent.{ Await, ExecutionContext }
 
 trait TimeoutResponse {
 
-  def generateTimeoutResponse(request: Request): CacheableResponse = {
+  def generateTimeoutResponse(request: Request, ahcConfig: AsyncHttpClientConfig): CacheableResponse = {
     val uri = request.getUri
     val status = new CacheableHttpResponseStatus(uri, 504, "Gateway Timeout", "")
-    val headers = CacheableHttpResponseHeaders(false, new DefaultHttpHeaders())
+    val headers = new DefaultHttpHeaders()
     val bodyParts = java.util.Collections.emptyList[CacheableHttpResponseBodyPart]()
-    CacheableResponse(status, headers, bodyParts)
+    CacheableResponse(status, headers, bodyParts, ahcConfig)
   }
 }
 
@@ -215,16 +216,16 @@ class CachingAsyncHttpClient(
   }
 
   protected def backgroundAsyncHandler[T](request: Request): BackgroundAsyncHandler[T] = {
-    new BackgroundAsyncHandler(request, ahcHttpCache)
+    new BackgroundAsyncHandler(request, ahcHttpCache, underlying.getConfig)
   }
 
   protected def serveTimeout[T](request: Request, handler: AsyncHandler[T])(implicit ec: ExecutionContext): CacheFuture[T] = {
-    val timeoutResponse = generateTimeoutResponse(request)
+    val timeoutResponse = generateTimeoutResponse(request, underlying.getConfig)
     executeFromCache(handler, request, timeoutResponse)
   }
 
   protected def cacheAsyncHandler[T](request: Request, handler: AsyncCompletionHandler[T], action: Option[ResponseServeAction] = None): AsyncCachingHandler[T] = {
-    new AsyncCachingHandler(request, handler, ahcHttpCache, action)
+    new AsyncCachingHandler(request, handler, ahcHttpCache, action, underlying.getConfig)
   }
 
   override def prepareGet(s: String): BoundRequestBuilder = {
@@ -290,5 +291,13 @@ class CachingAsyncHttpClient(
   override def executeRequest(requestBuilder: RequestBuilder): ListenableFuture[AHCResponse] = {
     underlying.executeRequest(requestBuilder)
   }
+
+  override def prepare(method: String, url: String): BoundRequestBuilder = underlying.prepare(method, url)
+
+  override def getClientStats: ClientStats = underlying.getClientStats
+
+  override def flushChannelPoolPartitions(predicate: Predicate[AnyRef]): Unit = underlying.flushChannelPoolPartitions(predicate)
+
+  override def getConfig: AsyncHttpClientConfig = underlying.getConfig
 }
 

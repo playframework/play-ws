@@ -97,7 +97,8 @@ class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(implici
         state.statusText,
         state.uriOption.get,
         state.responseHeaders,
-        state.publisher)
+        state.publisher,
+        asyncHttpClient.getConfig.isUseLaxCookieEncoder)
     )
     asyncHttpClient.executeRequest(request, new DefaultStreamedAsyncHandler[StreamedResponse](function, promise))
     promise.future

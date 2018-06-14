@@ -11,7 +11,7 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import play.api.libs.ws._
 import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
-import play.shaded.ahc.org.asynchttpclient.cookie.{ Cookie => AHCCookie }
+import play.shaded.ahc.io.netty.handler.codec.http.cookie.{ DefaultCookie, Cookie => AHCCookie }
 import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse }
 
 class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReadables with DefaultBodyWritables {
@@ -23,7 +23,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
       val (name, value, wrap, domain, path, maxAge, secure, httpOnly) =
         ("someName", "someValue", true, "example.com", "/", 1000L, false, false)
 
-      val ahcCookie: AHCCookie = new AHCCookie(name, value, wrap, domain, path, maxAge, secure, httpOnly)
+      val ahcCookie: AHCCookie = asCookie(name, value, wrap, domain, path, maxAge, secure, httpOnly)
       ahcResponse.getCookies returns util.Arrays.asList(ahcCookie)
 
       val response = StandaloneAhcWSResponse(ahcResponse)
@@ -45,7 +45,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
       val (name, value, wrap, domain, path, maxAge, secure, httpOnly) =
         ("someName", "someValue", true, "example.com", "/", 1000L, false, false)
 
-      val ahcCookie: AHCCookie = new AHCCookie(name, value, wrap, domain, path, maxAge, secure, httpOnly)
+      val ahcCookie: AHCCookie = asCookie(name, value, wrap, domain, path, maxAge, secure, httpOnly)
       ahcResponse.getCookies returns util.Arrays.asList(ahcCookie)
 
       val response = StandaloneAhcWSResponse(ahcResponse)
@@ -66,7 +66,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
     "return -1 values of expires and maxAge as None" in {
       val ahcResponse: AHCResponse = mock[AHCResponse]
 
-      val ahcCookie: AHCCookie = new AHCCookie("someName", "value", true, "domain", "path", -1L, false, false)
+      val ahcCookie: AHCCookie = asCookie("someName", "value", true, "domain", "path", -1L, false, false)
       ahcResponse.getCookies returns util.Arrays.asList(ahcCookie)
 
       val response = StandaloneAhcWSResponse(ahcResponse)
@@ -157,6 +157,17 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
 
       response.headerValues("Foo") must beEqualTo(Seq("bar", "baz"))
     }
+  }
+
+  def asCookie(name: String, value: String, wrap: Boolean, domain: String, path: String, maxAge: Long, secure: Boolean, httpOnly: Boolean): AHCCookie = {
+    val c = new DefaultCookie(name, value)
+    c.setWrap(wrap)
+    c.setDomain(domain)
+    c.setPath(path)
+    c.setMaxAge(maxAge)
+    c.setSecure(secure)
+    c.setHttpOnly(httpOnly)
+    c
   }
 
 }
