@@ -6,11 +6,11 @@ import sbt._
 object Dependencies {
   val logback = Seq("ch.qos.logback" % "logback-core" % "1.2.3")
 
-  val assertj = Seq("org.assertj" % "assertj-core" % "3.9.1")
+  val assertj = Seq("org.assertj" % "assertj-core" % "3.10.0")
 
   val awaitility = Seq("org.awaitility" % "awaitility" % "3.1.0")
 
-  val specsVersion = "4.0.3"
+  val specsVersion = "4.2.0"
   val specsBuild = Seq(
     "specs2-core",
     "specs2-junit",
@@ -30,7 +30,7 @@ object Dependencies {
 
   val javaxInject = Seq("javax.inject" % "javax.inject" % "1")
 
-  val sslConfigVersion = "0.2.2"
+  val sslConfigVersion = "0.2.3"
   val sslConfigCore = Seq("com.typesafe" %% "ssl-config-core" % sslConfigVersion)
 
   val scalaXmlVersion = "1.1.0"
@@ -45,7 +45,7 @@ object Dependencies {
   val asyncHttpClientVersion = "2.0.39"
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % asyncHttpClientVersion)
 
-  val akkaVersion = "2.5.11"
+  val akkaVersion = "2.5.12"
   val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion)
   val akkaHttp = Seq("com.typesafe.akka" %% "akka-http" % "10.1.0")
 
