@@ -32,6 +32,7 @@ public class StreamedResponse implements StandaloneWSResponse, CookieBuilder {
     private final URI uri;
     private final Publisher<HttpResponseBodyPart> publisher;
     private final StandaloneAhcWSClient client;
+    private final boolean useLaxCookieEncoder;
 
     private List<WSCookie> cookies;
 
@@ -39,13 +40,15 @@ public class StreamedResponse implements StandaloneWSResponse, CookieBuilder {
                             int status,
                             String statusText, URI uri,
                             scala.collection.Map<String, Seq<String>> headers,
-                            Publisher<HttpResponseBodyPart> publisher) {
+                            Publisher<HttpResponseBodyPart> publisher,
+                            boolean useLaxCookieEncoder) {
         this.client = client;
         this.status = status;
         this.statusText = statusText;
         this.uri = uri;
         this.headers = asJava(headers);
         this.publisher = publisher;
+        this.useLaxCookieEncoder = useLaxCookieEncoder;
     }
 
     @Override
@@ -105,6 +108,11 @@ public class StreamedResponse implements StandaloneWSResponse, CookieBuilder {
     @Override
     public Source<ByteString, ?> getBodyAsSource() {
         return Source.fromPublisher(publisher).map(bodyPart -> ByteString.fromArray(bodyPart.getBodyPartBytes()));
+    }
+
+    @Override
+    public boolean isUseLaxCookieEncoder() {
+        return useLaxCookieEncoder;
     }
 
     private java.util.Map<String, List<String>> asJava(scala.collection.Map<String, Seq<String>> scalaMap) {
