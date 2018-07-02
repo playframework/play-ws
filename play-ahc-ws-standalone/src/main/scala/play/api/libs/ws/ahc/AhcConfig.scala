@@ -253,7 +253,7 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
   /**
    * Configures the SSL.  Can use the system SSLContext.getDefault() if "ws.ssl.default" is set.
    */
-  def configureSSL(sslConfig: SSLConfigSettings) {
+  def configureSSL(sslConfig: SSLConfigSettings): Unit = {
 
     // context!
     val sslContext = if (sslConfig.default) {
@@ -299,7 +299,7 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
     new DefaultTrustManagerFactoryWrapper(ssl.trustManagerConfig.algorithm)
   }
 
-  def validateDefaultTrustManager(sslConfig: SSLConfigSettings) {
+  def validateDefaultTrustManager(sslConfig: SSLConfigSettings): Unit = {
     // If we are using a default SSL context, we can't filter out certificates with weak algorithms
     // We ALSO don't have access to the trust manager from the SSLContext without doing horrible things
     // with reflection.
