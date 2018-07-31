@@ -42,7 +42,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
     private BodyWritable<?> bodyWritable;
 
-    private final String url;
+    private String url;
     private String method = "GET";
     private final Map<String, List<String>> headers = new HashMap<>();
     private final Map<String, List<String>> queryParameters = new LinkedHashMap<>();
@@ -223,6 +223,12 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     @Override
     public Optional<String> getContentType() {
         return getHeader(CONTENT_TYPE);
+    }
+
+    @Override
+    public StandaloneAhcWSRequest setUrl(String url) {
+        this.url = url;
+        return this;
     }
 
     @Override

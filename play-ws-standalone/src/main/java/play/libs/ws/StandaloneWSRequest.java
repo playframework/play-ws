@@ -135,6 +135,14 @@ public interface StandaloneWSRequest {
     //-------------------------------------------------------------------------
 
     /**
+     * Sets the URL of the request.
+     *
+     * @param url the URL of the request
+     * @return the modified WSRequest.
+     */
+    StandaloneWSRequest setUrl(String url);
+
+    /**
      * Sets the HTTP method this request should use, where the no args execute() method is invoked.
      *
      * @param method the HTTP method.

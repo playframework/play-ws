@@ -183,6 +183,8 @@ case class StandaloneAhcWSRequest(
     withMethod(method).execute()
   }
 
+  override def withUrl(url: String): Self = copy(url = url)
+
   override def withMethod(method: String): Self = copy(method = method)
 
   override def execute(): Future[Response] = {
