@@ -83,13 +83,13 @@ trait StandaloneWSResponse {
    * But you can also render as JSON
    *
    * {{{
-   * val responseBodyAsJson: JsValue = response.getBody[JsValue]
+   * val responseBodyAsJson: JsValue = response.body[JsValue]
    * }}}
    *
    * or as XML:
    *
    * {{{
-   * val responseBodyAsByteString: ByteString = response.getBody[ByteString]
+   * val responseBodyAsByteString: ByteString = response.body[ByteString]
    * }}}
    */
   def body[T: BodyReadable]: T = {
