@@ -12,10 +12,24 @@ import akka.util.ByteString;
 import org.reactivestreams.Publisher;
 import play.api.libs.ws.ahc.FormUrlEncodedParser;
 import play.libs.oauth.OAuth;
-import play.libs.ws.*;
+import play.libs.ws.BodyWritable;
+import play.libs.ws.DefaultBodyWritables;
+import play.libs.ws.InMemoryBodyWritable;
+import play.libs.ws.SourceBodyWritable;
+import play.libs.ws.StandaloneWSRequest;
+import play.libs.ws.StandaloneWSResponse;
+import play.libs.ws.WSAuthInfo;
+import play.libs.ws.WSAuthScheme;
+import play.libs.ws.WSCookie;
+import play.libs.ws.WSRequestExecutor;
+import play.libs.ws.WSRequestFilter;
+import play.libs.ws.WSSignatureCalculator;
 import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders;
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders;
-import play.shaded.ahc.org.asynchttpclient.*;
+import play.shaded.ahc.org.asynchttpclient.Realm;
+import play.shaded.ahc.org.asynchttpclient.Request;
+import play.shaded.ahc.org.asynchttpclient.RequestBuilder;
+import play.shaded.ahc.org.asynchttpclient.SignatureCalculator;
 import play.shaded.ahc.org.asynchttpclient.cookie.Cookie;
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils;
 
@@ -25,7 +39,15 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
 import static java.util.Collections.singletonList;
@@ -161,11 +183,11 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
     @Override
     public StandaloneAhcWSRequest setAuth(String userInfo) {
-        if (userInfo.equals("")) {
+        if (userInfo.isEmpty()) {
             throw new RuntimeException(new MalformedURLException("userInfo should not be empty"));
         }
 
-        int split = userInfo.indexOf(":");
+        int split = userInfo.indexOf(':');
 
         if (split == 0) { // We only have a password without user
             this.auth = new WSAuthInfo("", userInfo.substring(1), WSAuthScheme.BASIC);
@@ -493,7 +515,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
         return builder.build();
     }
 
-    private void addValueTo(Map<String, List<String>> map, String name, String value) {
+    private static void addValueTo(Map<String, List<String>> map, String name, String value) {
         if (map.containsKey(name)) {
             List<String> values = map.get(name);
             values.add(value);
@@ -504,7 +526,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
         }
     }
 
-    Realm auth(String username, String password, WSAuthScheme scheme) {
+    static Realm auth(String username, String password, WSAuthScheme scheme) {
         Realm.AuthScheme authScheme = Realm.AuthScheme.valueOf(scheme.name());
         Boolean usePreemptiveAuth = scheme != WSAuthScheme.DIGEST;
         return (new Realm.Builder(username, password))

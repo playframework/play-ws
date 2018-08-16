@@ -304,6 +304,6 @@ class CacheableHttpResponseBodyPart(chunk: Array[Byte], last: Boolean) extends H
   override def length(): Int = if (chunk != null) chunk.length else 0
 
   override def toString: String = {
-    s"CacheableHttpResponseBodyPart(last = $last, chunk size = ${chunk.size})"
+    s"CacheableHttpResponseBodyPart(last = $last, chunk size = ${chunk.length})"
   }
 }
