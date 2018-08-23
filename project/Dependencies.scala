@@ -10,7 +10,7 @@ object Dependencies {
 
   val awaitility = Seq("org.awaitility" % "awaitility" % "3.1.0")
 
-  val specsVersion = "4.2.0"
+  val specsVersion = "4.3.3"
   val specsBuild = Seq(
     "specs2-core",
     "specs2-junit",
@@ -30,7 +30,7 @@ object Dependencies {
 
   val javaxInject = Seq("javax.inject" % "javax.inject" % "1")
 
-  val sslConfigVersion = "0.2.3"
+  val sslConfigVersion = "0.2.4"
   val sslConfigCore = Seq("com.typesafe" %% "ssl-config-core" % sslConfigVersion)
 
   val scalaXmlVersion = "1.1.0"
