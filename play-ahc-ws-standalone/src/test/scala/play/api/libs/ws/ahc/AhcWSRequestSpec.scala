@@ -458,6 +458,12 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
 
   "StandaloneAhcWSRequest supports" in {
 
+    "replace url" in withClient { client =>
+      val req = client.url("http://playframework.com/")
+        .withUrl("http://www.example.com/")
+      req.url must_=== "http://www.example.com/"
+    }
+
     "a custom signature calculator" in {
       var called = false
       val calc = new play.shaded.ahc.org.asynchttpclient.SignatureCalculator with WSSignatureCalculator {

@@ -49,6 +49,10 @@ lazy val mimaSettings = mimaDefaultSettings ++ Seq(
     ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getMethod"),
     ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.setAuth"),
 
+    // Added in #268 for 2.0.0
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.setUrl"),
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.api.libs.ws.StandaloneWSRequest.withUrl"),
+
     // Now have a default implementation at the interface
     ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSRequest.getPassword"),
     ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSRequest.getUsername"),

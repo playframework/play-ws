@@ -36,6 +36,17 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
       actual must beEqualTo("foo.com")
     }
 
+    "set the url" in {
+      val client = mock[StandaloneAhcWSClient]
+      val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
+      req.getUrl must be_===("http://playframework.com/") and {
+        val setReq = req.setUrl("http://example.com")
+        setReq.getUrl must be_===("http://example.com") and {
+          setReq must be_===(req)
+        }
+      }
+    }
+
     "For POST requests" in {
 
       "get method" in {
@@ -43,7 +54,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
         val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
           .setMethod("POST")
 
-        req.getMethod must be_==("POST")
+        req.getMethod must be_===("POST")
       }
 
       "set text/plain content-types for text bodies" in {

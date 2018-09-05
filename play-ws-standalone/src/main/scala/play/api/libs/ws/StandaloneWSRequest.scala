@@ -204,6 +204,11 @@ trait StandaloneWSRequest {
   def withProxyServer(proxyServer: WSProxyServer): Self
 
   /**
+   * Sets the url for this request.
+   */
+  def withUrl(url: String): Self
+
+  /**
    * Sets the method for this request
    */
   def withMethod(method: String): Self
