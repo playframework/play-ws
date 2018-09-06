@@ -22,6 +22,8 @@ public interface StandaloneWSClient extends java.io.Closeable {
      * properties on the StandaloneWSRequest by chaining calls, and execute the request to
      * return an asynchronous {@code CompletionStage<StandaloneWSResponse>}.
      *
+     * SHOULD NOT include the query string. Use {@link StandaloneWSRequest#addQueryParameter(String, String)} instead.
+     *
      * @param url the URL to request
      * @return the request
      */

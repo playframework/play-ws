@@ -22,6 +22,7 @@ trait StandaloneWSClient extends Closeable {
    * Generates a request.  Throws IllegalArgumentException if the URL is invalid.
    *
    * @param url The base URL to make HTTP requests to.
+   *            SHOULD NOT include the query string. Use [[StandaloneWSRequest.withQueryStringParameters]] instead.
    * @return a request
    */
   @throws[IllegalArgumentException]
