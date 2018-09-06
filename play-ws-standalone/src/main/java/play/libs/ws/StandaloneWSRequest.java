@@ -136,6 +136,7 @@ public interface StandaloneWSRequest {
 
     /**
      * Sets the URL of the request.
+     * SHOULD NOT include the query string. Use {@link StandaloneWSRequest#addQueryParameter(String, String)} instead.
      *
      * @param url the URL of the request
      * @return the modified WSRequest.

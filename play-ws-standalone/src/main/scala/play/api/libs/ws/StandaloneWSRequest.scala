@@ -30,6 +30,7 @@ trait StandaloneWSRequest {
   /**
    * The URI for this request
    */
+  @throws[java.net.URISyntaxException]("if the url is invalid, e.g. /path?foo=|")
   def uri: URI
 
   /**
@@ -205,6 +206,7 @@ trait StandaloneWSRequest {
 
   /**
    * Sets the url for this request.
+   * SHOULD NOT include the query string. Use [[withQueryStringParameters]] instead.
    */
   def withUrl(url: String): Self
 
