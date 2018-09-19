@@ -107,7 +107,7 @@ public class AhcCurlRequestLogger implements WSRequestFilter {
 
     private static String findCharset(StandaloneAhcWSRequest request) {
         return Optional.ofNullable(request.getContentType())
-                .flatMap(contentType -> contentType.map(HttpUtils::parseCharset))
+                .flatMap(contentType -> contentType.map(HttpUtils::extractContentTypeCharsetAttribute))
                 .orElse(StandardCharsets.UTF_8).name();
     }
 

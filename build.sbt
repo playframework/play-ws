@@ -274,26 +274,16 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
     name := "shaded-asynchttpclient",
     logLevel in assembly := Level.Error,
     assemblyMergeStrategy in assembly := {
-<<<<<<< HEAD
       val NettyPropertiesPath = "META-INF" + File.separator + "io.netty.versions.properties"
       ({
         case NettyPropertiesPath =>
           MergeStrategy.first
-        case "ahc-default.properties" =>
+        case ahcProperties if ahcProperties.endsWith("ahc-default.properties") =>
           ahcMerge
         case x =>
           val oldStrategy = (assemblyMergeStrategy in assembly).value
           oldStrategy(x)
       }: String => MergeStrategy)
-=======
-      case "META-INF/io.netty.versions.properties" =>
-        MergeStrategy.first
-      case ahcProperties if ahcProperties.endsWith("ahc-default.properties") =>
-        ahcMerge
-      case x =>
-        val oldStrategy = (assemblyMergeStrategy in assembly).value
-        oldStrategy(x)
->>>>>>> dc817f9... Upgrade async-http-client to 2.5.2 to expose client connection stats (#262)
     },
     //logLevel in assembly := Level.Debug,
     assemblyShadeRules in assembly := Seq(
