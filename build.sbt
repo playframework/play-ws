@@ -78,7 +78,60 @@ lazy val mimaSettings = mimaDefaultSettings ++ Seq(
     ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getRequestTimeout"),
     ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getFollowRedirects"),
     ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getCalculator"),
-    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getContentType")
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getContentType"),
+
+    // Update async-http-client to 2.5.2
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StreamedResponse.this"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.libs.ws.ahc.StandaloneAhcWSResponse.asCookie"),
+    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.StandaloneAhcWSRequest.asCookie"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.StandaloneAhcWSRequest.asCookie"),
+    ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.ahc.AhcWSClientConfig$"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.apply"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.copy"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.this"),
+    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.StreamedResponse.asCookie"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.StreamedResponse.asCookie"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.StreamedResponse.this"),
+    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.WSCookieConverter.asCookie"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.WSCookieConverter.asCookie"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.WSCookieConverter.asCookie"),
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.api.libs.ws.ahc.WSCookieConverter.asCookie"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.DefaultStreamedAsyncHandler.onHeadersReceived"),
+    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.StandaloneAhcWSResponse.asCookie"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.StandaloneAhcWSResponse.asCookie"),
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.api.libs.ws.ahc.CookieBuilder.useLaxCookieEncoder"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.AsyncCacheableConnection.debug"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.Debug.debug"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.cache.Debug.debug"),
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.api.libs.ws.ahc.cache.Debug.debug"),
+    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.cache.CacheableResponse.copy$default$2"),
+    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.cache.CacheableResponse.ahcHeaders"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.cache.CacheableResponse.copy"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.CacheableResponse.getHeaders"),
+    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.cache.CacheableResponse.headers"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.cache.CacheableResponse.this"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.CacheableResponse.getHeader"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.AhcHttpCache.calculateTimeToLive"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.AhcHttpCache.debug"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.AhcHttpCache.generateOriginResponse"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.CacheableResponseBuilder.accumulate"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.cache.CacheableResponseBuilder.this"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.AsyncCachingHandler.debug"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.cache.AsyncCachingHandler.generateTimeoutResponse"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.AsyncCachingHandler.onHeadersReceived"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.cache.AsyncCachingHandler.this"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.cache.CacheableResponse.apply"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.CacheableResponse.apply"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.CacheableResponse.apply"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.cache.TimeoutResponse.generateTimeoutResponse"),
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.api.libs.ws.ahc.cache.TimeoutResponse.generateTimeoutResponse"),
+    ProblemFilters.exclude[MissingClassProblem]("play.api.libs.ws.ahc.cache.CacheableHttpResponseHeaders"),
+    ProblemFilters.exclude[MissingClassProblem]("play.api.libs.ws.ahc.cache.CacheableHttpResponseHeaders$"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.CachingAsyncHttpClient.debug"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.cache.CachingAsyncHttpClient.generateTimeoutResponse"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.BackgroundAsyncHandler.debug"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.BackgroundAsyncHandler.onHeadersReceived"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.cache.BackgroundAsyncHandler.this")
   )
 )
 
@@ -221,6 +274,7 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
     name := "shaded-asynchttpclient",
     logLevel in assembly := Level.Error,
     assemblyMergeStrategy in assembly := {
+<<<<<<< HEAD
       val NettyPropertiesPath = "META-INF" + File.separator + "io.netty.versions.properties"
       ({
         case NettyPropertiesPath =>
@@ -231,6 +285,15 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
           val oldStrategy = (assemblyMergeStrategy in assembly).value
           oldStrategy(x)
       }: String => MergeStrategy)
+=======
+      case "META-INF/io.netty.versions.properties" =>
+        MergeStrategy.first
+      case ahcProperties if ahcProperties.endsWith("ahc-default.properties") =>
+        ahcMerge
+      case x =>
+        val oldStrategy = (assemblyMergeStrategy in assembly).value
+        oldStrategy(x)
+>>>>>>> dc817f9... Upgrade async-http-client to 2.5.2 to expose client connection stats (#262)
     },
     //logLevel in assembly := Level.Debug,
     assemblyShadeRules in assembly := Seq(

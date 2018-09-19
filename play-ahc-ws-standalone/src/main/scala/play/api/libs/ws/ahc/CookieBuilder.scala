@@ -1,20 +1,21 @@
 package play.api.libs.ws.ahc
 
 import play.api.libs.ws.{ DefaultWSCookie, WSCookie }
-import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders.Names._
-import play.shaded.ahc.org.asynchttpclient.cookie.{ Cookie, CookieDecoder }
+import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames._
+import play.shaded.ahc.io.netty.handler.codec.http.cookie.{ ClientCookieDecoder, Cookie, DefaultCookie }
 
 trait CookieBuilder extends WSCookieConverter {
   def buildCookies(headers: Map[String, Seq[String]]): Seq[WSCookie] = {
-    val option = headers.get(SET_COOKIE2).orElse(headers.get(SET_COOKIE))
+    val option = headers.get(SET_COOKIE2.toString).orElse(headers.get(SET_COOKIE.toString))
     option.map { cookiesHeaders =>
       for {
         value <- cookiesHeaders
-        Some(c) = Option(CookieDecoder.decode(value))
+        Some(c) = Some(if (useLaxCookieEncoder) ClientCookieDecoder.LAX.decode(value) else ClientCookieDecoder.STRICT.decode(value))
       } yield asCookie(c)
     }.getOrElse(Seq.empty)
   }
 
+  def useLaxCookieEncoder: Boolean
 }
 
 /**
@@ -23,24 +24,23 @@ trait CookieBuilder extends WSCookieConverter {
 trait WSCookieConverter {
 
   def asCookie(cookie: WSCookie): Cookie = {
-    Cookie.newValidCookie(
-      cookie.name,
-      cookie.value,
-      false,
-      cookie.domain.orNull,
-      cookie.path.orNull,
-      cookie.maxAge.getOrElse(-1L),
-      cookie.secure,
-      cookie.httpOnly)
+    val c = new DefaultCookie(cookie.name, cookie.value)
+    c.setWrap(false)
+    c.setDomain(cookie.domain.orNull)
+    c.setPath(cookie.path.orNull)
+    c.setMaxAge(cookie.maxAge.getOrElse(-1L))
+    c.setSecure(cookie.secure)
+    c.setHttpOnly(cookie.httpOnly)
+    c
   }
 
   def asCookie(c: Cookie): WSCookie = {
     DefaultWSCookie(
-      name = c.getName,
-      value = c.getValue,
-      domain = Option(c.getDomain),
-      path = Option(c.getPath),
-      maxAge = Option(c.getMaxAge).filterNot(_ < 0),
+      name = c.name,
+      value = c.value,
+      domain = Option(c.domain),
+      path = Option(c.path),
+      maxAge = Option(c.maxAge).filterNot(_ < 0),
       secure = c.isSecure,
       httpOnly = c.isHttpOnly
     )

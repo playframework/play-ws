@@ -33,6 +33,7 @@ import scala.concurrent.duration._
  * @param maxRequestRetry The maximum number of times to retry a request if it fails.
  * @param disableUrlEncoding Whether the raw URL should be used.
  * @param keepAlive keeps thread pool active, replaces allowPoolingConnection and allowSslConnectionPool
+ * @param useLaxCookieEncoder whether to use LAX(no cookie name/value verification) or STRICT (verifies cookie name/value) cookie decoder
  */
 case class AhcWSClientConfig(
     wsClientConfig: WSClientConfig = WSClientConfig(),
@@ -43,7 +44,8 @@ case class AhcWSClientConfig(
     maxNumberOfRedirects: Int = 5,
     maxRequestRetry: Int = 5,
     disableUrlEncoding: Boolean = false,
-    keepAlive: Boolean = true)
+    keepAlive: Boolean = true,
+    useLaxCookieEncoder: Boolean = false)
 
 /**
  * Factory for creating AhcWSClientConfig, for use from Java.
@@ -97,6 +99,7 @@ class AhcWSClientConfigParser @Inject() (
     val maxRequestRetry = configuration.getInt("play.ws.ahc.maxRequestRetry")
     val disableUrlEncoding = configuration.getBoolean("play.ws.ahc.disableUrlEncoding")
     val keepAlive = configuration.getBoolean("play.ws.ahc.keepAlive")
+    val useLaxCookieEncoder = configuration.getBoolean("play.ws.ahc.useLaxCookieEncoder")
 
     AhcWSClientConfig(
       wsClientConfig = wsClientConfig,
@@ -107,7 +110,8 @@ class AhcWSClientConfigParser @Inject() (
       maxNumberOfRedirects = maximumNumberOfRedirects,
       maxRequestRetry = maxRequestRetry,
       disableUrlEncoding = disableUrlEncoding,
-      keepAlive = keepAlive
+      keepAlive = keepAlive,
+      useLaxCookieEncoder = useLaxCookieEncoder
     )
   }
 }
@@ -204,6 +208,7 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
     // shutdownQuiet=2000 (milliseconds) and shutdownTimeout=15000 (milliseconds).
     builder.setShutdownQuietPeriod(0)
     builder.setShutdownTimeout(0)
+    builder.setUseLaxCookieEncoder(ahcConfig.useLaxCookieEncoder)
   }
 
   def configureProtocols(existingProtocols: Array[String], sslConfig: SSLConfigSettings): Array[String] = {
@@ -280,7 +285,7 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
     defaultParams.setCipherSuites(cipherSuites)
     builder.setEnabledCipherSuites(cipherSuites)
 
-    builder.setAcceptAnyCertificate(sslConfig.loose.acceptAnyCertificate)
+    builder.setUseInsecureTrustManager(sslConfig.loose.acceptAnyCertificate)
 
     // If you wan't to accept any certificate you also want to use a loose netty based loose SslContext
     // Never use this in production.

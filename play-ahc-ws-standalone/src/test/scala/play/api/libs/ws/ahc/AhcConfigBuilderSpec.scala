@@ -230,7 +230,7 @@ class AhcConfigBuilderSpec extends Specification with Mockito {
           val builder = new AhcConfigBuilder(config)
 
           val asyncConfig = builder.build()
-          asyncConfig.isAcceptAnyCertificate must beFalse
+          asyncConfig.isUseInsecureTrustManager must beFalse
         }
 
         "should disable the hostname verifier if loose.acceptAnyCertificate is enabled" in {
@@ -241,7 +241,7 @@ class AhcConfigBuilderSpec extends Specification with Mockito {
           val builder = new AhcConfigBuilder(config)
 
           val asyncConfig = builder.build()
-          asyncConfig.isAcceptAnyCertificate must beTrue
+          asyncConfig.isUseInsecureTrustManager must beTrue
         }
       }
 

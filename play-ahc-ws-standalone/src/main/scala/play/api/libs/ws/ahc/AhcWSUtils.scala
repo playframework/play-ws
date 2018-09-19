@@ -14,7 +14,7 @@ private[ws] object AhcWSUtils {
   }
 
   def getCharset(contentType: String): Charset = {
-    Option(HttpUtils.parseCharset(contentType)).getOrElse {
+    Option(HttpUtils.extractContentTypeCharsetAttribute(contentType)).getOrElse {
       if (contentType.startsWith("text/"))
         StandardCharsets.ISO_8859_1
       else
