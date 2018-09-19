@@ -9,6 +9,7 @@ import play.shaded.ahc.org.asynchttpclient._
 import com.typesafe.play.cachecontrol.ResponseServeAction
 import org.joda.time.DateTime
 import org.slf4j.{ Logger, LoggerFactory }
+import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -20,7 +21,8 @@ class AsyncCachingHandler[T](
     request: Request,
     handler: AsyncCompletionHandler[T],
     cache: AhcHttpCache,
-    maybeAction: Option[ResponseServeAction])
+    maybeAction: Option[ResponseServeAction],
+    ahcConfig: AsyncHttpClientConfig)
   extends AsyncHandler[T]
   with TimeoutResponse
   with Debug {
@@ -30,7 +32,7 @@ class AsyncCachingHandler[T](
   import com.typesafe.play.cachecontrol.HttpDate
   import AsyncCachingHandler._
 
-  protected val builder = new CacheableResponseBuilder()
+  protected val builder = new CacheableResponseBuilder(ahcConfig)
 
   protected val requestTime: DateTime = HttpDate.now
 
@@ -38,7 +40,7 @@ class AsyncCachingHandler[T](
 
   protected val timeout: Duration = scala.concurrent.duration.Duration(1, "second")
 
-  protected lazy val timeoutResponse: CacheableResponse = generateTimeoutResponse(request)
+  protected lazy val timeoutResponse: CacheableResponse = generateTimeoutResponse(request, ahcConfig)
 
   /**
    * Invoked if something wrong happened inside the previous methods or when an I/O exception occurs.
@@ -77,8 +79,8 @@ class AsyncCachingHandler[T](
   /**
    * Called when all response’s headers has been processed.
    */
-  override def onHeadersReceived(responseHeaders: HttpResponseHeaders): AsyncHandler.State = {
-    if (!responseHeaders.getHeaders.contains(DATE)) {
+  override def onHeadersReceived(responseHeaders: HttpHeaders): AsyncHandler.State = {
+    if (!responseHeaders.contains(DATE)) {
       /*
        A recipient with a clock that receives a response message without a
        Date header field MUST record the time it was received and append a
@@ -88,7 +90,7 @@ class AsyncCachingHandler[T](
        https://tools.ietf.org/html/rfc7231#section-7.1.1.2
       */
       val currentDate = HttpDate.format(HttpDate.now)
-      responseHeaders.getHeaders.add(DATE, currentDate)
+      responseHeaders.add(DATE, currentDate)
     }
     builder.accumulate(responseHeaders)
     handler.onHeadersReceived(responseHeaders)

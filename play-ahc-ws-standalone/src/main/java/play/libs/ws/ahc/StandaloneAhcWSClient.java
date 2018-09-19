@@ -100,7 +100,8 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
                         state.statusText(),
                         state.uriOption().get(),
                         state.responseHeaders(),
-                        state.publisher()),
+                        state.publisher(),
+                        asyncHttpClient.getConfig().isUseLaxCookieEncoder()),
                 scalaPromise));
         return FutureConverters.toJava(scalaPromise.future());
     }

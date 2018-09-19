@@ -13,17 +13,20 @@ import org.reactivestreams.Publisher;
 import play.api.libs.ws.ahc.FormUrlEncodedParser;
 import play.libs.oauth.OAuth;
 import play.libs.ws.*;
+import play.shaded.ahc.io.netty.buffer.ByteBuf;
+import play.shaded.ahc.io.netty.buffer.Unpooled;
 import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders;
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders;
-import play.shaded.ahc.org.asynchttpclient.*;
-import play.shaded.ahc.org.asynchttpclient.cookie.Cookie;
+import play.shaded.ahc.io.netty.handler.codec.http.cookie.Cookie;
+import play.shaded.ahc.io.netty.handler.codec.http.cookie.DefaultCookie;
+import play.shaded.ahc.org.asynchttpclient.Realm;
+import play.shaded.ahc.org.asynchttpclient.Request;
+import play.shaded.ahc.org.asynchttpclient.RequestBuilder;
+import play.shaded.ahc.org.asynchttpclient.SignatureCalculator;
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils;
 
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -424,7 +427,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
                     builder.setBody(byteString.toArray());
                 } else {
                     // Find a charset and try to pull a string out of it...
-                    Charset charset = HttpUtils.parseCharset(contentType);
+                    Charset charset = HttpUtils.extractContentTypeCharsetAttribute(contentType);
                     if (charset == null) {
                         charset = StandardCharsets.UTF_8;
                     }
@@ -454,7 +457,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
                 possiblyModifiedHeaders.remove(CONTENT_LENGTH);
 
                 @SuppressWarnings("unchecked") Source<ByteString, ?> sourceBody = ((SourceBodyWritable) bodyWritable).body().get();
-                Publisher<ByteBuffer> publisher = sourceBody.map(ByteString::toByteBuffer)
+                Publisher<ByteBuf> publisher = sourceBody.map(bs -> Unpooled.wrappedBuffer(bs.toByteBuffer()))
                         .runWith(Sink.asPublisher(AsPublisher.WITHOUT_FANOUT), materializer);
                 builder.setBody(publisher, contentLength);
             } else {
@@ -494,15 +497,13 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
         // add cookies
         this.cookies.forEach(cookie -> {
-            play.shaded.ahc.org.asynchttpclient.cookie.Cookie ahcCookie = Cookie.newValidCookie(
-                    cookie.getName(),
-                    cookie.getValue(),
-                    false,
-                    cookie.getDomain().orElse(null),
-                    cookie.getPath().orElse(null),
-                    cookie.getMaxAge().orElse(-1L),
-                    cookie.isSecure(),
-                    cookie.isHttpOnly());
+            Cookie ahcCookie = new DefaultCookie(cookie.getName(), cookie.getValue());
+            ahcCookie.setWrap(false);
+            ahcCookie.setDomain(cookie.getDomain().orElse(null));
+            ahcCookie.setPath(cookie.getPath().orElse(null));
+            ahcCookie.setMaxAge(cookie.getMaxAge().orElse(-1L));
+            ahcCookie.setSecure(cookie.isSecure());
+            ahcCookie.setHttpOnly(cookie.isHttpOnly());
             builder.addCookie(ahcCookie);
         });
 
