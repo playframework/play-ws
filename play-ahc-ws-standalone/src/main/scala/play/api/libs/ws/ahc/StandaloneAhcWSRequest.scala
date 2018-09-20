@@ -10,6 +10,7 @@ import java.nio.charset.{ Charset, StandardCharsets }
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
 import play.api.libs.ws.{ StandaloneWSRequest, _ }
+import play.shaded.ahc.io.netty.buffer.Unpooled
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
 import play.shaded.ahc.org.asynchttpclient._
@@ -284,7 +285,7 @@ case class StandaloneAhcWSRequest(
             val filteredHeaders = this.headers.filterNot { case (k, v) => k.equalsIgnoreCase(HttpHeaders.Names.CONTENT_LENGTH) }
 
             // extract the content type and the charset
-            val charsetOption = Option(HttpUtils.parseCharset(ct))
+            val charsetOption = Option(HttpUtils.extractContentTypeCharsetAttribute(ct))
             val charset = charsetOption.getOrElse {
               StandardCharsets.UTF_8
             }.name()
@@ -318,7 +319,7 @@ case class StandaloneAhcWSRequest(
         val filteredHeaders = this.headers.filterNot { case (k, v) => k.equalsIgnoreCase(HttpHeaders.Names.CONTENT_LENGTH) }
         val contentLength = this.headers.find { case (k, _) => k.equalsIgnoreCase(HttpHeaders.Names.CONTENT_LENGTH) }.map(_._2.head.toLong)
 
-        (builder.setBody(source.map(_.toByteBuffer).runWith(Sink.asPublisher(false)), contentLength.getOrElse(-1L)), filteredHeaders)
+        (builder.setBody(source.map(bs => Unpooled.wrappedBuffer(bs.toByteBuffer)).runWith(Sink.asPublisher(false)), contentLength.getOrElse(-1L)), filteredHeaders)
     }
 
     // headers

@@ -12,7 +12,7 @@ import com.typesafe.play.cachecontrol._
 import org.joda.time.Seconds
 import org.specs2.mutable.Specification
 import play.shaded.ahc.io.netty.handler.codec.http.{ DefaultHttpHeaders, HttpHeaders }
-import play.shaded.ahc.org.asynchttpclient.{ Request, RequestBuilder }
+import play.shaded.ahc.org.asynchttpclient.{ DefaultAsyncHttpClientConfig, Request, RequestBuilder }
 
 class AhcWSCacheSpec extends Specification {
 
@@ -60,11 +60,12 @@ class AhcWSCacheSpec extends Specification {
       import scala.concurrent.ExecutionContext.Implicits.global
 
       implicit val cache = new AhcHttpCache(new StubHttpCache(), false)
+      val achConfig = new DefaultAsyncHttpClientConfig.Builder().build()
 
       val url = "http://localhost:9000"
 
       val request = generateRequest(url)(headers => headers.add("Accept-Encoding", "gzip"))
-      val response = CacheableResponse(200, url).withHeaders("Vary" -> "Accept-Encoding")
+      val response = CacheableResponse(200, url, achConfig).withHeaders("Vary" -> "Accept-Encoding")
 
       val actual = cache.calculateSecondaryKeys(request, response)
 

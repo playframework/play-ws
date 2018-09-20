@@ -29,7 +29,8 @@ class StreamedResponse(
     val statusText: String,
     val uri: java.net.URI,
     val headers: Map[String, Seq[String]],
-    publisher: Publisher[HttpResponseBodyPart]) extends StandaloneWSResponse with CookieBuilder {
+    publisher: Publisher[HttpResponseBodyPart],
+    val useLaxCookieEncoder: Boolean) extends StandaloneWSResponse with CookieBuilder {
 
   /**
    * Get the underlying response object.

@@ -9,7 +9,7 @@ import static org.assertj.core.api.Assertions.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Test;
 import play.libs.ws.*;
-import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders;
+import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames;
 import play.shaded.ahc.org.asynchttpclient.Request;
 
 import java.io.IOException;
@@ -28,7 +28,7 @@ public class JsonRequestTest implements JsonBodyWritables {
 
         Request req = ahcWSRequest.buildRequest();
 
-        assertThat(req.getHeaders().get(HttpHeaders.Names.CONTENT_TYPE)).isEqualTo("application/json");
+        assertThat(req.getHeaders().get(HttpHeaderNames.CONTENT_TYPE)).isEqualTo("application/json");
         assertThat(node).isEqualTo(DefaultObjectMapper.instance.readTree("{\"k1\":\"v2\"}"));
     }
 
