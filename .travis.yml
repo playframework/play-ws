@@ -9,6 +9,7 @@ scala:
 jdk:
 - oraclejdk8
 - oraclejdk9
+- openjdk11
 cache:
   directories:
   - "$HOME/.ivy2/cache"
