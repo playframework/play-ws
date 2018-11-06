@@ -19,8 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import static java.util.stream.Collectors.joining;
-
 /**
  * This interface contains useful {@link BodyWritable} subclasses and default methods.
  *
@@ -156,7 +154,7 @@ public interface DefaultBodyWritables {
                 String value = URLEncoder.encode(item.getValue(), "UTF-8");
                 values.add(key + '=' + value);
             }
-            String s = values.stream().collect(joining("&"));
+            String s = String.join("&", values);
             ByteString byteString = ByteString.fromString(s);
             return new InMemoryBodyWritable(byteString, "application/x-www-form-urlencoded");
         } catch (UnsupportedEncodingException e) {
