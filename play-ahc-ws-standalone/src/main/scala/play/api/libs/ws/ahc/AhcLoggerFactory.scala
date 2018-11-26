@@ -10,7 +10,7 @@ class AhcLoggerFactory(lf: ILoggerFactory = SLF4JLoggerFactory.getILoggerFactory
 
   private[ahc] def createLogger(name: String) = {
     new NoDepsLogger {
-      private[ahc] val logger = lf.getLogger(this.getClass.getName)
+      private[ahc] val logger = lf.getLogger(name)
 
       def warn(msg: String): Unit = logger.warn(msg)
       def isDebugEnabled: Boolean = logger.isDebugEnabled
