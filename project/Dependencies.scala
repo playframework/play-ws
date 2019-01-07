@@ -23,7 +23,7 @@ object Dependencies {
 
   val scalaJava8Compat = Seq("org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0")
 
-  val playJsonVersion = "2.6.10"
+  val playJsonVersion = "2.6.13"
   val playJson = Seq("com.typesafe.play" %% "play-json" % playJsonVersion)
 
   val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "1.7.25")
