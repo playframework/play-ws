@@ -5,7 +5,7 @@ group: beta
 scala:
 - 2.12.7
 - 2.11.12
-- 2.13.0-M3
+- 2.13.0-M5
 jdk:
 - oraclejdk8
 - openjdk11
