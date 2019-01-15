@@ -29,7 +29,7 @@ scala:
   - 2.13.0-M3
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION 'testOnly -- xonly timefactor 5' mimaReportBinaryIssues doc
+  - sbt ++$TRAVIS_SCALA_VERSION 'testOnly -- xonly timefactor 5' mimaReportBinaryIssues validateCode doc
 
 cache:
   directories:

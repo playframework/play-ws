@@ -182,7 +182,13 @@ lazy val commonSettings = mimaSettings ++ Seq(
       </developers>),
   javacOptions in (Compile, doc) ++= javacSettings,
   javacOptions in Test ++= javacSettings,
-  javacOptions in IntegrationTest ++= javacSettings
+  javacOptions in IntegrationTest ++= javacSettings,
+  headerLicense := {
+    val currentYear = java.time.Year.now(java.time.Clock.systemUTC).getValue
+    Some(HeaderLicense.Custom(
+      s"Copyright (C) 2009-$currentYear Lightbend Inc. <https://www.lightbend.com>"
+    ))
+  }
 )
 
 val formattingSettings = Seq(
@@ -347,7 +353,7 @@ lazy val shaded = Project(id = "shaded", base = file("shaded") )
   .aggregate(
     `shaded-asynchttpclient`,
     `shaded-oauth`
-  ).disablePlugins(sbtassembly.AssemblyPlugin)
+  ).disablePlugins(sbtassembly.AssemblyPlugin, HeaderPlugin)
   .settings(
     disableDocs,
     disablePublishing,
@@ -523,3 +529,5 @@ releaseProcess := Seq[ReleaseStep](
   releaseStepCommand("sonatypeRelease"),
   pushChanges
 )
+
+addCommandAlias("validateCode", ";scalariformFormat;test:scalariformFormat;headerCheck;test:headerCheck;checkCodeFormat")
