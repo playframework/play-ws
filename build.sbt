@@ -182,7 +182,13 @@ lazy val commonSettings = mimaSettings ++ Seq(
       </developers>),
   javacOptions in (Compile, doc) ++= javacSettings,
   javacOptions in Test ++= javacSettings,
-  javacOptions in IntegrationTest ++= javacSettings
+  javacOptions in IntegrationTest ++= javacSettings,
+  headerLicense := {
+    val currentYear = java.time.Year.now(java.time.Clock.systemUTC).getValue
+    Some(HeaderLicense.Custom(
+      s"Copyright (C) 2009-$currentYear Lightbend Inc. <https://www.lightbend.com>"
+    ))
+  }
 )
 
 val formattingSettings = Seq(
@@ -347,7 +353,7 @@ lazy val shaded = Project(id = "shaded", base = file("shaded") )
   .aggregate(
     `shaded-asynchttpclient`,
     `shaded-oauth`
-  ).disablePlugins(sbtassembly.AssemblyPlugin)
+  ).disablePlugins(sbtassembly.AssemblyPlugin, HeaderPlugin)
   .settings(
     disableDocs,
     disablePublishing,
@@ -523,3 +529,20 @@ releaseProcess := Seq[ReleaseStep](
   releaseStepCommand("sonatypeRelease"),
   pushChanges
 )
+
+lazy val checkCodeFormat = taskKey[Unit]("Check that code format is following Scalariform rules")
+
+checkCodeFormat := {
+  import scala.sys.process._
+  val exitCode = "git diff --exit-code".!
+  if (exitCode != 0) {
+    sys.error(
+      """
+        |ERROR: Scalariform check failed, see differences above.
+        |To fix, format your sources using sbt scalariformFormat test:scalariformFormat before submitting a pull request.
+        |Additionally, please squash your commits (eg, use git commit --amend) if you're going to update this pull request.
+      """.stripMargin)
+  }
+}
+
+addCommandAlias("validateCode", ";scalariformFormat;test:scalariformFormat;headerCheck;test:headerCheck;checkCodeFormat")
