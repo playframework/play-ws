@@ -17,7 +17,12 @@ val scala211 = "2.11.12"
 val scala212 = "2.12.8"
 val scala213 = "2.13.0-M3"
 
-val previousVersion = None
+// Binary compatibility is this version
+val previousVersion = "2.0.0"
+
+val binaryCompatibilitySettings = Seq(
+  mimaPreviousArtifacts := Set(organization.value % s"${moduleName.value}_${scalaBinaryVersion.value}" % previousVersion)
+)
 
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
 resolvers in ThisBuild += Resolver.sonatypeRepo("public")
@@ -29,110 +34,8 @@ val javacSettings = Seq(
   "-Xlint:unchecked"
 )
 
-def mimaPreviousArtifactFor(scalaV: String, module: ModuleID): Set[ModuleID] = scalaV match {
-  case sv if sv == scala213 => Set.empty
-  case _ => Set(module)
-}
-
 lazy val mimaSettings = mimaDefaultSettings ++ Seq(
-  mimaBinaryIssueFilters ++= Seq(
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSResponse.getBodyAsSource"),
-    ProblemFilters.exclude[MissingClassProblem]("play.api.libs.ws.package$"),
-    ProblemFilters.exclude[MissingClassProblem]("play.api.libs.ws.package"),
-
-    // Implemented as a default method at the interface
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSResponse.getBodyAsSource"),
-
-    // Added to have better parity between Java and Scala APIs
-    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getBody"),
-    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getAuth"),
-    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getMethod"),
-    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.setAuth"),
-
-    // Added in #268 for 2.0.0
-    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.setUrl"),
-    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.api.libs.ws.StandaloneWSRequest.withUrl"),
-
-    // Now have a default implementation at the interface
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSRequest.getPassword"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSRequest.getUsername"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSRequest.setAuth"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSRequest.getScheme"),
-
-    // Add getUri method
-    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSResponse.getUri"),
-    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.api.libs.ws.StandaloneWSResponse.uri"),
-
-    // Using Optional and Duration for Java APIs
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSRequest.getRequestTimeoutDuration"),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.libs.ws.ahc.StandaloneAhcWSRequest.getFollowRedirects"),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.libs.ws.ahc.StandaloneAhcWSRequest.getCalculator"),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.libs.ws.ahc.StandaloneAhcWSRequest.getContentType"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getRequestTimeoutDuration"),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.libs.ws.StandaloneWSRequest.getFollowRedirects"),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.libs.ws.StandaloneWSRequest.getPassword"),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.libs.ws.StandaloneWSRequest.getCalculator"),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.libs.ws.StandaloneWSRequest.getUsername"),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.libs.ws.StandaloneWSRequest.getContentType"),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.libs.ws.StandaloneWSRequest.getScheme"),
-    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getRequestTimeout"),
-    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getFollowRedirects"),
-    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getCalculator"),
-    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getContentType"),
-
-    // Update async-http-client to 2.5.2
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StreamedResponse.this"),
-    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.libs.ws.ahc.StandaloneAhcWSResponse.asCookie"),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.StandaloneAhcWSRequest.asCookie"),
-    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.StandaloneAhcWSRequest.asCookie"),
-    ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.ahc.AhcWSClientConfig$"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.apply"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.copy"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.this"),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.StreamedResponse.asCookie"),
-    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.StreamedResponse.asCookie"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.StreamedResponse.this"),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.WSCookieConverter.asCookie"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.WSCookieConverter.asCookie"),
-    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.WSCookieConverter.asCookie"),
-    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.api.libs.ws.ahc.WSCookieConverter.asCookie"),
-    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.DefaultStreamedAsyncHandler.onHeadersReceived"),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.StandaloneAhcWSResponse.asCookie"),
-    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.StandaloneAhcWSResponse.asCookie"),
-    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.api.libs.ws.ahc.CookieBuilder.useLaxCookieEncoder"),
-    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.AsyncCacheableConnection.debug"),
-    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.Debug.debug"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.cache.Debug.debug"),
-    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.api.libs.ws.ahc.cache.Debug.debug"),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.cache.CacheableResponse.copy$default$2"),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.cache.CacheableResponse.ahcHeaders"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.cache.CacheableResponse.copy"),
-    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.CacheableResponse.getHeaders"),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.cache.CacheableResponse.headers"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.cache.CacheableResponse.this"),
-    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.CacheableResponse.getHeader"),
-    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.AhcHttpCache.calculateTimeToLive"),
-    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.AhcHttpCache.debug"),
-    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.AhcHttpCache.generateOriginResponse"),
-    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.CacheableResponseBuilder.accumulate"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.cache.CacheableResponseBuilder.this"),
-    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.AsyncCachingHandler.debug"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.cache.AsyncCachingHandler.generateTimeoutResponse"),
-    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.AsyncCachingHandler.onHeadersReceived"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.cache.AsyncCachingHandler.this"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.cache.CacheableResponse.apply"),
-    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.CacheableResponse.apply"),
-    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.CacheableResponse.apply"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.cache.TimeoutResponse.generateTimeoutResponse"),
-    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.api.libs.ws.ahc.cache.TimeoutResponse.generateTimeoutResponse"),
-    ProblemFilters.exclude[MissingClassProblem]("play.api.libs.ws.ahc.cache.CacheableHttpResponseHeaders"),
-    ProblemFilters.exclude[MissingClassProblem]("play.api.libs.ws.ahc.cache.CacheableHttpResponseHeaders$"),
-    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.CachingAsyncHttpClient.debug"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.cache.CachingAsyncHttpClient.generateTimeoutResponse"),
-    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.BackgroundAsyncHandler.debug"),
-    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.BackgroundAsyncHandler.onHeadersReceived"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.cache.BackgroundAsyncHandler.this")
-  )
+  mimaBinaryIssueFilters ++= Seq.empty
 )
 
 lazy val commonSettings = mimaSettings ++ Seq(
@@ -366,10 +269,9 @@ lazy val shaded = Project(id = "shaded", base = file("shaded") )
 // WS API, no play dependencies
 lazy val `play-ws-standalone` = project
   .in(file("play-ws-standalone"))
-  .settings(commonSettings ++ Seq(
-    libraryDependencies ++= standaloneApiWSDependencies,
-    mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ws-standalone" % "1.0.0"))
-  )
+  .settings(commonSettings)
+  .settings(binaryCompatibilitySettings)
+  .settings(libraryDependencies ++= standaloneApiWSDependencies)
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
@@ -393,12 +295,12 @@ def addShadedDeps(deps: Seq[xml.Node], node: xml.Node): xml.Node = {
 // Standalone implementation using AsyncHttpClient
 lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
+  .settings(binaryCompatibilitySettings: _*)
   .settings(commonSettings ++ formattingSettings ++ shadedAhcSettings ++ shadedOAuthSettings ++ Seq(
     fork in Test := true,
     testOptions in Test := Seq(
       Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
     libraryDependencies ++= standaloneAhcWSDependencies,
-    mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.0.0"),
     // This will not work if you do a publishLocal, because that uses ivy...
     pomPostProcess := {
       (node: xml.Node) => addShadedDeps(List(
@@ -427,12 +329,12 @@ lazy val `play-ws-standalone-json` = project
   .in(file("play-ws-standalone-json"))
   .settings(commonSettings)
   .settings(formattingSettings)
-  .settings(mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ws-standalone-json" % "1.0.0"))
+  .settings(binaryCompatibilitySettings)
   .settings(
     fork in Test := true,
-    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v"))
+    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
+    libraryDependencies ++= standaloneAhcWSJsonDependencies
   )
-  .settings(libraryDependencies ++= standaloneAhcWSJsonDependencies)
   .dependsOn(
     `play-ws-standalone`
   ).disablePlugins(sbtassembly.AssemblyPlugin)
@@ -445,7 +347,7 @@ lazy val `play-ws-standalone-xml` = project
   .in(file("play-ws-standalone-xml"))
   .settings(commonSettings)
   .settings(formattingSettings)
-  .settings(mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ws-standalone-xml" % "1.0.0"))
+  .settings(binaryCompatibilitySettings)
   .settings(
     fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
