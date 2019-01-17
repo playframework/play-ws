@@ -22,6 +22,7 @@ matrix:
     # testing play-ws using it to better discover possible problems but we
     # can allow failures here too.
     - env: TRAVIS_JDK=adopt@1.11.0-1
+    - scala: 2.13.0-M3
 
 scala:
   - 2.12.7
