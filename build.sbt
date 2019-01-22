@@ -208,8 +208,7 @@ val disableDocs = Seq[Setting[_]](
 
 val disablePublishing = Seq[Setting[_]](
   publishArtifact := false,
-  skip in publish := true,
-  crossScalaVersions := Seq(scala212)
+  skip in publish := true
 )
 
 lazy val shadeAssemblySettings = commonSettings ++ Seq(
@@ -465,7 +464,6 @@ lazy val `integration-tests` = project.in(file("integration-tests"))
   .settings(disableDocs)
   .settings(disablePublishing)
   .settings(
-    crossScalaVersions := Seq(scala213, scala212, scala211),
     fork in Test := true,
     concurrentRestrictions += Tags.limitAll(1), // only one integration test at a time
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
@@ -479,6 +477,24 @@ lazy val `integration-tests` = project.in(file("integration-tests"))
     `play-ws-standalone-xml`
   )
   .disablePlugins(sbtassembly.AssemblyPlugin)
+
+//---------------------------------------------------------------
+// Benchmarks (run manually)
+//---------------------------------------------------------------
+
+lazy val bench = project
+  .in(file("bench"))
+  .enablePlugins(JmhPlugin)
+  .dependsOn(
+    `play-ws-standalone`,
+    `play-ws-standalone-json`,
+    `play-ws-standalone-xml`,
+    `play-ahc-ws-standalone`
+  )
+  .settings(commonSettings)
+  .settings(formattingSettings)
+  .settings(disableDocs)
+  .settings(disablePublishing)
 
 //---------------------------------------------------------------
 // Root Project
@@ -496,13 +512,15 @@ lazy val root = project
   .settings(formattingSettings)
   .settings(disableDocs)
   .settings(disablePublishing)
+  .settings(crossScalaVersions := Seq(scala212))
   .aggregate(
     `shaded`,
     `play-ws-standalone`,
     `play-ws-standalone-json`,
     `play-ws-standalone-xml`,
     `play-ahc-ws-standalone`,
-    `integration-tests`
+    `integration-tests`,
+    bench
   )
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
