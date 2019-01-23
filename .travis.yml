@@ -22,12 +22,12 @@ matrix:
     # testing play-ws using it to better discover possible problems but we
     # can allow failures here too.
     - env: TRAVIS_JDK=adopt@1.11.0-1
-    - scala: 2.13.0-M3
+    - scala: 2.13.0-M5
 
 scala:
   - 2.12.7
   - 2.11.12
-  - 2.13.0-M3
+  - 2.13.0-M5
 
 script:
   - sbt ++$TRAVIS_SCALA_VERSION 'testOnly -- xonly timefactor 5' mimaReportBinaryIssues validateCode doc
