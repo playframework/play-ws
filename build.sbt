@@ -17,7 +17,7 @@ val scala211 = "2.11.12"
 val scala212 = "2.12.8"
 val scala213 = "2.13.0-M3"
 
-val previousVersion = None
+val previousVersion = "2.0.0"
 
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
 resolvers in ThisBuild += Resolver.sonatypeRepo("public")
@@ -368,7 +368,7 @@ lazy val `play-ws-standalone` = project
   .in(file("play-ws-standalone"))
   .settings(commonSettings ++ Seq(
     libraryDependencies ++= standaloneApiWSDependencies,
-    mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ws-standalone" % "1.0.0"))
+    mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ws-standalone" % previousVersion))
   )
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
@@ -398,7 +398,7 @@ lazy val `play-ahc-ws-standalone` = project
     testOptions in Test := Seq(
       Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
     libraryDependencies ++= standaloneAhcWSDependencies,
-    mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.0.0"),
+    mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ahc-ws-standalone" % previousVersion),
     // This will not work if you do a publishLocal, because that uses ivy...
     pomPostProcess := {
       (node: xml.Node) => addShadedDeps(List(
@@ -427,7 +427,7 @@ lazy val `play-ws-standalone-json` = project
   .in(file("play-ws-standalone-json"))
   .settings(commonSettings)
   .settings(formattingSettings)
-  .settings(mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ws-standalone-json" % "1.0.0"))
+  .settings(mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ws-standalone-json" % previousVersion))
   .settings(
     fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v"))
@@ -445,7 +445,7 @@ lazy val `play-ws-standalone-xml` = project
   .in(file("play-ws-standalone-xml"))
   .settings(commonSettings)
   .settings(formattingSettings)
-  .settings(mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ws-standalone-xml" % "1.0.0"))
+  .settings(mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ws-standalone-xml" % previousVersion))
   .settings(
     fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
