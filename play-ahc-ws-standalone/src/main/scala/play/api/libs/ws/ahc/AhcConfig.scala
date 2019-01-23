@@ -177,7 +177,7 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
     val config = ahcConfig.wsClientConfig
 
     def toMillis(duration: Duration): Int = {
-      if (duration.isFinite()) duration.toMillis.toInt
+      if (duration.isFinite) duration.toMillis.toInt
       else -1
     }
 

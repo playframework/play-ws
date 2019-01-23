@@ -231,7 +231,7 @@ case class StandaloneAhcWSRequest(
    */
   def requestQueryParams: Map[String, Seq[String]] = {
     val params: java.util.List[Param] = buildRequest().getQueryParams
-    params.asScala.toSeq.groupBy(_.getName).mapValues(_.map(_.getValue))
+    params.asScala.toSeq.groupBy(_.getName).map(kv => kv._1 -> kv._2.map(_.getValue))
   }
 
   /**
