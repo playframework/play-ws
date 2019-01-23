@@ -40,7 +40,7 @@ def scalacOptionsFor(scalaBinVersion: String): Seq[String] = scalaBinVersion mat
     "-feature",
     "-unchecked",
 
-    // This next two flags are not supported by 2.13
+    // The next two flags are not supported by 2.13
     "-Ywarn-unused-import",
     "-Ywarn-nullary-unit",
 
