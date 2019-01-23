@@ -18,9 +18,10 @@ val scala213 = "2.13.0-M5"
 // Binary compatibility is this version
 val previousVersion = "2.0.0"
 
-val binaryCompatibilitySettings = Seq(
-  mimaPreviousArtifacts := Set(organization.value % s"${moduleName.value}_${scalaBinaryVersion.value}" % previousVersion)
-)
+def binaryCompatibilitySettings(scalaBinVersion: String, org: String, moduleName: String): Set[ModuleID] = scalaBinVersion match {
+  case "2.13" => Set.empty
+  case _ => Set(org % s"${moduleName}_$scalaBinVersion" % previousVersion)
+}
 
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
 resolvers in ThisBuild += Resolver.sonatypeRepo("public")
@@ -284,7 +285,7 @@ lazy val shaded = Project(id = "shaded", base = file("shaded") )
 lazy val `play-ws-standalone` = project
   .in(file("play-ws-standalone"))
   .settings(commonSettings)
-  .settings(binaryCompatibilitySettings)
+  .settings(mimaPreviousArtifacts := binaryCompatibilitySettings(scalaBinaryVersion.value, organization.value, name.value))
   .settings(libraryDependencies ++= standaloneApiWSDependencies)
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
@@ -309,7 +310,7 @@ def addShadedDeps(deps: Seq[xml.Node], node: xml.Node): xml.Node = {
 // Standalone implementation using AsyncHttpClient
 lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
-  .settings(binaryCompatibilitySettings: _*)
+  .settings(mimaPreviousArtifacts := binaryCompatibilitySettings(scalaBinaryVersion.value, organization.value, name.value))
   .settings(commonSettings ++ formattingSettings ++ shadedAhcSettings ++ shadedOAuthSettings ++ Seq(
     fork in Test := true,
     testOptions in Test := Seq(
@@ -343,7 +344,7 @@ lazy val `play-ws-standalone-json` = project
   .in(file("play-ws-standalone-json"))
   .settings(commonSettings)
   .settings(formattingSettings)
-  .settings(binaryCompatibilitySettings)
+  .settings(mimaPreviousArtifacts := binaryCompatibilitySettings(scalaBinaryVersion.value, organization.value, name.value))
   .settings(
     fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
@@ -361,7 +362,7 @@ lazy val `play-ws-standalone-xml` = project
   .in(file("play-ws-standalone-xml"))
   .settings(commonSettings)
   .settings(formattingSettings)
-  .settings(binaryCompatibilitySettings)
+  .settings(mimaPreviousArtifacts := binaryCompatibilitySettings(scalaBinaryVersion.value, organization.value, name.value))
   .settings(
     fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
