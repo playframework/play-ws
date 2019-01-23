@@ -7,6 +7,7 @@ package play.api.libs.ws.ahc.cache
 import java.net.URI
 
 import com.typesafe.play.cachecontrol._
+import play.api.libs.ws.{ ahc => standaloneAhc }
 import org.joda.time.{ DateTime, Seconds }
 import org.slf4j.LoggerFactory
 import play.shaded.ahc.io.netty.handler.codec.http.{ DefaultHttpHeaders, HttpHeaders }
@@ -23,7 +24,7 @@ import scala.concurrent.{ ExecutionContext, Future }
  * to caching responses to GET, many caches simply decline other methods
  * and use only the URI as the primary cache key.
  */
-class AhcHttpCache(underlying: Cache, heuristicsEnabled: Boolean = false)(implicit val executionContext: ExecutionContext) extends CacheDefaults with Debug {
+class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boolean = false)(implicit val executionContext: ExecutionContext) extends CacheDefaults with Debug {
   require(underlying != null, "null underlying!")
 
   private val logger = LoggerFactory.getLogger(this.getClass)

@@ -204,8 +204,8 @@ case class CacheableResponse(
     if (!isNonEmpty(setCookieHeaders)) setCookieHeaders = headers.getAll(SET_COOKIE)
     if (isNonEmpty(setCookieHeaders)) {
       val cookies = new util.ArrayList[Cookie](1)
-      import scala.collection.JavaConversions._
-      for (value <- setCookieHeaders) {
+      import scala.collection.JavaConverters._
+      for (value <- setCookieHeaders.iterator.asScala) {
         val c = if (ahcConfig.isUseLaxCookieEncoder) ClientCookieDecoder.LAX.decode(value) else ClientCookieDecoder.STRICT.decode(value)
         if (c != null) cookies.add(c)
       }

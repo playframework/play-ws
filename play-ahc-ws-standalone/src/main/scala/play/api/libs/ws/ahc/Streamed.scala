@@ -18,7 +18,7 @@ case class StreamedState(
     statusCode: Int = -1,
     statusText: String = "",
     uriOption: Option[URI] = None,
-    responseHeaders: Map[String, Seq[String]] = Map.empty,
+    responseHeaders: Map[String, scala.collection.Seq[String]] = Map.empty,
     publisher: Publisher[HttpResponseBodyPart] = EmptyPublisher
 )
 

@@ -29,7 +29,7 @@ class StreamedResponse(
     val status: Int,
     val statusText: String,
     val uri: java.net.URI,
-    val headers: Map[String, Seq[String]],
+    val headers: Map[String, scala.collection.Seq[String]],
     publisher: Publisher[HttpResponseBodyPart],
     val useLaxCookieEncoder: Boolean) extends StandaloneWSResponse with CookieBuilder {
 
@@ -41,7 +41,7 @@ class StreamedResponse(
   /**
    * Get all the cookies.
    */
-  override lazy val cookies: Seq[WSCookie] = buildCookies(headers)
+  override lazy val cookies: scala.collection.Seq[WSCookie] = buildCookies(headers)
 
   /**
    * Get only one cookie, using the cookie name.

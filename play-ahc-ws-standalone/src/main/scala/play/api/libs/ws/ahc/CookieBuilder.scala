@@ -9,7 +9,7 @@ import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames._
 import play.shaded.ahc.io.netty.handler.codec.http.cookie.{ ClientCookieDecoder, Cookie, DefaultCookie }
 
 trait CookieBuilder extends WSCookieConverter {
-  def buildCookies(headers: Map[String, Seq[String]]): Seq[WSCookie] = {
+  def buildCookies(headers: Map[String, scala.collection.Seq[String]]): scala.collection.Seq[WSCookie] = {
     val option = headers.get(SET_COOKIE2.toString).orElse(headers.get(SET_COOKIE.toString))
     option.map { cookiesHeaders =>
       for {

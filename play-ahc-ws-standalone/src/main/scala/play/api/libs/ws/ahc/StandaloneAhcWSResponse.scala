@@ -29,7 +29,7 @@ class StandaloneAhcWSResponse(ahcResponse: AHCResponse) extends StandaloneWSResp
 
   override def statusText: String = ahcResponse.getStatusText
 
-  override lazy val cookies: Seq[WSCookie] = ahcResponse.getCookies.asScala.map(asCookie)
+  override lazy val cookies: Seq[WSCookie] = ahcResponse.getCookies.asScala.map(asCookie).toSeq
 
   override def cookie(name: String): Option[WSCookie] = cookies.find(_.name == name)
 
