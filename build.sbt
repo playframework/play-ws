@@ -19,7 +19,7 @@ val scala213 = "2.13.0-M5"
 val previousVersion = "2.0.0"
 
 def binaryCompatibilitySettings(scalaBinVersion: String, org: String, moduleName: String): Set[ModuleID] = scalaBinVersion match {
-  case "2.13" => Set.empty
+  case version if version.equals(scala213) => Set.empty
   case _ => Set(org % s"${moduleName}_$scalaBinVersion" % previousVersion)
 }
 
