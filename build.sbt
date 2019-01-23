@@ -1,12 +1,10 @@
+import java.io.File
+
 import Dependencies._
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
-
-import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
-import java.io.File
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
-
 import scalariform.formatter.preferences._
 
 //---------------------------------------------------------------
@@ -20,9 +18,10 @@ val scala213 = "2.13.0-M5"
 // Binary compatibility is this version
 val previousVersion = "2.0.0"
 
-val binaryCompatibilitySettings = Seq(
-  mimaPreviousArtifacts := Set(organization.value % s"${moduleName.value}_${scalaBinaryVersion.value}" % previousVersion)
-)
+def binaryCompatibilitySettings(scalaBinVersion: String, org: String, moduleName: String): Set[ModuleID] = scalaBinVersion match {
+  case version if version.equals(scala213) => Set.empty
+  case _ => Set(org % s"${moduleName}_$scalaBinVersion" % previousVersion)
+}
 
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
 resolvers in ThisBuild += Resolver.sonatypeRepo("public")
@@ -34,6 +33,42 @@ val javacSettings = Seq(
   "-Xlint:unchecked"
 )
 
+def scalacOptionsFor(scalaBinVersion: String): Seq[String] = scalaBinVersion match {
+  case "2.11" => Seq(
+    "-target:jvm-1.8",
+    "-deprecation",
+    "-encoding", "UTF-8",
+    "-feature",
+    "-unchecked",
+
+    // The next two flags are not supported by 2.13
+    "-Ywarn-unused-import",
+    "-Ywarn-nullary-unit",
+
+    "-Xfatal-warnings",
+    "-Xlint",
+    "-Ywarn-dead-code"
+  )
+  case _ => Seq(
+    "-target:jvm-1.8",
+    "-deprecation",
+    "-encoding", "UTF-8",
+    "-feature",
+    "-unchecked",
+
+    // The next two flags are not supported by 2.11
+    "-Ywarn-unused:imports",
+    "-Xlint:nullary-unit",
+
+    "-Xfatal-warnings",
+    "-Xlint",
+    "-Ywarn-dead-code",
+
+    // Work around 2.12 bug which prevents javadoc in nested java classes from compiling.
+    "-no-java-comments"
+  )
+}
+
 lazy val mimaSettings = mimaDefaultSettings ++ Seq(
   mimaBinaryIssueFilters ++= Seq.empty
 )
@@ -42,27 +77,7 @@ lazy val commonSettings = mimaSettings ++ Seq(
   organization := "com.typesafe.play",
   scalaVersion := scala212,
   crossScalaVersions := Seq(scala213, scala212, scala211),
-  scalacOptions in (Compile, doc) ++= Seq(
-    "-target:jvm-1.8",
-    "-deprecation",
-    "-encoding", "UTF-8",
-    "-feature",
-    "-unchecked",
-    "-Ywarn-unused-import",
-    "-Ywarn-nullary-unit",
-    "-Xfatal-warnings",
-    "-Xlint",
-    "-Ywarn-dead-code"
-  ),
-  // Work around 2.12 bug which prevents javadoc in nested java classes from compiling.
-  scalacOptions in (Compile, doc) ++= {
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, v)) if v >= 12 =>
-        Seq("-no-java-comments")
-      case _ =>
-        Nil
-    }
-  },
+  scalacOptions in (Compile, doc) ++= scalacOptionsFor(scalaBinaryVersion.value),
   pomExtra := (
     <url>https://github.com/playframework/play-ws</url>
       <licenses>
@@ -270,7 +285,7 @@ lazy val shaded = Project(id = "shaded", base = file("shaded") )
 lazy val `play-ws-standalone` = project
   .in(file("play-ws-standalone"))
   .settings(commonSettings)
-  .settings(binaryCompatibilitySettings)
+  .settings(mimaPreviousArtifacts := binaryCompatibilitySettings(scalaBinaryVersion.value, organization.value, name.value))
   .settings(libraryDependencies ++= standaloneApiWSDependencies)
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
@@ -295,7 +310,7 @@ def addShadedDeps(deps: Seq[xml.Node], node: xml.Node): xml.Node = {
 // Standalone implementation using AsyncHttpClient
 lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
-  .settings(binaryCompatibilitySettings: _*)
+  .settings(mimaPreviousArtifacts := binaryCompatibilitySettings(scalaBinaryVersion.value, organization.value, name.value))
   .settings(commonSettings ++ formattingSettings ++ shadedAhcSettings ++ shadedOAuthSettings ++ Seq(
     fork in Test := true,
     testOptions in Test := Seq(
@@ -329,7 +344,7 @@ lazy val `play-ws-standalone-json` = project
   .in(file("play-ws-standalone-json"))
   .settings(commonSettings)
   .settings(formattingSettings)
-  .settings(binaryCompatibilitySettings)
+  .settings(mimaPreviousArtifacts := binaryCompatibilitySettings(scalaBinaryVersion.value, organization.value, name.value))
   .settings(
     fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
@@ -347,7 +362,7 @@ lazy val `play-ws-standalone-xml` = project
   .in(file("play-ws-standalone-xml"))
   .settings(commonSettings)
   .settings(formattingSettings)
-  .settings(binaryCompatibilitySettings)
+  .settings(mimaPreviousArtifacts := binaryCompatibilitySettings(scalaBinaryVersion.value, organization.value, name.value))
   .settings(
     fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
