@@ -1,12 +1,10 @@
+import java.io.File
+
 import Dependencies._
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
-
-import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
-import java.io.File
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
-
 import scalariform.formatter.preferences._
 
 //---------------------------------------------------------------
@@ -34,6 +32,42 @@ val javacSettings = Seq(
   "-Xlint:unchecked"
 )
 
+def scalacOptionsFor(scalaBinVersion: String): Seq[String] = scalaBinVersion match {
+  case "2.11" => Seq(
+    "-target:jvm-1.8",
+    "-deprecation",
+    "-encoding", "UTF-8",
+    "-feature",
+    "-unchecked",
+
+    // This next two flags are not supported by 2.13
+    "-Ywarn-unused-import",
+    "-Ywarn-nullary-unit",
+
+    "-Xfatal-warnings",
+    "-Xlint",
+    "-Ywarn-dead-code"
+  )
+  case _ => Seq(
+    "-target:jvm-1.8",
+    "-deprecation",
+    "-encoding", "UTF-8",
+    "-feature",
+    "-unchecked",
+
+    // The next two flags are not supported by 2.11
+    "-Ywarn-unused:imports",
+    "-Xlint:nullary-unit",
+
+    "-Xfatal-warnings",
+    "-Xlint",
+    "-Ywarn-dead-code",
+
+    // Work around 2.12 bug which prevents javadoc in nested java classes from compiling.
+    "-no-java-comments"
+  )
+}
+
 lazy val mimaSettings = mimaDefaultSettings ++ Seq(
   mimaBinaryIssueFilters ++= Seq.empty
 )
@@ -42,27 +76,7 @@ lazy val commonSettings = mimaSettings ++ Seq(
   organization := "com.typesafe.play",
   scalaVersion := scala212,
   crossScalaVersions := Seq(scala213, scala212, scala211),
-  scalacOptions in (Compile, doc) ++= Seq(
-    "-target:jvm-1.8",
-    "-deprecation",
-    "-encoding", "UTF-8",
-    "-feature",
-    "-unchecked",
-    "-Ywarn-unused-import",
-    "-Ywarn-nullary-unit",
-    "-Xfatal-warnings",
-    "-Xlint",
-    "-Ywarn-dead-code"
-  ),
-  // Work around 2.12 bug which prevents javadoc in nested java classes from compiling.
-  scalacOptions in (Compile, doc) ++= {
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, v)) if v >= 12 =>
-        Seq("-no-java-comments")
-      case _ =>
-        Nil
-    }
-  },
+  scalacOptions in (Compile, doc) ++= scalacOptionsFor(scalaBinaryVersion.value),
   pomExtra := (
     <url>https://github.com/playframework/play-ws</url>
       <licenses>

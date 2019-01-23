@@ -31,6 +31,8 @@ scala:
 
 script:
   - sbt ++$TRAVIS_SCALA_VERSION 'testOnly -- xonly timefactor 5' mimaReportBinaryIssues validateCode doc
+  # Check that we can actually build and package the library
+  - sbt ++$TRAVIS_SCALA_VERSION publishLocal
 
 cache:
   directories:
