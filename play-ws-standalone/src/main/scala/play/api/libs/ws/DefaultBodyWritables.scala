@@ -104,7 +104,7 @@ trait DefaultBodyWritables {
   }
 
   implicit val writeableOf_urlEncodedSimpleForm: BodyWritable[Map[String, String]] = {
-    writeableOf_urlEncodedForm.map[Map[String, String]](_.mapValues(v => Seq(v)))
+    writeableOf_urlEncodedForm.map[Map[String, String]](_.map(kv => kv._1 -> Seq(kv._2)))
   }
 
 }

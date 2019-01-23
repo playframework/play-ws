@@ -20,7 +20,7 @@ trait StandaloneWSResponse {
   /**
    * Returns the current headers for this response.
    */
-  def headers: Map[String, Seq[String]]
+  def headers: Map[String, scala.collection.Seq[String]]
 
   /**
    * Get the value of the header with the specified name. If there are more than one values
@@ -39,7 +39,7 @@ trait StandaloneWSResponse {
    * @param name the header name.
    * @return all the values for this header name.
    */
-  def headerValues(name: String): Seq[String] = headers.getOrElse(name, Seq.empty)
+  def headerValues(name: String): scala.collection.Seq[String] = headers.getOrElse(name, Seq.empty)
 
   /**
    * Get the underlying response object.
@@ -59,7 +59,7 @@ trait StandaloneWSResponse {
   /**
    * Get all the cookies.
    */
-  def cookies: Seq[WSCookie]
+  def cookies: scala.collection.Seq[WSCookie]
 
   /**
    * Get only one cookie, using the cookie name.

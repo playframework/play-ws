@@ -10,7 +10,7 @@ object Dependencies {
 
   val awaitility = Seq("org.awaitility" % "awaitility" % "3.1.2")
 
-  val specsVersion = "4.2.0"
+  val specsVersion = "4.3.6"
   val specsBuild = Seq(
     "specs2-core",
     "specs2-junit",
@@ -39,7 +39,7 @@ object Dependencies {
   val signpostVersion = "1.2.1.2"
   val oauth = Seq("oauth.signpost" % "signpost-core" % signpostVersion)
 
-  val cachecontrolVersion = "1.1.4"
+  val cachecontrolVersion = "1.1.5"
   val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % cachecontrolVersion)
 
   val asyncHttpClientVersion = "2.6.0"
@@ -47,7 +47,7 @@ object Dependencies {
 
   val akkaVersion = "2.5.19"
   val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion)
-  val akkaHttp = Seq("com.typesafe.akka" %% "akka-http" % "10.1.5")
+  val akkaHttp = Seq("com.typesafe.akka" %% "akka-http" % "10.1.7")
 
   val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.2")
 

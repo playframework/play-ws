@@ -101,7 +101,7 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
 
-        val paramsList: Seq[Param] = req.getQueryParams.asScala
+        val paramsList: Seq[Param] = req.getQueryParams.asScala.toSeq
         paramsList.exists(p => (p.getName == "foo") && (p.getValue == "foo1")) must beTrue
         paramsList.exists(p => (p.getName == "foo") && (p.getValue == "foo2")) must beTrue
         paramsList.count(p => p.getName == "foo") must beEqualTo(2)
