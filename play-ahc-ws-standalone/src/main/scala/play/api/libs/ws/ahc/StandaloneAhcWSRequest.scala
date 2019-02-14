@@ -67,12 +67,23 @@ case class StandaloneAhcWSRequest(
   override def withAuth(username: String, password: String, scheme: WSAuthScheme): Self =
     copy(auth = Some((username, password, scheme)))
 
+  override def addHttpHeaders(hdrs: (String, String)*): StandaloneWSRequest = {
+    val newHeaders = buildHeaders(headers, hdrs: _*)
+    copy(headers = newHeaders)
+  }
+
   override def withHttpHeaders(hdrs: (String, String)*): Self = {
-    var newHeaders = hdrs.foldLeft(TreeMap[String, Seq[String]]()(CaseInsensitiveOrdered)) {
-      (m, hdr) =>
+    val emptyMap = TreeMap[String, Seq[String]]()(CaseInsensitiveOrdered)
+    val newHeaders = buildHeaders(emptyMap, hdrs: _*)
+    copy(headers = newHeaders)
+  }
+
+  private def buildHeaders(origHeaders: Map[String, Seq[String]], hdrs: (String, String)*): Map[String, Seq[String]] = {
+    var newHeaders = hdrs
+      .foldLeft(origHeaders) { (m, hdr) =>
         if (m.contains(hdr._1)) m.updated(hdr._1, m(hdr._1) :+ hdr._2)
         else m + (hdr._1 -> Seq(hdr._2))
-    }
+      }
 
     // preserve the content type
     newHeaders = contentType match {
@@ -82,13 +93,24 @@ case class StandaloneAhcWSRequest(
         newHeaders
     }
 
-    copy(headers = newHeaders)
+    newHeaders
   }
 
-  override def withQueryStringParameters(parameters: (String, String)*): Self =
-    copy(queryString = parameters.foldLeft(Map.empty[String, Seq[String]]) {
+  override def addQueryStringParameters(parameters: (String, String)*): StandaloneWSRequest = {
+    val newQueryString = buildQueryParams(queryString, parameters: _*)
+    copy(queryString = newQueryString)
+  }
+
+  override def withQueryStringParameters(parameters: (String, String)*): Self = {
+    val newQueryString = buildQueryParams(Map.empty[String, Seq[String]], parameters: _*)
+    copy(queryString = newQueryString)
+  }
+
+  private def buildQueryParams(orig: Map[String, Seq[String]], params: (String, String)*): Map[String, Seq[String]] = {
+    params.foldLeft(orig) {
       case (m, (k, v)) => m + (k -> (v +: m.getOrElse(k, Nil)))
-    })
+    }
+  }
 
   override def withCookies(cookies: WSCookie*): StandaloneWSRequest = copy(cookies = cookies)
 
