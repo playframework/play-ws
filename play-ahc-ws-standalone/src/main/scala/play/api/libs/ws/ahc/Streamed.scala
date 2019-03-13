@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
  */
+
 package play.api.libs.ws.ahc
 
 import java.net.URI
 
 import org.reactivestreams.{ Publisher, Subscriber, Subscription }
+import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import play.shaded.ahc.org.asynchttpclient.AsyncHandler.State
 import play.shaded.ahc.org.asynchttpclient._
 import play.shaded.ahc.org.asynchttpclient.handler.StreamedAsyncHandler
@@ -16,7 +18,7 @@ case class StreamedState(
     statusCode: Int = -1,
     statusText: String = "",
     uriOption: Option[URI] = None,
-    responseHeaders: Map[String, Seq[String]] = Map.empty,
+    responseHeaders: Map[String, scala.collection.Seq[String]] = Map.empty,
     publisher: Publisher[HttpResponseBodyPart] = EmptyPublisher
 )
 
@@ -44,10 +46,10 @@ class DefaultStreamedAsyncHandler[T](f: java.util.function.Function[StreamedStat
     }
   }
 
-  override def onHeadersReceived(h: HttpResponseHeaders): State = {
+  override def onHeadersReceived(h: HttpHeaders): State = {
     if (this.state.publisher != EmptyPublisher) State.ABORT
     else {
-      state = state.copy(responseHeaders = headersToMap(h.getHeaders))
+      state = state.copy(responseHeaders = headersToMap(h))
       State.CONTINUE
     }
   }

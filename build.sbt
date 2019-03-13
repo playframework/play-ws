@@ -1,12 +1,10 @@
+import java.io.File
+
 import Dependencies._
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
-
-import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
-import java.io.File
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
-
 import scalariform.formatter.preferences._
 
 //---------------------------------------------------------------
@@ -14,10 +12,16 @@ import scalariform.formatter.preferences._
 //---------------------------------------------------------------
 
 val scala211 = "2.11.12"
-val scala212 = "2.12.4"
-val scala213 = "2.13.0-M3"
+val scala212 = "2.12.8"
+val scala213 = "2.13.0-M5"
 
-val previousVersion = None
+// Binary compatibility is this version
+val previousVersion = "2.0.0"
+
+def binaryCompatibilitySettings(scalaBinVersion: String, org: String, moduleName: String): Set[ModuleID] = scalaBinVersion match {
+  case version if version.equals(scala213) => Set.empty
+  case _ => Set(org % s"${moduleName}_$scalaBinVersion" % previousVersion)
+}
 
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
 resolvers in ThisBuild += Resolver.sonatypeRepo("public")
@@ -29,44 +33,51 @@ val javacSettings = Seq(
   "-Xlint:unchecked"
 )
 
-def mimaPreviousArtifactFor(scalaV: String, module: ModuleID): Set[ModuleID] = scalaV match {
-  case sv if sv == scala213 => Set.empty
-  case _ => Set(module)
+def scalacOptionsFor(scalaBinVersion: String): Seq[String] = scalaBinVersion match {
+  case "2.11" => Seq(
+    "-target:jvm-1.8",
+    "-deprecation",
+    "-encoding", "UTF-8",
+    "-feature",
+    "-unchecked",
+
+    // The next two flags are not supported by 2.13
+    "-Ywarn-unused-import",
+    "-Ywarn-nullary-unit",
+
+    "-Xfatal-warnings",
+    "-Xlint",
+    "-Ywarn-dead-code"
+  )
+  case _ => Seq(
+    "-target:jvm-1.8",
+    "-deprecation",
+    "-encoding", "UTF-8",
+    "-feature",
+    "-unchecked",
+
+    // The next two flags are not supported by 2.11
+    "-Ywarn-unused:imports",
+    "-Xlint:nullary-unit",
+
+    "-Xfatal-warnings",
+    "-Xlint",
+    "-Ywarn-dead-code",
+
+    // Work around 2.12 bug which prevents javadoc in nested java classes from compiling.
+    "-no-java-comments"
+  )
 }
 
 lazy val mimaSettings = mimaDefaultSettings ++ Seq(
-  mimaBinaryIssueFilters ++= Seq(
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSResponse.getBodyAsSource"),
-    ProblemFilters.exclude[MissingClassProblem]("play.api.libs.ws.package$"),
-    ProblemFilters.exclude[MissingClassProblem]("play.api.libs.ws.package")
-  )
+  mimaBinaryIssueFilters ++= Seq.empty
 )
 
 lazy val commonSettings = mimaSettings ++ Seq(
   organization := "com.typesafe.play",
   scalaVersion := scala212,
   crossScalaVersions := Seq(scala213, scala212, scala211),
-  scalacOptions in (Compile, doc) ++= Seq(
-    "-target:jvm-1.8",
-    "-deprecation",
-    "-encoding", "UTF-8",
-    "-feature",
-    "-unchecked",
-    "-Ywarn-unused-import",
-    "-Ywarn-nullary-unit",
-    "-Xfatal-warnings",
-    "-Xlint",
-    "-Ywarn-dead-code"
-  ),
-  // Work around 2.12 bug which prevents javadoc in nested java classes from compiling.
-  scalacOptions in (Compile, doc) ++= {
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, v)) if v >= 12 =>
-        Seq("-no-java-comments")
-      case _ =>
-        Nil
-    }
-  },
+  scalacOptions in (Compile, doc) ++= scalacOptionsFor(scalaBinaryVersion.value),
   pomExtra := (
     <url>https://github.com/playframework/play-ws</url>
       <licenses>
@@ -89,7 +100,13 @@ lazy val commonSettings = mimaSettings ++ Seq(
       </developers>),
   javacOptions in (Compile, doc) ++= javacSettings,
   javacOptions in Test ++= javacSettings,
-  javacOptions in IntegrationTest ++= javacSettings
+  javacOptions in IntegrationTest ++= javacSettings,
+  headerLicense := {
+    val currentYear = java.time.Year.now(java.time.Clock.systemUTC).getValue
+    Some(HeaderLicense.Custom(
+      s"Copyright (C) 2009-$currentYear Lightbend Inc. <https://www.lightbend.com>"
+    ))
+  }
 )
 
 val formattingSettings = Seq(
@@ -109,8 +126,7 @@ val disableDocs = Seq[Setting[_]](
 
 val disablePublishing = Seq[Setting[_]](
   publishArtifact := false,
-  skip in publish := true,
-  crossScalaVersions := Seq(scala212)
+  skip in publish := true
 )
 
 lazy val shadeAssemblySettings = commonSettings ++ Seq(
@@ -185,7 +201,7 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
       ({
         case NettyPropertiesPath =>
           MergeStrategy.first
-        case "ahc-default.properties" =>
+        case ahcProperties if ahcProperties.endsWith("ahc-default.properties") =>
           ahcMerge
         case x =>
           val oldStrategy = (assemblyMergeStrategy in assembly).value
@@ -254,7 +270,7 @@ lazy val shaded = Project(id = "shaded", base = file("shaded") )
   .aggregate(
     `shaded-asynchttpclient`,
     `shaded-oauth`
-  ).disablePlugins(sbtassembly.AssemblyPlugin)
+  ).disablePlugins(sbtassembly.AssemblyPlugin, HeaderPlugin)
   .settings(
     disableDocs,
     disablePublishing,
@@ -267,14 +283,9 @@ lazy val shaded = Project(id = "shaded", base = file("shaded") )
 // WS API, no play dependencies
 lazy val `play-ws-standalone` = project
   .in(file("play-ws-standalone"))
-  .settings(commonSettings ++ Seq(
-    libraryDependencies ++= standaloneApiWSDependencies,
-    mimaBinaryIssueFilters ++= Seq(
-      ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSResponse.getUri"),
-      ProblemFilters.exclude[ReversedMissingMethodProblem]("play.api.libs.ws.StandaloneWSResponse.uri")
-    ),
-    mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ws-standalone" % "1.0.0"))
-  )
+  .settings(commonSettings)
+  .settings(mimaPreviousArtifacts := binaryCompatibilitySettings(scalaBinaryVersion.value, organization.value, name.value))
+  .settings(libraryDependencies ++= standaloneApiWSDependencies)
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
@@ -298,15 +309,12 @@ def addShadedDeps(deps: Seq[xml.Node], node: xml.Node): xml.Node = {
 // Standalone implementation using AsyncHttpClient
 lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
+  .settings(mimaPreviousArtifacts := binaryCompatibilitySettings(scalaBinaryVersion.value, organization.value, name.value))
   .settings(commonSettings ++ formattingSettings ++ shadedAhcSettings ++ shadedOAuthSettings ++ Seq(
     fork in Test := true,
     testOptions in Test := Seq(
       Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
     libraryDependencies ++= standaloneAhcWSDependencies,
-    mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.0.0"),
-    mimaBinaryIssueFilters ++= Seq(
-      ProblemFilters.exclude[DirectMissingMethodProblem](
-        "play.libs.ws.ahc.StandaloneAhcWSResponse.getBodyAsSource")),
     // This will not work if you do a publishLocal, because that uses ivy...
     pomPostProcess := {
       (node: xml.Node) => addShadedDeps(List(
@@ -335,12 +343,12 @@ lazy val `play-ws-standalone-json` = project
   .in(file("play-ws-standalone-json"))
   .settings(commonSettings)
   .settings(formattingSettings)
-  .settings(mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ws-standalone-json" % "1.0.0"))
+  .settings(mimaPreviousArtifacts := binaryCompatibilitySettings(scalaBinaryVersion.value, organization.value, name.value))
   .settings(
     fork in Test := true,
-    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v"))
+    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
+    libraryDependencies ++= standaloneAhcWSJsonDependencies
   )
-  .settings(libraryDependencies ++= standaloneAhcWSJsonDependencies)
   .dependsOn(
     `play-ws-standalone`
   ).disablePlugins(sbtassembly.AssemblyPlugin)
@@ -353,7 +361,7 @@ lazy val `play-ws-standalone-xml` = project
   .in(file("play-ws-standalone-xml"))
   .settings(commonSettings)
   .settings(formattingSettings)
-  .settings(mimaPreviousArtifacts := mimaPreviousArtifactFor(scalaVersion.value, "com.typesafe.play" %% "play-ws-standalone-xml" % "1.0.0"))
+  .settings(mimaPreviousArtifacts := binaryCompatibilitySettings(scalaBinaryVersion.value, organization.value, name.value))
   .settings(
     fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
@@ -373,7 +381,6 @@ lazy val `integration-tests` = project.in(file("integration-tests"))
   .settings(disableDocs)
   .settings(disablePublishing)
   .settings(
-    crossScalaVersions := Seq(scala213, scala212, scala211),
     fork in Test := true,
     concurrentRestrictions += Tags.limitAll(1), // only one integration test at a time
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
@@ -387,6 +394,24 @@ lazy val `integration-tests` = project.in(file("integration-tests"))
     `play-ws-standalone-xml`
   )
   .disablePlugins(sbtassembly.AssemblyPlugin)
+
+//---------------------------------------------------------------
+// Benchmarks (run manually)
+//---------------------------------------------------------------
+
+lazy val bench = project
+  .in(file("bench"))
+  .enablePlugins(JmhPlugin)
+  .dependsOn(
+    `play-ws-standalone`,
+    `play-ws-standalone-json`,
+    `play-ws-standalone-xml`,
+    `play-ahc-ws-standalone`
+  )
+  .settings(commonSettings)
+  .settings(formattingSettings)
+  .settings(disableDocs)
+  .settings(disablePublishing)
 
 //---------------------------------------------------------------
 // Root Project
@@ -404,13 +429,15 @@ lazy val root = project
   .settings(formattingSettings)
   .settings(disableDocs)
   .settings(disablePublishing)
+  .settings(crossScalaVersions := Seq(scala212))
   .aggregate(
     `shaded`,
     `play-ws-standalone`,
     `play-ws-standalone-json`,
     `play-ws-standalone-xml`,
     `play-ahc-ws-standalone`,
-    `integration-tests`
+    `integration-tests`,
+    bench
   )
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
@@ -437,3 +464,20 @@ releaseProcess := Seq[ReleaseStep](
   releaseStepCommand("sonatypeRelease"),
   pushChanges
 )
+
+lazy val checkCodeFormat = taskKey[Unit]("Check that code format is following Scalariform rules")
+
+checkCodeFormat := {
+  import scala.sys.process._
+  val exitCode = "git diff --exit-code".!
+  if (exitCode != 0) {
+    sys.error(
+      """
+        |ERROR: Scalariform check failed, see differences above.
+        |To fix, format your sources using sbt scalariformFormat test:scalariformFormat before submitting a pull request.
+        |Additionally, please squash your commits (eg, use git commit --amend) if you're going to update this pull request.
+      """.stripMargin)
+  }
+}
+
+addCommandAlias("validateCode", ";scalariformFormat;test:scalariformFormat;headerCheck;test:headerCheck;checkCodeFormat")

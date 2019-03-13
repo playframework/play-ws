@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
  */
+
 package play.api.libs.ws.ahc
 
 import java.io.UnsupportedEncodingException
@@ -10,6 +11,7 @@ import java.nio.charset.{ Charset, StandardCharsets }
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
 import play.api.libs.ws.{ StandaloneWSRequest, _ }
+import play.shaded.ahc.io.netty.buffer.Unpooled
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
 import play.shaded.ahc.org.asynchttpclient._
@@ -35,7 +37,7 @@ case class StandaloneAhcWSRequest(
     calc: Option[WSSignatureCalculator] = None,
     auth: Option[(String, String, WSAuthScheme)] = None,
     followRedirects: Option[Boolean] = None,
-    requestTimeout: Option[Int] = None,
+    requestTimeout: Option[Duration] = None,
     virtualHost: Option[String] = None,
     proxyServer: Option[WSProxyServer] = None,
     disableUrlEncoding: Option[Boolean] = None,
@@ -65,12 +67,23 @@ case class StandaloneAhcWSRequest(
   override def withAuth(username: String, password: String, scheme: WSAuthScheme): Self =
     copy(auth = Some((username, password, scheme)))
 
+  override def addHttpHeaders(hdrs: (String, String)*): StandaloneWSRequest = {
+    val newHeaders = buildHeaders(headers, hdrs: _*)
+    copy(headers = newHeaders)
+  }
+
   override def withHttpHeaders(hdrs: (String, String)*): Self = {
-    var newHeaders = hdrs.foldLeft(TreeMap[String, Seq[String]]()(CaseInsensitiveOrdered)) {
-      (m, hdr) =>
+    val emptyMap = TreeMap[String, Seq[String]]()(CaseInsensitiveOrdered)
+    val newHeaders = buildHeaders(emptyMap, hdrs: _*)
+    copy(headers = newHeaders)
+  }
+
+  private def buildHeaders(origHeaders: Map[String, Seq[String]], hdrs: (String, String)*): Map[String, Seq[String]] = {
+    var newHeaders = hdrs
+      .foldLeft(origHeaders) { (m, hdr) =>
         if (m.contains(hdr._1)) m.updated(hdr._1, m(hdr._1) :+ hdr._2)
         else m + (hdr._1 -> Seq(hdr._2))
-    }
+      }
 
     // preserve the content type
     newHeaders = contentType match {
@@ -80,13 +93,24 @@ case class StandaloneAhcWSRequest(
         newHeaders
     }
 
-    copy(headers = newHeaders)
+    newHeaders
   }
 
-  override def withQueryStringParameters(parameters: (String, String)*): Self =
-    copy(queryString = parameters.foldLeft(Map.empty[String, Seq[String]]) {
+  override def addQueryStringParameters(parameters: (String, String)*): StandaloneWSRequest = {
+    val newQueryString = buildQueryParams(queryString, parameters: _*)
+    copy(queryString = newQueryString)
+  }
+
+  override def withQueryStringParameters(parameters: (String, String)*): Self = {
+    val newQueryString = buildQueryParams(Map.empty[String, Seq[String]], parameters: _*)
+    copy(queryString = newQueryString)
+  }
+
+  private def buildQueryParams(orig: Map[String, Seq[String]], params: (String, String)*): Map[String, Seq[String]] = {
+    params.foldLeft(orig) {
       case (m, (k, v)) => m + (k -> (v +: m.getOrElse(k, Nil)))
-    })
+    }
+  }
 
   override def withCookies(cookies: WSCookie*): StandaloneWSRequest = copy(cookies = cookies)
 
@@ -95,11 +119,11 @@ case class StandaloneAhcWSRequest(
   override def withRequestTimeout(timeout: Duration): Self = {
     timeout match {
       case Duration.Inf =>
-        copy(requestTimeout = Some(-1))
+        copy(requestTimeout = Some(timeout))
       case d =>
         val millis = d.toMillis
         require(millis >= 0 && millis <= Int.MaxValue, s"Request timeout must be between 0 and ${Int.MaxValue} milliseconds")
-        copy(requestTimeout = Some(millis.toInt))
+        copy(requestTimeout = Some(timeout))
     }
   }
 
@@ -183,6 +207,8 @@ case class StandaloneAhcWSRequest(
     withMethod(method).execute()
   }
 
+  override def withUrl(url: String): Self = copy(url = url)
+
   override def withMethod(method: String): Self = copy(method = method)
 
   override def execute(): Future[Response] = {
@@ -227,7 +253,7 @@ case class StandaloneAhcWSRequest(
    */
   def requestQueryParams: Map[String, Seq[String]] = {
     val params: java.util.List[Param] = buildRequest().getQueryParams
-    params.asScala.toSeq.groupBy(_.getName).mapValues(_.map(_.getValue))
+    params.asScala.toSeq.groupBy(_.getName).map(kv => kv._1 -> kv._2.map(_.getValue))
   }
 
   /**
@@ -262,7 +288,12 @@ case class StandaloneAhcWSRequest(
     virtualHost.foreach(builder.setVirtualHost)
     followRedirects.foreach(builder.setFollowRedirect)
     proxyServer.foreach(p => builder.setProxyServer(createProxy(p)))
-    requestTimeout.foreach(builder.setRequestTimeout)
+    requestTimeout.foreach {
+      case d if d == Duration.Inf =>
+        builder.setRequestTimeout(-1)
+      case d =>
+        builder.setRequestTimeout(d.toMillis.toInt)
+    }
 
     val (builderWithBody, updatedHeaders) = body match {
       case EmptyBody => (builder, this.headers)
@@ -277,7 +308,7 @@ case class StandaloneAhcWSRequest(
             val filteredHeaders = this.headers.filterNot { case (k, v) => k.equalsIgnoreCase(HttpHeaders.Names.CONTENT_LENGTH) }
 
             // extract the content type and the charset
-            val charsetOption = Option(HttpUtils.parseCharset(ct))
+            val charsetOption = Option(HttpUtils.extractContentTypeCharsetAttribute(ct))
             val charset = charsetOption.getOrElse {
               StandardCharsets.UTF_8
             }.name()
@@ -311,7 +342,7 @@ case class StandaloneAhcWSRequest(
         val filteredHeaders = this.headers.filterNot { case (k, v) => k.equalsIgnoreCase(HttpHeaders.Names.CONTENT_LENGTH) }
         val contentLength = this.headers.find { case (k, _) => k.equalsIgnoreCase(HttpHeaders.Names.CONTENT_LENGTH) }.map(_._2.head.toLong)
 
-        (builder.setBody(source.map(_.toByteBuffer).runWith(Sink.asPublisher(false)), contentLength.getOrElse(-1L)), filteredHeaders)
+        (builder.setBody(source.map(bs => Unpooled.wrappedBuffer(bs.toByteBuffer)).runWith(Sink.asPublisher(false)), contentLength.getOrElse(-1L)), filteredHeaders)
     }
 
     // headers

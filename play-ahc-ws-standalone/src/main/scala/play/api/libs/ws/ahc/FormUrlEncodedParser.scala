@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
  */
+
 package play.api.libs.ws.ahc
 
 /** An object for parsing application/x-www-form-urlencoded data */
@@ -15,8 +16,9 @@ private[ahc] object FormUrlEncodedParser {
    */
   def parseNotPreservingOrder(data: String, encoding: String = "utf-8"): Map[String, Seq[String]] = {
     // Generate the pairs of values from the string.
-    parseToPairs(data, encoding).groupBy(_._1).
-      map(param => param._1 -> param._2.map(_._2))(scala.collection.breakOut)
+    parseToPairs(data, encoding)
+      .groupBy(_._1)
+      .map(param => param._1 -> param._2.map(_._2))
   }
 
   /**

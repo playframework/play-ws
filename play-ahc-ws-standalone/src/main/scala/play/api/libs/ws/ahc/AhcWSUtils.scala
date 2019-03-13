@@ -1,3 +1,7 @@
+/*
+ * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
+ */
+
 package play.api.libs.ws.ahc
 
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils
@@ -14,7 +18,7 @@ private[ws] object AhcWSUtils {
   }
 
   def getCharset(contentType: String): Charset = {
-    Option(HttpUtils.parseCharset(contentType)).getOrElse {
+    Option(HttpUtils.extractContentTypeCharsetAttribute(contentType)).getOrElse {
       if (contentType.startsWith("text/"))
         StandardCharsets.ISO_8859_1
       else

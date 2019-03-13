@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package play.libs.ws.ahc;
@@ -10,7 +10,7 @@ import org.junit.Test;
 import org.w3c.dom.Document;
 import play.libs.ws.XML;
 import play.libs.ws.XMLBodyWritables;
-import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders;
+import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames;
 import play.shaded.ahc.org.asynchttpclient.Request;
 
 import static org.mockito.Mockito.mock;
@@ -31,7 +31,7 @@ public class XMLRequestTest implements XMLBodyWritables {
 
           Request req = ahcWSRequest.buildRequest();
 
-          assertThat(req.getHeaders().get(HttpHeaders.Names.CONTENT_TYPE)).isEqualTo("application/xml");
+          assertThat(req.getHeaders().get(HttpHeaderNames.CONTENT_TYPE)).isEqualTo("application/xml");
 
           Document responseXml = XML.fromString(req.getStringData());
           responseXml.normalizeDocument();

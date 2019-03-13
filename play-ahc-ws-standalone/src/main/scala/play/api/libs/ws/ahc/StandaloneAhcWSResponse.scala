@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
  */
+
 package play.api.libs.ws.ahc
 
 import akka.stream.scaladsl.Source
@@ -28,7 +29,7 @@ class StandaloneAhcWSResponse(ahcResponse: AHCResponse) extends StandaloneWSResp
 
   override def statusText: String = ahcResponse.getStatusText
 
-  override lazy val cookies: Seq[WSCookie] = ahcResponse.getCookies.asScala.map(asCookie)
+  override lazy val cookies: Seq[WSCookie] = ahcResponse.getCookies.asScala.map(asCookie).toSeq
 
   override def cookie(name: String): Option[WSCookie] = cookies.find(_.name == name)
 

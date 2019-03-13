@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
  */
+
 package play.libs.ws;
 
 
 import java.time.Duration;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -136,6 +136,14 @@ public interface StandaloneWSRequest {
     //-------------------------------------------------------------------------
 
     /**
+     * Sets the URL of the request.
+     *
+     * @param url the URL of the request
+     * @return the modified WSRequest.
+     */
+    StandaloneWSRequest setUrl(String url);
+
+    /**
      * Sets the HTTP method this request should use, where the no args execute() method is invoked.
      *
      * @param method the HTTP method.
@@ -243,7 +251,9 @@ public interface StandaloneWSRequest {
      * @param password the basic auth password
      * @return the modified WSRequest.
      */
-    StandaloneWSRequest setAuth(String username, String password);
+    default StandaloneWSRequest setAuth(String username, String password) {
+        return setAuth(new WSAuthInfo(username, password, WSAuthScheme.BASIC));
+    }
 
     /**
      * Sets the authentication header for the current request.
@@ -253,7 +263,18 @@ public interface StandaloneWSRequest {
      * @param scheme   authentication scheme
      * @return the modified WSRequest.
      */
-    StandaloneWSRequest setAuth(String username, String password, WSAuthScheme scheme);
+    default StandaloneWSRequest setAuth(String username, String password, WSAuthScheme scheme) {
+        return setAuth(new WSAuthInfo(username, password, scheme));
+    }
+
+    /**
+     * Sets the authentication header for the current request.
+     *
+     * @param authInfo the authentication information.
+     *
+     * @return the modified request.
+     */
+    StandaloneWSRequest setAuth(WSAuthInfo authInfo);
 
     /**
      * Sets an (OAuth) signature calculator.
@@ -349,6 +370,11 @@ public interface StandaloneWSRequest {
     }
 
     /**
+     * @return the body of the request.
+     */
+    Optional<BodyWritable> getBody();
+
+    /**
      * @return the headers (a copy to prevent side-effects). This has not passed through an internal request builder and so will not be signed.
      */
     Map<String, List<String>> getHeaders();
@@ -378,39 +404,52 @@ public interface StandaloneWSRequest {
     Map<String, List<String>> getQueryParameters();
 
     /**
-     * @return the auth username, null if not an authenticated request.
+     * @return the auth username, Optional.empty() if not an authenticated request.
      */
-    String getUsername();
+    default Optional<String> getUsername() {
+        return getAuth().map(WSAuthInfo::getUsername);
+    }
 
     /**
-     * @return the auth password, null if not an authenticated request
+     * @return the auth password, Optional.empty() if not an authenticated request
      */
-    String getPassword();
+    default Optional<String> getPassword() {
+        return getAuth().map(WSAuthInfo::getPassword);
+    }
 
     /**
-     * @return the auth scheme, null if not an authenticated request.
+     * @return the auth scheme, Optional.empty() if not an authenticated request.
      */
-    WSAuthScheme getScheme();
+    default Optional<WSAuthScheme> getScheme() {
+        return getAuth().map(WSAuthInfo::getScheme);
+    }
 
     /**
-     * @return the signature calculator (example: OAuth), null if none is set.
+     * @return get auth information if present.
+     *
+     * @see WSAuthInfo
      */
-    WSSignatureCalculator getCalculator();
+    Optional<WSAuthInfo> getAuth();
+
+    /**
+     * @return the signature calculator (example: OAuth), or Optional.empty() if none is set.
+     */
+    Optional<WSSignatureCalculator> getCalculator();
 
     /**
      * Gets the original request timeout duration, passed into the request as input.
      *
      * @return the timeout duration.
      */
-    Duration getRequestTimeoutDuration();
+    Optional<Duration> getRequestTimeout();
 
     /**
-     * @return true if the request is configure to follow redirect, false if it is configure not to, null if nothing is configured and the global client preference should be used instead.
+     * @return true if the request is configure to follow redirect, false if it is configure not to, Optional.empty() if nothing is configured and the global client preference should be used instead.
      */
-    boolean getFollowRedirects();
+    Optional<Boolean> getFollowRedirects();
 
     /**
-     * @return the content type, if any, or null.
+     * @return the content type, if any, or Optional.empty() if no content type is found.
      */
-    String getContentType();
+    Optional<String> getContentType();
 }

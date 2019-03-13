@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
  */
+
 package play.libs.ws.ahc
 
 import java.time.Duration
@@ -10,7 +11,7 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable._
 import play.libs.oauth.OAuth
 import play.libs.ws._
-import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
+import play.shaded.ahc.io.netty.handler.codec.http.{ HttpHeaderNames, HttpHeaders }
 import play.shaded.ahc.org.asynchttpclient.{ Request, RequestBuilderBase, SignatureCalculator }
 
 import scala.collection.JavaConverters._
@@ -36,6 +37,17 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
       actual must beEqualTo("foo.com")
     }
 
+    "set the url" in {
+      val client = mock[StandaloneAhcWSClient]
+      val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
+      req.getUrl must be_===("http://playframework.com/") and {
+        val setReq = req.setUrl("http://example.com")
+        setReq.getUrl must be_===("http://example.com") and {
+          setReq must be_===(req)
+        }
+      }
+    }
+
     "For POST requests" in {
 
       "get method" in {
@@ -43,7 +55,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
         val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
           .setMethod("POST")
 
-        req.getMethod must be_==("POST")
+        req.getMethod must be_===("POST")
       }
 
       "set text/plain content-types for text bodies" in {
@@ -64,7 +76,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
 
-        req.getHeaders.get(HttpHeaders.Names.CONTENT_TYPE) must be_==("text/plain")
+        req.getHeaders.get(HttpHeaderNames.CONTENT_TYPE) must be_==("text/plain; charset=UTF-8")
         req.getStringData must be_==("HELLO WORLD")
       }
 
@@ -76,7 +88,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
 
-        req.getHeaders.get(HttpHeaders.Names.CONTENT_TYPE) must be_==("text/plain+hello") // preserve the content type
+        req.getHeaders.get(HttpHeaderNames.CONTENT_TYPE) must be_==("text/plain+hello; charset=UTF-8") // preserve the content type
         req.getStringData must be_==("HELLO WORLD") // should result in byte data.
       }
 
@@ -187,7 +199,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
       request.setBody(body("HELLO WORLD"))
       request.addHeader("Content-Type", "application/json") // will be ignored since body already sets content type
       val req = request.buildRequest()
-      req.getHeaders.get("Content-Type") must be_==("text/plain")
+      req.getHeaders.get("Content-Type") must be_==("text/plain; charset=UTF-8")
     }
 
     "only send first Content-Type header and keep the charset when setting the Content-Type multiple times" in {
@@ -476,7 +488,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
           .addCookie(cookie("cookie1", "value1"))
           .buildRequest()
 
-        request.getCookies.asScala.head.getName must beEqualTo("cookie1")
+        request.getCookies.asScala.head.name must beEqualTo("cookie1")
       }
 
       "add more than one cookie" in {
@@ -486,8 +498,8 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
           .buildRequest()
 
         request.getCookies.asScala must size(2)
-        request.getCookies.asScala.head.getName must beEqualTo("cookie1")
-        request.getCookies.asScala(1).getName must beEqualTo("cookie2")
+        request.getCookies.asScala.head.name must beEqualTo("cookie1")
+        request.getCookies.asScala(1).name must beEqualTo("cookie2")
       }
 
       "keep existing cookies when adding a new one" in {
@@ -498,8 +510,8 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
           .buildRequest()
 
         request.getCookies.asScala must size(2)
-        request.getCookies.asScala.head.getName must beEqualTo("cookie1")
-        request.getCookies.asScala(1).getName must beEqualTo("cookie2")
+        request.getCookies.asScala.head.name must beEqualTo("cookie1")
+        request.getCookies.asScala(1).name must beEqualTo("cookie2")
       }
 
       "set all cookies" in {
@@ -509,8 +521,8 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
           .buildRequest()
 
         request.getCookies.asScala must size(2)
-        request.getCookies.asScala.head.getName must beEqualTo("cookie1")
-        request.getCookies.asScala(1).getName must beEqualTo("cookie2")
+        request.getCookies.asScala.head.name must beEqualTo("cookie1")
+        request.getCookies.asScala(1).name must beEqualTo("cookie2")
       }
 
       "discard old cookies when setting" in {
@@ -521,8 +533,8 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
           .buildRequest()
 
         request.getCookies.asScala must size(2)
-        request.getCookies.asScala.head.getName must beEqualTo("cookie3")
-        request.getCookies.asScala(1).getName must beEqualTo("cookie4")
+        request.getCookies.asScala.head.name must beEqualTo("cookie3")
+        request.getCookies.asScala(1).name must beEqualTo("cookie4")
       }
     }
   }

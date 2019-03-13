@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
  */
+
 package play.api.libs.ws
 
 import java.net.URI
@@ -99,7 +100,7 @@ trait StandaloneWSRequest {
   /**
    * The timeout for the request
    */
-  def requestTimeout: Option[Int]
+  def requestTimeout: Option[Duration]
 
   /**
    * The virtual host this request will use
@@ -202,6 +203,11 @@ trait StandaloneWSRequest {
    * Sets the proxy server to use in this request
    */
   def withProxyServer(proxyServer: WSProxyServer): Self
+
+  /**
+   * Sets the url for this request.
+   */
+  def withUrl(url: String): Self
 
   /**
    * Sets the method for this request

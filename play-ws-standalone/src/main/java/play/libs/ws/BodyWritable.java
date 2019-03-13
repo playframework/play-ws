@@ -1,9 +1,8 @@
 /*
- * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
  */
-package play.libs.ws;
 
-import java.util.function.Supplier;
+package play.libs.ws;
 
 /**
  * Writes out a {@code WSBody<A>}

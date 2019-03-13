@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
  */
+
 package play.api.libs.ws.ahc
 
 import com.typesafe.config.{ Config, ConfigFactory }
@@ -230,7 +231,7 @@ class AhcConfigBuilderSpec extends Specification with Mockito {
           val builder = new AhcConfigBuilder(config)
 
           val asyncConfig = builder.build()
-          asyncConfig.isAcceptAnyCertificate must beFalse
+          asyncConfig.isUseInsecureTrustManager must beFalse
         }
 
         "should disable the hostname verifier if loose.acceptAnyCertificate is enabled" in {
@@ -241,7 +242,7 @@ class AhcConfigBuilderSpec extends Specification with Mockito {
           val builder = new AhcConfigBuilder(config)
 
           val asyncConfig = builder.build()
-          asyncConfig.isAcceptAnyCertificate must beTrue
+          asyncConfig.isUseInsecureTrustManager must beTrue
         }
       }
 

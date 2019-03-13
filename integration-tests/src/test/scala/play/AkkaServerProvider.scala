@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
  */
+
 package play
 
 import akka.actor.ActorSystem
@@ -40,9 +41,7 @@ trait AkkaServerProvider extends BeforeAfterAll {
 
   override def beforeAll(): Unit = {
     val portFuture = futureServer.map(_.localAddress.getPort)(executionEnv.executionContext)
-    portFuture.onSuccess {
-      case port => testServerPort = port
-    }(executionEnv.executionContext)
+    portFuture.foreach(port => testServerPort = port)(executionEnv.executionContext)
     Await.ready(portFuture, defaultTimeout)
   }
 

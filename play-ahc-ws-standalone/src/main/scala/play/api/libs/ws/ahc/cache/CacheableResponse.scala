@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
- *
+ * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package play.api.libs.ws.ahc.cache
@@ -8,22 +7,22 @@ package play.api.libs.ws.ahc.cache
 import java.io.{ ByteArrayInputStream, IOException, InputStream }
 import java.net.{ MalformedURLException, SocketAddress }
 import java.nio.ByteBuffer
-import java.nio.charset.Charset
+import java.nio.charset.{ Charset, StandardCharsets }
 import java.util
 
 import org.slf4j.LoggerFactory
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders.Names._
+import play.shaded.ahc.io.netty.handler.codec.http.cookie.Cookie
 import play.shaded.ahc.io.netty.handler.codec.http.{ DefaultHttpHeaders, HttpHeaders }
 import play.shaded.ahc.org.asynchttpclient._
-import play.shaded.ahc.org.asynchttpclient.cookie.Cookie
 import play.shaded.ahc.org.asynchttpclient.uri.Uri
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils._
 
-class CacheableResponseBuilder {
+class CacheableResponseBuilder(ahcConfig: AsyncHttpClientConfig) {
 
   private var bodyParts: List[CacheableHttpResponseBodyPart] = Nil
   private var status: Option[CacheableHttpResponseStatus] = None
-  private var headers: Option[CacheableHttpResponseHeaders] = None
+  private var headers: Option[HttpHeaders] = None
 
   def accumulate(responseStatus: HttpResponseStatus): CacheableResponseBuilder = {
     // https://github.com/AsyncHttpClient/async-http-client/blob/2.0/client/src/main/java/org/asynchttpclient/HttpResponseStatus.java
@@ -37,9 +36,8 @@ class CacheableResponseBuilder {
     this
   }
 
-  def accumulate(responseHeaders: HttpResponseHeaders): CacheableResponseBuilder = {
-    val cacheableHeaders = CacheableHttpResponseHeaders(responseHeaders.isTrailling, responseHeaders.getHeaders)
-    headers = Some(cacheableHeaders)
+  def accumulate(responseHeaders: HttpHeaders): CacheableResponseBuilder = {
+    headers = Some(responseHeaders)
     this
   }
 
@@ -57,15 +55,16 @@ class CacheableResponseBuilder {
 
   def build: CacheableResponse = {
     import scala.collection.JavaConverters._
-    new CacheableResponse(status.get, headers.get, bodyParts.asJava)
+    new CacheableResponse(status.get, headers.get, bodyParts.asJava, ahcConfig)
   }
 }
 
 // https://github.com/AsyncHttpClient/async-http-client/blob/2.0/client/src/main/java/org/asynchttpclient/netty/NettyResponse.java
 case class CacheableResponse(
     status: CacheableHttpResponseStatus,
-    headers: CacheableHttpResponseHeaders,
-    bodyParts: util.List[CacheableHttpResponseBodyPart]) extends Response {
+    headers: HttpHeaders,
+    bodyParts: util.List[CacheableHttpResponseBodyPart],
+    ahcConfig: AsyncHttpClientConfig) extends Response {
 
   private var cookies: util.List[Cookie] = _
 
@@ -75,18 +74,17 @@ case class CacheableResponse(
 
   def ahcStatus: HttpResponseStatus = status.asInstanceOf[HttpResponseStatus]
 
-  def ahcHeaders: HttpResponseHeaders = headers.asInstanceOf[HttpResponseHeaders]
+  def ahcHeaders: HttpHeaders = headers.asInstanceOf[HttpHeaders]
 
   def ahcbodyParts: util.List[HttpResponseBodyPart] = bodyParts.asInstanceOf[util.List[HttpResponseBodyPart]]
 
   def withHeaders(tuple: (String, String)*): CacheableResponse = {
-    val headerMap = new DefaultHttpHeaders().add(this.headers.headers)
+    val headerMap = new DefaultHttpHeaders().add(this.headers)
     tuple.foreach {
       case (k, v) =>
         headerMap.add(k, v)
     }
-    val newHeaders = CacheableHttpResponseHeaders(this.headers.trailingHeaders, headerMap)
-    this.copy(headers = newHeaders)
+    this.copy(headers = headerMap)
   }
 
   override def getStatusCode: Int = {
@@ -112,13 +110,11 @@ case class CacheableResponse(
     target
   }
 
-  private def computeCharset(charset: Charset): Charset = {
-    Option(charset)
-      .orElse(
-        Option(getContentType)
-          .flatMap(ct => Option(parseCharset(ct)))
-      ).getOrElse(DEFAULT_CHARSET)
-  }
+  private def computeCharset(charset: Charset): Charset = Option(charset)
+    .orElse(
+      Option(getContentType)
+        .flatMap(ct => Option(extractContentTypeCharsetAttribute(ct)))
+    ).getOrElse(StandardCharsets.UTF_8)
 
   @throws(classOf[IOException])
   override def getResponseBody: String = {
@@ -153,16 +149,16 @@ case class CacheableResponse(
     getHeader(CONTENT_TYPE)
   }
 
-  override def getHeader(name: String): String = {
-    headers.getHeaders.get(name)
+  override def getHeader(name: CharSequence): String = {
+    headers.get(name)
   }
 
-  override def getHeaders(name: String): util.List[String] = {
-    headers.getHeaders.getAll(name)
+  override def getHeaders(name: CharSequence): util.List[String] = {
+    headers.getAll(name)
   }
 
   override def getHeaders: HttpHeaders = {
-    headers.getHeaders
+    headers
   }
 
   override def isRedirected: Boolean = {
@@ -201,16 +197,16 @@ case class CacheableResponse(
 
   private def buildCookies: util.List[Cookie] = {
     import play.shaded.ahc.org.asynchttpclient.util.MiscUtils.isNonEmpty
-    import play.shaded.ahc.org.asynchttpclient.cookie.CookieDecoder
+    import play.shaded.ahc.io.netty.handler.codec.http.cookie.ClientCookieDecoder
     import java.util.Collections
 
-    var setCookieHeaders = headers.getHeaders.getAll(SET_COOKIE2)
-    if (!isNonEmpty(setCookieHeaders)) setCookieHeaders = headers.getHeaders.getAll(SET_COOKIE)
+    var setCookieHeaders = headers.getAll(SET_COOKIE2)
+    if (!isNonEmpty(setCookieHeaders)) setCookieHeaders = headers.getAll(SET_COOKIE)
     if (isNonEmpty(setCookieHeaders)) {
       val cookies = new util.ArrayList[Cookie](1)
-      import scala.collection.JavaConversions._
-      for (value <- setCookieHeaders) {
-        val c = CookieDecoder.decode(value)
+      import scala.collection.JavaConverters._
+      for (value <- setCookieHeaders.iterator.asScala) {
+        val c = if (ahcConfig.isUseLaxCookieEncoder) ClientCookieDecoder.LAX.decode(value) else ClientCookieDecoder.STRICT.decode(value)
         if (c != null) cookies.add(c)
       }
       return Collections.unmodifiableList(cookies)
@@ -227,35 +223,25 @@ case class CacheableResponse(
   override def getRemoteAddress: SocketAddress = status.getRemoteAddress
 }
 
-case class CacheableHttpResponseHeaders(trailingHeaders: Boolean, headers: HttpHeaders)
-  extends HttpResponseHeaders(headers, trailingHeaders) {
-
-  override def toString: String = {
-    s"CacheableHttpResponseHeaders(trailingHeaders = $trailingHeaders, headers = $headers)"
-  }
-}
-
 object CacheableResponse {
   private val logger = LoggerFactory.getLogger("play.api.libs.ws.ahc.cache.CacheableResponse")
 
-  def apply(code: Int, urlString: String): CacheableResponse = {
+  def apply(code: Int, urlString: String, ahcConfig: AsyncHttpClientConfig): CacheableResponse = {
     val uri: Uri = Uri.create(urlString)
     val status = new CacheableHttpResponseStatus(uri, code, "", "")
-    val headers = new DefaultHttpHeaders()
-    val responseHeaders = CacheableHttpResponseHeaders(trailingHeaders = false, headers = headers)
+    val responseHeaders = new DefaultHttpHeaders()
     val bodyParts = util.Collections.emptyList[CacheableHttpResponseBodyPart]
 
-    CacheableResponse(status = status, headers = responseHeaders, bodyParts = bodyParts)
+    CacheableResponse(status = status, headers = responseHeaders, bodyParts = bodyParts, ahcConfig)
   }
 
-  def apply(code: Int, urlString: String, body: String): CacheableResponse = {
+  def apply(code: Int, urlString: String, body: String, ahcConfig: AsyncHttpClientConfig): CacheableResponse = {
     val uri: Uri = Uri.create(urlString)
     val status = new CacheableHttpResponseStatus(uri, code, "", "")
-    val headers = new DefaultHttpHeaders()
-    val responseHeaders = CacheableHttpResponseHeaders(trailingHeaders = false, headers = headers)
+    val responseHeaders = new DefaultHttpHeaders()
     val bodyParts = util.Collections.singletonList(new CacheableHttpResponseBodyPart(body.getBytes, true))
 
-    CacheableResponse(status = status, headers = responseHeaders, bodyParts = bodyParts)
+    CacheableResponse(status = status, headers = responseHeaders, bodyParts = bodyParts, ahcConfig)
   }
 }
 
@@ -265,7 +251,7 @@ class CacheableHttpResponseStatus(
     statusCode: Int,
     statusText: String,
     protocolText: String)
-  extends HttpResponseStatus(uri, null) {
+  extends HttpResponseStatus(uri) {
   override def getStatusCode: Int = statusCode
 
   override def getProtocolText: String = protocolText
@@ -304,6 +290,6 @@ class CacheableHttpResponseBodyPart(chunk: Array[Byte], last: Boolean) extends H
   override def length(): Int = if (chunk != null) chunk.length else 0
 
   override def toString: String = {
-    s"CacheableHttpResponseBodyPart(last = $last, chunk size = ${chunk.size})"
+    s"CacheableHttpResponseBodyPart(last = $last, chunk size = ${chunk.length})"
   }
 }

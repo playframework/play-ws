@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package play.libs.ws.ahc;
@@ -13,7 +13,7 @@ import play.libs.ws.WSCookie;
 import play.libs.ws.WSCookieBuilder;
 
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders;
-import play.shaded.ahc.org.asynchttpclient.cookie.Cookie;
+import play.shaded.ahc.io.netty.handler.codec.http.cookie.Cookie;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -81,11 +81,11 @@ public class StandaloneAhcWSResponse implements StandaloneWSResponse {
 
     public WSCookie asCookie(Cookie c) {
        return new WSCookieBuilder()
-                .setName(c.getName())
-                .setValue(c.getValue())
-                .setDomain(c.getDomain())
-                .setPath(c.getPath())
-                .setMaxAge(c.getMaxAge())
+                .setName(c.name())
+                .setValue(c.value())
+                .setDomain(c.domain())
+                .setPath(c.path())
+                .setMaxAge(c.maxAge())
                 .setSecure(c.isSecure())
                 .setHttpOnly(c.isHttpOnly()).build();
     }
@@ -95,9 +95,9 @@ public class StandaloneAhcWSResponse implements StandaloneWSResponse {
      */
     @Override
     public Optional<WSCookie> getCookie(String name) {
-        for (play.shaded.ahc.org.asynchttpclient.cookie.Cookie ahcCookie : ahcResponse.getCookies()) {
+        for (Cookie ahcCookie : ahcResponse.getCookies()) {
             // safe -- cookie.getName() will never return null
-            if (ahcCookie.getName().equals(name)) {
+            if (ahcCookie.name().equals(name)) {
                 return Optional.of(asCookie(ahcCookie));
             }
         }

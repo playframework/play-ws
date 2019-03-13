@@ -1,18 +1,18 @@
 /*
- * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
- *
+ * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
  */
+
 package play.api.libs.ws.ahc.cache
 
 import java.net.URI
 
 import com.typesafe.play.cachecontrol._
+import play.api.libs.ws.{ ahc => standaloneAhc }
 import org.joda.time.{ DateTime, Seconds }
 import org.slf4j.LoggerFactory
 import play.shaded.ahc.io.netty.handler.codec.http.{ DefaultHttpHeaders, HttpHeaders }
 import play.shaded.ahc.org.asynchttpclient._
 
-import scala.Option
 import scala.concurrent.{ ExecutionContext, Future }
 
 /**
@@ -24,7 +24,7 @@ import scala.concurrent.{ ExecutionContext, Future }
  * to caching responses to GET, many caches simply decline other methods
  * and use only the URI as the primary cache key.
  */
-class AhcHttpCache(underlying: Cache, heuristicsEnabled: Boolean = false)(implicit val executionContext: ExecutionContext) extends CacheDefaults with Debug {
+class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boolean = false)(implicit val executionContext: ExecutionContext) extends CacheDefaults with Debug {
   require(underlying != null, "null underlying!")
 
   private val logger = LoggerFactory.getLogger(this.getClass)
@@ -263,7 +263,7 @@ class AhcHttpCache(underlying: Cache, heuristicsEnabled: Boolean = false)(implic
   /**
    * Calculates the time to live.  Currently hardcoded to 24 hours.
    */
-  protected def calculateTimeToLive(request: Request, status: CacheableHttpResponseStatus, headers: CacheableHttpResponseHeaders): Option[DateTime] = {
+  protected def calculateTimeToLive(request: Request, status: CacheableHttpResponseStatus, headers: HttpHeaders): Option[DateTime] = {
     Some(DateTime.now.plusHours(24))
   }
 
@@ -289,7 +289,7 @@ class AhcHttpCache(underlying: Cache, heuristicsEnabled: Boolean = false)(implic
     any match {
       case chrs: CacheableHttpResponseStatus =>
         false
-      case headers: CacheableHttpResponseHeaders =>
+      case headers: HttpHeaders =>
         false
       case bodyPart: CacheableHttpResponseBodyPart =>
         false
@@ -319,7 +319,7 @@ class AhcHttpCache(underlying: Cache, heuristicsEnabled: Boolean = false)(implic
     //o  retain any Warning header fields in the stored response with
     //warn-code 2xx; and,
     val headers = response.headers
-    val headersMap: HttpHeaders = new DefaultHttpHeaders().add(headers.getHeaders)
+    val headersMap: HttpHeaders = new DefaultHttpHeaders().add(headers)
     val filteredWarnings = headersMap.getAll("Warning").asScala.filter { line =>
       val warning = WarningParser.parse(line)
       warning.code < 200
@@ -331,8 +331,7 @@ class AhcHttpCache(underlying: Cache, heuristicsEnabled: Boolean = false)(implic
     //fields in the stored response.
     headersMap.set(newHeaders)
 
-    val updatedHeaders = headers.copy(headers = headersMap)
-    response.copy(headers = updatedHeaders)
+    response.copy(headers = headersMap)
   }
 
   /**
@@ -374,10 +373,7 @@ class AhcHttpCache(underlying: Cache, heuristicsEnabled: Boolean = false)(implic
 
   def replaceHeaders(response: CacheableResponse)(block: HttpHeaders => HttpHeaders): CacheableResponse = {
     val newHeadersMap = block(new DefaultHttpHeaders().add(response.getHeaders))
-
-    val cachedHeaders = response.headers
-    val newHeaders = cachedHeaders.copy(headers = newHeadersMap)
-    response.copy(headers = newHeaders)
+    response.copy(headers = newHeadersMap)
   }
 
   protected def generateCacheRequest(request: Request): CacheRequest = {
@@ -407,9 +403,9 @@ class AhcHttpCache(underlying: Cache, heuristicsEnabled: Boolean = false)(implic
       nominatedHeaders = nominatedHeaders)
   }
 
-  protected def generateOriginResponse(request: Request, status: Int, responseHeaders: HttpResponseHeaders): OriginResponse = {
+  protected def generateOriginResponse(request: Request, status: Int, responseHeaders: HttpHeaders): OriginResponse = {
     val uri = request.getUri.toJavaNetURI
-    val headers = headersToMap(responseHeaders.getHeaders).map {
+    val headers = headersToMap(responseHeaders).map {
       case (name, values) =>
         (HeaderName(name), values)
     }
@@ -429,9 +425,7 @@ class AhcHttpCache(underlying: Cache, heuristicsEnabled: Boolean = false)(implic
       logger.debug(s"massageCachedResponse: stripHeaderNames = $stripHeaderNames")
       stripHeaderNames.asScala.foreach(httpResponse.getHeaders.remove)
       logger.debug(s"massageCachedResponse: strippedHeaders = ${httpResponse.getHeaders}")
-      val isTrailing = httpResponse.headers.isTrailling
-      val newHeaders = CacheableHttpResponseHeaders(isTrailing, httpResponse.getHeaders)
-      httpResponse.copy(headers = newHeaders)
+      httpResponse.copy(headers = httpResponse.getHeaders)
     } else {
       httpResponse
     }

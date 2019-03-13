@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
  */
+
 package play.api.libs.ws.ahc
 
 import akka.stream.scaladsl.Source
@@ -28,8 +29,9 @@ class StreamedResponse(
     val status: Int,
     val statusText: String,
     val uri: java.net.URI,
-    val headers: Map[String, Seq[String]],
-    publisher: Publisher[HttpResponseBodyPart]) extends StandaloneWSResponse with CookieBuilder {
+    val headers: Map[String, scala.collection.Seq[String]],
+    publisher: Publisher[HttpResponseBodyPart],
+    val useLaxCookieEncoder: Boolean) extends StandaloneWSResponse with CookieBuilder {
 
   /**
    * Get the underlying response object.
@@ -39,7 +41,7 @@ class StreamedResponse(
   /**
    * Get all the cookies.
    */
-  override lazy val cookies: Seq[WSCookie] = buildCookies(headers)
+  override lazy val cookies: scala.collection.Seq[WSCookie] = buildCookies(headers)
 
   /**
    * Get only one cookie, using the cookie name.

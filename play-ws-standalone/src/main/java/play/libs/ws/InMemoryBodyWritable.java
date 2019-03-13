@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package play.libs.ws;
@@ -7,7 +7,9 @@ package play.libs.ws;
 import akka.util.ByteString;
 
 /**
- * A body writable that takes a bytestring with InMemoryBody.
+ * A body writable that takes a ByteString with InMemoryBody.
+ *
+ * @see ByteString
  */
 public class InMemoryBodyWritable implements BodyWritable<ByteString> {
     private final InMemoryBody body;

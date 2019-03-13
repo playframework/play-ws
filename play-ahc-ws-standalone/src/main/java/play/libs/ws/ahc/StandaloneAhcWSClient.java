@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package play.libs.ws.ahc;
@@ -19,7 +19,12 @@ import play.api.libs.ws.ahc.cache.AhcHttpCache;
 import play.api.libs.ws.ahc.cache.CachingAsyncHttpClient;
 import play.libs.ws.StandaloneWSClient;
 import play.libs.ws.StandaloneWSResponse;
-import play.shaded.ahc.org.asynchttpclient.*;
+import play.shaded.ahc.org.asynchttpclient.AsyncCompletionHandler;
+import play.shaded.ahc.org.asynchttpclient.AsyncHttpClient;
+import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClient;
+import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClientConfig;
+import play.shaded.ahc.org.asynchttpclient.Request;
+import play.shaded.ahc.org.asynchttpclient.Response;
 import scala.compat.java8.FutureConverters;
 import scala.concurrent.ExecutionContext;
 import scala.concurrent.Future;
@@ -68,19 +73,7 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
     CompletionStage<StandaloneWSResponse> execute(Request request) {
         final Promise<StandaloneWSResponse> scalaPromise = scala.concurrent.Promise$.MODULE$.apply();
 
-        AsyncCompletionHandler<Response> handler = new AsyncCompletionHandler<Response>() {
-            @Override
-            public Response onCompleted(Response response) {
-                StandaloneAhcWSResponse r = new StandaloneAhcWSResponse(response);
-                scalaPromise.success(r);
-                return response;
-            }
-
-            @Override
-            public void onThrowable(Throwable t) {
-                scalaPromise.failure(t);
-            }
-        };
+        AsyncCompletionHandler<Response> handler = new ResponseAsyncCompletionHandler(scalaPromise);
 
         try {
             asyncHttpClient.executeRequest(request, handler);
@@ -100,7 +93,8 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
                         state.statusText(),
                         state.uriOption().get(),
                         state.responseHeaders(),
-                        state.publisher()),
+                        state.publisher(),
+                        asyncHttpClient.getConfig().isUseLaxCookieEncoder()),
                 scalaPromise));
         return FutureConverters.toJava(scalaPromise.future());
     }
@@ -170,4 +164,23 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
         }
     }
 
+    private static class ResponseAsyncCompletionHandler extends AsyncCompletionHandler<Response> {
+        private final Promise<StandaloneWSResponse> scalaPromise;
+
+        public ResponseAsyncCompletionHandler(Promise<StandaloneWSResponse> scalaPromise) {
+            this.scalaPromise = scalaPromise;
+        }
+
+        @Override
+        public Response onCompleted(Response response) {
+            StandaloneAhcWSResponse r = new StandaloneAhcWSResponse(response);
+            scalaPromise.success(r);
+            return response;
+        }
+
+        @Override
+        public void onThrowable(Throwable t) {
+            scalaPromise.failure(t);
+        }
+    }
 }

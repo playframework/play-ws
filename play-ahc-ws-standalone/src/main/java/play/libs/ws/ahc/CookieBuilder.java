@@ -1,20 +1,21 @@
 /*
- * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package play.libs.ws.ahc;
 
 import play.libs.ws.WSCookie;
 import play.libs.ws.WSCookieBuilder;
-import play.shaded.ahc.org.asynchttpclient.cookie.CookieDecoder;
+import play.shaded.ahc.io.netty.handler.codec.http.cookie.ClientCookieDecoder;
+import play.shaded.ahc.io.netty.handler.codec.http.cookie.Cookie;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders.Names.SET_COOKIE;
-import static play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders.Names.SET_COOKIE2;
+import static play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames.SET_COOKIE;
+import static play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames.SET_COOKIE2;
 import static play.shaded.ahc.org.asynchttpclient.util.MiscUtils.isNonEmpty;
 
 interface CookieBuilder {
@@ -29,14 +30,14 @@ interface CookieBuilder {
         if (isNonEmpty(setCookieHeaders)) {
             List<WSCookie> cookies = new ArrayList<>(setCookieHeaders.size());
             for (String value : setCookieHeaders) {
-                play.shaded.ahc.org.asynchttpclient.cookie.Cookie c = CookieDecoder.decode(value);
+                Cookie c = isUseLaxCookieEncoder() ? ClientCookieDecoder.LAX.decode(value) : ClientCookieDecoder.STRICT.decode(value);
                 if (c != null) {
                     WSCookie wsCookie = new WSCookieBuilder()
-                            .setName(c.getName())
-                            .setValue(c.getValue())
-                            .setDomain(c.getDomain())
-                            .setPath(c.getPath())
-                            .setMaxAge(c.getMaxAge())
+                            .setName(c.name())
+                            .setValue(c.value())
+                            .setDomain(c.domain())
+                            .setPath(c.path())
+                            .setMaxAge(c.maxAge())
                             .setSecure(c.isSecure())
                             .setHttpOnly(c.isHttpOnly())
                             .build();
@@ -49,4 +50,5 @@ interface CookieBuilder {
         return Collections.emptyList();
     }
 
+    boolean isUseLaxCookieEncoder();
 }

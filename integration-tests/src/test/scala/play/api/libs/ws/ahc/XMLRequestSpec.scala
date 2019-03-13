@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package play.api.libs.ws.ahc
@@ -40,7 +40,7 @@ class XMLRequestSpec extends Specification with Mockito with AfterAll {
       .asInstanceOf[StandaloneAhcWSRequest]
       .buildRequest()
 
-    req.getHeaders.get("Content-Type") must be_==("text/xml")
+    req.getHeaders.get("Content-Type") must be_==("text/xml; charset=UTF-8")
     ByteString.fromArray(req.getByteData).utf8String must be_==("<hello><test/></hello>")
   }
 

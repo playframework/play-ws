@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
- *
+ * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package play.api.libs.ws.ahc.cache
 
 import play.api.libs.ws.ahc.AhcUtilities
+import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import play.shaded.ahc.org.asynchttpclient._
 
 /**
@@ -41,12 +41,9 @@ private[ahc] trait Debug extends AhcUtilities {
     }.getOrElse("null")
   }
 
-  def debug(responseHeaders: HttpResponseHeaders): String = {
-    Option(responseHeaders).map {
-      case crh: CacheableHttpResponseHeaders =>
-        crh.toString
-      case rh =>
-        s"HttpResponseHeaders(${headersToMap(rh.getHeaders)})"
+  def debug(responseHeaders: HttpHeaders): String = {
+    Option(responseHeaders).map { rh =>
+      s"HttpResponseHeaders(${headersToMap(rh)})"
     }.getOrElse("null")
   }
 

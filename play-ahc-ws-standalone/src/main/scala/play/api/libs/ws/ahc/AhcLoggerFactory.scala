@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
  */
+
 package play.api.libs.ws.ahc
 
 import com.typesafe.sslconfig.util.{ LoggerFactory, NoDepsLogger }
@@ -10,7 +11,7 @@ class AhcLoggerFactory(lf: ILoggerFactory = SLF4JLoggerFactory.getILoggerFactory
 
   private[ahc] def createLogger(name: String) = {
     new NoDepsLogger {
-      private[ahc] val logger = lf.getLogger(this.getClass.getName)
+      private[ahc] val logger = lf.getLogger(name)
 
       def warn(msg: String): Unit = logger.warn(msg)
       def isDebugEnabled: Boolean = logger.isDebugEnabled

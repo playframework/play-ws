@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
  */
+
 package play.libs.ws.ahc;
 
 import akka.stream.javadsl.Source;
@@ -13,15 +14,15 @@ import play.libs.ws.WSCookie;
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders;
 import play.shaded.ahc.org.asynchttpclient.HttpResponseBodyPart;
 import scala.collection.Seq;
+import scala.compat.java8.ScalaStreamSupport;
 
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
-import scala.compat.java8.ScalaStreamSupport;
 
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.toMap;
 import static scala.collection.JavaConverters.seqAsJavaListConverter;
 
 public class StreamedResponse implements StandaloneWSResponse, CookieBuilder {
@@ -32,6 +33,7 @@ public class StreamedResponse implements StandaloneWSResponse, CookieBuilder {
     private final URI uri;
     private final Publisher<HttpResponseBodyPart> publisher;
     private final StandaloneAhcWSClient client;
+    private final boolean useLaxCookieEncoder;
 
     private List<WSCookie> cookies;
 
@@ -39,13 +41,15 @@ public class StreamedResponse implements StandaloneWSResponse, CookieBuilder {
                             int status,
                             String statusText, URI uri,
                             scala.collection.Map<String, Seq<String>> headers,
-                            Publisher<HttpResponseBodyPart> publisher) {
+                            Publisher<HttpResponseBodyPart> publisher,
+                            boolean useLaxCookieEncoder) {
         this.client = client;
         this.status = status;
         this.statusText = statusText;
         this.uri = uri;
         this.headers = asJava(headers);
         this.publisher = publisher;
+        this.useLaxCookieEncoder = useLaxCookieEncoder;
     }
 
     @Override
@@ -107,12 +111,16 @@ public class StreamedResponse implements StandaloneWSResponse, CookieBuilder {
         return Source.fromPublisher(publisher).map(bodyPart -> ByteString.fromArray(bodyPart.getBodyPartBytes()));
     }
 
+    public boolean isUseLaxCookieEncoder() {
+        return useLaxCookieEncoder;
+    }
+
     @Override
     public URI getUri() {
         return this.uri;
     }
 
-    private java.util.Map<String, List<String>> asJava(scala.collection.Map<String, Seq<String>> scalaMap) {
+    private static java.util.Map<String, List<String>> asJava(scala.collection.Map<String, Seq<String>> scalaMap) {
         return ScalaStreamSupport.stream(scalaMap).collect(toMap(f -> f._1(), f -> seqAsJavaListConverter(f._2()).asJava()));
     }
 

@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
  */
+
 package play.api.libs.ws.ahc
 
 import javax.inject.Inject
@@ -97,7 +98,8 @@ class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(implici
         state.statusText,
         state.uriOption.get,
         state.responseHeaders,
-        state.publisher)
+        state.publisher,
+        asyncHttpClient.getConfig.isUseLaxCookieEncoder)
     )
     asyncHttpClient.executeRequest(request, new DefaultStreamedAsyncHandler[StreamedResponse](function, promise))
     promise.future

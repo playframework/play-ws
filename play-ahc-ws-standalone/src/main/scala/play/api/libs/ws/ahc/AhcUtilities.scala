@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
- *
+ * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package play.api.libs.ws.ahc
@@ -18,7 +17,7 @@ trait AhcUtilities {
     import scala.collection.JavaConverters._
     val mutableMap = scala.collection.mutable.HashMap[String, Seq[String]]()
     headers.names().asScala.foreach { name =>
-      mutableMap.put(name, headers.getAll(name).asScala)
+      mutableMap.put(name, headers.getAll(name).asScala.toSeq)
     }
     TreeMap[String, Seq[String]]()(CaseInsensitiveOrdered) ++ mutableMap
   }
