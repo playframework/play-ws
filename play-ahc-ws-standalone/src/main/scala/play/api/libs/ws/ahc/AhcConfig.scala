@@ -208,6 +208,13 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
     builder.setShutdownQuietPeriod(0)
     builder.setShutdownTimeout(0)
     builder.setUseLaxCookieEncoder(ahcConfig.useLaxCookieEncoder)
+
+    // The WSRequest withCookies method suggests all cookies will be
+    // discarded. This is not the case if the underlying http client
+    // has a cookie store. Play ws also does not know about those
+    // cookies so for example the AhcCurlRequestLogger does not log
+    // these cookies.
+    builder.setCookieStore(null)
   }
 
   def configureProtocols(existingProtocols: Array[String], sslConfig: SSLConfigSettings): Array[String] = {
