@@ -51,6 +51,7 @@ class AhcConfigBuilderSpec extends Specification with Mockito {
         actual.getRequestTimeout must_== defaultWsConfig.requestTimeout.toMillis
         actual.getConnectTimeout must_== defaultWsConfig.connectionTimeout.toMillis
         actual.isFollowRedirect must_== defaultWsConfig.followRedirects
+        actual.getCookieStore must_== null
 
         actual.getEnabledCipherSuites.toSeq must not contain Ciphers.deprecatedCiphers
         actual.getEnabledProtocols.toSeq must not contain Protocols.deprecatedProtocols
