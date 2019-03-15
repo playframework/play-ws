@@ -6,11 +6,11 @@ import sbt._
 object Dependencies {
   val logback = Seq("ch.qos.logback" % "logback-core" % "1.2.3")
 
-  val assertj = Seq("org.assertj" % "assertj-core" % "3.11.1")
+  val assertj = Seq("org.assertj" % "assertj-core" % "3.12.1")
 
-  val awaitility = Seq("org.awaitility" % "awaitility" % "3.1.2")
+  val awaitility = Seq("org.awaitility" % "awaitility" % "3.1.6")
 
-  val specsVersion = "4.3.6"
+  val specsVersion = "4.5.1"
   val specsBuild = Seq(
     "specs2-core",
     "specs2-junit",
@@ -23,17 +23,17 @@ object Dependencies {
 
   val scalaJava8Compat = Seq("org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0")
 
-  val playJsonVersion = "2.7.1"
+  val playJsonVersion = "2.7.2"
   val playJson = Seq("com.typesafe.play" %% "play-json" % playJsonVersion)
 
-  val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "1.7.25")
+  val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "1.7.26")
 
   val javaxInject = Seq("javax.inject" % "javax.inject" % "1")
 
   val sslConfigVersion = "0.3.7"
   val sslConfigCore = Seq("com.typesafe" %% "ssl-config-core" % sslConfigVersion)
 
-  val scalaXmlVersion = "1.1.0"
+  val scalaXmlVersion = "1.1.1"
   val scalaXml = Seq("org.scala-lang.modules" %% "scala-xml" % scalaXmlVersion)
 
   val signpostVersion = "1.2.1.2"
