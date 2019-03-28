@@ -162,7 +162,8 @@ trait StandaloneWSRequest {
   }
 
   /**
-   * Returns this request with the given query string parameters, discarding the existing ones.
+   * Returns this request with the given query string parameters, discarding the existing ones for this request.
+   * But when `play.ws.ahc.useCookieStore` is true, there is a cookie store that is global and keeps cookies between requests.
    *
    * @param cookies the cookies to be used
    */
