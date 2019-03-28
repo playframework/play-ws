@@ -44,7 +44,8 @@ case class AhcWSClientConfig(
     maxRequestRetry: Int = 5,
     disableUrlEncoding: Boolean = false,
     keepAlive: Boolean = true,
-    useLaxCookieEncoder: Boolean = false)
+    useLaxCookieEncoder: Boolean = false,
+    useCookieStore: Boolean = false)
 
 /**
  * Factory for creating AhcWSClientConfig, for use from Java.
@@ -99,6 +100,7 @@ class AhcWSClientConfigParser @Inject() (
     val disableUrlEncoding = configuration.getBoolean("play.ws.ahc.disableUrlEncoding")
     val keepAlive = configuration.getBoolean("play.ws.ahc.keepAlive")
     val useLaxCookieEncoder = configuration.getBoolean("play.ws.ahc.useLaxCookieEncoder")
+    val useCookieStore = configuration.getBoolean("play.ws.ahc.useCookieStore")
 
     AhcWSClientConfig(
       wsClientConfig = wsClientConfig,
@@ -110,7 +112,8 @@ class AhcWSClientConfigParser @Inject() (
       maxRequestRetry = maxRequestRetry,
       disableUrlEncoding = disableUrlEncoding,
       keepAlive = keepAlive,
-      useLaxCookieEncoder = useLaxCookieEncoder
+      useLaxCookieEncoder = useLaxCookieEncoder,
+      useCookieStore = useCookieStore
     )
   }
 }
@@ -209,12 +212,9 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
     builder.setShutdownTimeout(0)
     builder.setUseLaxCookieEncoder(ahcConfig.useLaxCookieEncoder)
 
-    // The WSRequest withCookies method suggests all cookies will be
-    // discarded. This is not the case if the underlying http client
-    // has a cookie store. Play ws also does not know about those
-    // cookies so for example the AhcCurlRequestLogger does not log
-    // these cookies.
-    builder.setCookieStore(null)
+    if (!ahcConfig.useCookieStore) {
+      builder.setCookieStore(null)
+    }
   }
 
   def configureProtocols(existingProtocols: Array[String], sslConfig: SSLConfigSettings): Array[String] = {
