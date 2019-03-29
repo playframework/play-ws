@@ -3,6 +3,8 @@ import java.io.File
 import Dependencies._
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
+import com.typesafe.tools.mima.core.ProblemFilters
+import com.typesafe.tools.mima.core._
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
 import scalariform.formatter.preferences._
@@ -14,14 +16,6 @@ import scalariform.formatter.preferences._
 val scala211 = "2.11.12"
 val scala212 = "2.12.8"
 val scala213 = "2.13.0-M5"
-
-// Binary compatibility is this version
-val previousVersion = "2.0.0"
-
-def binaryCompatibilitySettings(scalaBinVersion: String, org: String, moduleName: String): Set[ModuleID] = scalaBinVersion match {
-  case version if version.equals(scala213) => Set.empty
-  case _ => Set(org % s"${moduleName}_$scalaBinVersion" % previousVersion)
-}
 
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
 resolvers in ThisBuild += Resolver.sonatypeRepo("public")
@@ -70,10 +64,27 @@ def scalacOptionsFor(scalaBinVersion: String): Seq[String] = scalaBinVersion mat
 }
 
 lazy val mimaSettings = mimaDefaultSettings ++ Seq(
-  mimaBinaryIssueFilters ++= Seq.empty
+  mimaPreviousArtifacts := {
+    val VersionPattern = """^(\d+).(\d+).(\d+)(-.*)?""".r
+    val previousVersions = version.value match {
+      case VersionPattern(epoch, major, minor, _) => (0 until minor.toInt).map(v => s"$epoch.$major.$v")
+      case _ => sys.error(s"Cannot find previous versions for ${version.value}")
+    }
+
+    scalaBinaryVersion.value match {
+      case sbv if sbv.equals(scala213) => Set.empty
+      case _ => previousVersions.toSet.map(previousVersion => organization.value %% name.value % previousVersion)
+    }
+  },
+  mimaBinaryIssueFilters ++= Seq(
+    ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.ahc.AhcWSClientConfig$"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.apply"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.copy"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.this"),
+  )
 )
 
-lazy val commonSettings = mimaSettings ++ Seq(
+lazy val commonSettings = Seq(
   organization := "com.typesafe.play",
   scalaVersion := scala212,
   crossScalaVersions := Seq(scala213, scala212, scala211),
@@ -284,7 +295,7 @@ lazy val shaded = Project(id = "shaded", base = file("shaded") )
 lazy val `play-ws-standalone` = project
   .in(file("play-ws-standalone"))
   .settings(commonSettings)
-  .settings(mimaPreviousArtifacts := binaryCompatibilitySettings(scalaBinaryVersion.value, organization.value, name.value))
+  .settings(mimaSettings)
   .settings(libraryDependencies ++= standaloneApiWSDependencies)
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
@@ -309,7 +320,6 @@ def addShadedDeps(deps: Seq[xml.Node], node: xml.Node): xml.Node = {
 // Standalone implementation using AsyncHttpClient
 lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
-  .settings(mimaPreviousArtifacts := binaryCompatibilitySettings(scalaBinaryVersion.value, organization.value, name.value))
   .settings(commonSettings ++ formattingSettings ++ shadedAhcSettings ++ shadedOAuthSettings ++ Seq(
     fork in Test := true,
     testOptions in Test := Seq(
@@ -331,6 +341,7 @@ lazy val `play-ahc-ws-standalone` = project
       ), node)
     }
   ))
+  .settings(mimaSettings)
   .dependsOn(
     `play-ws-standalone`
   ).disablePlugins(sbtassembly.AssemblyPlugin)
@@ -343,7 +354,7 @@ lazy val `play-ws-standalone-json` = project
   .in(file("play-ws-standalone-json"))
   .settings(commonSettings)
   .settings(formattingSettings)
-  .settings(mimaPreviousArtifacts := binaryCompatibilitySettings(scalaBinaryVersion.value, organization.value, name.value))
+  .settings(mimaSettings)
   .settings(
     fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
@@ -361,7 +372,7 @@ lazy val `play-ws-standalone-xml` = project
   .in(file("play-ws-standalone-xml"))
   .settings(commonSettings)
   .settings(formattingSettings)
-  .settings(mimaPreviousArtifacts := binaryCompatibilitySettings(scalaBinaryVersion.value, organization.value, name.value))
+  .settings(mimaSettings)
   .settings(
     fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
