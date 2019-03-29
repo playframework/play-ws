@@ -229,7 +229,8 @@ public interface StandaloneWSRequest {
     StandaloneWSRequest addCookies(WSCookie... cookies);
 
     /**
-     * Set the request cookies. This discard the existing cookies.
+     * Set the request cookies. This discard the existing ones for this request, but when `play.ws.ahc.useCookieStore`
+     * is true, there is a cookie store that is global and keeps cookies between requests.
      *
      * @param cookies the cookies to be used.
      * @return the modified WSRequest.
