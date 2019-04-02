@@ -76,10 +76,14 @@ lazy val mimaSettings = mimaDefaultSettings ++ Seq(
     else previousVersions.toSet.map(previousVersion => organization.value %% name.value % previousVersion)
   },
   mimaBinaryIssueFilters ++= Seq(
+    // Add useCookieStorage configuration
     ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.ahc.AhcWSClientConfig$"),
     ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.apply"),
     ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.copy"),
     ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.this"),
+    // Update AHC to version 2.8.1
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.cache.AsyncCachingHandler.onTlsHandshakeSuccess"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.cache.BackgroundAsyncHandler.onTlsHandshakeSuccess"),
   )
 )
 
