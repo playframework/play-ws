@@ -461,7 +461,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
                         .map(Long::valueOf).orElse(-1L);
                 possiblyModifiedHeaders.remove(CONTENT_LENGTH);
 
-                @SuppressWarnings("unchecked") Source<ByteString, ?> sourceBody = ((SourceBodyWritable) bodyWritable).body().get();
+                Source<ByteString, ?> sourceBody = ((SourceBodyWritable) bodyWritable).body().get();
                 Publisher<ByteBuf> publisher = sourceBody.map(bs -> Unpooled.wrappedBuffer(bs.toByteBuffer()))
                         .runWith(Sink.asPublisher(AsPublisher.WITHOUT_FANOUT), materializer);
                 builder.setBody(publisher, contentLength);
@@ -524,7 +524,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
     static Realm auth(String username, String password, WSAuthScheme scheme) {
         Realm.AuthScheme authScheme = Realm.AuthScheme.valueOf(scheme.name());
-        Boolean usePreemptiveAuth = scheme != WSAuthScheme.DIGEST;
+        boolean usePreemptiveAuth = scheme != WSAuthScheme.DIGEST;
         return (new Realm.Builder(username, password))
                 .setScheme(authScheme)
                 .setUsePreemptiveAuth(usePreemptiveAuth)
