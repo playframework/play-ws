@@ -71,10 +71,9 @@ lazy val mimaSettings = mimaDefaultSettings ++ Seq(
       case _ => sys.error(s"Cannot find previous versions for ${version.value}")
     }
 
-    scalaBinaryVersion.value match {
-      case sbv if sbv.equals(scala213) => Set.empty
-      case _ => previousVersions.toSet.map(previousVersion => organization.value %% name.value % previousVersion)
-    }
+    val sbv = scalaBinaryVersion.value
+    if (sbv.equals(scala213)) Set.empty
+    else previousVersions.toSet.map(previousVersion => organization.value %% name.value % previousVersion)
   },
   mimaBinaryIssueFilters ++= Seq(
     ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.ahc.AhcWSClientConfig$"),
@@ -140,8 +139,15 @@ val disablePublishing = Seq[Setting[_]](
   skip in publish := true
 )
 
-lazy val shadeAssemblySettings = commonSettings ++ Seq(
+lazy val shadedCommonSettings = Seq(
+  scalaVersion := scala212,
   crossScalaVersions := Seq(scala212),
+
+  // No need to cross publish the shaded libraries
+  crossPaths := false,
+)
+
+lazy val shadeAssemblySettings = commonSettings ++ shadedCommonSettings ++ Seq(
   assemblyOption in assembly ~= (_.copy(includeScala = false)),
   test in assembly := {},
   assemblyOption in assembly ~= {
@@ -163,7 +169,6 @@ lazy val shadeAssemblySettings = commonSettings ++ Seq(
         sys.error("Cannot find valid scala version!")
     }
   },
-  crossPaths := false // only useful for Java
 )
 
 val ahcMerge: MergeStrategy = new MergeStrategy {
@@ -285,6 +290,7 @@ lazy val shaded = Project(id = "shaded", base = file("shaded") )
   .settings(
     disableDocs,
     disablePublishing,
+    shadedCommonSettings,
   )
 
 //---------------------------------------------------------------
