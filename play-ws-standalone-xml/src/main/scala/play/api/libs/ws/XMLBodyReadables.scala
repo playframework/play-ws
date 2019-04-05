@@ -4,6 +4,10 @@
 
 package play.api.libs.ws
 
+import java.io.ByteArrayInputStream
+
+import scala.xml.InputSource
+
 trait XMLBodyReadables {
 
   import scala.xml.Elem
@@ -15,7 +19,7 @@ trait XMLBodyReadables {
    * }}}
    */
   implicit val readableAsXml: BodyReadable[Elem] = BodyReadable { response =>
-    XML.parser.loadString(response.body)
+    xml.XML.load(new InputSource(new ByteArrayInputStream(response.bodyAsBytes.toArray)))
   }
 
 }

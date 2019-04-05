@@ -4,23 +4,28 @@
 
 package play.api.libs.ws.ahc
 
+import java.io.File
 import java.nio.charset.StandardCharsets
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.util.ByteString
+import com.google.common.hash.Hashing
+import org.specs2.matcher.MustMatchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
-import play.api.libs.ws.{ XML, XMLBodyReadables, XMLBodyWritables }
+import play.api.libs.json.JsValue
+import play.api.libs.ws._
 import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse }
 
-import scala.xml.Elem
+import scala.io.{ Codec, Source }
+import scala.xml.{ Elem, InputSource, Node }
 
 /**
  *
  */
-class XMLRequestSpec extends Specification with Mockito with AfterAll {
+class XMLRequestSpec extends Specification with Mockito with AfterAll with MustMatchers {
   sequential
 
   implicit val system = ActorSystem()
@@ -28,6 +33,27 @@ class XMLRequestSpec extends Specification with Mockito with AfterAll {
 
   override def afterAll: Unit = {
     system.terminate()
+  }
+  class StubResponse(byteArray: Array[Byte]) extends StandaloneWSResponse {
+    override def uri: java.net.URI = ???
+
+    override def headers: Map[String, Seq[String]] = ???
+
+    override def underlying[T]: T = ???
+
+    override def status: Int = ???
+
+    override def statusText: String = ???
+
+    override def cookies: Seq[WSCookie] = ???
+
+    override def cookie(name: String): Option[WSCookie] = ???
+
+    override def body: String = ???
+
+    override def bodyAsBytes: ByteString = ByteString.fromArray(byteArray)
+
+    override def bodyAsSource: akka.stream.scaladsl.Source[ByteString, _] = ???
   }
 
   "write an XML node" in {
@@ -44,16 +70,39 @@ class XMLRequestSpec extends Specification with Mockito with AfterAll {
     ByteString.fromArray(req.getByteData).utf8String must be_==("<hello><test/></hello>")
   }
 
-  "read an XML node" in {
-    import XMLBodyReadables._
+  "read an XML node in Utf-8" in {
+    val test =
+      """
+        |<note>
+        |<to>Tove</to>
+        |<from>Jani</from>
+        |<heading>Reminder</heading>
+        |<body>Don't forget me this weekend!</body>
+        |</note>
+      """.stripMargin
+    val readables = new XMLBodyReadables() {}
+    /* UTF-8 */
+    val value: Elem = readables.readableAsXml.transform(new StubResponse(test.getBytes(StandardCharsets.UTF_8)))
+    (value \\ "note" \ "to").text must be_==("Tove")
+    (value \\ "note" \ "from").text must be_==("Jani")
+    (value \\ "note" \ "heading").text must be_==("Reminder")
+  }
 
-    val ahcResponse = mock[AHCResponse]
-    ahcResponse.getContentType() returns "application/xml"
-    ahcResponse.getResponseBody(StandardCharsets.UTF_8) returns "<hello><test></test></hello>"
-    val response = new StandaloneAhcWSResponse(ahcResponse)
-
-    val expected = XML.parser.loadString("<hello><test></test></hello>")
-    val actual = response.body[Elem]
-    actual must be_==(expected)
+  "read an XML node in Utf-16" in {
+    val test =
+      """
+        |<note>
+        |<to>Tove</to>
+        |<from>Jani</from>
+        |<heading>Reminder</heading>
+        |<body>Don't forget me this weekend!</body>
+        |</note>
+      """.stripMargin
+    val readables = new XMLBodyReadables() {}
+    /* UTF-16 */
+    val value: Elem = readables.readableAsXml.transform(new StubResponse(test.getBytes(StandardCharsets.UTF_16)))
+    (value \\ "note" \ "to").text must be_==("Tove")
+    (value \\ "note" \ "from").text must be_==("Jani")
+    (value \\ "note" \ "heading").text must be_==("Reminder")
   }
 }
