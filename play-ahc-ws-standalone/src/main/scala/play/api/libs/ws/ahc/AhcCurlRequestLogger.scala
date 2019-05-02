@@ -58,7 +58,7 @@ trait CurlFormat {
         val encodedPassword = Base64.getUrlEncoder.encodeToString(s"$userName:$password".getBytes(StandardCharsets.US_ASCII))
         b.append(s"""  --header 'Authorization: Basic ${quote(encodedPassword)}'""")
         b.append(" \\\n")
-      case _ => Unit
+      case _ =>
     }
 
     // headers
