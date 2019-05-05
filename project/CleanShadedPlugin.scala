@@ -35,10 +35,11 @@ object CleanShadedPlugin extends AutoPlugin {
       Space ~> token(token("%") ~> Space ~> StringBasic.examples("\"name\""))
 
     def query(base: File, param: Option[ModuleParam], org: String, name: String): Seq[File] = {
+      val base1 = PathFinder(base)
       val pathFinder = param match {
-        case None                               => base ** stringToGlob(org) ** stringToGlob(name)
-        case Some(ModuleParam(org, None))       => base ** stringToGlob(org)
-        case Some(ModuleParam(org, Some(name))) => base ** stringToGlob(org) ** stringToGlob(name)
+        case None                               => base1 ** stringToGlob(org) ** stringToGlob(name)
+        case Some(ModuleParam(org, None))       => base1 ** stringToGlob(org)
+        case Some(ModuleParam(org, Some(name))) => base1 ** stringToGlob(org) ** stringToGlob(name)
       }
       pathFinder.get()
     }
