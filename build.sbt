@@ -13,7 +13,6 @@ import scalariform.formatter.preferences._
 // Shading and Project Settings
 //---------------------------------------------------------------
 
-val scala211 = "2.11.12"
 val scala212 = "2.12.8"
 val scala213 = "2.13.0-M5"
 
@@ -86,7 +85,7 @@ lazy val mimaSettings = mimaDefaultSettings ++ Seq(
 lazy val commonSettings = Seq(
   organization := "com.typesafe.play",
   scalaVersion := scala212,
-  crossScalaVersions := Seq(scala213, scala212, scala211),
+  crossScalaVersions := Seq(scala213, scala212),
   scalacOptions in (Compile, doc) ++= scalacOptionsFor(scalaBinaryVersion.value),
   pomExtra := (
     <url>https://github.com/playframework/play-ws</url>
