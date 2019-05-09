@@ -23,23 +23,23 @@ object Dependencies {
 
   val scalaJava8Compat = Seq("org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0")
 
-  val playJsonVersion = "2.7.2"
+  val playJsonVersion = "2.7.2" // "2.7.3" once on 2.13.0-RC1
   val playJson = Seq("com.typesafe.play" %% "play-json" % playJsonVersion)
 
   val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "1.7.26")
 
   val javaxInject = Seq("javax.inject" % "javax.inject" % "1")
 
-  val sslConfigVersion = "0.3.7"
+  val sslConfigVersion = "0.3.7" // 0.4.0+ once we're not blocked by Akka 2.6 vs Scala 2.13.0-RC1
   val sslConfigCore = Seq("com.typesafe" %% "ssl-config-core" % sslConfigVersion)
 
-  val scalaXmlVersion = "1.1.1"
+  val scalaXmlVersion = "1.1.1" // "1.2.0" once on 2.13.0-RC1
   val scalaXml = Seq("org.scala-lang.modules" %% "scala-xml" % scalaXmlVersion)
 
   val signpostVersion = "1.2.1.2"
   val oauth = Seq("oauth.signpost" % "signpost-core" % signpostVersion)
 
-  val cachecontrolVersion = "1.1.5"
+  val cachecontrolVersion = "1.1.5" // "1.1.6" once on 2.13.0-RC1
   val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % cachecontrolVersion)
 
   val asyncHttpClientVersion = "2.6.0"
