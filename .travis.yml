@@ -1,27 +1,47 @@
 language: scala
-dist: trusty
-sudo: false
-group: beta
+
+before_install:
+  - curl -sL https://github.com/shyiko/jabba/raw/master/install.sh | bash && . ~/.jabba/jabba.sh
+
+install:
+  - $JABBA_HOME/bin/jabba install $TRAVIS_JDK
+  - unset _JAVA_OPTIONS
+  - export JAVA_HOME="$JABBA_HOME/jdk/$TRAVIS_JDK" && export PATH="$JAVA_HOME/bin:$PATH" && java -Xmx32m -version
+
+env:
+  global:
+    - JABBA_HOME=$HOME/.jabba
+  matrix:
+    - TRAVIS_JDK=adopt@1.8.192-12
+    - TRAVIS_JDK=adopt@1.11.0-1
+
+matrix:
+  fast_finish: true
+  allow_failures:
+    # Java 11 is still not fully supported. It is good that we are already
+    # testing play-ws using it to better discover possible problems but we
+    # can allow failures here too.
+    - env: TRAVIS_JDK=adopt@1.11.0-1
+
 scala:
-- 2.12.4
-- 2.11.12
-jdk:
-- oraclejdk8
-- oraclejdk9
+  - 2.12.8
+  - 2.11.12
+
+script:
+  - sbt ++$TRAVIS_SCALA_VERSION 'testOnly -- xonly timefactor 5' mimaReportBinaryIssues doc
+
 cache:
   directories:
-  - "$HOME/.ivy2/cache"
-  - "$HOME/.sbt/boot/"
-script:
-- sbt ++$TRAVIS_SCALA_VERSION 'testOnly -- xonly timefactor 5' mimaReportBinaryIssues doc 
+    - "$HOME/.ivy2/cache"
+    - "$HOME/.sbt/boot/"
+    - "$HOME/.jabba/jdk"
+
 before_cache:
-- find $HOME/.ivy2/cache -name "ivydata-*.properties" | xargs rm
+  - rm -rf $HOME/.ivy2/cache/com.typesafe.play/*
+  - rm -rf $HOME/.ivy2/cache/scala_*/sbt_*/com.typesafe.play/*
+  - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
+  - find $HOME/.sbt -name "*.lock" -delete
+
 notifications:
   slack:
     secure: gEa3XQiBUbMxCy+zzwka1cRcoc/h+lcOYFWiDM7JVxrPJxqAZcrlzSHqMrCEiey39bolMDWdRM9RhrJ/jkjOurHgDWN/oyhV4JRvXQJmipLDErRwuWemo1S15DcVeZ4+3VCmB3KIMKk0AWPjPZb2QEIQfzjNwd9MRXZPyWw9XiNjjUCC4VEjYxYlxIYhha4NaFRy96nTm/Rf6hc55bZeFYYz6Y42pK6sRN+M8ES9KsoW2KQeoxIXHp1bq3WxVPGlUPyhUroh53kehS6iS3tChMVw8fnFUbd8cvtNx/dN847Pwj1E2hLhdD+aTjf8Wjq6V+l+RNWJnWdKIo+4bi0vqLZkUN7XrS9FgwX1cawdC32tNFlKXA4fmvXxtyMh3bGE011NVGtcdE2MBudy6lfYSvxROeDXwd+0xTbvyYd8xQrZv3JL3dTM3Hb+586NeZOTq2BpZJytKh4wIZcHyOeHdq+IbvPviERaem/d/wJ1QLVHspQw7xab8JopMWJ5iyJnCL9nC35hZomvzSyZ8KrVQKyMenbq7Kb8Vp/Lo5kCp1ygK8qfSNVl+sZfoW5D1dlipXDp2EYP399hqGa1kn23cIT1JiAbeQ9SEmhXWj4lPAq2rTAOt90V6OcpTqydJ3k/TVqzraZ3pGDirkrfS4kAvhgeIWIGDUnYXak5tpCoIcY=
-
-# No need to test using Scala 2.11 and Java 9
-matrix:
-  exclude:
-    - scala: 2.11.12
-      jdk: oraclejdk9
