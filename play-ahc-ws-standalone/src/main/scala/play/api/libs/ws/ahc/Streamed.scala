@@ -5,7 +5,8 @@ package play.api.libs.ws.ahc
 
 import java.net.URI
 
-import org.reactivestreams.{ Publisher, Subscriber, Subscription }
+import akka.Done
+import org.reactivestreams.{ Subscriber, Subscription, Publisher }
 import play.shaded.ahc.org.asynchttpclient.AsyncHandler.State
 import play.shaded.ahc.org.asynchttpclient._
 import play.shaded.ahc.org.asynchttpclient.handler.StreamedAsyncHandler
@@ -20,14 +21,14 @@ case class StreamedState(
     publisher: Publisher[HttpResponseBodyPart] = EmptyPublisher
 )
 
-class DefaultStreamedAsyncHandler[T](f: java.util.function.Function[StreamedState, T], promise: Promise[T]) extends StreamedAsyncHandler[Unit] with AhcUtilities {
+class DefaultStreamedAsyncHandler[T](f: java.util.function.Function[StreamedState, T], streamStarted: Promise[T], streamDone: Promise[Done]) extends StreamedAsyncHandler[Unit] with AhcUtilities {
   private var state = StreamedState()
 
   def onStream(publisher: Publisher[HttpResponseBodyPart]): State = {
     if (this.state.publisher != EmptyPublisher) State.ABORT
     else {
       this.state = state.copy(publisher = publisher)
-      promise.success(f(state))
+      streamStarted.success(f(state))
       State.CONTINUE
     }
   }
@@ -58,15 +59,20 @@ class DefaultStreamedAsyncHandler[T](f: java.util.function.Function[StreamedStat
   override def onCompleted(): Unit = {
     // EmptyPublisher can be replaces with `Source.empty` when we carry out the refactoring
     // mentioned in the `execute2` method.
-    promise.trySuccess(f(state.copy(publisher = EmptyPublisher)))
+    streamStarted.trySuccess(f(state.copy(publisher = EmptyPublisher)))
+    streamDone.trySuccess(Done)
   }
 
-  override def onThrowable(t: Throwable): Unit = promise.tryFailure(t)
+  override def onThrowable(t: Throwable): Unit = {
+    streamStarted.tryFailure(t)
+    streamDone.tryFailure(t)
+  }
 }
 
 private case object EmptyPublisher extends Publisher[HttpResponseBodyPart] {
   def subscribe(s: Subscriber[_ >: HttpResponseBodyPart]): Unit = {
-    if (s eq null) throw new NullPointerException("Subscriber must not be null, rule 1.9")
+    if (s eq null)
+      throw new NullPointerException("Subscriber must not be null, rule 1.9")
     s.onSubscribe(CancelledSubscription)
     s.onComplete()
   }

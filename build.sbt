@@ -32,7 +32,8 @@ lazy val mimaSettings = mimaDefaultSettings ++ Seq(
   mimaBinaryIssueFilters ++= Seq(
     ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSResponse.getBodyAsSource"),
     ProblemFilters.exclude[MissingClassProblem]("play.api.libs.ws.package$"),
-    ProblemFilters.exclude[MissingClassProblem]("play.api.libs.ws.package")
+    ProblemFilters.exclude[MissingClassProblem]("play.api.libs.ws.package"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.DefaultStreamedAsyncHandler.this")
   )
 )
 

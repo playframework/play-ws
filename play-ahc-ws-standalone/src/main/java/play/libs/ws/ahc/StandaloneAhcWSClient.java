@@ -4,31 +4,36 @@
 
 package play.libs.ws.ahc;
 
+import akka.Done;
 import akka.stream.Materializer;
 import akka.stream.javadsl.Source;
 import akka.util.ByteString;
 import akka.util.ByteStringBuilder;
 import com.typesafe.sslconfig.ssl.SystemConfiguration;
 import com.typesafe.sslconfig.ssl.debug.DebugConfiguration;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import org.slf4j.LoggerFactory;
-import play.api.libs.ws.ahc.AhcConfigBuilder;
-import play.api.libs.ws.ahc.AhcLoggerFactory;
-import play.api.libs.ws.ahc.AhcWSClientConfig;
-import play.api.libs.ws.ahc.DefaultStreamedAsyncHandler;
+import play.api.libs.ws.ahc.*;
 import play.api.libs.ws.ahc.cache.AhcHttpCache;
 import play.api.libs.ws.ahc.cache.CachingAsyncHttpClient;
 import play.libs.ws.StandaloneWSClient;
 import play.libs.ws.StandaloneWSResponse;
 import play.shaded.ahc.org.asynchttpclient.*;
+import scala.Function1;
 import scala.compat.java8.FutureConverters;
+import scala.compat.java8.FutureConverters$;
 import scala.concurrent.ExecutionContext;
 import scala.concurrent.Future;
 import scala.concurrent.Promise;
+import scala.util.Try;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 
 /**
  * A WS asyncHttpClient backed by an AsyncHttpClient instance.
@@ -92,33 +97,73 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
     }
 
     CompletionStage<StandaloneWSResponse> executeStream(Request request, ExecutionContext ec) {
-        final Promise<StandaloneWSResponse> scalaPromise = scala.concurrent.Promise$.MODULE$.apply();
+        final Promise<StandaloneWSResponse> streamStarted = scala.concurrent.Promise$.MODULE$.apply();
+        final Promise<Done> streamCompletion = scala.concurrent.Promise$.MODULE$.apply();
 
-        asyncHttpClient.executeRequest(request, new DefaultStreamedAsyncHandler<>(state ->
-                new StreamedResponse(this,
-                        state.statusCode(),
-                        state.statusText(),
-                        state.uriOption().get(),
-                        state.responseHeaders(),
-                        state.publisher()),
-                scalaPromise));
-        return FutureConverters.toJava(scalaPromise.future());
+        Function<StreamedState, StandaloneWSResponse> f = state -> {
+            Publisher<HttpResponseBodyPart> publisher = state.publisher();
+            Publisher<HttpResponseBodyPart> wrap = new Publisher<HttpResponseBodyPart>() {
+                @Override
+                public void subscribe(Subscriber<? super HttpResponseBodyPart> s) {
+                    publisher.subscribe(
+                        new Subscriber<HttpResponseBodyPart>() {
+                            @Override
+                            public void onSubscribe(Subscription sub) {
+                                s.onSubscribe(sub);
+                            }
+
+                            @Override
+                            public void onNext(HttpResponseBodyPart httpResponseBodyPart) {
+                                s.onNext(httpResponseBodyPart);
+                            }
+
+                            @Override
+                            public void onError(Throwable t) {
+                                s.onError(t);
+                            }
+
+                            @Override
+                            public void onComplete() {
+                                FutureConverters$.MODULE$.toJava(streamCompletion.future())
+                                    .handle((d, t) -> {
+                                        if (d != null) s.onComplete();
+                                        else s.onError(t);
+                                        return null;
+                                    });
+                            }
+                        }
+                    );
+                }
+            };
+
+            return new StreamedResponse(this,
+                state.statusCode(),
+                state.statusText(),
+                state.uriOption().get(),
+                state.responseHeaders(),
+                wrap);
+        };
+
+        asyncHttpClient.executeRequest(request, new DefaultStreamedAsyncHandler<>(f,
+            streamStarted,
+            streamCompletion
+        ));
+        return FutureConverters.toJava(streamStarted.future());
     }
 
     /**
      * A convenience method for creating a StandaloneAhcWSClient from configuration.
      *
      * @param ahcWSClientConfig the configuration object
-     * @param materializer an akka materializer
+     * @param materializer      an akka materializer
      * @return a fully configured StandaloneAhcWSClient instance.
-     *
      * @see #create(AhcWSClientConfig, AhcHttpCache, Materializer)
      */
     public static StandaloneAhcWSClient create(AhcWSClientConfig ahcWSClientConfig, Materializer materializer) {
         return create(
-                ahcWSClientConfig,
-                null /* no cache*/,
-                materializer
+            ahcWSClientConfig,
+            null /* no cache*/,
+            materializer
         );
     }
 
@@ -161,10 +206,10 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
     ByteString blockingToByteString(Source<ByteString, ?> bodyAsSource) {
         try {
             return bodyAsSource
-                    .runFold(ByteString.createBuilder(), ByteStringBuilder::append, materializer)
-                    .thenApply(ByteStringBuilder::result)
-                    .toCompletableFuture()
-                    .get();
+                .runFold(ByteString.createBuilder(), ByteStringBuilder::append, materializer)
+                .thenApply(ByteStringBuilder::result)
+                .toCompletableFuture()
+                .get();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
