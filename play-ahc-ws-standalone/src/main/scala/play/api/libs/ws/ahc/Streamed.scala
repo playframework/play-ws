@@ -24,6 +24,9 @@ case class StreamedState(
 class DefaultStreamedAsyncHandler[T](f: java.util.function.Function[StreamedState, T], streamStarted: Promise[T], streamDone: Promise[Done]) extends StreamedAsyncHandler[Unit] with AhcUtilities {
   private var state = StreamedState()
 
+  def this(f: java.util.function.Function[StreamedState, T], streamStarted: Promise[T]) =
+    this(f, streamStarted, Promise())
+
   def onStream(publisher: Publisher[HttpResponseBodyPart]): State = {
     if (this.state.publisher != EmptyPublisher) State.ABORT
     else {
