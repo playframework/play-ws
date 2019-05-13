@@ -16,7 +16,7 @@ import scalariform.formatter.preferences._
 val scala211 = "2.11.12"
 val scala212 = "2.12.8"
 
-val previousVersion = None
+val previousVersion = "1.1.13"
 
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
 resolvers in ThisBuild += Resolver.sonatypeRepo("public")
@@ -28,13 +28,10 @@ val javacSettings = Seq(
   "-Xlint:unchecked"
 )
 
-lazy val mimaSettings = mimaDefaultSettings ++ Seq(
+lazy val mimaSettings = Def.settings(
+  mimaDefaultSettings,
   mimaBinaryIssueFilters ++= Seq(
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.ahc.StandaloneAhcWSResponse.getBodyAsSource"),
-    ProblemFilters.exclude[MissingClassProblem]("play.api.libs.ws.package$"),
-    ProblemFilters.exclude[MissingClassProblem]("play.api.libs.ws.package"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.DefaultStreamedAsyncHandler.this")
-  )
+  ),
 )
 
 lazy val commonSettings = mimaSettings ++ Seq(
@@ -264,7 +261,7 @@ lazy val shaded = Project(id = "shaded", base = file("shaded") )
 lazy val `play-ws-standalone` = project
   .in(file("play-ws-standalone"))
   .settings(commonSettings)
-  .settings(mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ws-standalone" % "1.0.0"))
+  .settings(mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ws-standalone" % previousVersion))
   .settings(libraryDependencies ++= standaloneApiWSDependencies)
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
@@ -291,7 +288,7 @@ lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
   .settings(commonSettings)
   .settings(formattingSettings)
-  .settings(mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ahc-ws-standalone" % "1.0.0"))
+  .settings(mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ahc-ws-standalone" % previousVersion))
   .settings(
     fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v"))
@@ -331,7 +328,7 @@ lazy val `play-ws-standalone-json` = project
   .in(file("play-ws-standalone-json"))
   .settings(commonSettings)
   .settings(formattingSettings)
-  .settings(mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ws-standalone-json" % "1.0.0"))
+  .settings(mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ws-standalone-json" % previousVersion))
   .settings(
     fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v"))
@@ -352,7 +349,7 @@ lazy val `play-ws-standalone-xml` = project
   .in(file("play-ws-standalone-xml"))
   .settings(commonSettings)
   .settings(formattingSettings)
-  .settings(mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ws-standalone-xml" % "1.0.0"))
+  .settings(mimaPreviousArtifacts := Set("com.typesafe.play" %% "play-ws-standalone-xml" % previousVersion))
   .settings(
     fork in Test := true,
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v"))
