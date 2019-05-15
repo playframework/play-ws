@@ -10,7 +10,6 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.typesafe.sslconfig.ssl.SystemConfiguration
-import com.typesafe.sslconfig.ssl.debug.DebugConfiguration
 import org.reactivestreams.Publisher
 import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
@@ -211,10 +210,6 @@ object StandaloneAhcWSClient {
     config: AhcWSClientConfig = AhcWSClientConfigFactory.forConfig(),
     httpCache: Option[AhcHttpCache] = None
   )(implicit materializer: Materializer): StandaloneAhcWSClient = {
-    if (config.wsClientConfig.ssl.debug.enabled) {
-      new DebugConfiguration(StandaloneAhcWSClient.loggerFactory)
-        .configure(config.wsClientConfig.ssl.debug)
-    }
     val ahcConfig = new AhcConfigBuilder(config).build()
     val asyncHttpClient = new DefaultAsyncHttpClient(ahcConfig)
     val wsClient = new StandaloneAhcWSClient(

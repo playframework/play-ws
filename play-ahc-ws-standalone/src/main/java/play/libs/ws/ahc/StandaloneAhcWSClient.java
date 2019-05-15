@@ -10,7 +10,6 @@ import akka.stream.javadsl.Source;
 import akka.util.ByteString;
 import akka.util.ByteStringBuilder;
 import com.typesafe.sslconfig.ssl.SystemConfiguration;
-import com.typesafe.sslconfig.ssl.debug.DebugConfiguration;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -170,11 +169,6 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
      */
     public static StandaloneAhcWSClient create(AhcWSClientConfig ahcWSClientConfig, AhcHttpCache cache, Materializer materializer) {
         AhcLoggerFactory loggerFactory = new AhcLoggerFactory(LoggerFactory.getILoggerFactory());
-
-        // Set up debugging configuration
-        if (ahcWSClientConfig.wsClientConfig().ssl().debug().enabled()) {
-            new DebugConfiguration(loggerFactory).configure(ahcWSClientConfig.wsClientConfig().ssl().debug());
-        }
 
         // Configure the AsyncHttpClientConfig.Builder from the application.conf file...
         final AhcConfigBuilder builder = new AhcConfigBuilder(ahcWSClientConfig);

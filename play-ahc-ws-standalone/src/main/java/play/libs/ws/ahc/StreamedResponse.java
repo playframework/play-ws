@@ -11,7 +11,7 @@ import play.api.libs.ws.ahc.AhcWSUtils;
 import play.libs.ws.BodyReadable;
 import play.libs.ws.StandaloneWSResponse;
 import play.libs.ws.WSCookie;
-import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders;
+import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames;
 import play.shaded.ahc.org.asynchttpclient.HttpResponseBodyPart;
 import scala.collection.Seq;
 import scala.compat.java8.ScalaStreamSupport;
@@ -88,7 +88,7 @@ public class StreamedResponse implements StandaloneWSResponse, CookieBuilder {
 
     @Override
     public String getContentType() {
-        return getSingleHeader(HttpHeaders.Names.CONTENT_TYPE).orElse("application/octet-stream");
+        return getSingleHeader(HttpHeaderNames.CONTENT_TYPE.toString()).orElse("application/octet-stream");
     }
 
     @Override

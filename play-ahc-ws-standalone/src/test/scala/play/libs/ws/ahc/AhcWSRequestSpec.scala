@@ -11,7 +11,7 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable._
 import play.libs.oauth.OAuth
 import play.libs.ws._
-import play.shaded.ahc.io.netty.handler.codec.http.{ HttpHeaderNames, HttpHeaders }
+import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames
 import play.shaded.ahc.org.asynchttpclient.{ Request, RequestBuilderBase, SignatureCalculator }
 
 import scala.collection.JavaConverters._
@@ -60,8 +60,6 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
 
       "set text/plain content-types for text bodies" in {
         val client = mock[StandaloneAhcWSClient]
-        val formEncoding = java.net.URLEncoder.encode("param1=value1", "UTF-8")
-
         val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
           .setBody(body("HELLO WORLD"))
           .asInstanceOf[StandaloneAhcWSRequest]
@@ -152,7 +150,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
           called = true
         }
       }
-      val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
+      new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
         .sign(calc)
         .buildRequest()
       called must beTrue

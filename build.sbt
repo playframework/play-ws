@@ -26,41 +26,19 @@ val javacSettings = Seq(
   "-Xlint:unchecked"
 )
 
-def scalacOptionsFor(scalaBinVersion: String): Seq[String] = scalaBinVersion match {
-  case "2.11" => Seq(
-    "-target:jvm-1.8",
-    "-deprecation",
-    "-encoding", "UTF-8",
-    "-feature",
-    "-unchecked",
+def scalacOpts: Seq[String] = Seq(
+  "-target:jvm-1.8",
+  "-deprecation",
+  "-encoding", "UTF-8",
+  "-feature",
+  "-unchecked",
 
-    // The next two flags are not supported by 2.13
-    "-Ywarn-unused-import",
-    "-Ywarn-nullary-unit",
+  "-Ywarn-unused:imports",
+  "-Xlint:nullary-unit",
 
-    "-Xfatal-warnings",
-    "-Xlint",
-    "-Ywarn-dead-code"
-  )
-  case _ => Seq(
-    "-target:jvm-1.8",
-    "-deprecation",
-    "-encoding", "UTF-8",
-    "-feature",
-    "-unchecked",
-
-    // The next two flags are not supported by 2.11
-    "-Ywarn-unused:imports",
-    "-Xlint:nullary-unit",
-
-    "-Xfatal-warnings",
-    "-Xlint",
-    "-Ywarn-dead-code",
-
-    // Work around 2.12 bug which prevents javadoc in nested java classes from compiling.
-    "-no-java-comments"
-  )
-}
+  "-Xlint",
+  "-Ywarn-dead-code",
+)
 
 lazy val mimaSettings = mimaDefaultSettings ++ Seq(
   mimaPreviousArtifacts := {
@@ -87,7 +65,13 @@ lazy val commonSettings = Seq(
   organization := "com.typesafe.play",
   scalaVersion := scala212,
   crossScalaVersions := Seq(scala213, scala212),
-  scalacOptions in (Compile, doc) ++= scalacOptionsFor(scalaBinaryVersion.value),
+  scalacOptions ++= scalacOpts,
+  scalacOptions in (Compile, doc) ++= Seq(
+    "-Xfatal-warnings",
+
+    // Work around 2.12 bug which prevents javadoc in nested java classes from compiling.
+    "-no-java-comments",
+  ),
   pomExtra := (
     <url>https://github.com/playframework/play-ws</url>
       <licenses>
@@ -108,9 +92,8 @@ lazy val commonSettings = Seq(
           <url>http://playframework.com/</url>
         </developer>
       </developers>),
-  javacOptions in (Compile, doc) ++= javacSettings,
+  javacOptions in Compile ++= javacSettings,
   javacOptions in Test ++= javacSettings,
-  javacOptions in IntegrationTest ++= javacSettings,
   headerLicense := {
     val currentYear = java.time.Year.now(java.time.Clock.systemUTC).getValue
     Some(HeaderLicense.Custom(

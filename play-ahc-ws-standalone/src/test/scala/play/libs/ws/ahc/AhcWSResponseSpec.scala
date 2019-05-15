@@ -4,8 +4,6 @@
 
 package play.libs.ws.ahc
 
-import java.nio.charset.StandardCharsets
-
 import org.specs2.mock.Mockito
 import org.specs2.mutable._
 import play.libs.ws._
@@ -16,8 +14,6 @@ import scala.collection.JavaConverters._
 import scala.compat.java8.OptionConverters._
 
 class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReadables with DefaultBodyWritables {
-
-  private val emptyMap = new java.util.HashMap[String, java.util.Collection[String]]
 
   "getUnderlying" should {
 

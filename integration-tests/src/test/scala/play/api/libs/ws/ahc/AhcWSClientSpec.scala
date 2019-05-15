@@ -261,7 +261,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv) extends Specifica
       "not keep cookie when repeating the request" in {
         withClientFollowingRedirect() { client =>
           // First let's do a request that sets a cookie
-          val res1 = Await.result(client.url(s"http://localhost:$testServerPort/cookie").get().map(res => res.body[String]), defaultTimeout)
+          Await.result(client.url(s"http://localhost:$testServerPort/cookie").get().map(res => res.body[String]), defaultTimeout)
 
           // Then run a request to a url that checks the cookie, but without setting it
           val res2 = Await.result(client.url(s"http://localhost:$testServerPort/cookie-destination").get().map(res => res.body[String]), defaultTimeout)

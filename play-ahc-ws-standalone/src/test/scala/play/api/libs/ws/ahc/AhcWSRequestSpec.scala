@@ -13,14 +13,11 @@ import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
 import play.api.libs.oauth.{ ConsumerKey, OAuthCalculator, RequestToken }
 import play.api.libs.ws._
-import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
+import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames
 import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
-import play.shaded.ahc.io.netty.handler.codec.http.cookie.{ Cookie => AHCCookie }
-import play.shaded.ahc.org.asynchttpclient.{ Param, RequestBuilderBase, SignatureCalculator, Request => AHCRequest }
-
+import play.shaded.ahc.org.asynchttpclient.{ Param, SignatureCalculator, Request => AHCRequest }
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
-import scala.language.implicitConversions
 
 class AhcWSRequestSpec extends Specification with Mockito with AfterAll with DefaultBodyReadables with DefaultBodyWritables {
 
@@ -257,7 +254,7 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
           .withBody("I am a text/plain body")
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
-        req.getHeaders.getAll(HttpHeaders.Names.CONTENT_TYPE).asScala must_== Seq("fake/contenttype; charset=utf-8")
+        req.getHeaders.getAll(HttpHeaderNames.CONTENT_TYPE.toString()).asScala must_== Seq("fake/contenttype; charset=utf-8")
       }
     }
 
@@ -372,9 +369,8 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
 
     "Have form body for content type text/plain" in {
       withClient { client =>
-        val formEncoding = java.net.URLEncoder.encode("param1=value1", "UTF-8")
         val req: AHCRequest = client.url("http://playframework.com/")
-          .withHttpHeaders(HttpHeaders.Names.CONTENT_TYPE -> "text/plain")
+          .withHttpHeaders(HttpHeaderNames.CONTENT_TYPE.toString() -> "text/plain")
           .withBody("HELLO WORLD")
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
@@ -388,7 +384,7 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
     "Have form body for content type application/x-www-form-urlencoded explicitly set" in {
       withClient { client =>
         val req: AHCRequest = client.url("http://playframework.com/")
-          .withHttpHeaders(HttpHeaders.Names.CONTENT_TYPE -> "application/x-www-form-urlencoded") // set content type by hand
+          .withHttpHeaders(HttpHeaderNames.CONTENT_TYPE.toString() -> "application/x-www-form-urlencoded") // set content type by hand
           .withBody("HELLO WORLD") // and body is set to string (see #5221)
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
@@ -399,7 +395,7 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
     "Send binary data as is" in withClient { client =>
       val binData = ByteString((0 to 511).map(_.toByte).toArray)
       val req: AHCRequest = client.url("http://playframework.com/")
-        .addHttpHeaders(HttpHeaders.Names.CONTENT_TYPE -> "application/x-custom-bin-data")
+        .addHttpHeaders(HttpHeaderNames.CONTENT_TYPE.toString() -> "application/x-custom-bin-data")
         .withBody(binData)
         .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
@@ -475,7 +471,7 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
         }
       }
       withClient { client =>
-        val req = client.url("http://playframework.com/").sign(calc)
+        client.url("http://playframework.com/").sign(calc)
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
         called must beTrue
@@ -538,9 +534,6 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
   }
 
   "Not remove a user defined content length header" in withClient { client =>
-    val consumerKey = ConsumerKey("key", "secret")
-    val requestToken = RequestToken("token", "secret")
-    val calc = OAuthCalculator(consumerKey, requestToken)
     val req: AHCRequest = client.url("http://playframework.com/").withBody(Map("param1" -> Seq("value1")))
       .withHttpHeaders("Content-Length" -> "9001") // add a meaningless content length here...
       .asInstanceOf[StandaloneAhcWSRequest]
@@ -572,11 +565,11 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
   "Verify Content-Type header is passed through correctly" in withClient { client =>
     import scala.collection.JavaConverters._
     val req: AHCRequest = client.url("http://playframework.com/")
-      .withHttpHeaders(HttpHeaders.Names.CONTENT_TYPE -> "text/plain; charset=US-ASCII")
+      .withHttpHeaders(HttpHeaderNames.CONTENT_TYPE.toString() -> "text/plain; charset=US-ASCII")
       .withBody("HELLO WORLD")
       .asInstanceOf[StandaloneAhcWSRequest]
       .buildRequest()
-    req.getHeaders.getAll(HttpHeaders.Names.CONTENT_TYPE).asScala must_== Seq("text/plain; charset=US-ASCII")
+    req.getHeaders.getAll(HttpHeaderNames.CONTENT_TYPE.toString()).asScala must_== Seq("text/plain; charset=US-ASCII")
   }
 
 }

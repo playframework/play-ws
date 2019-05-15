@@ -17,7 +17,7 @@ env:
 
 scala:
   - 2.12.8
-  - 2.13.0-M5
+# - 2.13.0-M5  # BRB, testing Akka 2.6.0 pre-releases
 
 script:
   - sbt ++$TRAVIS_SCALA_VERSION 'testOnly -- xonly timefactor 5' mimaReportBinaryIssues validateCode doc
