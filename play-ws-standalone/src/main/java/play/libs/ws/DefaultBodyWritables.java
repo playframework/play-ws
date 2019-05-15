@@ -137,7 +137,7 @@ public interface DefaultBodyWritables {
      * @return a {@link SourceBodyWritable} instance.
      */
     default BodyWritable<Source<ByteString, ?>> body(File file) {
-        return new SourceBodyWritable(FileIO.fromFile(file));
+        return new SourceBodyWritable(FileIO.fromPath(file.toPath()));
     }
 
     /**

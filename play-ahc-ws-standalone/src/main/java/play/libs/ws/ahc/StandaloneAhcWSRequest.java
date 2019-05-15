@@ -16,6 +16,7 @@ import play.libs.ws.*;
 import play.shaded.ahc.io.netty.buffer.ByteBuf;
 import play.shaded.ahc.io.netty.buffer.Unpooled;
 import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders;
+import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames;
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders;
 import play.shaded.ahc.io.netty.handler.codec.http.cookie.Cookie;
 import play.shaded.ahc.io.netty.handler.codec.http.cookie.DefaultCookie;
@@ -43,9 +44,9 @@ import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
 import static java.util.Collections.singletonList;
-import static play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_LENGTH;
-import static play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
-import static play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders.Values.APPLICATION_X_WWW_FORM_URLENCODED;
+import static play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames.CONTENT_LENGTH;
+import static play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
+import static play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED;
 
 /**
  * Provides the User facing API for building a WS request.
@@ -231,12 +232,12 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
     @Override
     public StandaloneAhcWSRequest setContentType(String contentType) {
-        return addHeader(CONTENT_TYPE, contentType);
+        return addHeader(CONTENT_TYPE.toString(), contentType);
     }
 
     @Override
     public Optional<String> getContentType() {
-        return getHeader(CONTENT_TYPE);
+        return getHeader(CONTENT_TYPE.toString());
     }
 
     @Override
@@ -263,8 +264,8 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
         this.bodyWritable = bodyWritable;
 
         String contentType = bodyWritable.contentType();
-        if (!headers.containsKey(HttpHeaders.Names.CONTENT_TYPE) && contentType != null) {
-            this.addHeader(HttpHeaders.Names.CONTENT_TYPE, bodyWritable.contentType());
+        if (contentType != null && headers.keySet().stream().noneMatch(s -> s.equalsIgnoreCase(CONTENT_TYPE.toString()))) {
+            addHeader(HttpHeaderNames.CONTENT_TYPE.toString(), bodyWritable.contentType());
         }
 
         return this;
@@ -416,13 +417,13 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
         getBody().ifPresent(bodyWritable -> {
             // Detect and maybe add content type
-            String contentType = possiblyModifiedHeaders.get(CONTENT_TYPE);
+            String contentType = possiblyModifiedHeaders.get(CONTENT_TYPE.toString());
             if (contentType == null) {
                 contentType = bodyWritable.contentType();
             }
 
             // Always replace the content type header to make sure exactly one exists
-            possiblyModifiedHeaders.set(CONTENT_TYPE, singletonList(contentType));
+            possiblyModifiedHeaders.set(CONTENT_TYPE.toString(), singletonList(contentType));
 
             if (bodyWritable instanceof InMemoryBodyWritable) {
                 ByteString byteString = ((InMemoryBodyWritable) bodyWritable).body().get();
@@ -442,8 +443,8 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
                     // If using a POST with OAuth signing, the builder looks at
                     // getFormParams() rather than getBody() and constructs the signature
                     // based on the form params.
-                    if (contentType.equals(APPLICATION_X_WWW_FORM_URLENCODED)) {
-                        possiblyModifiedHeaders.remove(CONTENT_LENGTH);
+                    if (contentType.equals(APPLICATION_X_WWW_FORM_URLENCODED.toString())) {
+                        possiblyModifiedHeaders.remove(CONTENT_LENGTH.toString());
 
                         // XXX shouldn't the encoding be same as charset?
                         Map<String, List<String>> stringListMap = FormUrlEncodedParser.parseAsJava(stringBody, "utf-8");
@@ -457,9 +458,9 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
                 // else every content would be Transfer-Encoding: chunked
                 // If the Content-Length is -1 Async-Http-Client sets a Transfer-Encoding: chunked
                 // If the Content-Length is great than -1 Async-Http-Client will use the correct Content-Length
-                long contentLength = Optional.ofNullable(possiblyModifiedHeaders.get(CONTENT_LENGTH))
+                long contentLength = Optional.ofNullable(possiblyModifiedHeaders.get(CONTENT_LENGTH.toString()))
                         .map(Long::valueOf).orElse(-1L);
-                possiblyModifiedHeaders.remove(CONTENT_LENGTH);
+                possiblyModifiedHeaders.remove(CONTENT_LENGTH.toString());
 
                 @SuppressWarnings("unchecked") Source<ByteString, ?> sourceBody = ((SourceBodyWritable) bodyWritable).body().get();
                 Publisher<ByteBuf> publisher = sourceBody.map(bs -> Unpooled.wrappedBuffer(bs.toByteBuffer()))
@@ -512,13 +513,22 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     private static void addValueTo(Map<String, List<String>> map, String name, String value) {
-        if (map.containsKey(name)) {
-            List<String> values = map.get(name);
-            values.add(value);
+        final Optional<String> existing = map.keySet().stream().filter(s -> s.equalsIgnoreCase(name)).findAny();
+        if (existing.isPresent()) {
+            existing.ifPresent(n -> {
+                final List<String> oldValues = map.get(n);
+                final List<String> newValues;
+                if (oldValues == null) { // yep!  that's right...
+                    newValues = Collections.singletonList(value);
+                } else {
+                    newValues = new ArrayList<>(oldValues.size() + 1);
+                    newValues.addAll(oldValues);
+                    newValues.add(value);
+                }
+                map.put(n, newValues);
+            });
         } else {
-            List<String> values = new ArrayList<>();
-            values.add(value);
-            map.put(name, values);
+            map.put(name, Collections.singletonList(value));
         }
     }
 
