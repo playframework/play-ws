@@ -2,6 +2,7 @@
  * Copyright (C) 2009-2017 Lightbend Inc. <https://www.lightbend.com>
  */
 import sbt._
+import sbt.Keys._
 
 object Dependencies {
   val logback = Seq("ch.qos.logback" % "logback-core" % "1.2.3")
@@ -23,7 +24,7 @@ object Dependencies {
 
   val scalaJava8Compat = Seq("org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0")
 
-  val playJsonVersion = "2.7.2"
+  val playJsonVersion = "2.8.0-M1"
   val playJson = Seq("com.typesafe.play" %% "play-json" % playJsonVersion)
 
   val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "1.7.26")
@@ -33,21 +34,26 @@ object Dependencies {
   val sslConfigVersion = "0.4.0"
   val sslConfigCore = Seq("com.typesafe" %% "ssl-config-core" % sslConfigVersion)
 
-  val scalaXmlVersion = "1.1.1"
+  val scalaXmlVersion = "1.2.0"
   val scalaXml = Seq("org.scala-lang.modules" %% "scala-xml" % scalaXmlVersion)
 
   val signpostVersion = "1.2.1.2"
   val oauth = Seq("oauth.signpost" % "signpost-core" % signpostVersion)
 
-  val cachecontrolVersion = "1.1.5"
+  val cachecontrolVersion = "2.0.0-M1"
   val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % cachecontrolVersion)
 
   val asyncHttpClientVersion = "2.9.0"
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % asyncHttpClientVersion)
 
-  val akkaVersion = "2.6.0-M1"
+  val akkaVersion = "2.5.23"
   val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion)
-  val akkaHttp = Seq("com.typesafe.akka" %% "akka-http" % "10.1.8")
+
+  val akkaHttpVersion = Def.setting(CrossVersion.partialVersion(scalaVersion.value) match {
+    case Some((2, 13)) => "10.1.8+26-f33ec39a"
+    case _             => "10.1.8"
+  })
+  val akkaHttp = Def.setting(Seq("com.typesafe.akka" %% "akka-http" % akkaHttpVersion.value))
 
   val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.2")
 

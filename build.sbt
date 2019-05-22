@@ -14,10 +14,11 @@ import scalariform.formatter.preferences._
 //---------------------------------------------------------------
 
 val scala212 = "2.12.8"
-val scala213 = "2.13.0-M5"
+val scala213 = "2.13.0-RC2"
 
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
 resolvers in ThisBuild += Resolver.sonatypeRepo("public")
+resolvers in ThisBuild += Resolver.bintrayRepo("akka", "snapshots")
 
 val javacSettings = Seq(
   "-source", "1.8",
@@ -61,7 +62,7 @@ lazy val mimaSettings = mimaDefaultSettings ++ Seq(
   )
 )
 
-lazy val commonSettings = Seq(
+lazy val commonSettings = Def.settings(
   organization := "com.typesafe.play",
   scalaVersion := scala212,
   crossScalaVersions := Seq(scala213, scala212),
@@ -384,7 +385,7 @@ lazy val `integration-tests` = project.in(file("integration-tests"))
     fork in Test := true,
     concurrentRestrictions += Tags.limitAll(1), // only one integration test at a time
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
-    libraryDependencies ++= akkaHttp.map(_ % Test) ++ testDependencies
+    libraryDependencies ++= akkaHttp.value.map(_ % Test) ++ testDependencies
   )
   .settings(shadedAhcSettings)
   .settings(shadedOAuthSettings)

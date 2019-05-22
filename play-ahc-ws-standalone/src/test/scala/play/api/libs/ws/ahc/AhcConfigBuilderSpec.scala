@@ -258,7 +258,7 @@ class AhcConfigBuilderSpec extends Specification with Mockito {
 
           val actual = builder.configureProtocols(existingProtocols, sslConfig)
 
-          actual.toSeq must containTheSameElementsAs(Protocols.recommendedProtocols)
+          actual.toSeq must containTheSameElementsAs(Protocols.recommendedProtocols.toIndexedSeq)
         }
 
         "provide explicit protocols if specified" in {

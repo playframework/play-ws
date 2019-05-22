@@ -30,7 +30,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv) extends Sp
       }
     } ~ {
       get {
-        parameters('key.as[String]) { (key) =>
+        parameters("key".as[String]) { (key) =>
           val httpEntity = HttpEntity(ContentTypes.`text/html(UTF-8)`, s"<h1>Say hello to akka-http, key = $key</h1>")
           complete(httpEntity)
         }
@@ -118,7 +118,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv) extends Sp
       val appendedHeaderValue = "someid"
       client.url(s"http://localhost:$testServerPort")
         .withRequestFilter(new HeaderAppendingFilter(appendedHeader, appendedHeaderValue))
-        .get().map { response ⇒
+        .get().map { response =>
           response.headers("X-Request-Id").head must be_==("someid")
         }
         .await(retries = 0, timeout = defaultTimeout)
@@ -129,7 +129,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv) extends Sp
       val appendedHeaderValue = "someid"
       client.url(s"http://localhost:$testServerPort")
         .withRequestFilter(new HeaderAppendingFilter(appendedHeader, appendedHeaderValue))
-        .withMethod("GET").stream().map { response ⇒
+        .withMethod("GET").stream().map { response =>
           response.headers("X-Request-Id").head must be_==("someid")
         }
         .await(retries = 0, timeout = defaultTimeout)

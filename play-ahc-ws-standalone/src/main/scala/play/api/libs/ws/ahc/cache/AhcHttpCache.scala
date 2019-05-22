@@ -5,10 +5,10 @@
 package play.api.libs.ws.ahc.cache
 
 import java.net.URI
+import java.time.ZonedDateTime
 
 import com.typesafe.play.cachecontrol._
 import play.api.libs.ws.{ ahc => standaloneAhc }
-import org.joda.time.{ DateTime, Seconds }
 import org.slf4j.LoggerFactory
 import play.shaded.ahc.io.netty.handler.codec.http.{ DefaultHttpHeaders, HttpHeaders }
 import play.shaded.ahc.org.asynchttpclient._
@@ -111,7 +111,7 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
         val lastRequestedAt = HttpDate.now
         val timeSinceLastModified: Seconds = HttpDate.diff(start = lastModified, end = lastRequestedAt)
         // 10% of the duration
-        val scaledDownSeconds = (0.1 * timeSinceLastModified.getSeconds).toInt
+        val scaledDownSeconds = (0.1 * timeSinceLastModified.seconds).toInt
         val scaledSeconds: Seconds = Seconds.seconds(scaledDownSeconds)
         scaledSeconds
       }
@@ -156,7 +156,7 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
   /**
    * Calculates the current age of the stored response.
    */
-  def calculateCurrentAge(request: Request, entry: ResponseEntry, requestTime: DateTime): Seconds = {
+  def calculateCurrentAge(request: Request, entry: ResponseEntry, requestTime: ZonedDateTime): Seconds = {
     val cacheRequest: CacheRequest = generateCacheRequest(request)
     val storedResponse: StoredResponse = generateStoredResponse(entry.response, entry.requestMethod, entry.nominatedHeaders)
     val currentAge = calculateCurrentAge(cacheRequest, storedResponse, requestTime, responseTime = HttpDate.now)
@@ -256,15 +256,15 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
   /**
    * Calculates the current age of the stored response.
    */
-  protected def calculateCurrentAge(request: CacheRequest, response: StoredResponse, requestTime: DateTime, responseTime: DateTime): Seconds = {
+  protected def calculateCurrentAge(request: CacheRequest, response: StoredResponse, requestTime: ZonedDateTime, responseTime: ZonedDateTime): Seconds = {
     currentAgeCalculator.calculateCurrentAge(request, response, requestTime, responseTime)
   }
 
   /**
    * Calculates the time to live.  Currently hardcoded to 24 hours.
    */
-  protected def calculateTimeToLive(request: Request, status: CacheableHttpResponseStatus, headers: HttpHeaders): Option[DateTime] = {
-    Some(DateTime.now.plusHours(24))
+  protected def calculateTimeToLive(request: Request, status: CacheableHttpResponseStatus, headers: HttpHeaders): Option[ZonedDateTime] = {
+    Some(ZonedDateTime.now.plusHours(24))
   }
 
   /**
@@ -343,7 +343,7 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
       //    validation, a cache MUST generate an Age header field (Section 5.1),
       //    replacing any present in the response with a value equal to the
       //    stored response's current_age; see Section 4.2.3.
-      headers.set("Age", currentAge.getSeconds.toString)
+      headers.set("Age", currentAge.seconds.toString)
       if (!isFresh) {
         //    A cache SHOULD generate a Warning header field with the 110 warn-code
         //    (see Section 5.5.1) in stale responses.  Likewise, a cache SHOULD
