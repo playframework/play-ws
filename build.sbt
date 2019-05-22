@@ -61,7 +61,7 @@ lazy val mimaSettings = mimaDefaultSettings ++ Seq(
   )
 )
 
-lazy val commonSettings = Seq(
+lazy val commonSettings = Def.settings(
   organization := "com.typesafe.play",
   scalaVersion := scala212,
   crossScalaVersions := Seq(scala213, scala212),

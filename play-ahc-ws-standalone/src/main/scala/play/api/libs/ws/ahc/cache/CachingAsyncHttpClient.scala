@@ -72,7 +72,7 @@ class CachingAsyncHttpClient(
     // Ask the cache if it has anything matching the primary key...
     val key = EffectiveURIKey(request)
     val requestTime = HttpDate.now
-    val entryResults = Await.result(ahcHttpCache.get(key), cacheTimeout).toSeq
+    val entryResults = Await.result(ahcHttpCache.get(key), cacheTimeout).toList
     if (logger.isDebugEnabled) {
       logger.debug(s"execute $key: results = $entryResults")
     }
