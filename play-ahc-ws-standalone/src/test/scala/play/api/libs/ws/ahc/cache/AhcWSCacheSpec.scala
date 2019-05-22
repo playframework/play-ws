@@ -8,7 +8,6 @@ import java.net.URI
 
 import com.typesafe.play.cachecontrol.HttpDate._
 import com.typesafe.play.cachecontrol._
-import org.joda.time.Seconds
 import org.specs2.mutable.Specification
 import play.shaded.ahc.io.netty.handler.codec.http.{ DefaultHttpHeaders, HttpHeaders }
 import play.shaded.ahc.org.asynchttpclient.{ DefaultAsyncHttpClientConfig, Request, RequestBuilder }
