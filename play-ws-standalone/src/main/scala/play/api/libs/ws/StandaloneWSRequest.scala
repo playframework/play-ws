@@ -24,7 +24,7 @@ trait StandaloneWSRequest {
   type Response <: StandaloneWSResponse
 
   /**
-   * The base URL for this request
+   * The base URL for this request, excluding query params.
    */
   def url: String
 

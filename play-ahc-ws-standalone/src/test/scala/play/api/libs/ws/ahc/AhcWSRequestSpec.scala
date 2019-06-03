@@ -4,6 +4,8 @@
 
 package play.api.libs.ws.ahc
 
+import java.net.URLEncoder
+
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.util.ByteString
@@ -16,6 +18,7 @@ import play.api.libs.ws._
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames
 import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
 import play.shaded.ahc.org.asynchttpclient.{ Param, SignatureCalculator, Request => AHCRequest }
+
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 
@@ -103,9 +106,84 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
         paramsList.exists(p => (p.getName == "foo") && (p.getValue == "foo2")) must beTrue
         paramsList.count(p => p.getName == "foo") must beEqualTo(2)
       }
-
     }
 
+    "with unencoded values" in {
+
+      /**
+       * All tests in this block produce the same request.
+       */
+      def verify(input: StandaloneWSClient => StandaloneWSRequest) = {
+        withClient { client =>
+          val request = input(client)
+
+          val uri = request.uri
+          uri.getPath === "/|"
+          uri.getQuery.split('&').toSeq must contain(exactly("!=", "#=$", "^=*", "^=("))
+
+          request.url === "http://www.example.com/%7C"
+          request.queryString must contain("!" -> Seq(""))
+          request.queryString must contain("#" -> Seq("$"))
+          request.queryString.get("^") must beSome.which(_ must contain(exactly("*", "(")))
+        }
+      }
+
+      "path=plain qp=plain" in verify { client =>
+        client
+          .url("http://www.example.com/|?!")
+          .addQueryStringParameters("#" -> "$")
+          .addQueryStringParameters("^" -> "*", "^" -> "(")
+      }
+
+      "path=enc qp=plain" in verify { client =>
+        client
+          .url("http://www.example.com/|?%21")
+          .addQueryStringParameters("#" -> "$")
+          .addQueryStringParameters("^" -> "*", "^" -> "(")
+      }
+
+      "path=enc qp=enc" in verify { client =>
+        client
+          .url("http://www.example.com/%7C?%21")
+          .addQueryStringParameters("#" -> "$")
+          .addQueryStringParameters("^" -> "*", "^" -> "(")
+      }
+
+      "withUrl" in verify { client =>
+        client
+          .url("http://www.example.com/%7C")
+          .addQueryStringParameters("#" -> "$")
+          .addQueryStringParameters("^" -> "*", "^" -> "(")
+          .withUrl("http://www.example.com/|?!")
+      }
+    }
+
+    "with encoded query params" in {
+      def testEncoded(unencoded: String) = withClient { client =>
+        val encoded = URLEncoder.encode(unencoded, "UTF-8")
+        val request = client.url(s"http://www.example.com/?$encoded=$encoded")
+        request.url === "http://www.example.com/"
+        request.queryString === Map(unencoded -> Seq(unencoded))
+      }
+
+      "=" in testEncoded("=")
+      "?" in testEncoded("?")
+      "/" in testEncoded("/")
+      "+" in testEncoded("+")
+      " " in testEncoded(" ")
+    }
+
+    "with urls that normalize can't fix" in {
+      "kitty" in withClient { client =>
+        client.url(">^..^<") must throwA[IllegalArgumentException]
+      }
+
+      "withUrl kitty" in withClient { client =>
+        val validRequest = client.url("https://www.example.com")
+        validRequest.withUrl(">^..^<") must throwA[IllegalArgumentException]
+      }
+
+    }
   }
 
   "For Cookies" in {
@@ -571,5 +649,4 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
       .buildRequest()
     req.getHeaders.getAll(HttpHeaderNames.CONTENT_TYPE.toString()).asScala must_== Seq("text/plain; charset=US-ASCII")
   }
-
 }

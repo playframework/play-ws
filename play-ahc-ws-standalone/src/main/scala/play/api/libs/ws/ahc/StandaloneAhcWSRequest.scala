@@ -10,7 +10,7 @@ import java.nio.charset.{ Charset, StandardCharsets }
 
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
-import play.api.libs.ws.{ StandaloneWSRequest, _ }
+import play.api.libs.ws._
 import play.shaded.ahc.io.netty.buffer.Unpooled
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
@@ -42,7 +42,7 @@ case class StandaloneAhcWSRequest(
     proxyServer: Option[WSProxyServer] = None,
     disableUrlEncoding: Option[Boolean] = None,
     private val filters: Seq[WSRequestFilter] = Nil
-)(implicit materializer: Materializer) extends StandaloneWSRequest with AhcUtilities with WSCookieConverter {
+)(implicit private[ahc] val materializer: Materializer) extends StandaloneWSRequest with AhcUtilities with WSCookieConverter {
   override type Self = StandaloneWSRequest
   override type Response = StandaloneWSResponse
 
@@ -207,7 +207,10 @@ case class StandaloneAhcWSRequest(
     withMethod(method).execute()
   }
 
-  override def withUrl(url: String): Self = copy(url = url)
+  override def withUrl(url: String): Self = {
+    val unsafe = copy(url = url)
+    StandaloneAhcWSClient.normalize(unsafe)
+  }
 
   override def withMethod(method: String): Self = copy(method = method)
 

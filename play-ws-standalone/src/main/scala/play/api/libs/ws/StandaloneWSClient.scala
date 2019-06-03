@@ -22,10 +22,14 @@ trait StandaloneWSClient extends Closeable {
   /**
    * Generates a request.  Throws IllegalArgumentException if the URL is invalid.
    *
+   * Query params may be present in the url either encoded or unencoded,
+   * which will be available in the [[StandaloneWSRequest.queryString]]
+   * of the returned [[StandaloneWSRequest]].
+   *
    * @param url The base URL to make HTTP requests to.
    * @return a request
    */
-  @throws[IllegalArgumentException]
+  @throws[IllegalArgumentException]("if the URL is invalid")
   def url(url: String): StandaloneWSRequest
 
   /**
