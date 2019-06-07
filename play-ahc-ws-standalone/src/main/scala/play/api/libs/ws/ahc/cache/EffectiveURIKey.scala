@@ -5,9 +5,9 @@
 package play.api.libs.ws.ahc.cache
 
 import java.net.URI
+import java.time.{ Instant, ZonedDateTime }
 
 import com.typesafe.play.cachecontrol.HeaderName
-import org.joda.time.DateTime
 import play.shaded.ahc.org.asynchttpclient._
 
 case class EffectiveURIKey(method: String, uri: URI) {
@@ -28,10 +28,10 @@ case class ResponseEntry(
     response: CacheableResponse,
     requestMethod: String,
     nominatedHeaders: Map[HeaderName, Seq[String]],
-    expiresAt: Option[DateTime]) {
+    expiresAt: Option[ZonedDateTime]) {
 
   /**
    * Has the entry expired yet?
    */
-  def isExpired: Boolean = expiresAt.exists(_.isBeforeNow)
+  def isExpired: Boolean = expiresAt.exists(_.toInstant.isBefore(Instant.now()))
 }

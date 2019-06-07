@@ -13,12 +13,12 @@ import scalariform.formatter.preferences._
 // Shading and Project Settings
 //---------------------------------------------------------------
 
-val scala211 = "2.11.12"
 val scala212 = "2.12.8"
-val scala213 = "2.13.0-M5"
+val scala213 = "2.13.0-RC2"
 
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
 resolvers in ThisBuild += Resolver.sonatypeRepo("public")
+resolvers in ThisBuild += Resolver.bintrayRepo("akka", "snapshots")
 
 val javacSettings = Seq(
   "-source", "1.8",
@@ -27,41 +27,19 @@ val javacSettings = Seq(
   "-Xlint:unchecked"
 )
 
-def scalacOptionsFor(scalaBinVersion: String): Seq[String] = scalaBinVersion match {
-  case "2.11" => Seq(
-    "-target:jvm-1.8",
-    "-deprecation",
-    "-encoding", "UTF-8",
-    "-feature",
-    "-unchecked",
+def scalacOpts: Seq[String] = Seq(
+  "-target:jvm-1.8",
+  "-deprecation",
+  "-encoding", "UTF-8",
+  "-feature",
+  "-unchecked",
 
-    // The next two flags are not supported by 2.13
-    "-Ywarn-unused-import",
-    "-Ywarn-nullary-unit",
+  "-Ywarn-unused:imports",
+  "-Xlint:nullary-unit",
 
-    "-Xfatal-warnings",
-    "-Xlint",
-    "-Ywarn-dead-code"
-  )
-  case _ => Seq(
-    "-target:jvm-1.8",
-    "-deprecation",
-    "-encoding", "UTF-8",
-    "-feature",
-    "-unchecked",
-
-    // The next two flags are not supported by 2.11
-    "-Ywarn-unused:imports",
-    "-Xlint:nullary-unit",
-
-    "-Xfatal-warnings",
-    "-Xlint",
-    "-Ywarn-dead-code",
-
-    // Work around 2.12 bug which prevents javadoc in nested java classes from compiling.
-    "-no-java-comments"
-  )
-}
+  "-Xlint",
+  "-Ywarn-dead-code",
+)
 
 lazy val mimaSettings = mimaDefaultSettings ++ Seq(
   mimaPreviousArtifacts := {
@@ -80,14 +58,21 @@ lazy val mimaSettings = mimaDefaultSettings ++ Seq(
     ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.apply"),
     ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.copy"),
     ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.this"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.DefaultStreamedAsyncHandler.this"),
   )
 )
 
-lazy val commonSettings = Seq(
+lazy val commonSettings = Def.settings(
   organization := "com.typesafe.play",
   scalaVersion := scala212,
-  crossScalaVersions := Seq(scala213, scala212, scala211),
-  scalacOptions in (Compile, doc) ++= scalacOptionsFor(scalaBinaryVersion.value),
+  crossScalaVersions := Seq(scala213, scala212),
+  scalacOptions ++= scalacOpts,
+  scalacOptions in (Compile, doc) ++= Seq(
+    "-Xfatal-warnings",
+
+    // Work around 2.12 bug which prevents javadoc in nested java classes from compiling.
+    "-no-java-comments",
+  ),
   pomExtra := (
     <url>https://github.com/playframework/play-ws</url>
       <licenses>
@@ -108,9 +93,8 @@ lazy val commonSettings = Seq(
           <url>http://playframework.com/</url>
         </developer>
       </developers>),
-  javacOptions in (Compile, doc) ++= javacSettings,
+  javacOptions in Compile ++= javacSettings,
   javacOptions in Test ++= javacSettings,
-  javacOptions in IntegrationTest ++= javacSettings,
   headerLicense := {
     val currentYear = java.time.Year.now(java.time.Clock.systemUTC).getValue
     Some(HeaderLicense.Custom(
@@ -401,7 +385,7 @@ lazy val `integration-tests` = project.in(file("integration-tests"))
     fork in Test := true,
     concurrentRestrictions += Tags.limitAll(1), // only one integration test at a time
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
-    libraryDependencies ++= akkaHttp.map(_ % Test) ++ testDependencies
+    libraryDependencies ++= akkaHttp.value.map(_ % Test) ++ testDependencies
   )
   .settings(shadedAhcSettings)
   .settings(shadedOAuthSettings)

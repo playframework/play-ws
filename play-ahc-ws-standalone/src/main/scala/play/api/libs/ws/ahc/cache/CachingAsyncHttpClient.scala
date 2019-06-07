@@ -6,8 +6,8 @@ package play.api.libs.ws.ahc.cache
 
 import java.io._
 import java.util.function.Predicate
+import java.time.ZonedDateTime
 
-import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
 import play.shaded.ahc.org.asynchttpclient.handler.StreamedAsyncHandler
@@ -72,7 +72,7 @@ class CachingAsyncHttpClient(
     // Ask the cache if it has anything matching the primary key...
     val key = EffectiveURIKey(request)
     val requestTime = HttpDate.now
-    val entryResults = Await.result(ahcHttpCache.get(key), cacheTimeout).toSeq
+    val entryResults = Await.result(ahcHttpCache.get(key), cacheTimeout).toList
     if (logger.isDebugEnabled) {
       logger.debug(s"execute $key: results = $entryResults")
     }
@@ -98,7 +98,7 @@ class CachingAsyncHttpClient(
   /**
    * Serves a future containing the response, based on the cache behavior.
    */
-  protected def serveResponse[T](handler: AsyncCompletionHandler[T], request: Request, entry: ResponseEntry, requestTime: DateTime)(implicit ec: ExecutionContext): ListenableFuture[T] = {
+  protected def serveResponse[T](handler: AsyncCompletionHandler[T], request: Request, entry: ResponseEntry, requestTime: ZonedDateTime)(implicit ec: ExecutionContext): ListenableFuture[T] = {
 
     val key = EffectiveURIKey(request)
 

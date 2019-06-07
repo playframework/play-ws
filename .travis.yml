@@ -17,8 +17,7 @@ env:
 
 scala:
   - 2.12.8
-  - 2.11.12
-  - 2.13.0-M5
+  - 2.13.0-RC2
 
 script:
   - sbt ++$TRAVIS_SCALA_VERSION 'testOnly -- xonly timefactor 5' mimaReportBinaryIssues validateCode doc

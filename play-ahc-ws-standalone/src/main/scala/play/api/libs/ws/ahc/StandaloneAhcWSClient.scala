@@ -4,21 +4,31 @@
 
 package play.api.libs.ws.ahc
 
+import akka.Done
 import javax.inject.Inject
-
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.typesafe.sslconfig.ssl.SystemConfiguration
-import com.typesafe.sslconfig.ssl.debug.DebugConfiguration
+import org.reactivestreams.Publisher
+import org.reactivestreams.Subscriber
+import org.reactivestreams.Subscription
 import play.api.libs.ws.ahc.cache._
-import play.api.libs.ws.{ EmptyBody, StandaloneWSClient, StandaloneWSRequest }
+import play.api.libs.ws.EmptyBody
+import play.api.libs.ws.StandaloneWSClient
+import play.api.libs.ws.StandaloneWSRequest
 import play.shaded.ahc.org.asynchttpclient.uri.Uri
-import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse, _ }
+import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse }
+import play.shaded.ahc.org.asynchttpclient._
+import java.util.function.{ Function => JFunction }
 
 import scala.collection.immutable.TreeMap
-import scala.compat.java8.FunctionConverters
-import scala.concurrent.{ Await, Future, Promise }
+import scala.compat.java8.FunctionConverters._
+import scala.concurrent.Await
+import scala.concurrent.Future
+import scala.concurrent.Promise
+import scala.util.Failure
+import scala.util.Success
 
 /**
  * A WS client backed by an AsyncHttpClient.
@@ -30,7 +40,10 @@ import scala.concurrent.{ Await, Future, Promise }
  *                        also close asyncHttpClient.
  * @param materializer A materializer, meant to execute the stream
  */
-class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(implicit materializer: Materializer) extends StandaloneWSClient {
+class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(
+    implicit
+    materializer: Materializer
+) extends StandaloneWSClient {
 
   /** Returns instance of AsyncHttpClient */
   def underlying[T]: T = asyncHttpClient.asInstanceOf[T]
@@ -59,7 +72,9 @@ class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(implici
     )
   }
 
-  private[ahc] def execute(request: Request): Future[StandaloneAhcWSResponse] = {
+  private[ahc] def execute(
+    request: Request
+  ): Future[StandaloneAhcWSResponse] = {
     val result = Promise[StandaloneAhcWSResponse]()
     val handler = new AsyncCompletionHandler[AHCResponse]() {
       override def onCompleted(response: AHCResponse): AHCResponse = {
@@ -89,31 +104,72 @@ class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(implici
   }
 
   private[ahc] def executeStream(request: Request): Future[StreamedResponse] = {
-    val promise = Promise[StreamedResponse]()
+    val streamStarted = Promise[StreamedResponse]()
+    val streamCompletion = Promise[Done]()
 
-    val function = FunctionConverters.asJavaFunction[StreamedState, StreamedResponse](state =>
-      new StreamedResponse(
-        this,
-        state.statusCode,
-        state.statusText,
-        state.uriOption.get,
-        state.responseHeaders,
-        state.publisher,
-        asyncHttpClient.getConfig.isUseLaxCookieEncoder)
+    val client = this
+
+    val function: JFunction[StreamedState, StreamedResponse] = {
+      state: StreamedState =>
+        val publisher = state.publisher
+
+        val wrap = new Publisher[HttpResponseBodyPart]() {
+          override def subscribe(
+            s: Subscriber[_ >: HttpResponseBodyPart]
+          ): Unit = {
+            publisher.subscribe(new Subscriber[HttpResponseBodyPart] {
+              override def onSubscribe(sub: Subscription): Unit =
+                s.onSubscribe(sub)
+
+              override def onNext(t: HttpResponseBodyPart): Unit = s.onNext(t)
+
+              override def onError(t: Throwable): Unit = s.onError(t)
+
+              override def onComplete(): Unit = {
+                streamCompletion.future.onComplete {
+                  case Success(_) => s.onComplete()
+                  case Failure(t) => s.onError(t)
+                }(materializer.executionContext)
+              }
+            })
+          }
+
+        }
+        new StreamedResponse(
+          client,
+          state.statusCode,
+          state.statusText,
+          state.uriOption.get,
+          state.responseHeaders,
+          wrap,
+          asyncHttpClient.getConfig.isUseLaxCookieEncoder
+        )
+
+    }.asJava
+    asyncHttpClient.executeRequest(
+      request,
+      new DefaultStreamedAsyncHandler[StreamedResponse](
+        function,
+        streamStarted,
+        streamCompletion
+      )
     )
-    asyncHttpClient.executeRequest(request, new DefaultStreamedAsyncHandler[StreamedResponse](function, promise))
-    promise.future
+    streamStarted.future
   }
 
   private[ahc] def blockingToByteString(bodyAsSource: Source[ByteString, _]) = {
-    StandaloneAhcWSClient.logger.warn(s"blockingToByteString is a blocking and unsafe operation!")
+    StandaloneAhcWSClient.logger.warn(
+      s"blockingToByteString is a blocking and unsafe operation!"
+    )
 
     import scala.concurrent.ExecutionContext.Implicits.global
 
     val limitedSource = bodyAsSource.limit(StandaloneAhcWSClient.elementLimit)
-    val result = limitedSource.runFold(ByteString.createBuilder) { (acc, bs) =>
-      acc.append(bs)
-    }.map(_.result())
+    val result = limitedSource
+      .runFold(ByteString.createBuilder) { (acc, bs) =>
+        acc.append(bs)
+      }
+      .map(_.result())
 
     Await.result(result, StandaloneAhcWSClient.blockingTimeout)
   }
@@ -127,7 +183,9 @@ object StandaloneAhcWSClient {
   val elementLimit = 13 // 13 8192k blocks is roughly 100k
   private val logger = org.slf4j.LoggerFactory.getLogger(this.getClass)
 
-  private[ahc] val loggerFactory = new AhcLoggerFactory(org.slf4j.LoggerFactory.getILoggerFactory)
+  private[ahc] val loggerFactory = new AhcLoggerFactory(
+    org.slf4j.LoggerFactory.getILoggerFactory
+  )
 
   /**
    * Convenient factory method that uses a play.api.libs.ws.WSClientConfig value for configuration instead of
@@ -148,21 +206,22 @@ object StandaloneAhcWSClient {
    * @param httpCache if not null, will be used for HTTP response caching.
    * @param materializer the akka materializer.
    */
-  def apply(config: AhcWSClientConfig = AhcWSClientConfigFactory.forConfig(), httpCache: Option[AhcHttpCache] = None)(implicit materializer: Materializer): StandaloneAhcWSClient = {
-    if (config.wsClientConfig.ssl.debug.enabled) {
-      new DebugConfiguration(StandaloneAhcWSClient.loggerFactory).configure(config.wsClientConfig.ssl.debug)
-    }
+  def apply(
+    config: AhcWSClientConfig = AhcWSClientConfigFactory.forConfig(),
+    httpCache: Option[AhcHttpCache] = None
+  )(implicit materializer: Materializer): StandaloneAhcWSClient = {
     val ahcConfig = new AhcConfigBuilder(config).build()
     val asyncHttpClient = new DefaultAsyncHttpClient(ahcConfig)
     val wsClient = new StandaloneAhcWSClient(
-      httpCache.map { cache =>
-        new CachingAsyncHttpClient(asyncHttpClient, cache)
-      }.getOrElse {
-        asyncHttpClient
-      }
+      httpCache
+        .map { cache =>
+          new CachingAsyncHttpClient(asyncHttpClient, cache)
+        }
+        .getOrElse {
+          asyncHttpClient
+        }
     )
     new SystemConfiguration(loggerFactory).configure(config.wsClientConfig.ssl)
     wsClient
   }
 }
-

@@ -4,9 +4,10 @@
 
 package play.api.libs.ws.ahc.cache
 
+import java.time.ZonedDateTime
+
 import play.shaded.ahc.org.asynchttpclient._
 import com.typesafe.play.cachecontrol.ResponseServeAction
-import org.joda.time.DateTime
 import org.slf4j.{ Logger, LoggerFactory }
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 
@@ -33,7 +34,7 @@ class AsyncCachingHandler[T](
 
   protected val builder = new CacheableResponseBuilder(ahcConfig)
 
-  protected val requestTime: DateTime = HttpDate.now
+  protected val requestTime: ZonedDateTime = HttpDate.now
 
   protected val key: EffectiveURIKey = EffectiveURIKey(request)
 

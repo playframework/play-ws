@@ -27,23 +27,24 @@ object CleanShadedPlugin extends AutoPlugin {
     final case class ModuleParam(organization: String, name: Option[String])
 
     def parseParam: Parser[Option[ModuleParam]] =
-      ((parseOrg ~ parseName.?) map {
-        case o ~ n => ModuleParam(o, n)
-      }).?
+      (parseOrg ~ parseName.?).map { case o ~ n => ModuleParam(o, n) }.?
 
-    private def parseOrg: Parser[String] =
-      (Space ~> token(StringBasic.examples("\"organization\"")))
+    private def parseOrg: Parser[String] = Space ~> token(StringBasic.examples("\"organization\""))
 
     private def parseName: Parser[String] =
-      (Space ~> token(token("%") ~> Space ~> StringBasic.examples("\"name\"")))
+      Space ~> token(token("%") ~> Space ~> StringBasic.examples("\"name\""))
 
-    def query(base: File, param: Option[ModuleParam], org: String, name: String): Seq[File] =
-      (param match {
-        case None                                   => base ** ("*" + org + "*") ** ("*" + name + "*")
-        case Some(ModuleParam("*", None))           => base ** "*"
-        case Some(ModuleParam(o, None | Some("*"))) => base ** ("*" + o + "*") ** "*"
-        case Some(ModuleParam(o, Some(n)))          => base ** ("*" + o + "*") ** ("*" + n + "*")
-      }).get
+    def query(base: File, param: Option[ModuleParam], org: String, name: String): Seq[File] = {
+      val base1 = PathFinder(base)
+      val pathFinder = param match {
+        case None                               => base1 ** stringToGlob(org) ** stringToGlob(name)
+        case Some(ModuleParam(org, None))       => base1 ** stringToGlob(org)
+        case Some(ModuleParam(org, Some(name))) => base1 ** stringToGlob(org) ** stringToGlob(name)
+      }
+      pathFinder.get()
+    }
+
+    private def stringToGlob(s: String) = if (s == "*") "*" else s"*$s*"
   }
 
   override def projectSettings = Seq(
