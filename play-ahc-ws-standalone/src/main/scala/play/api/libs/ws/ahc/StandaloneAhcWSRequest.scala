@@ -5,7 +5,7 @@
 package play.api.libs.ws.ahc
 
 import java.io.UnsupportedEncodingException
-import java.net.URI
+import java.net.{ URI, URISyntaxException }
 import java.nio.charset.{ Charset, StandardCharsets }
 
 import akka.stream.Materializer
@@ -51,6 +51,7 @@ case class StandaloneAhcWSRequest(
 
   override def contentType: Option[String] = this.headers.get(HttpHeaders.Names.CONTENT_TYPE).map(_.head)
 
+  @throws[URISyntaxException]("If the url is invalid.")
   override lazy val uri: URI = {
     val enc = (p: String) => java.net.URLEncoder.encode(p, "utf-8")
     new java.net.URI(if (queryString.isEmpty) url else {

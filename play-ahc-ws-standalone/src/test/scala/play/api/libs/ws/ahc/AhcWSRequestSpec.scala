@@ -4,6 +4,8 @@
 
 package play.api.libs.ws.ahc
 
+import java.net.URISyntaxException
+
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.util.ByteString
@@ -16,6 +18,7 @@ import play.api.libs.ws._
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames
 import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
 import play.shaded.ahc.org.asynchttpclient.{ Param, SignatureCalculator, Request => AHCRequest }
+
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 
@@ -105,6 +108,13 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
       }
 
     }
+
+    "uri should not throw" in {
+      withClient { client =>
+        val req = client.url("https://github.com/playframework/play-ws/issues/267/?pipe=|")
+        req.uri must not(throwAn[URISyntaxException])
+      }
+    }.pendingUntilFixed("issue #267")
 
   }
 
