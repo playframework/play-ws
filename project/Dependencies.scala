@@ -46,7 +46,7 @@ object Dependencies {
   val asyncHttpClientVersion = "2.10.0"
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % asyncHttpClientVersion)
 
-  val akkaVersion = "2.6.0-M2"
+  val akkaVersion = "2.6.0-M3"
   val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion)
 
   val akkaHttpVersion = Def.setting(CrossVersion.partialVersion(scalaVersion.value) match {
