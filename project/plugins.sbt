@@ -18,10 +18,6 @@ addSbtPlugin("com.gilt" % "sbt-dependency-graph-sugar" % "0.9.0")
 
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.2.0")
 
-<<<<<<< HEAD
-addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.3.4")
-=======
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.3.6")
 
 addSbtPlugin("com.dwijnand" % "sbt-dynver" % "3.3.0")
->>>>>>> ba5d92b... Start using dynver
