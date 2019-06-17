@@ -14,7 +14,7 @@ import scalariform.formatter.preferences._
 //---------------------------------------------------------------
 
 val scala212 = "2.12.8"
-val scala213 = "2.13.0-RC2"
+val scala213 = "2.13.0"
 
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
 resolvers in ThisBuild += Resolver.sonatypeRepo("public")
@@ -45,13 +45,12 @@ lazy val mimaSettings = mimaDefaultSettings ++ Seq(
   mimaPreviousArtifacts := {
     val VersionPattern = """^(\d+).(\d+).(\d+)(-.*)?""".r
     val previousVersions = version.value match {
+      case VersionPattern("2", "0", "5", _) if scalaBinaryVersion.value == "2.13" => Set.empty // added 2.13.0 support in 2.0.5-SNAPSHOT.
       case VersionPattern(epoch, major, minor, _) => (0 until minor.toInt).map(v => s"$epoch.$major.$v")
       case _ => sys.error(s"Cannot find previous versions for ${version.value}")
     }
 
-    val sbv = scalaBinaryVersion.value
-    if (sbv.equals(scala213)) Set.empty
-    else previousVersions.toSet.map(previousVersion => organization.value %% name.value % previousVersion)
+    previousVersions.toSet.map(previousVersion => organization.value %% name.value % previousVersion)
   },
   mimaBinaryIssueFilters ++= Seq(
     ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.ahc.AhcWSClientConfig$"),
@@ -385,7 +384,7 @@ lazy val `integration-tests` = project.in(file("integration-tests"))
     fork in Test := true,
     concurrentRestrictions += Tags.limitAll(1), // only one integration test at a time
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
-    libraryDependencies ++= akkaHttp.value.map(_ % Test) ++ testDependencies
+    libraryDependencies ++= akkaHttp.map(_ % Test) ++ testDependencies
   )
   .settings(shadedAhcSettings)
   .settings(shadedOAuthSettings)
