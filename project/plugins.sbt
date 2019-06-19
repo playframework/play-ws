@@ -18,6 +18,6 @@ addSbtPlugin("com.gilt" % "sbt-dependency-graph-sugar" % "0.9.0")
 
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.2.0")
 
-addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.3.6")
+addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.3.7")
 
 addSbtPlugin("com.dwijnand" % "sbt-dynver" % "4.0.0")
