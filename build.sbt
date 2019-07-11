@@ -45,14 +45,8 @@ ThisBuild / mimaFailOnNoPrevious := false
 
 lazy val mimaSettings = mimaDefaultSettings ++ Seq(
   mimaPreviousArtifacts := {
-    val VersionPattern = """^(\d+).(\d+).(\d+)(-.*)?""".r
-    val previousVersions = version.value match {
-      case VersionPattern("2", "0", "5", _) if scalaBinaryVersion.value == "2.13" => Set.empty // added 2.13.0 support in 2.0.5-SNAPSHOT.
-      case VersionPattern(epoch, major, minor, _) => (0 until minor.toInt).map(v => s"$epoch.$major.$v")
-      case _ => sys.error(s"Cannot find previous versions for ${version.value}")
-    }
-
-    previousVersions.toSet.map(previousVersion => organization.value %% name.value % previousVersion)
+      if(scalaVersion.value.equals(scala213))  Set.empty //TODO enable when 2.0.7 is available Set(organization.value %% name.value % "2.0.7")
+      else  Set(organization.value %% name.value % "2.0.0")
   },
   mimaBinaryIssueFilters ++= Seq(
     ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.ahc.AhcWSClientConfig$"),
