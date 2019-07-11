@@ -40,17 +40,12 @@ def scalacOpts: Seq[String] = Seq(
   "-Xlint",
   "-Ywarn-dead-code",
 )
-
 lazy val mimaSettings = mimaDefaultSettings ++ Seq(
   mimaPreviousArtifacts := {
-    val VersionPattern = """^(\d+).(\d+).(\d+)(-.*)?""".r
-    val previousVersions = version.value match {
-      case VersionPattern("2", "0", "5", _) if scalaBinaryVersion.value == "2.13" => Set.empty // added 2.13.0 support in 2.0.5-SNAPSHOT.
-      case VersionPattern(epoch, major, minor, _) => (0 until minor.toInt).map(v => s"$epoch.$major.$v")
-      case _ => sys.error(s"Cannot find previous versions for ${version.value}")
-    }
-
-    previousVersions.toSet.map(previousVersion => organization.value %% name.value % previousVersion)
+    // for now we should check against the previous released version 2.0.0 (2.0.6 for Scala 2.13)
+    // when we release master, this should become 2.1.0 (for all Scala versions)
+    if(scalaVersion.value.equals(scala213))  Set(organization.value %% name.value % "2.0.6")
+    else  Set(organization.value %% name.value % "2.0.0")
   },
   mimaBinaryIssueFilters ++= Seq(
     ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.ahc.AhcWSClientConfig$"),
