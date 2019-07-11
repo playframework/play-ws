@@ -53,6 +53,15 @@ lazy val mimaSettings = mimaDefaultSettings ++ Seq(
     ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.copy"),
     ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.this"),
     ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.DefaultStreamedAsyncHandler.this"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.AhcHttpCache.serveAction"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.AhcHttpCache.calculateCurrentAge"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.AhcHttpCache.calculateCurrentAge"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.AhcHttpCache.generateCachedResponse"),
+    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.cache.AhcHttpCache.calculateFreshnessLifetime"),
+    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.cache.AsyncCachingHandler.requestTime"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.cache.AsyncCachingHandler.onTlsHandshakeSuccess"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.CachingAsyncHttpClient.serveResponse"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.cache.BackgroundAsyncHandler.onTlsHandshakeSuccess"),
   )
 )
 
