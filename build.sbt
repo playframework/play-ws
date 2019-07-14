@@ -44,8 +44,9 @@ lazy val mimaSettings = mimaDefaultSettings ++ Seq(
   mimaPreviousArtifacts := {
     // for now we should check against the previous released version 2.0.0 (2.0.6 for Scala 2.13)
     // when we release master, this should become 2.1.0 (for all Scala versions)
-    if(scalaVersion.value.equals(scala213))  Set(organization.value %% name.value % "2.0.6")
-    else  Set(organization.value %% name.value % "2.0.0")
+    val previousVer = if (scalaVersion.value == scala213) "2.0.6" else "2.0.0"
+  
+    Set(organization.value %% name.value % previousVer)
   },
   mimaBinaryIssueFilters ++= Seq(
     ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.ahc.AhcWSClientConfig$"),
