@@ -41,6 +41,8 @@ def scalacOpts: Seq[String] = Seq(
   "-Ywarn-dead-code",
 )
 
+ThisBuild / mimaFailOnNoPrevious := false
+
 lazy val mimaSettings = mimaDefaultSettings ++ Seq(
   mimaPreviousArtifacts := {
     val VersionPattern = """^(\d+).(\d+).(\d+)(-.*)?""".r
