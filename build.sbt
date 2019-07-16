@@ -40,6 +40,9 @@ def scalacOpts: Seq[String] = Seq(
   "-Xlint",
   "-Ywarn-dead-code",
 )
+
+ThisBuild / mimaFailOnNoPrevious := false
+
 lazy val mimaSettings = mimaDefaultSettings ++ Seq(
   mimaPreviousArtifacts := {
     // for now we should check against the previous released version 2.0.0 (2.0.6 for Scala 2.13)
