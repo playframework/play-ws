@@ -65,7 +65,7 @@ def scalacOptionsFor(scalaBinVersion: String): Seq[String] = scalaBinVersion mat
 
 lazy val mimaSettings = mimaDefaultSettings ++ Seq(
   mimaPreviousArtifacts := {
-      if(scalaVersion.value.equals(scala213))  Set.empty //TODO enable when 2.0.7 is available Set(organization.value %% name.value % "2.0.7")
+      if(scalaVersion.value.equals(scala213)) Set(organization.value %% name.value % "2.0.7")
       else  Set(organization.value %% name.value % "2.0.0")
   },
   mimaBinaryIssueFilters ++= Seq(
