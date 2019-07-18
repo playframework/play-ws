@@ -48,7 +48,7 @@ object Dependencies {
 
   val akkaVersion = "2.6.0-M4"
   val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion)
-  val akkaHttp = Seq("com.typesafe.akka" %% "akka-http" % "10.1.8")
+  val akkaHttp = Seq("com.typesafe.akka" %% "akka-http" % "10.1.9")
 
   val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.2")
 
