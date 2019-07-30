@@ -7,7 +7,7 @@ import sbt.Keys._
 object Dependencies {
   val logback = Seq("ch.qos.logback" % "logback-core" % "1.2.3")
 
-  val assertj = Seq("org.assertj" % "assertj-core" % "3.13.0")
+  val assertj = Seq("org.assertj" % "assertj-core" % "3.13.1")
 
   val awaitility = Seq("org.awaitility" % "awaitility" % "3.1.6")
 
