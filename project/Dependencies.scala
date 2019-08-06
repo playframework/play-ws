@@ -11,7 +11,7 @@ object Dependencies {
 
   val awaitility = Seq("org.awaitility" % "awaitility" % "3.1.6")
 
-  val specsVersion = "4.6.0"
+  val specsVersion = "4.7.0"
   val specsBuild = Seq(
     "specs2-core",
     "specs2-junit",
