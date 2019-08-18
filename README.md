@@ -161,7 +161,7 @@ You can also post a Source:
 class MyClass {
     public CompletionStage<String> doStuff() {
         Source<ByteString, NotUsed> source = fromSource();
-        return ws.url(url).post(source).thenApply(response ->
+        return ws.url(url).post(body(source)).thenApply(response ->
             response.body()
         );
     }
@@ -279,7 +279,7 @@ public class JavaClient implements DefaultBodyReadables {
         client.url("http://www.google.com").get()
                 .whenComplete((response, throwable) -> {
                     String statusText = response.getStatusText();
-                    String body = response.body(string());
+                    String body = response.getBody(string());
                     System.out.println("Got a response " + statusText);
                 })
                 .thenRun(() -> {
