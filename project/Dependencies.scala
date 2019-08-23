@@ -50,7 +50,7 @@ object Dependencies {
   val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion)
   val akkaHttp = Seq("com.typesafe.akka" %% "akka-http" % "10.1.9")
 
-  val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.2")
+  val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.3")
 
   val testDependencies = (specsBuild ++ junitInterface ++ assertj ++ awaitility ++ slf4jtest ++ logback).map(_ % Test)
 
