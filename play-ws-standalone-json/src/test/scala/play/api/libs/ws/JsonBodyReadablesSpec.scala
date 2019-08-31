@@ -12,7 +12,7 @@ import play.api.libs.json.{ JsSuccess, JsValue }
 
 class JsonBodyReadablesSpec extends Specification with MustMatchers {
 
-  class StubResponse(byteArray: Array[Byte]) extends StandaloneWSResponse {
+  class StubResponse(byteArray: Array[Byte], charsetName: String = "UTF-8") extends StandaloneWSResponse {
     override def uri: java.net.URI = ???
 
     override def headers: Map[String, Seq[String]] = ???
@@ -27,7 +27,7 @@ class JsonBodyReadablesSpec extends Specification with MustMatchers {
 
     override def cookie(name: String): Option[WSCookie] = ???
 
-    override def body: String = ???
+    override def body: String = new String(byteArray, charsetName)
 
     override def bodyAsBytes: ByteString = ByteString.fromArray(byteArray)
 
@@ -39,30 +39,32 @@ class JsonBodyReadablesSpec extends Specification with MustMatchers {
     "read an encoding of UTF-32BE" in {
       val readables = new JsonBodyReadables() {}
       val json = """{"menu": {"id": "file", "value": "File"} }"""
-
-      val value: JsValue = readables.readableAsJson.transform(new StubResponse(json.getBytes("UTF-32BE")))
+      val charsetName = "UTF-32BE"
+      val value: JsValue = readables.readableAsJson.transform(new StubResponse(json.getBytes(charsetName), charsetName))
       (value \ "menu" \ "id").validate[String] must beEqualTo(JsSuccess("file"))
     }
 
     "read an encoding of UTF-32LE" in {
       val readables = new JsonBodyReadables() {}
       val json = """{"menu": {"id": "file", "value": "File"} }"""
-
-      val value: JsValue = readables.readableAsJson.transform(new StubResponse(json.getBytes("UTF-32LE")))
+      val charsetName = "UTF-32LE"
+      val value: JsValue = readables.readableAsJson.transform(new StubResponse(json.getBytes(charsetName), charsetName))
       (value \ "menu" \ "id").validate[String] must beEqualTo(JsSuccess("file"))
     }
 
     "read an encoding of UTF-16BE" in {
       val readables = new JsonBodyReadables() {}
       val json = """{"menu": {"id": "file", "value": "File"} }"""
-      val value: JsValue = readables.readableAsJson.transform(new StubResponse(json.getBytes("UTF-16BE")))
+      val charsetName = "UTF-16BE"
+      val value: JsValue = readables.readableAsJson.transform(new StubResponse(json.getBytes(charsetName), charsetName))
       (value \ "menu" \ "id").validate[String] must beEqualTo(JsSuccess("file"))
     }
 
     "read an encoding of UTF-16LE" in {
       val readables = new JsonBodyReadables() {}
       val json = """{"menu": {"id": "file", "value": "File"} }"""
-      val value: JsValue = readables.readableAsJson.transform(new StubResponse(json.getBytes("UTF-16LE")))
+      val charsetName = "UTF-16LE"
+      val value: JsValue = readables.readableAsJson.transform(new StubResponse(json.getBytes(charsetName), charsetName))
       (value \ "menu" \ "id").validate[String] must beEqualTo(JsSuccess("file"))
     }
 
@@ -86,6 +88,7 @@ class JsonBodyReadablesSpec extends Specification with MustMatchers {
       val value: JsValue = readables.readableAsJson.transform(new StubResponse(json.getBytes("UTF-8")))
       value.toString() must beEqualTo("[]")
     }
+
   }
 
 }

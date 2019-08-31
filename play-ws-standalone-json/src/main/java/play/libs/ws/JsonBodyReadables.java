@@ -4,7 +4,6 @@
 
 package play.libs.ws;
 
-import akka.util.ByteString;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -25,8 +24,7 @@ public interface JsonBodyReadables {
         return (response -> {
             // Jackson will automatically detect the correct encoding according to the rules in RFC-4627
             try {
-                ByteString bodyAsBytes = response.getBodyAsBytes();
-                return objectMapper.readValue(bodyAsBytes.toArray(), JsonNode.class);
+                return objectMapper.readTree(response.getBody());
             } catch(IOException e) {
                 throw new RuntimeException("Error parsing JSON from WS response wsBody", e);
             }
