@@ -4,16 +4,22 @@
 
 package play.api.libs.ws.ahc
 
+import java.nio.charset.StandardCharsets
+
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.util.ByteString
+import org.mockito.Mockito.{ times, verify, when }
 import org.specs2.mock.Mockito
+import org.specs2.mock.Mockito.mock
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
-import play.api.libs.json.JsString
-import play.api.libs.json.Json
-import play.api.libs.ws.JsonBodyWritables
+import play.api.libs.json.{ JsString, JsValue, Json }
+import play.api.libs.ws.{ JsonBodyReadables, JsonBodyWritables, StandaloneWSResponse }
 import play.libs.ws.DefaultObjectMapper
+import play.shaded.ahc.org.asynchttpclient.Response
+
+import scala.io.Codec
 
 /**
  *
@@ -53,5 +59,39 @@ class JsonRequestSpec extends Specification with Mockito with AfterAll with Json
 
     req.getHeaders.get("Content-Type") must be_==("application/json")
     ByteString.fromArray(req.getByteData).utf8String must be_==("""{"k1":"v1"}""")
+  }
+
+  "read an encoding of UTF-8" in {
+
+    val readables = new JsonBodyReadables {}
+    val json = io.Source.fromResource("test.json")(Codec.ISO8859).getLines.mkString
+
+    val ahcResponse = mock[Response]
+    val response = new StandaloneAhcWSResponse(ahcResponse)
+
+    when(ahcResponse.getResponseBody(StandardCharsets.UTF_8)).thenReturn(json)
+    when(ahcResponse.getContentType).thenReturn("application/json")
+
+    val value: JsValue = readables.readableAsJson.transform(response)
+    verify(ahcResponse, times(1)).getResponseBody(StandardCharsets.UTF_8)
+    verify(ahcResponse, times(1)).getContentType
+    value.toString must beEqualTo(json)
+  }
+
+  "read an encoding of ISO-8859-1" in {
+
+    val readables = new JsonBodyReadables {}
+    val json = io.Source.fromResource("test.json")(Codec.ISO8859).getLines.mkString
+
+    val ahcResponse = mock[Response]
+    val response = new StandaloneAhcWSResponse(ahcResponse)
+
+    when(ahcResponse.getResponseBody(StandardCharsets.ISO_8859_1)).thenReturn(json)
+    when(ahcResponse.getContentType).thenReturn("application/json;charset=iso-8859-1")
+
+    val value: JsValue = readables.readableAsJson.transform(response)
+    verify(ahcResponse, times(1)).getResponseBody(StandardCharsets.ISO_8859_1)
+    verify(ahcResponse, times(1)).getContentType
+    value.toString must beEqualTo(json)
   }
 }
