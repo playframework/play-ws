@@ -13,7 +13,7 @@ import scalariform.formatter.preferences._
 // Shading and Project Settings
 //---------------------------------------------------------------
 
-val scala212 = "2.12.8"
+val scala212 = "2.12.10"
 val scala213 = "2.13.0"
 
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
@@ -65,7 +65,7 @@ lazy val mimaSettings = mimaDefaultSettings ++ Seq(
 
 lazy val commonSettings = Def.settings(
   organization := "com.typesafe.play",
-  scalaVersion := scala212,
+  scalaVersion := scala213,
   crossScalaVersions := Seq(scala213, scala212),
   scalacOptions ++= scalacOpts,
   scalacOptions in (Compile, doc) ++= Seq(
@@ -125,8 +125,8 @@ val disablePublishing = Seq[Setting[_]](
 )
 
 lazy val shadedCommonSettings = Seq(
-  scalaVersion := scala212,
-  crossScalaVersions := Seq(scala212),
+  scalaVersion := scala213,
+  crossScalaVersions := Seq(scala213),
 
   // No need to cross publish the shaded libraries
   crossPaths := false,
