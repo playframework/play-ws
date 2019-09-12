@@ -6,7 +6,6 @@ package play.libs.ws.ahc;
 
 import akka.Done;
 import akka.actor.ActorSystem;
-import akka.stream.ActorMaterializer;
 import akka.stream.Materializer;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
@@ -86,7 +85,7 @@ public class ByteStringRequestTest implements DefaultBodyReadables {
         final StringBuilder result = new StringBuilder();
 
         final ActorSystem system = ActorSystem.create("test-body-as-bytes");
-        final Materializer materializer = ActorMaterializer.create(system);
+        final Materializer materializer = Materializer.matFromSystem(system);
 
         Source<String, ?> bodyAsSource = response.getBodyAsSource().map(ByteString::utf8String);
         Sink<String, CompletionStage<Done>> appender = Sink.foreach(result::append);

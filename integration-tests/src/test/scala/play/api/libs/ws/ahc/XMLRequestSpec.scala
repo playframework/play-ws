@@ -4,23 +4,18 @@
 
 package play.api.libs.ws.ahc
 
-import java.io.File
 import java.nio.charset.StandardCharsets
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
+import akka.stream.Materializer
 import akka.util.ByteString
-import com.google.common.hash.Hashing
 import org.specs2.matcher.MustMatchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
-import play.api.libs.json.JsValue
 import play.api.libs.ws._
-import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse }
 
-import scala.io.{ Codec, Source }
-import scala.xml.{ Elem, InputSource, Node }
+import scala.xml.Elem
 
 /**
  *
@@ -29,7 +24,7 @@ class XMLRequestSpec extends Specification with Mockito with AfterAll with MustM
   sequential
 
   implicit val system = ActorSystem()
-  implicit val materializer = ActorMaterializer()
+  implicit val materializer = Materializer.matFromSystem
 
   override def afterAll: Unit = {
     system.terminate()

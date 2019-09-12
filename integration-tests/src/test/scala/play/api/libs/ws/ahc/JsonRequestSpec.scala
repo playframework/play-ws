@@ -5,12 +5,13 @@
 package play.api.libs.ws.ahc
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
+import akka.stream.Materializer
 import akka.util.ByteString
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
-import play.api.libs.json.{ JsString, Json }
+import play.api.libs.json.JsString
+import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables
 import play.libs.ws.DefaultObjectMapper
 
@@ -21,7 +22,7 @@ class JsonRequestSpec extends Specification with Mockito with AfterAll with Json
   sequential
 
   implicit val system = ActorSystem()
-  implicit val materializer = ActorMaterializer()
+  implicit val materializer = Materializer.matFromSystem
 
   override def afterAll: Unit = {
     system.terminate()

@@ -50,7 +50,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv) extends Specifica
     "source successfully" in withClient() { client =>
       val future = toScala(client.url(s"http://localhost:$testServerPort").stream())
       val result: Future[ByteString] = future.flatMap { response: StandaloneWSResponse =>
-        toScala(response.getBodyAsSource.runWith(Sink.head(), materializer))
+        toScala(response.getBodyAsSource.runWith(Sink.head[ByteString](), materializer))
       }
       val expected: ByteString = ByteString.fromString("<h1>Say hello to akka-http</h1>")
       result must be_==(expected).await(retries = 0, timeout = 5.seconds)
