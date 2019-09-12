@@ -431,7 +431,7 @@ lazy val root = project
   .settings(formattingSettings)
   .settings(disableDocs)
   .settings(disablePublishing)
-  .settings(crossScalaVersions := Seq(scala212))
+  .settings(crossScalaVersions := Seq(scala213))
   .aggregate(
     `shaded`,
     `play-ws-standalone`,
