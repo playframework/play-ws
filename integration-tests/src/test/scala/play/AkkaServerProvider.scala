@@ -7,12 +7,12 @@ package play
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
-import akka.stream.ActorMaterializer
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.specification.BeforeAfterAll
 
 import scala.concurrent.duration._
 import scala.concurrent.{ Await, Future }
+import akka.stream.Materializer
 
 trait AkkaServerProvider extends BeforeAfterAll {
 
@@ -31,7 +31,7 @@ trait AkkaServerProvider extends BeforeAfterAll {
 
   // Create Akka system for thread and streaming management
   implicit val system = ActorSystem()
-  implicit val materializer = ActorMaterializer()
+  implicit val materializer = Materializer.matFromSystem
 
   lazy val futureServer: Future[Http.ServerBinding] = {
     // Using 0 (zero) means that a random free port will be used.
