@@ -13,7 +13,7 @@ import scalariform.formatter.preferences._
 // Shading and Project Settings
 //---------------------------------------------------------------
 
-val scala212 = "2.12.8"
+val scala212 = "2.12.10"
 val scala213 = "2.13.0"
 
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
