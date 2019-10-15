@@ -14,7 +14,7 @@ import scalariform.formatter.preferences._
 //---------------------------------------------------------------
 
 val scala211 = "2.11.12"
-val scala212 = "2.12.8"
+val scala212 = "2.12.10"
 
 val previousVersion = "1.1.13"
 
