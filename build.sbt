@@ -84,7 +84,7 @@ lazy val commonSettings = Def.settings(
         </license>
       </licenses>
       <scm>
-        <url>git@github.com/playframework/play-ws.git</url>
+        <url>https://github.com/playframework/play-ws</url>
         <connection>scm:git:git@github.com/playframework/play-ws.git</connection>
       </scm>
       <developers>
