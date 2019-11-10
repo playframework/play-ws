@@ -62,8 +62,6 @@ class JsonRequestSpec extends Specification with Mockito with AfterAll with Json
   }
 
   "read an encoding of UTF-8" in {
-
-    val readables = new JsonBodyReadables {}
     val json = io.Source.fromResource("test.json")(Codec.ISO8859).getLines.mkString
 
     val ahcResponse = mock[Response]
@@ -72,15 +70,13 @@ class JsonRequestSpec extends Specification with Mockito with AfterAll with Json
     when(ahcResponse.getResponseBody(StandardCharsets.UTF_8)).thenReturn(json)
     when(ahcResponse.getContentType).thenReturn("application/json")
 
-    val value: JsValue = readables.readableAsJson.transform(response)
+    val value: JsValue = JsonBodyReadables.readableAsJson.transform(response)
     verify(ahcResponse, times(1)).getResponseBody(StandardCharsets.UTF_8)
     verify(ahcResponse, times(1)).getContentType
     value.toString must beEqualTo(json)
   }
 
   "read an encoding of ISO-8859-1" in {
-
-    val readables = new JsonBodyReadables {}
     val json = io.Source.fromResource("test.json")(Codec.ISO8859).getLines.mkString
 
     val ahcResponse = mock[Response]
@@ -89,7 +85,7 @@ class JsonRequestSpec extends Specification with Mockito with AfterAll with Json
     when(ahcResponse.getResponseBody(StandardCharsets.ISO_8859_1)).thenReturn(json)
     when(ahcResponse.getContentType).thenReturn("application/json;charset=iso-8859-1")
 
-    val value: JsValue = readables.readableAsJson.transform(response)
+    val value: JsValue = JsonBodyReadables.readableAsJson.transform(response)
     verify(ahcResponse, times(1)).getResponseBody(StandardCharsets.ISO_8859_1)
     verify(ahcResponse, times(1)).getContentType
     value.toString must beEqualTo(json)
