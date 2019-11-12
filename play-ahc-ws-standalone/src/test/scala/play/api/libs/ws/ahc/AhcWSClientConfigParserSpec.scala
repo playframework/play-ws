@@ -49,6 +49,7 @@ class AhcWSClientConfigParserSpec extends Specification with Mockito {
           |play.ws.ahc.maxConnectionsTotal = 6
           |play.ws.ahc.maxConnectionLifetime = 1 minute
           |play.ws.ahc.idleConnectionInPoolTimeout = 30 seconds
+          |play.ws.ahc.connectionPoolCleanerPeriod = 10 seconds
           |play.ws.ahc.maxNumberOfRedirects = 0
           |play.ws.ahc.maxRequestRetry = 99
           |play.ws.ahc.disableUrlEncoding = true
@@ -59,6 +60,7 @@ class AhcWSClientConfigParserSpec extends Specification with Mockito {
       actual.maxConnectionsTotal must_== 6
       actual.maxConnectionLifetime must_== 1.minute
       actual.idleConnectionInPoolTimeout must_== 30.seconds
+      actual.connectionPoolCleanerPeriod must_== 10.seconds
       actual.maxNumberOfRedirects must_== 0
       actual.maxRequestRetry must_== 99
       actual.disableUrlEncoding must beTrue
