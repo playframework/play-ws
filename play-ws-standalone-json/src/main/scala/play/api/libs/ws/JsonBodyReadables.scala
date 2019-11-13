@@ -21,7 +21,7 @@ trait JsonBodyReadables {
    * }}}
    */
   implicit val readableAsJson: BodyReadable[JsValue] = BodyReadable { response =>
-    Json.parse(response.bodyAsBytes.toArray)
+    Json.parse(response.body)
   }
 }
 
