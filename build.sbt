@@ -41,26 +41,13 @@ def scalacOpts: Seq[String] = Seq(
   "-Ywarn-dead-code",
 )
 
+// Binary compatibility is this version
+val previousVersions: Set[String] = Set("2.1.0")
+
 ThisBuild / mimaFailOnNoPrevious := false
 
 lazy val mimaSettings = mimaDefaultSettings ++ Seq(
-  mimaPreviousArtifacts := {
-    val VersionPattern = """^(\d+).(\d+).(\d+)(-.*)?""".r
-    val previousVersions = version.value match {
-      case VersionPattern("2", "0", "5", _) if scalaBinaryVersion.value == "2.13" => Set.empty // added 2.13.0 support in 2.0.5-SNAPSHOT.
-      case VersionPattern(epoch, major, minor, _) => (0 until minor.toInt).map(v => s"$epoch.$major.$v")
-      case _ => sys.error(s"Cannot find previous versions for ${version.value}")
-    }
-
-    previousVersions.toSet.map(previousVersion => organization.value %% name.value % previousVersion)
-  },
-  mimaBinaryIssueFilters ++= Seq(
-    ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.ahc.AhcWSClientConfig$"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.apply"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.copy"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.this"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.DefaultStreamedAsyncHandler.this"),
-  )
+  mimaPreviousArtifacts := previousVersions.map(pv => organization.value %% name.value % pv)
 )
 
 lazy val commonSettings = Def.settings(
