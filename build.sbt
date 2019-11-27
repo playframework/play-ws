@@ -202,6 +202,8 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
       ShadeRule.rename("io.netty.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.rename("javassist.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.rename("com.typesafe.netty.**" -> "play.shaded.ahc.@0").inAll,
+      ShadeRule.rename("javax.activation.**" -> "play.shaded.ahc.@0").inAll,
+      ShadeRule.rename("com.sun.activation.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.zap("org.reactivestreams.**").inAll,
       ShadeRule.zap("org.slf4j.**").inAll
     ),
