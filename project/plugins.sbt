@@ -19,7 +19,7 @@ addSbtPlugin("org.scalariform" % "sbt-scalariform" % "1.8.3")
 
 addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.6.1")
 
-addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.2.0")
+addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.3.1")
 
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.3.7")
 
