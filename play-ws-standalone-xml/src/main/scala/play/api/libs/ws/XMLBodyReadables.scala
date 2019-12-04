@@ -15,7 +15,12 @@ trait XMLBodyReadables {
    * Converts a response body into XML document:
    *
    * {{{
-   * val xml = response.body[scala.xml.Elem]
+   * import scala.xml.Elem
+   *
+   * import play.api.libs.ws.StandaloneWSResponse
+   * import play.api.libs.ws.XMLBodyReadables._
+   *
+   * def foo(resp: StandaloneWSResponse): Elem = resp.body[Elem]
    * }}}
    */
   implicit val readableAsXml: BodyReadable[Elem] = BodyReadable { response =>

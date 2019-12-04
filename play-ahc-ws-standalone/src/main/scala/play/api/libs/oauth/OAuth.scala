@@ -10,7 +10,11 @@ import play.shaded.oauth.oauth.signpost.exception.OAuthException
 import play.shaded.ahc.org.asynchttpclient.oauth.OAuthSignatureCalculator
 import play.shaded.ahc.org.asynchttpclient.{ Request, RequestBuilderBase, SignatureCalculator }
 import play.api.libs.ws.WSSignatureCalculator
-import play.shaded.ahc.org.asynchttpclient.oauth.{ ConsumerKey => AHCConsumerKey, RequestToken => AHCRequestToken }
+
+import play.shaded.ahc.org.asynchttpclient.oauth.{
+  ConsumerKey => AHCConsumerKey,
+  RequestToken => AHCRequestToken
+}
 
 /**
  * Library to access resources protected by OAuth 1.0a.
@@ -111,10 +115,24 @@ class OAuthCalculator(consumerKey: ConsumerKey, requestToken: RequestToken) exte
  *
  * Example:
  * {{{
- * import play.api.libs.oauth._
- * val consumerKey: ConsumerKey = ConsumerKey(twitterConsumerKey, twitterConsumerSecret)
- * val requestToken: RequestToken = RequestToken(accessTokenKey, accessTokenSecret)
- * WS.url("http://example.com/protected").sign(OAuthCalculator(consumerKey, requestToken)).get()
+ * import play.api.libs.oauth.{ ConsumerKey, OAuthCalculator, RequestToken }
+ * import play.api.libs.ws.ahc.StandaloneAhcWSClient
+ *
+ * def example(
+ *   twitterConsumerKey: String,
+ *   twitterConsumerSecret: String,
+ *   accessTokenKey: String,
+ *   accessTokenSecret: String,
+ *   ws: StandaloneAhcWSClient) = {
+ *   val consumerKey: ConsumerKey =
+ *     ConsumerKey(twitterConsumerKey, twitterConsumerSecret)
+ *
+ *   val requestToken: RequestToken =
+ *     RequestToken(accessTokenKey, accessTokenSecret)
+ *
+ *   ws.url("http://example.com/protected").
+ *     sign(OAuthCalculator(consumerKey, requestToken)).get()
+ * }
  * }}}
  */
 object OAuthCalculator {
