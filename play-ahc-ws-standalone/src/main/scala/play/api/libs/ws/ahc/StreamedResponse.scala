@@ -16,11 +16,20 @@ import play.shaded.ahc.org.asynchttpclient.HttpResponseBodyPart
  * Note that this is only usable with a stream call, i.e.
  *
  * {{{
- * class MyClass extends StreamedBodyReadable {
- *   ws.url("http://example.com").stream().map { response =>
- *      val source = response.body[Source[ByteString, NotUsed]]
- *      ...
- *   }
+ * import scala.concurrent.{ ExecutionContext, Future }
+ *
+ * import akka.util.ByteString
+ * import akka.stream.scaladsl.Source
+ *
+ * import play.api.libs.ws.DefaultBodyReadables._
+ * import play.api.libs.ws.ahc.StandaloneAhcWSClient
+ *
+ * class MyClass(ws: StandaloneAhcWSClient) {
+ *   def doIt(implicit ec: ExecutionContext): Future[String] =
+ *     ws.url("http://example.com").stream().map { response =>
+ *        val _ = response.body[Source[ByteString, _]]
+ *        ??? // process source to String
+ *     }
  * }
  * }}}
  */

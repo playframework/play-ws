@@ -194,12 +194,19 @@ object StandaloneAhcWSClient {
    * Typical usage:
    *
    * {{{
+   * import play.api.libs.ws.ahc.StandaloneAhcWSClient
+   *
+   * def example(someUrl: String)(implicit m: akka.stream.Materializer) = {
+   *   implicit def ec = m.executionContext
+   *
    *   val client = StandaloneAhcWSClient()
    *   val request = client.url(someUrl).get()
+   *
    *   request.foreach { response =>
-   *     doSomething(response)
+   *     //doSomething(response)
    *     client.close()
    *   }
+   * }
    * }}}
    *
    * @param config configuration settings

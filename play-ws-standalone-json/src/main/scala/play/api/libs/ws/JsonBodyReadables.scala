@@ -17,7 +17,10 @@ trait JsonBodyReadables {
    * Converts a response body into Play JSON format:
    *
    * {{{
-   * val json = response.body[play.api.libs.json.JsValue]
+   * import play.api.libs.ws.StandaloneWSResponse
+   * import play.api.libs.ws.JsonBodyReadables._
+   *
+   * def json(r: StandaloneWSResponse) = r.body[play.api.libs.json.JsValue]
    * }}}
    */
   implicit val readableAsJson: BodyReadable[JsValue] = BodyReadable { response =>

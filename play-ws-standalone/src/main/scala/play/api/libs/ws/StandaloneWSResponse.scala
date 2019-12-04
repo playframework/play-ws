@@ -78,19 +78,33 @@ trait StandaloneWSResponse {
    * The simplest use case is
    *
    * {{{
-   * val responseBodyAsString: String = response.body[String]
+   * import play.api.libs.ws.StandaloneWSResponse
+   * import play.api.libs.ws.DefaultBodyReadables._
+   *
+   * def responseBodyAsString(response: StandaloneWSResponse): String =
+   *   response.body[String]
    * }}}
    *
    * But you can also render as JSON
    *
    * {{{
-   * val responseBodyAsJson: JsValue = response.body[JsValue]
+   * // not compilable: requires `play-ws-standalone-json` dependency
+   * import play.api.libs.json.JsValue
+   * import play.api.libs.ws.StandaloneWSResponse
+   *
+   * def responseBodyAsJson(response: StandaloneWSResponse): JsValue =
+   *   response.body[JsValue]
    * }}}
    *
-   * or as XML:
+   * or as binary:
    *
    * {{{
-   * val responseBodyAsByteString: ByteString = response.body[ByteString]
+   * import akka.util.ByteString
+   * import play.api.libs.ws.StandaloneWSResponse
+   * import play.api.libs.ws.DefaultBodyReadables._
+   *
+   * def responseBodyAsByteString(response: StandaloneWSResponse): ByteString =
+   *   response.body[ByteString]
    * }}}
    */
   def body[T: BodyReadable]: T = {
