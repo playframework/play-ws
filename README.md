@@ -71,37 +71,69 @@ import play.api.libs.ws.JsonBodyWritables._
 To use a BodyReadable in a response, you must type the response explicitly:
 
 ```scala
-val responseBody: Future[scala.xml.Elem] = ws.url(...).get().map { response =>
-  response.body[scala.xml.Elem]
-}
+import scala.concurrent.{ ExecutionContext, Future }
+
+import play.api.libs.ws.StandaloneWSClient
+import play.api.libs.ws.XMLBodyReadables._ // required
+
+def handleXml(ws: StandaloneWSClient)(
+  implicit ec: ExecutionContext): Future[scala.xml.Elem] =
+  ws.url("...").get().map { response =>
+    response.body[scala.xml.Elem]
+  }
 ```
 
 or using Play-JSON:
 
 ```scala
-val jsonBody: Future[JsValue] = ws.url(...).get().map { response =>
-  response.body[JsValue]
-}
+import scala.concurrent.{ ExecutionContext, Future }
+
+import play.api.libs.json.JsValue
+import play.api.libs.ws.StandaloneWSClient
+
+import play.api.libs.ws.JsonBodyReadables._ // required
+
+def handleJsonResp(ws: StandaloneWSClient)(
+  implicit ec: ExecutionContext): Future[JsValue] =
+  ws.url("...").get().map { response =>
+    response.body[JsValue]
+  }
 ```
 
 Note that there is a special case: when you are streaming the response, then you should get the body as a Source:
 
 ```scala
-ws.url(...).stream().map { response =>
-   val source: Source[ByteString, NotUsed] = response.bodyAsSource
-}
+import scala.concurrent.ExecutionContext
+import akka.util.ByteString
+import akka.stream.scaladsl.Source
+import play.api.libs.ws.StandaloneWSClient
+
+def useWSStream(ws: StandaloneWSClient)(implicit ec: ExecutionContext) =
+  ws.url("...").stream().map { response =>
+     val source: Source[ByteString, _] = response.bodyAsSource
+     val _ = source // do something with source
+  }
 ```
 
 To POST, you should pass in a type which has an implicit class mapping of BodyWritable:
 
 ```scala
-val stringData = "Hello world"
-ws.url(...).post(stringData).map { response => ... }
+import scala.concurrent.ExecutionContext
+import play.api.libs.ws.DefaultBodyWritables._ // required
+
+def postExampleString(ws: play.api.libs.ws.StandaloneWSClient)(
+  implicit ec: ExecutionContext) = {
+  val stringData = "Hello world"
+  ws.url("...").post(stringData).map { response => /* do something */ }
+}
 ```
 
 You can also define your own custom BodyReadable: 
 
 ```scala
+import play.api.libs.ws.BodyReadable
+import play.api.libs.ws.ahc.StandaloneAhcWSResponse
+
 case class Foo(body: String)
 
 implicit val fooBodyReadable = BodyReadable[Foo] { response =>
@@ -114,9 +146,12 @@ implicit val fooBodyReadable = BodyReadable[Foo] { response =>
 or custom BodyWritable:
 
 ```scala
+import akka.util.ByteString
+import play.api.libs.ws.{ BodyWritable, InMemoryBody }
+
 implicit val writeableOf_Foo: BodyWritable[Foo] = {
   // https://tools.ietf.org/html/rfc6838#section-3.2
-  BodyWritable(foo => InMemoryBody(ByteString.fromString(foo.serialize)), application/vnd.company.category+foo)
+  BodyWritable(foo => InMemoryBody(ByteString.fromString(foo.toString)), "application/vnd.company.category+foo")
 }
 ```
 
@@ -234,10 +269,10 @@ object ScalaClient {
   }
 
   def call(wsClient: StandaloneWSClient): Future[Unit] = {
-    wsClient.url("http://www.google.com").get().map { response ⇒
+    wsClient.url("http://www.google.com").get().map { response =>
       val statusText: String = response.statusText
       val body = response.body[String]
-      println(s"Got a response $statusText")
+      println(s"Got a response $statusText: $body")
     }
   }
 }
@@ -299,19 +334,39 @@ Play WS implements [HTTP Caching](https://tools.ietf.org/html/rfc7234) through C
 To create a standalone AHC client that uses caching, pass in an instance of AhcHttpCache with a cache adapter to the underlying implementation.  For example, to use Caffeine as the underlying cache, you could use the following:
 
 ```scala
-class CaffeineHttpCache extends Cache {
-     val underlying = Caffeine.newBuilder()
-       .ticker(Ticker.systemTicker())
-       .expireAfterWrite(365, TimeUnit.DAYS)
-       .build[EffectiveURIKey, ResponseEntry]()
+import scala.concurrent.Future
+import java.util.concurrent.TimeUnit
+import com.github.benmanes.caffeine.cache.{ Caffeine, Ticker }
 
-  override def remove(key: EffectiveURIKey): Unit = underlying.invalidate(key)
-  override def put(key: EffectiveURIKey, entry: ResponseEntry): Unit = underlying.put(key, entry)
-  override def get(key: EffectiveURIKey): ResponseEntry = underlying.getIfPresent(key)
-  override def close(): Unit = underlying.cleanUp()
+import play.api.libs.ws.ahc.StandaloneAhcWSClient
+import play.api.libs.ws.ahc.cache.{
+  AhcHttpCache, Cache, EffectiveURIKey, ResponseEntry
 }
-val cache = new CaffeineHttpCache()
-val client = StandaloneAhcWSClient(httpCache = AhcHttpCache(cache))   
+
+class CaffeineHttpCache extends Cache {
+  val underlying = Caffeine.newBuilder()
+    .ticker(Ticker.systemTicker())
+    .expireAfterWrite(365, TimeUnit.DAYS)
+    .build[EffectiveURIKey, ResponseEntry]()
+
+  def remove(key: EffectiveURIKey) =
+    Future.successful(Option(underlying.invalidate(key)))
+
+  def put(key: EffectiveURIKey, entry: ResponseEntry) =
+    Future.successful(underlying.put(key, entry))
+
+  def get(key: EffectiveURIKey) =
+    Future.successful(Option(underlying getIfPresent key ))
+
+  def close(): Unit = underlying.cleanUp()
+}
+
+def withCache(implicit m: akka.stream.Materializer): StandaloneAhcWSClient = {
+  implicit def ec = m.executionContext
+
+  val cache = new CaffeineHttpCache()
+  StandaloneAhcWSClient(httpCache = Some(new AhcHttpCache(cache)))
+}
 ```
 
 There are a number of guides that help with putting together Cache-Control headers:
