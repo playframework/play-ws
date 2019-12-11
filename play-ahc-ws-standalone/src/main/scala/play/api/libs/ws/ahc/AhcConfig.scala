@@ -28,6 +28,7 @@ import scala.concurrent.duration._
  * @param maxConnectionsTotal The maximum total number of connections. -1 means no maximum.
  * @param maxConnectionLifetime The maximum time that a connection should live for in the pool.
  * @param idleConnectionInPoolTimeout The time after which a connection that has been idle in the pool should be closed.
+ * @param connectionPoolCleanerPeriod the frequency to cleanup timeout idle connections
  * @param maxNumberOfRedirects The maximum number of redirects.
  * @param maxRequestRetry The maximum number of times to retry a request if it fails.
  * @param disableUrlEncoding Whether the raw URL should be used.
@@ -40,6 +41,7 @@ case class AhcWSClientConfig(
     maxConnectionsTotal: Int = -1,
     maxConnectionLifetime: Duration = Duration.Inf,
     idleConnectionInPoolTimeout: Duration = 1.minute,
+    connectionPoolCleanerPeriod: Duration = 1.second,
     maxNumberOfRedirects: Int = 5,
     maxRequestRetry: Int = 5,
     disableUrlEncoding: Boolean = false,
@@ -95,6 +97,7 @@ class AhcWSClientConfigParser @Inject() (
     val maximumConnectionsTotal = configuration.getInt("play.ws.ahc.maxConnectionsTotal")
     val maxConnectionLifetime = getDuration("play.ws.ahc.maxConnectionLifetime", Duration.Inf)
     val idleConnectionInPoolTimeout = getDuration("play.ws.ahc.idleConnectionInPoolTimeout", 1.minute)
+    val connectionPoolCleanerPeriod = getDuration("play.ws.ahc.connectionPoolCleanerPeriod", 1.second)
     val maximumNumberOfRedirects = configuration.getInt("play.ws.ahc.maxNumberOfRedirects")
     val maxRequestRetry = configuration.getInt("play.ws.ahc.maxRequestRetry")
     val disableUrlEncoding = configuration.getBoolean("play.ws.ahc.disableUrlEncoding")
@@ -108,6 +111,7 @@ class AhcWSClientConfigParser @Inject() (
       maxConnectionsTotal = maximumConnectionsTotal,
       maxConnectionLifetime = maxConnectionLifetime,
       idleConnectionInPoolTimeout = idleConnectionInPoolTimeout,
+      connectionPoolCleanerPeriod = connectionPoolCleanerPeriod,
       maxNumberOfRedirects = maximumNumberOfRedirects,
       maxRequestRetry = maxRequestRetry,
       disableUrlEncoding = disableUrlEncoding,
@@ -197,6 +201,7 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
     builder.setMaxConnections(ahcConfig.maxConnectionsTotal)
     builder.setConnectionTtl(toMillis(ahcConfig.maxConnectionLifetime))
     builder.setPooledConnectionIdleTimeout(toMillis(ahcConfig.idleConnectionInPoolTimeout))
+    builder.setConnectionPoolCleanerPeriod(toMillis(ahcConfig.connectionPoolCleanerPeriod))
     builder.setMaxRedirects(ahcConfig.maxNumberOfRedirects)
     builder.setMaxRequestRetry(ahcConfig.maxRequestRetry)
     builder.setDisableUrlEncodingForBoundRequests(ahcConfig.disableUrlEncoding)
