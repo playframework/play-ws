@@ -10,9 +10,11 @@ import scala.concurrent.Future
  * A request filter.  Override this trait to implement your own filters:
  *
  * {{{
+ * import play.api.libs.ws.{ WSRequestFilter, WSRequestExecutor }
+ *
  * class HeaderAppendingFilter(key: String, value: String) extends WSRequestFilter {
  *   override def apply(executor: WSRequestExecutor): WSRequestExecutor = {
- *     WSRequestExecutor(r => executor(r.withHeaders((key, value))))
+ *     WSRequestExecutor(r => executor(r.withHttpHeaders((key, value))))
  *   }
  * }
  * }}}
@@ -25,8 +27,10 @@ object WSRequestFilter {
    * Creates an adhoc filter from a function:
    *
    * {{{
+   * import play.api.libs.ws.{ WSRequestFilter, WSRequestExecutor }
+   *
    * val filter: WSRequestFilter = WSRequestFilter { e =>
-   *   WSRequestExecutor(r => e.apply(r.withQueryString("bed" -> "1")))
+   *   WSRequestExecutor(r => e.apply(r.withQueryStringParameters("bed" -> "1")))
    * }
    * }}}
    *

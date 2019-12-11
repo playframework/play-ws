@@ -18,7 +18,11 @@ import scala.concurrent.duration.Duration
  * You can create a client config from an application.conf file by running
  *
  * {{{
- *   val wsClientConfig = new WSConfigParser(ConfigFactory.load(), this.classLoader).parse()
+ * import play.api.libs.ws.WSConfigParser
+ * import com.typesafe.config.ConfigFactory
+ *
+ * val wsClientConfig = new WSConfigParser(
+ *   ConfigFactory.load(), this.getClass.getClassLoader).parse()
  * }}}
  */
 @Singleton

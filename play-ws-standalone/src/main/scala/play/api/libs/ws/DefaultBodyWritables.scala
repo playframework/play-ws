@@ -19,10 +19,15 @@ import scala.compat.java8.FunctionConverters.asScalaFromSupplier
  * requests that take a body such as PUT, POST and PATCH.
  *
  * {{{
- * class MyClass extends DefaultBodyWritables {
- *   def postBody() = {
- *     val getBody: String = ...
- *     ws.url(...).post(getBody).map { response => ... }
+ * import scala.concurrent.ExecutionContext
+ *
+ * import play.api.libs.ws.StandaloneWSClient
+ * import play.api.libs.ws.DefaultBodyWritables._
+ *
+ * class MyClass(ws: StandaloneWSClient) {
+ *   def postBody()(implicit ec: ExecutionContext) = {
+ *     val getBody: String = "..."
+ *     ws.url("...").post(getBody).map { response => ??? }
  *   }
  * }
  * }}}

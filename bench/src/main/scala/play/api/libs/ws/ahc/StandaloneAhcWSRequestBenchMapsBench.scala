@@ -26,7 +26,9 @@ import play.api.libs.ws.StandaloneWSRequest
  * Compare your results before/after on your machine. Don't trust the ones in scaladoc.
  *
  * Sample benchmark results:
+ *
  * {{{
+ * // not compilable
  * > bench/jmh:run .*StandaloneAhcWSRequestBenchMapsBench
  * [info] Benchmark                                             (size)  Mode  Cnt    Score   Error  Units
  * [info] StandaloneAhcWSRequestBenchMapsBench.addHeaders            1  avgt       162.673          ns/op
