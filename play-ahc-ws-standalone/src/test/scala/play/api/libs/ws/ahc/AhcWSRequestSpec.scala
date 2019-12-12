@@ -4,22 +4,23 @@
 
 package play.api.libs.ws.ahc
 
+import scala.collection.JavaConverters._
+import scala.concurrent.duration._
+
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import akka.stream.Materializer
 import akka.util.ByteString
+
 import org.specs2.execute.Result
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
+
 import play.api.libs.oauth.{ ConsumerKey, RequestToken, OAuthCalculator }
 import play.api.libs.ws._
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames
 import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
 import play.shaded.ahc.org.asynchttpclient.{ SignatureCalculator, Param, Request => AHCRequest }
-
-import scala.collection.JavaConverters._
-import scala.concurrent.duration._
 
 class AhcWSRequestSpec extends Specification with Mockito with AfterAll with DefaultBodyReadables with DefaultBodyWritables {
 

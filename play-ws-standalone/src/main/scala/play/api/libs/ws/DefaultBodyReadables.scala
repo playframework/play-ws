@@ -10,51 +10,65 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 
 /**
- * Defines common BodyReadable for a response backed by org.asynchttpclient.Response.
+ * Defines common BodyReadable for a response backed by `org.asynchttpclient.Response`.
  */
 trait DefaultBodyReadables {
 
   /**
-   * Converts a response body into an akka.util.ByteString:
+   * Converts a response body into an `akka.util.ByteString`:
    *
    * {{{
-   * val byteString = response.body[ByteString]
+   * import akka.util.ByteString
+   * import play.api.libs.ws.DefaultBodyReadables._
+   *
+   * def example(response: play.api.libs.ws.StandaloneWSResponse): ByteString =
+   *   response.body[ByteString]
    * }}}
    */
   implicit val readableAsByteString: BodyReadable[ByteString] = BodyReadable(_.bodyAsBytes)
 
   /**
-   * Converts a response body into a String.
+   * Converts a response body into a `String`.
    *
    * Note: this is only a best-guess effort and does not handle all content types. See
    * [[StandaloneWSResponse.body:String*]] for more information.
    *
    * {{{
-   * val string = response.body[String]
+   * import play.api.libs.ws.DefaultBodyReadables._
+   *
+   * def example(response: play.api.libs.ws.StandaloneWSResponse): String =
+   *   response.body[String]
    * }}}
    */
   implicit val readableAsString: BodyReadable[String] = BodyReadable(_.body)
 
   /**
-   * Converts a response body into a read only ByteBuffer.
+   * Converts a response body into a read only `ByteBuffer`.
    *
    * {{{
-   * val buffer = response.body[ByteBuffer]
+   * import java.nio.ByteBuffer
+   * import play.api.libs.ws.DefaultBodyReadables._
+   *
+   * def example(response: play.api.libs.ws.StandaloneWSResponse): ByteBuffer =
+   *   response.body[ByteBuffer]
    * }}}
    */
   implicit val readableAsByteBuffer: BodyReadable[ByteBuffer] = BodyReadable(_.bodyAsBytes.asByteBuffer)
 
   /**
-   * Converts a response body into Array[Byte].
+   * Converts a response body into `Array[Byte]`.
    *
    * {{{
-   * val byteArray = response.body[Array[Byte]]
+   * import play.api.libs.ws.DefaultBodyReadables._
+   *
+   * def example(response: play.api.libs.ws.StandaloneWSResponse): Array[Byte] =
+   *   response.body[Array[Byte]]
    * }}}
    */
   implicit val readableAsByteArray: BodyReadable[Array[Byte]] = BodyReadable(_.bodyAsBytes.toArray)
 
   /**
-   * Converts a response body into Source[ByteString, NotUsed].
+   * Converts a response body into `Source[ByteString, _]`.
    */
   implicit val readableAsSource: BodyReadable[Source[ByteString, _]] = BodyReadable(_.bodyAsSource)
 }

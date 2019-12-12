@@ -12,16 +12,31 @@ import scala.concurrent.Future
  * Implementations can write adapters that map through to this trait, i.e.
  *
  * {{{
- * class CaffeineHttpCache extends Cache {
- *    val underlying = Caffeine.newBuilder()
- *      .ticker(Ticker.systemTicker())
- *      .expireAfterWrite(365, TimeUnit.DAYS)
- *      .build[EffectiveURIKey, ResponseEntry]()
+ * import java.util.concurrent.TimeUnit
+ * import scala.concurrent.Future
  *
- *     override def remove(key: EffectiveURIKey) = Future.successful(Option(underlying.invalidate(key))
- *     override def put(key: EffectiveURIKey, entry: ResponseEntry) = Future.successful(underlying.put(key, entry))
- *     override def get(key: EffectiveURIKey) = Future.successful(underlying.getIfPresent(key))
- *     override def close(): Unit = underlying.cleanUp()
+ * import com.github.benmanes.caffeine.cache.{ Caffeine, Ticker }
+ *
+ * import play.api.libs.ws.ahc.cache.{
+ *   Cache, EffectiveURIKey, ResponseEntry
+ * }
+ *
+ * class CaffeineHttpCache extends Cache {
+ *   val underlying = Caffeine.newBuilder()
+ *     .ticker(Ticker.systemTicker())
+ *     .expireAfterWrite(365, TimeUnit.DAYS)
+ *     .build[EffectiveURIKey, ResponseEntry]()
+ *
+ *   def remove(key: EffectiveURIKey) =
+ *     Future.successful(Option(underlying.invalidate(key)))
+ *
+ *   def put(key: EffectiveURIKey, entry: ResponseEntry) =
+ *     Future.successful(underlying.put(key, entry))
+ *
+ *   def get(key: EffectiveURIKey) =
+ *     Future.successful(Option(underlying getIfPresent key ))
+ *
+ *   def close(): Unit = underlying.cleanUp()
  * }
  * }}}
  */

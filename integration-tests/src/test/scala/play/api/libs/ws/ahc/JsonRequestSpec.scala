@@ -11,11 +11,11 @@ import akka.stream.Materializer
 import akka.util.ByteString
 import org.mockito.Mockito.{ times, verify, when }
 import org.specs2.mock.Mockito
-import org.specs2.mock.Mockito.mock
+
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
 import play.api.libs.json.{ JsString, JsValue, Json }
-import play.api.libs.ws.{ JsonBodyReadables, JsonBodyWritables, StandaloneWSResponse }
+import play.api.libs.ws.{ JsonBodyReadables, JsonBodyWritables }
 import play.libs.ws.DefaultObjectMapper
 import play.shaded.ahc.org.asynchttpclient.Response
 
