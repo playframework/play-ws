@@ -42,12 +42,12 @@ def scalacOpts: Seq[String] = Seq(
 )
 
 // Binary compatibility is this version
-val previousVersions: Set[String] = Set("2.1.0")
+val previousVersion: Option[String] = Some("2.1.2")
 
 ThisBuild / mimaFailOnNoPrevious := false
 
 lazy val mimaSettings = mimaDefaultSettings ++ Seq(
-  mimaPreviousArtifacts := previousVersions.map(pv => organization.value %% name.value % pv)
+  mimaPreviousArtifacts := previousVersion.map(organization.value %% name.value % _).toSet
 )
 
 lazy val commonSettings = Def.settings(
