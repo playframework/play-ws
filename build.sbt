@@ -42,27 +42,12 @@ def scalacOpts: Seq[String] = Seq(
 )
 
 // Binary compatibility is this version
-val previousVersions: Set[String] = Set("2.1.0")
+val previousVersion: Option[String] = Some("2.1.2")
 
 ThisBuild / mimaFailOnNoPrevious := false
 
 lazy val mimaSettings = mimaDefaultSettings ++ Seq(
-  mimaPreviousArtifacts := previousVersions.map(pv => organization.value %% name.value % pv),
-  mimaBinaryIssueFilters ++= Seq(
-    ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.ahc.AhcWSClientConfig$"),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.<init>$default$6"),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.<init>$default$8"),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.apply$default$6"),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.apply$default$8"),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.copy$default$6"),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.copy$default$8"),
-    ProblemFilters.exclude[IncompatibleSignatureProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.tupled"),
-    ProblemFilters.exclude[IncompatibleSignatureProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.unapply"),
-    ProblemFilters.exclude[IncompatibleSignatureProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.curried"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.apply"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.copy"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.this")
-  )
+  mimaPreviousArtifacts := previousVersion.map(organization.value %% name.value % _).toSet
 )
 
 lazy val commonSettings = Def.settings(
@@ -217,6 +202,8 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
       ShadeRule.rename("io.netty.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.rename("javassist.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.rename("com.typesafe.netty.**" -> "play.shaded.ahc.@0").inAll,
+      ShadeRule.rename("javax.activation.**" -> "play.shaded.ahc.@0").inAll,
+      ShadeRule.rename("com.sun.activation.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.zap("org.reactivestreams.**").inAll,
       ShadeRule.zap("org.slf4j.**").inAll
     ),
