@@ -10,7 +10,18 @@ pull_request_rules:
     actions:
       merge:
         method: merge
-        strict: smart
+
+
+  - name: Merge ScalaSteward's PRs that are ready
+    conditions:
+      - author=scala-steward
+      - status-success=Travis CI - Pull Request
+      - "#review-requested=0"
+      - "#changes-requested-reviews-by=0"
+      - label!=status:block-merge
+    actions:
+      merge:
+        method: merge
 
   - name: backport patches to 2.0.x branch
     conditions:
@@ -51,10 +62,3 @@ pull_request_rules:
     actions:
       delete_head_branch: {}
 
-  - name: auto add wip
-    conditions:
-      # match a few flavours of wip
-      - title~=^(\[wip\]( |:) |\[WIP\]( |:) |wip( |:) |WIP( |:)).*
-    actions:
-      label:
-        add: ["status:block-merge"]
