@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2020 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) Lightbend Inc. <https://www.lightbend.com>
  */
 
 package play.api.libs.ws.ahc.cache
@@ -99,4 +99,3 @@ class BackgroundAsyncHandler[T](request: Request, cache: AhcHttpCache, ahcConfig
 object BackgroundAsyncHandler {
   private val logger: Logger = LoggerFactory.getLogger("play.api.libs.ws.ahc.cache.BackgroundAsyncHandler")
 }
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2020 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) Lightbend Inc. <https://www.lightbend.com>
  */
 
 package play.libs.ws;
@@ -173,4 +173,3 @@ public interface DefaultBodyWritables {
     }
 
 }
-

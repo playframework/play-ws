@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2020 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) Lightbend Inc. <https://www.lightbend.com>
  */
 
 package play.api.libs.ws
@@ -51,4 +51,3 @@ object BodyWritable {
   def apply[A](transform: (A => WSBody), contentType: String): BodyWritable[A] =
     new BodyWritable(transform, contentType)
 }
-
