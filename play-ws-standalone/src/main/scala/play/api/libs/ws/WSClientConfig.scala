@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) Lightbend Inc. <https://www.lightbend.com>
  */
 
 package play.api.libs.ws
@@ -29,4 +29,3 @@ case class WSClientConfig(
   userAgent: Option[String] = None,
   compressionEnabled: Boolean = false,
   ssl: SSLConfigSettings = SSLConfigSettings())
-

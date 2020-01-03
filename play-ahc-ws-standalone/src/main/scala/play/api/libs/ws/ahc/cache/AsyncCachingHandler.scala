@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) Lightbend Inc. <https://www.lightbend.com>
  */
 
 package play.api.libs.ws.ahc.cache
@@ -234,4 +234,3 @@ class AsyncCachingHandler[T](
 object AsyncCachingHandler {
   private val logger: Logger = LoggerFactory.getLogger("play.api.libs.ws.ahc.cache.AsyncCachingHandler")
 }
-
