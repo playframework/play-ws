@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) Lightbend Inc. <https://www.lightbend.com>
  */
 
 package play.libs.ws;
@@ -24,5 +24,3 @@ abstract class AbstractWSBody<A> implements WSBody<A> {
         return body;
     }
 }
-
-

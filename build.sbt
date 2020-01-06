@@ -20,6 +20,20 @@ resolvers ++= DefaultOptions.resolvers(snapshot = true)
 resolvers in ThisBuild += Resolver.sonatypeRepo("public")
 resolvers in ThisBuild += Resolver.bintrayRepo("akka", "snapshots")
 
+// Customise sbt-dynver's behaviour to make it work with tags which aren't v-prefixed
+dynverVTagPrefix in ThisBuild := false
+
+// Sanity-check: assert that version comes from a tag (e.g. not a too-shallow clone)
+// https://github.com/dwijnand/sbt-dynver/#sanity-checking-the-version
+Global / onLoad := (Global / onLoad).value.andThen { s =>
+  val v = version.value
+  if (dynverGitDescribeOutput.value.hasNoTags)
+    throw new MessageOnlyException(
+      s"Failed to derive version from git tags. Maybe run `git fetch --unshallow`? Version: $v"
+    )
+  s
+}
+
 val javacSettings = Seq(
   "-source", "1.8",
   "-target", "1.8",
@@ -101,9 +115,8 @@ lazy val commonSettings = Def.settings(
   javacOptions in Compile ++= javacSettings,
   javacOptions in Test ++= javacSettings,
   headerLicense := {
-    val currentYear = java.time.Year.now(java.time.Clock.systemUTC).getValue
     Some(HeaderLicense.Custom(
-      s"Copyright (C) 2009-$currentYear Lightbend Inc. <https://www.lightbend.com>"
+      s"Copyright (C) Lightbend Inc. <https://www.lightbend.com>"
     ))
   }
 )
