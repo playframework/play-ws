@@ -1,5 +1,8 @@
 language: scala
 
+git:
+  depth: false # Avoid sbt-dynver not seeing the tag
+  
 env:
   - TRAVIS_JDK=8
   - TRAVIS_JDK=11
@@ -18,6 +21,7 @@ script:
 
 cache:
   directories:
+    - "$HOME/.cache/coursier"
     - "$HOME/.ivy2/cache"
     - "$HOME/.sbt/boot/"
     - "$HOME/.jabba/jdk"

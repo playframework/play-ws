@@ -20,6 +20,20 @@ resolvers ++= DefaultOptions.resolvers(snapshot = true)
 resolvers in ThisBuild += Resolver.sonatypeRepo("public")
 resolvers in ThisBuild += Resolver.bintrayRepo("akka", "snapshots")
 
+// Customise sbt-dynver's behaviour to make it work with tags which aren't v-prefixed
+dynverVTagPrefix in ThisBuild := false
+
+// Sanity-check: assert that version comes from a tag (e.g. not a too-shallow clone)
+// https://github.com/dwijnand/sbt-dynver/#sanity-checking-the-version
+Global / onLoad := (Global / onLoad).value.andThen { s =>
+  val v = version.value
+  if (dynverGitDescribeOutput.value.hasNoTags)
+    throw new MessageOnlyException(
+      s"Failed to derive version from git tags. Maybe run `git fetch --unshallow`? Version: $v"
+    )
+  s
+}
+
 val javacSettings = Seq(
   "-source", "1.8",
   "-target", "1.8",
@@ -42,12 +56,14 @@ def scalacOpts: Seq[String] = Seq(
 )
 
 // Binary compatibility is this version
-val previousVersions: Set[String] = Set("2.1.0")
+val previousVersion: Option[String] = Some("2.1.2")
 
 ThisBuild / mimaFailOnNoPrevious := false
 
 lazy val mimaSettings = mimaDefaultSettings ++ Seq(
-  mimaPreviousArtifacts := previousVersions.map(pv => organization.value %% name.value % pv),
+  mimaPreviousArtifacts := previousVersion.map(organization.value %% name.value % _).toSet,
+  
+  // these exclusions are only for master branch and are targeting 2.2.x
   mimaBinaryIssueFilters ++= Seq(
     ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.ahc.AhcWSClientConfig$"),
     ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.<init>$default$6"),
@@ -216,6 +232,8 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
       ShadeRule.rename("io.netty.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.rename("javassist.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.rename("com.typesafe.netty.**" -> "play.shaded.ahc.@0").inAll,
+      ShadeRule.rename("javax.activation.**" -> "play.shaded.ahc.@0").inAll,
+      ShadeRule.rename("com.sun.activation.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.zap("org.reactivestreams.**").inAll,
       ShadeRule.zap("org.slf4j.**").inAll
     ),
