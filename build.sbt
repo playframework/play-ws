@@ -477,5 +477,5 @@ releaseProcess := Seq[ReleaseStep](
 
 addCommandAlias(
   "validateCode",
-  ";scalafmtAll;scalafmtCheck;headerCheck;test:headerCheck"
+  ";scalafmtCheck;headerCheck;test:headerCheck"
 )
