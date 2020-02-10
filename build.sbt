@@ -1,13 +1,13 @@
 import java.io.File
 
 import Dependencies._
-import com.typesafe.sbt.SbtScalariform.ScalariformKeys
+
 import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
 import com.typesafe.tools.mima.core.ProblemFilters
 import com.typesafe.tools.mima.core._
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
-import scalariform.formatter.preferences._
+import org.scalafmt.sbt.ScalafmtPlugin
 
 //---------------------------------------------------------------
 // Shading and Project Settings
@@ -119,16 +119,6 @@ lazy val commonSettings = Def.settings(
       s"Copyright (C) Lightbend Inc. <https://www.lightbend.com>"
     ))
   }
-)
-
-val formattingSettings = Seq(
-  scalariformAutoformat := true,
-  ScalariformKeys.preferences := ScalariformKeys.preferences.value
-    .setPreference(SpacesAroundMultiImports, true)
-    .setPreference(SpaceInsideParentheses, false)
-    .setPreference(DanglingCloseParenthesis, Preserve)
-    .setPreference(PreserveSpaceBeforeArguments, true)
-    .setPreference(DoubleIndentConstructorArguments, true)
 )
 
 val disableDocs = Seq[Setting[_]](
@@ -330,7 +320,7 @@ def addShadedDeps(deps: Seq[xml.Node], node: xml.Node): xml.Node = {
 // Standalone implementation using AsyncHttpClient
 lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
-  .settings(commonSettings ++ formattingSettings ++ shadedAhcSettings ++ shadedOAuthSettings ++ Seq(
+  .settings(commonSettings ++ shadedAhcSettings ++ shadedOAuthSettings ++ Seq(
     fork in Test := true,
     testOptions in Test := Seq(
       Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
@@ -363,7 +353,6 @@ lazy val `play-ahc-ws-standalone` = project
 lazy val `play-ws-standalone-json` = project
   .in(file("play-ws-standalone-json"))
   .settings(commonSettings)
-  .settings(formattingSettings)
   .settings(mimaSettings)
   .settings(
     fork in Test := true,
@@ -381,7 +370,6 @@ lazy val `play-ws-standalone-json` = project
 lazy val `play-ws-standalone-xml` = project
   .in(file("play-ws-standalone-xml"))
   .settings(commonSettings)
-  .settings(formattingSettings)
   .settings(mimaSettings)
   .settings(
     fork in Test := true,
@@ -398,7 +386,6 @@ lazy val `play-ws-standalone-xml` = project
 
 lazy val `integration-tests` = project.in(file("integration-tests"))
   .settings(commonSettings)
-  .settings(formattingSettings)
   .settings(disableDocs)
   .settings(disablePublishing)
   .settings(
@@ -430,7 +417,6 @@ lazy val bench = project
     `play-ahc-ws-standalone`
   )
   .settings(commonSettings)
-  .settings(formattingSettings)
   .settings(disableDocs)
   .settings(disablePublishing)
 
@@ -447,7 +433,6 @@ lazy val root = project
     sonatypeProfileName := "com.typesafe"
   )
   .settings(commonSettings)
-  .settings(formattingSettings)
   .settings(disableDocs)
   .settings(disablePublishing)
   .settings(crossScalaVersions := Seq(scala213))
