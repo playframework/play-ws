@@ -5,8 +5,10 @@
 package play.api.libs.ws.ahc.cache
 
 import play.shaded.ahc.org.asynchttpclient._
-import com.typesafe.play.cachecontrol.ResponseCachingActions.{ DoCacheResponse, DoNotCacheResponse }
-import org.slf4j.{ Logger, LoggerFactory }
+import com.typesafe.play.cachecontrol.ResponseCachingActions.DoCacheResponse
+import com.typesafe.play.cachecontrol.ResponseCachingActions.DoNotCacheResponse
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 
 import scala.concurrent.Await
@@ -15,8 +17,8 @@ import scala.concurrent.Await
  * An async handler that accumulates a response and stores it to cache in the background.
  */
 class BackgroundAsyncHandler[T](request: Request, cache: AhcHttpCache, ahcConfig: AsyncHttpClientConfig)
-  extends AsyncHandler[T]
-  with Debug {
+    extends AsyncHandler[T]
+    with Debug {
 
   import BackgroundAsyncHandler.logger
 
@@ -82,7 +84,7 @@ class BackgroundAsyncHandler[T](request: Request, cache: AhcHttpCache, ahcConfig
     // FIXME XXX Find the response which matches the secondary keys...
     result match {
       case Some(entry) =>
-        val newHeaders = notModifiedResponse.getHeaders
+        val newHeaders    = notModifiedResponse.getHeaders
         val freshResponse = cache.freshenResponse(newHeaders, entry.response)
         cache.cacheResponse(request, freshResponse)
       case None =>

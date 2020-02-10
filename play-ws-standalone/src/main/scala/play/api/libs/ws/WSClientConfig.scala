@@ -21,11 +21,12 @@ import scala.concurrent.duration._
  * @param ssl use custom SSL / TLS configuration, see https://typesafehub.github.io/ssl-config/ for documentation.
  */
 case class WSClientConfig(
-  connectionTimeout: Duration = 2.minutes,
-  idleTimeout: Duration = 2.minutes,
-  requestTimeout: Duration = 2.minutes,
-  followRedirects: Boolean = true,
-  useProxyProperties: Boolean = true,
-  userAgent: Option[String] = None,
-  compressionEnabled: Boolean = false,
-  ssl: SSLConfigSettings = SSLConfigSettings())
+    connectionTimeout: Duration = 2.minutes,
+    idleTimeout: Duration = 2.minutes,
+    requestTimeout: Duration = 2.minutes,
+    followRedirects: Boolean = true,
+    useProxyProperties: Boolean = true,
+    userAgent: Option[String] = None,
+    compressionEnabled: Boolean = false,
+    ssl: SSLConfigSettings = SSLConfigSettings()
+)

@@ -8,7 +8,8 @@ import java.time.ZonedDateTime
 
 import play.shaded.ahc.org.asynchttpclient._
 import com.typesafe.play.cachecontrol.ResponseServeAction
-import org.slf4j.{ Logger, LoggerFactory }
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 
 import scala.concurrent.Await
@@ -22,10 +23,10 @@ class AsyncCachingHandler[T](
     handler: AsyncCompletionHandler[T],
     cache: AhcHttpCache,
     maybeAction: Option[ResponseServeAction],
-    ahcConfig: AsyncHttpClientConfig)
-  extends AsyncHandler[T]
-  with TimeoutResponse
-  with Debug {
+    ahcConfig: AsyncHttpClientConfig
+) extends AsyncHandler[T]
+    with TimeoutResponse
+    with Debug {
 
   private val DATE = "Date"
 
@@ -88,7 +89,7 @@ class AsyncCachingHandler[T](
        is cached or forwarded downstream.
 
        https://tools.ietf.org/html/rfc7231#section-7.1.1.2
-      */
+       */
       val currentDate = HttpDate.format(HttpDate.now)
       responseHeaders.add(DATE, currentDate)
     }
@@ -155,9 +156,9 @@ class AsyncCachingHandler[T](
     val result = Await.result(cache.get(key), timeout)
     val finalResponse = result match {
       case Some(entry) =>
-        val currentAge = cache.calculateCurrentAge(request, entry, requestTime)
+        val currentAge        = cache.calculateCurrentAge(request, entry, requestTime)
         val freshnessLifetime = cache.calculateFreshnessLifetime(request, entry)
-        val isFresh = freshnessLifetime.isGreaterThan(currentAge)
+        val isFresh           = freshnessLifetime.isGreaterThan(currentAge)
 
         cache.addRevalidationFailed {
           cache.addDisconnectHeader {
@@ -214,7 +215,7 @@ class AsyncCachingHandler[T](
     // FIXME XXX Find the response which matches the secondary keys...
     val fullResponse = result match {
       case Some(entry) =>
-        val newHeaders = notModifiedResponse.getHeaders
+        val newHeaders    = notModifiedResponse.getHeaders
         val freshResponse = cache.freshenResponse(newHeaders, entry.response)
         cache.cacheResponse(request, freshResponse)
         freshResponse

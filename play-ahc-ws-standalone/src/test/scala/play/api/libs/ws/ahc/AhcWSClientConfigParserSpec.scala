@@ -14,14 +14,14 @@ import scala.concurrent.duration._
 class AhcWSClientConfigParserSpec extends Specification with Mockito {
 
   val defaultWsConfig = WSClientConfig()
-  val defaultConfig = AhcWSClientConfig(defaultWsConfig)
+  val defaultConfig   = AhcWSClientConfig(defaultWsConfig)
 
   "AhcWSClientConfigParser" should {
 
     def parseThis(input: String) = {
       val classLoader = this.getClass.getClassLoader
-      val config = ConfigFactory.parseString(input).withFallback(ConfigFactory.defaultReference())
-      val parser = new AhcWSClientConfigParser(defaultWsConfig, config, classLoader)
+      val config      = ConfigFactory.parseString(input).withFallback(ConfigFactory.defaultReference())
+      val parser      = new AhcWSClientConfigParser(defaultWsConfig, config, classLoader)
       parser.parse()
     }
 
@@ -43,17 +43,16 @@ class AhcWSClientConfigParserSpec extends Specification with Mockito {
     }
 
     "parse ws ahc section" in {
-      val actual = parseThis(
-        """
-          |play.ws.ahc.maxConnectionsPerHost = 3
-          |play.ws.ahc.maxConnectionsTotal = 6
-          |play.ws.ahc.maxConnectionLifetime = 1 minute
-          |play.ws.ahc.idleConnectionInPoolTimeout = 30 seconds
-          |play.ws.ahc.connectionPoolCleanerPeriod = 10 seconds
-          |play.ws.ahc.maxNumberOfRedirects = 0
-          |play.ws.ahc.maxRequestRetry = 99
-          |play.ws.ahc.disableUrlEncoding = true
-          |play.ws.ahc.keepAlive = false
+      val actual = parseThis("""
+                               |play.ws.ahc.maxConnectionsPerHost = 3
+                               |play.ws.ahc.maxConnectionsTotal = 6
+                               |play.ws.ahc.maxConnectionLifetime = 1 minute
+                               |play.ws.ahc.idleConnectionInPoolTimeout = 30 seconds
+                               |play.ws.ahc.connectionPoolCleanerPeriod = 10 seconds
+                               |play.ws.ahc.maxNumberOfRedirects = 0
+                               |play.ws.ahc.maxRequestRetry = 99
+                               |play.ws.ahc.disableUrlEncoding = true
+                               |play.ws.ahc.keepAlive = false
         """.stripMargin)
 
       actual.maxConnectionsPerHost must_== 3

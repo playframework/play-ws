@@ -80,7 +80,7 @@ private[ahc] object FormUrlEncodedParser {
     } else {
       parameterDelimiter.split(data).toIndexedSeq.map { param =>
         val parts = param.split("=", -1)
-        val key = java.net.URLDecoder.decode(parts(0), encoding)
+        val key   = java.net.URLDecoder.decode(parts(0), encoding)
         val value = java.net.URLDecoder.decode(parts.lift(1).getOrElse(""), encoding)
         key -> value
       }

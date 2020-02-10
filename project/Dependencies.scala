@@ -24,30 +24,30 @@ object Dependencies {
   val scalaJava8Compat = Seq("org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0")
 
   val playJsonVersion = "2.8.1"
-  val playJson = Seq("com.typesafe.play" %% "play-json" % playJsonVersion)
+  val playJson        = Seq("com.typesafe.play" %% "play-json" % playJsonVersion)
 
   val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "1.7.30")
 
   val javaxInject = Seq("javax.inject" % "javax.inject" % "1")
 
   val sslConfigVersion = "0.4.1"
-  val sslConfigCore = Seq("com.typesafe" %% "ssl-config-core" % sslConfigVersion)
+  val sslConfigCore    = Seq("com.typesafe" %% "ssl-config-core" % sslConfigVersion)
 
   val scalaXmlVersion = "1.2.0"
-  val scalaXml = Seq("org.scala-lang.modules" %% "scala-xml" % scalaXmlVersion)
+  val scalaXml        = Seq("org.scala-lang.modules" %% "scala-xml" % scalaXmlVersion)
 
   val signpostVersion = "1.2.1.2"
-  val oauth = Seq("oauth.signpost" % "signpost-core" % signpostVersion)
+  val oauth           = Seq("oauth.signpost" % "signpost-core" % signpostVersion)
 
   val cachecontrolVersion = "2.0.0"
-  val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % cachecontrolVersion)
+  val cachecontrol        = Seq("com.typesafe.play" %% "cachecontrol" % cachecontrolVersion)
 
   val asyncHttpClientVersion = "2.10.5"
-  val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % asyncHttpClientVersion)
+  val asyncHttpClient        = Seq("org.asynchttpclient" % "async-http-client" % asyncHttpClientVersion)
 
   val akkaVersion = "2.6.3"
   val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion)
-  val akkaHttp = Seq("com.typesafe.akka" %% "akka-http" % "10.1.11")
+  val akkaHttp    = Seq("com.typesafe.akka" %% "akka-http" % "10.1.11")
 
   val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.3")
 

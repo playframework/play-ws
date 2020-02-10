@@ -18,33 +18,41 @@ private[ahc] trait Debug extends AhcUtilities {
   }
 
   def debug(request: Request): String = {
-    Option(request).map { r =>
-      s"Request(${r.getMethod} ${r.getUrl})"
-    }.getOrElse("null")
+    Option(request)
+      .map { r =>
+        s"Request(${r.getMethod} ${r.getUrl})"
+      }
+      .getOrElse("null")
   }
 
   def debug(response: Response): String = {
-    Option(response).map {
-      case cr: CacheableResponse =>
-        cr.toString
-      case r =>
-        s"Response(${r.getStatusCode} ${r.getStatusText})"
-    }.getOrElse("null")
+    Option(response)
+      .map {
+        case cr: CacheableResponse =>
+          cr.toString
+        case r =>
+          s"Response(${r.getStatusCode} ${r.getStatusText})"
+      }
+      .getOrElse("null")
   }
 
   def debug(responseStatus: HttpResponseStatus): String = {
-    Option(responseStatus).map {
-      case cs: CacheableHttpResponseStatus =>
-        cs.toString
-      case s =>
-        s"HttpResponseStatus(${s.getProtocolName} ${s.getStatusCode} ${s.getStatusText})"
-    }.getOrElse("null")
+    Option(responseStatus)
+      .map {
+        case cs: CacheableHttpResponseStatus =>
+          cs.toString
+        case s =>
+          s"HttpResponseStatus(${s.getProtocolName} ${s.getStatusCode} ${s.getStatusText})"
+      }
+      .getOrElse("null")
   }
 
   def debug(responseHeaders: HttpHeaders): String = {
-    Option(responseHeaders).map { rh =>
-      s"HttpResponseHeaders(${headersToMap(rh)})"
-    }.getOrElse("null")
+    Option(responseHeaders)
+      .map { rh =>
+        s"HttpResponseHeaders(${headersToMap(rh)})"
+      }
+      .getOrElse("null")
   }
 
   def debug(bodyParts: java.util.List[HttpResponseBodyPart]): String = {

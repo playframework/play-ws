@@ -8,13 +8,13 @@ import play.shaded.oauth.oauth.signpost.basic.DefaultOAuthConsumer
 import play.shaded.oauth.oauth.signpost.basic.DefaultOAuthProvider
 import play.shaded.oauth.oauth.signpost.exception.OAuthException
 import play.shaded.ahc.org.asynchttpclient.oauth.OAuthSignatureCalculator
-import play.shaded.ahc.org.asynchttpclient.{ Request, RequestBuilderBase, SignatureCalculator }
+import play.shaded.ahc.org.asynchttpclient.Request
+import play.shaded.ahc.org.asynchttpclient.RequestBuilderBase
+import play.shaded.ahc.org.asynchttpclient.SignatureCalculator
 import play.api.libs.ws.WSSignatureCalculator
 
-import play.shaded.ahc.org.asynchttpclient.oauth.{
-  ConsumerKey => AHCConsumerKey,
-  RequestToken => AHCRequestToken
-}
+import play.shaded.ahc.org.asynchttpclient.oauth.{ ConsumerKey => AHCConsumerKey }
+import play.shaded.ahc.org.asynchttpclient.oauth.{ RequestToken => AHCRequestToken }
 
 /**
  * Library to access resources protected by OAuth 1.0a.
@@ -99,11 +99,13 @@ case class ServiceInfo(requestTokenURL: String, accessTokenURL: String, authoriz
 /**
  * The public AsyncHttpClient implementation of WSSignatureCalculator.
  */
-class OAuthCalculator(consumerKey: ConsumerKey, requestToken: RequestToken) extends WSSignatureCalculator with SignatureCalculator {
+class OAuthCalculator(consumerKey: ConsumerKey, requestToken: RequestToken)
+    extends WSSignatureCalculator
+    with SignatureCalculator {
 
-  private val ahcConsumerKey = new AHCConsumerKey(consumerKey.key, consumerKey.secret)
+  private val ahcConsumerKey  = new AHCConsumerKey(consumerKey.key, consumerKey.secret)
   private val ahcRequestToken = new AHCRequestToken(requestToken.token, requestToken.secret)
-  private val calculator = new OAuthSignatureCalculator(ahcConsumerKey, ahcRequestToken)
+  private val calculator      = new OAuthSignatureCalculator(ahcConsumerKey, ahcRequestToken)
 
   override def calculateAndAddSignature(request: Request, requestBuilder: RequestBuilderBase[_]): Unit = {
     calculator.calculateAndAddSignature(request, requestBuilder)

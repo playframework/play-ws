@@ -4,7 +4,8 @@
 
 package play.api.libs.ws
 
-import java.io.{ Closeable, IOException }
+import java.io.Closeable
+import java.io.IOException
 
 /**
  * The WSClient holds the configuration information needed to build a request, and provides a way to get a request holder.
@@ -31,5 +32,6 @@ trait StandaloneWSClient extends Closeable {
   /**
    * Closes this client, and releases underlying resources.
    */
-  @throws[IOException] def close(): Unit
+  @throws[IOException]
+  def close(): Unit
 }

@@ -11,7 +11,8 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import org.specs2.matcher.MustMatchers
 import org.specs2.mutable.Specification
-import play.api.libs.json.{ JsSuccess, JsValue }
+import play.api.libs.json.JsSuccess
+import play.api.libs.json.JsValue
 
 class JsonBodyReadablesSpec extends Specification with MustMatchers {
 
@@ -40,54 +41,56 @@ class JsonBodyReadablesSpec extends Specification with MustMatchers {
   "decode encodings correctly" should {
 
     "read an encoding of UTF-32BE" in {
-      val readables = new JsonBodyReadables() {}
-      val json = """{"menu": {"id": "file", "value": "File"} }"""
+      val readables   = new JsonBodyReadables() {}
+      val json        = """{"menu": {"id": "file", "value": "File"} }"""
       val charsetName = "UTF-32BE"
-      val value: JsValue = readables.readableAsJson.transform(new StubResponse(json.getBytes(charsetName), Charset.forName(charsetName)))
+      val value: JsValue =
+        readables.readableAsJson.transform(new StubResponse(json.getBytes(charsetName), Charset.forName(charsetName)))
       (value \ "menu" \ "id").validate[String] must beEqualTo(JsSuccess("file"))
     }
 
     "read an encoding of UTF-32LE" in {
-      val readables = new JsonBodyReadables() {}
-      val json = """{"menu": {"id": "file", "value": "File"} }"""
+      val readables   = new JsonBodyReadables() {}
+      val json        = """{"menu": {"id": "file", "value": "File"} }"""
       val charsetName = "UTF-32LE"
-      val value: JsValue = readables.readableAsJson.transform(new StubResponse(json.getBytes(charsetName), Charset.forName(charsetName)))
+      val value: JsValue =
+        readables.readableAsJson.transform(new StubResponse(json.getBytes(charsetName), Charset.forName(charsetName)))
       (value \ "menu" \ "id").validate[String] must beEqualTo(JsSuccess("file"))
     }
 
     "read an encoding of UTF-16BE" in {
-      val readables = new JsonBodyReadables() {}
-      val json = """{"menu": {"id": "file", "value": "File"} }"""
-      val charset = UTF_16BE
+      val readables      = new JsonBodyReadables() {}
+      val json           = """{"menu": {"id": "file", "value": "File"} }"""
+      val charset        = UTF_16BE
       val value: JsValue = readables.readableAsJson.transform(new StubResponse(json.getBytes(charset), charset))
       (value \ "menu" \ "id").validate[String] must beEqualTo(JsSuccess("file"))
     }
 
     "read an encoding of UTF-16LE" in {
-      val readables = new JsonBodyReadables() {}
-      val json = """{"menu": {"id": "file", "value": "File"} }"""
-      val charset = UTF_16LE
+      val readables      = new JsonBodyReadables() {}
+      val json           = """{"menu": {"id": "file", "value": "File"} }"""
+      val charset        = UTF_16LE
       val value: JsValue = readables.readableAsJson.transform(new StubResponse(json.getBytes(charset), charset))
       (value \ "menu" \ "id").validate[String] must beEqualTo(JsSuccess("file"))
     }
 
     "read an encoding of UTF-8" in {
-      val readables = new JsonBodyReadables() {}
-      val json = """{"menu": {"id": "file", "value": "File"} }"""
+      val readables      = new JsonBodyReadables() {}
+      val json           = """{"menu": {"id": "file", "value": "File"} }"""
       val value: JsValue = readables.readableAsJson.transform(new StubResponse(json.getBytes(UTF_8)))
       (value \ "menu" \ "id").validate[String] must beEqualTo(JsSuccess("file"))
     }
 
     "read an encoding of UTF-8 with empty object" in {
-      val readables = new JsonBodyReadables() {}
-      val json = "{}"
+      val readables      = new JsonBodyReadables() {}
+      val json           = "{}"
       val value: JsValue = readables.readableAsJson.transform(new StubResponse(json.getBytes(UTF_8)))
       value.toString() must beEqualTo("{}")
     }
 
     "read an encoding of UTF-8 with empty array" in {
-      val readables = new JsonBodyReadables() {}
-      val json = "[]"
+      val readables      = new JsonBodyReadables() {}
+      val json           = "[]"
       val value: JsValue = readables.readableAsJson.transform(new StubResponse(json.getBytes(UTF_8)))
       value.toString() must beEqualTo("[]")
     }

@@ -5,7 +5,8 @@
 package play.api.libs.ws.ahc
 
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils
-import java.nio.charset.{ Charset, StandardCharsets }
+import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 
 /**
  * INTERNAL API: Utilities for handling the response for both Java and Scala APIs
@@ -13,7 +14,7 @@ import java.nio.charset.{ Charset, StandardCharsets }
 private[ws] object AhcWSUtils {
   def getResponseBody(ahcResponse: play.shaded.ahc.org.asynchttpclient.Response): String = {
     val contentType = Option(ahcResponse.getContentType).getOrElse("application/octet-stream")
-    val charset = getCharset(contentType)
+    val charset     = getCharset(contentType)
     ahcResponse.getResponseBody(charset)
   }
 

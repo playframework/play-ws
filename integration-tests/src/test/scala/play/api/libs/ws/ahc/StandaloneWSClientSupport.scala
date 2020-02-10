@@ -11,7 +11,9 @@ trait StandaloneWSClientSupport {
 
   def materializer: Materializer
 
-  def withClient(config: AhcWSClientConfig = AhcWSClientConfigFactory.forConfig())(block: StandaloneAhcWSClient => Result): Result = {
+  def withClient(
+      config: AhcWSClientConfig = AhcWSClientConfigFactory.forConfig()
+  )(block: StandaloneAhcWSClient => Result): Result = {
     val client = StandaloneAhcWSClient(config)(materializer)
     try {
       block(client)

@@ -6,17 +6,23 @@ package play.api.libs.ws.ahc
 
 import java.security.KeyStore
 import java.security.cert.CertPathValidatorException
-import javax.inject.{ Inject, Provider, Singleton }
+import javax.inject.Inject
+import javax.inject.Provider
+import javax.inject.Singleton
 import javax.net.ssl._
 
-import com.typesafe.config.{ Config, ConfigException, ConfigFactory }
+import com.typesafe.config.Config
+import com.typesafe.config.ConfigException
+import com.typesafe.config.ConfigFactory
 import com.typesafe.sslconfig.ssl._
 import org.slf4j.LoggerFactory
-import play.api.libs.ws.{ WSClientConfig, WSConfigParser }
+import play.api.libs.ws.WSClientConfig
+import play.api.libs.ws.WSConfigParser
 import play.shaded.ahc.io.netty.handler.ssl.SslContextBuilder
 import play.shaded.ahc.io.netty.handler.ssl.util.InsecureTrustManagerFactory
 import play.shaded.ahc.org.asynchttpclient.netty.ssl.JsseSslEngineFactory
-import play.shaded.ahc.org.asynchttpclient.{ AsyncHttpClientConfig, DefaultAsyncHttpClientConfig }
+import play.shaded.ahc.org.asynchttpclient.AsyncHttpClientConfig
+import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClientConfig
 
 import scala.concurrent.duration._
 
@@ -47,7 +53,8 @@ case class AhcWSClientConfig(
     disableUrlEncoding: Boolean = false,
     keepAlive: Boolean = true,
     useLaxCookieEncoder: Boolean = false,
-    useCookieStore: Boolean = false)
+    useCookieStore: Boolean = false
+)
 
 /**
  * Factory for creating AhcWSClientConfig, for use from Java.
@@ -61,7 +68,10 @@ object AhcWSClientConfigFactory {
    * @param classLoader the classloader
    * @return a AhcWSClientConfig configuration object.
    */
-  def forConfig(config: Config = ConfigFactory.load(), classLoader: ClassLoader = this.getClass.getClassLoader): AhcWSClientConfig = {
+  def forConfig(
+      config: Config = ConfigFactory.load(),
+      classLoader: ClassLoader = this.getClass.getClassLoader
+  ): AhcWSClientConfig = {
     val wsClientConfig = new WSConfigParser(config, classLoader).parse()
     new AhcWSClientConfigParser(wsClientConfig, config, classLoader).parse()
   }
@@ -78,7 +88,8 @@ object AhcWSClientConfigFactory {
 class AhcWSClientConfigParser @Inject() (
     wsClientConfig: WSClientConfig,
     configuration: Config,
-    classLoader: ClassLoader) extends Provider[AhcWSClientConfig] {
+    classLoader: ClassLoader
+) extends Provider[AhcWSClientConfig] {
 
   def get = parse()
 
@@ -93,17 +104,17 @@ class AhcWSClientConfigParser @Inject() (
       }
     }
 
-    val maximumConnectionsPerHost = configuration.getInt("play.ws.ahc.maxConnectionsPerHost")
-    val maximumConnectionsTotal = configuration.getInt("play.ws.ahc.maxConnectionsTotal")
-    val maxConnectionLifetime = getDuration("play.ws.ahc.maxConnectionLifetime", Duration.Inf)
+    val maximumConnectionsPerHost   = configuration.getInt("play.ws.ahc.maxConnectionsPerHost")
+    val maximumConnectionsTotal     = configuration.getInt("play.ws.ahc.maxConnectionsTotal")
+    val maxConnectionLifetime       = getDuration("play.ws.ahc.maxConnectionLifetime", Duration.Inf)
     val idleConnectionInPoolTimeout = getDuration("play.ws.ahc.idleConnectionInPoolTimeout", 1.minute)
     val connectionPoolCleanerPeriod = getDuration("play.ws.ahc.connectionPoolCleanerPeriod", 1.second)
-    val maximumNumberOfRedirects = configuration.getInt("play.ws.ahc.maxNumberOfRedirects")
-    val maxRequestRetry = configuration.getInt("play.ws.ahc.maxRequestRetry")
-    val disableUrlEncoding = configuration.getBoolean("play.ws.ahc.disableUrlEncoding")
-    val keepAlive = configuration.getBoolean("play.ws.ahc.keepAlive")
-    val useLaxCookieEncoder = configuration.getBoolean("play.ws.ahc.useLaxCookieEncoder")
-    val useCookieStore = configuration.getBoolean("play.ws.ahc.useCookieStore")
+    val maximumNumberOfRedirects    = configuration.getInt("play.ws.ahc.maxNumberOfRedirects")
+    val maxRequestRetry             = configuration.getInt("play.ws.ahc.maxRequestRetry")
+    val disableUrlEncoding          = configuration.getBoolean("play.ws.ahc.disableUrlEncoding")
+    val keepAlive                   = configuration.getBoolean("play.ws.ahc.keepAlive")
+    val useLaxCookieEncoder         = configuration.getBoolean("play.ws.ahc.useLaxCookieEncoder")
+    val useCookieStore              = configuration.getBoolean("play.ws.ahc.useCookieStore")
 
     AhcWSClientConfig(
       wsClientConfig = wsClientConfig,
@@ -129,14 +140,15 @@ class AhcWSClientConfigParser @Inject() (
  */
 class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
 
-  protected val addCustomSettings: DefaultAsyncHttpClientConfig.Builder => DefaultAsyncHttpClientConfig.Builder = identity
+  protected val addCustomSettings: DefaultAsyncHttpClientConfig.Builder => DefaultAsyncHttpClientConfig.Builder =
+    identity
 
   /**
    * The underlying `DefaultAsyncHttpClientConfig.Builder` used by this instance.
    */
   val builder: DefaultAsyncHttpClientConfig.Builder = new DefaultAsyncHttpClientConfig.Builder()
 
-  private[ahc] val logger = LoggerFactory.getLogger(this.getClass.getName)
+  private[ahc] val logger        = LoggerFactory.getLogger(this.getClass.getName)
   private[ahc] val loggerFactory = new AhcLoggerFactory(LoggerFactory.getILoggerFactory)
 
   /**
@@ -170,10 +182,11 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
    * @return the new builder
    */
   def modifyUnderlying(
-    modify: DefaultAsyncHttpClientConfig.Builder => DefaultAsyncHttpClientConfig.Builder): AhcConfigBuilder = {
+      modify: DefaultAsyncHttpClientConfig.Builder => DefaultAsyncHttpClientConfig.Builder
+  ): AhcConfigBuilder = {
     new AhcConfigBuilder(ahcConfig) {
-      override val addCustomSettings = modify compose AhcConfigBuilder.this.addCustomSettings
-      override val builder = AhcConfigBuilder.this.builder
+      override val addCustomSettings = modify.compose(AhcConfigBuilder.this.addCustomSettings)
+      override val builder           = AhcConfigBuilder.this.builder
     }
   }
 
@@ -188,14 +201,15 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
       else -1
     }
 
-    builder.setConnectTimeout(toMillis(config.connectionTimeout))
+    builder
+      .setConnectTimeout(toMillis(config.connectionTimeout))
       .setReadTimeout(toMillis(config.idleTimeout))
       .setRequestTimeout(toMillis(config.requestTimeout))
       .setFollowRedirect(config.followRedirects)
       .setUseProxyProperties(config.useProxyProperties)
       .setCompressionEnforced(config.compressionEnabled)
 
-    config.userAgent foreach builder.setUserAgent
+    config.userAgent.foreach(builder.setUserAgent)
 
     builder.setMaxConnectionsPerHost(ahcConfig.maxConnectionsPerHost)
     builder.setMaxConnections(ahcConfig.maxConnectionsTotal)
@@ -278,21 +292,21 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
       SSLContext.getDefault
     } else {
       // break out the static methods as much as we can...
-      val keyManagerFactory = buildKeyManagerFactory(sslConfig)
+      val keyManagerFactory   = buildKeyManagerFactory(sslConfig)
       val trustManagerFactory = buildTrustManagerFactory(sslConfig)
       new ConfigSSLContextBuilder(loggerFactory, sslConfig, keyManagerFactory, trustManagerFactory).build()
     }
 
     // protocols!
-    val defaultParams = sslContext.getDefaultSSLParameters
+    val defaultParams    = sslContext.getDefaultSSLParameters
     val defaultProtocols = defaultParams.getProtocols
-    val protocols = configureProtocols(defaultProtocols, sslConfig)
+    val protocols        = configureProtocols(defaultProtocols, sslConfig)
     defaultParams.setProtocols(protocols)
     builder.setEnabledProtocols(protocols)
 
     // ciphers!
     val defaultCiphers = defaultParams.getCipherSuites
-    val cipherSuites = configureCipherSuites(defaultCiphers, sslConfig)
+    val cipherSuites   = configureCipherSuites(defaultCiphers, sslConfig)
     defaultParams.setCipherSuites(cipherSuites)
     builder.setEnabledCipherSuites(cipherSuites)
 
@@ -332,14 +346,19 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
     tmf.init(null.asInstanceOf[KeyStore])
     val trustManager: X509TrustManager = tmf.getTrustManagers()(0).asInstanceOf[X509TrustManager]
 
-    val constraints = sslConfig.disabledKeyAlgorithms.map(a => AlgorithmConstraintsParser.parseAll(AlgorithmConstraintsParser.expression, a).get).toSet
+    val constraints = sslConfig.disabledKeyAlgorithms
+      .map(a => AlgorithmConstraintsParser.parseAll(AlgorithmConstraintsParser.expression, a).get)
+      .toSet
     val algorithmChecker = new AlgorithmChecker(loggerFactory, Set(), constraints)
     for (cert <- trustManager.getAcceptedIssuers) {
       try {
         algorithmChecker.checkKeyAlgorithms(cert)
       } catch {
         case e: CertPathValidatorException =>
-          logger.warn("You are using play.ws.ssl.default=true and have a weak certificate in your default trust store!  (You can modify play.ws.ssl.disabledKeyAlgorithms to remove this message.)", e)
+          logger.warn(
+            "You are using play.ws.ssl.default=true and have a weak certificate in your default trust store!  (You can modify play.ws.ssl.disabledKeyAlgorithms to remove this message.)",
+            e
+          )
       }
     }
   }

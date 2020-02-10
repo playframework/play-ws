@@ -6,7 +6,9 @@ package play.api.libs.ws.ahc
 
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import play.api.libs.ws.{ DefaultBodyReadables, StandaloneWSResponse, WSCookie }
+import play.api.libs.ws.DefaultBodyReadables
+import play.api.libs.ws.StandaloneWSResponse
+import play.api.libs.ws.WSCookie
 import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse }
 
 import scala.collection.JavaConverters._
@@ -14,10 +16,11 @@ import scala.collection.JavaConverters._
 /**
  * A WS HTTP response backed by org.asynchttpclient.Response.
  */
-class StandaloneAhcWSResponse(ahcResponse: AHCResponse) extends StandaloneWSResponse
-  with DefaultBodyReadables
-  with WSCookieConverter
-  with AhcUtilities {
+class StandaloneAhcWSResponse(ahcResponse: AHCResponse)
+    extends StandaloneWSResponse
+    with DefaultBodyReadables
+    with WSCookieConverter
+    with AhcUtilities {
 
   override lazy val headers: Map[String, Seq[String]] = headersToMap(ahcResponse.getHeaders)
 

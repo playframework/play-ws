@@ -23,7 +23,7 @@ import scala.xml.Elem
 class XMLRequestSpec extends Specification with Mockito with AfterAll with MustMatchers {
   sequential
 
-  implicit val system = ActorSystem()
+  implicit val system       = ActorSystem()
   implicit val materializer = Materializer.matFromSystem
 
   override def afterAll: Unit = {
@@ -54,7 +54,7 @@ class XMLRequestSpec extends Specification with Mockito with AfterAll with MustM
   "write an XML node" in {
     import XMLBodyWritables._
 
-    val xml = XML.parser.loadString("<hello><test></test></hello>")
+    val xml    = XML.parser.loadString("<hello><test></test></hello>")
     val client = mock[StandaloneAhcWSClient]
     val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
       .withBody(xml)

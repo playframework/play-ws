@@ -4,19 +4,27 @@
 
 package play.api.libs.ws.ahc
 
-import play.api.libs.ws.{ DefaultWSCookie, WSCookie }
+import play.api.libs.ws.DefaultWSCookie
+import play.api.libs.ws.WSCookie
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames._
-import play.shaded.ahc.io.netty.handler.codec.http.cookie.{ ClientCookieDecoder, Cookie, DefaultCookie }
+import play.shaded.ahc.io.netty.handler.codec.http.cookie.ClientCookieDecoder
+import play.shaded.ahc.io.netty.handler.codec.http.cookie.Cookie
+import play.shaded.ahc.io.netty.handler.codec.http.cookie.DefaultCookie
 
 trait CookieBuilder extends WSCookieConverter {
   def buildCookies(headers: Map[String, scala.collection.Seq[String]]): scala.collection.Seq[WSCookie] = {
     val option = headers.get(SET_COOKIE2.toString).orElse(headers.get(SET_COOKIE.toString))
-    option.map { cookiesHeaders =>
-      for {
-        value <- cookiesHeaders
-        Some(c) = Some(if (useLaxCookieEncoder) ClientCookieDecoder.LAX.decode(value) else ClientCookieDecoder.STRICT.decode(value))
-      } yield asCookie(c)
-    }.getOrElse(Seq.empty)
+    option
+      .map { cookiesHeaders =>
+        for {
+          value <- cookiesHeaders
+          Some(c) = Some(
+            if (useLaxCookieEncoder) ClientCookieDecoder.LAX.decode(value)
+            else ClientCookieDecoder.STRICT.decode(value)
+          )
+        } yield asCookie(c)
+      }
+      .getOrElse(Seq.empty)
   }
 
   def useLaxCookieEncoder: Boolean

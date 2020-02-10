@@ -4,9 +4,12 @@
 
 package play.api.libs.ws
 
-import javax.inject.{ Inject, Provider, Singleton }
+import javax.inject.Inject
+import javax.inject.Provider
+import javax.inject.Singleton
 
-import com.typesafe.config.{ Config, ConfigException }
+import com.typesafe.config.Config
+import com.typesafe.config.ConfigException
 import com.typesafe.sslconfig.ssl.SSLConfigParser
 import com.typesafe.sslconfig.util.EnrichedConfig
 
@@ -32,10 +35,10 @@ class WSConfigParser @Inject() (config: Config, classLoader: ClassLoader) extend
     val wsConfig = config.getConfig("play.ws")
 
     val connectionTimeout = Duration(wsConfig.getString("timeout.connection"))
-    val idleTimeout = Duration(wsConfig.getString("timeout.idle"))
-    val requestTimeout = Duration(wsConfig.getString("timeout.request"))
+    val idleTimeout       = Duration(wsConfig.getString("timeout.idle"))
+    val requestTimeout    = Duration(wsConfig.getString("timeout.request"))
 
-    val followRedirects = wsConfig.getBoolean("followRedirects")
+    val followRedirects    = wsConfig.getBoolean("followRedirects")
     val useProxyProperties = wsConfig.getBoolean("useProxyProperties")
 
     val userAgent = {
@@ -59,7 +62,8 @@ class WSConfigParser @Inject() (config: Config, classLoader: ClassLoader) extend
       useProxyProperties = useProxyProperties,
       userAgent = userAgent,
       compressionEnabled = compressionEnabled,
-      ssl = sslConfig)
+      ssl = sslConfig
+    )
   }
 
   override lazy val get: WSClientConfig = parse()

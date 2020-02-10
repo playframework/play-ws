@@ -13,14 +13,15 @@ import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
 import play.shaded.ahc.org.asynchttpclient.handler.StreamedAsyncHandler
 import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse, _ }
 
-import scala.concurrent.{ Await, ExecutionContext }
+import scala.concurrent.Await
+import scala.concurrent.ExecutionContext
 
 trait TimeoutResponse {
 
   def generateTimeoutResponse(request: Request, ahcConfig: AsyncHttpClientConfig): CacheableResponse = {
-    val uri = request.getUri
-    val status = new CacheableHttpResponseStatus(uri, 504, "Gateway Timeout", "")
-    val headers = new DefaultHttpHeaders()
+    val uri       = request.getUri
+    val status    = new CacheableHttpResponseStatus(uri, 504, "Gateway Timeout", "")
+    val headers   = new DefaultHttpHeaders()
     val bodyParts = java.util.Collections.emptyList[CacheableHttpResponseBodyPart]()
     CacheableResponse(status, headers, bodyParts, ahcConfig)
   }
@@ -29,12 +30,10 @@ trait TimeoutResponse {
 /**
  * A provider that pulls a response from the cache.
  */
-class CachingAsyncHttpClient(
-    underlying: AsyncHttpClient,
-    ahcHttpCache: AhcHttpCache)
-  extends AsyncHttpClient
-  with TimeoutResponse
-  with Debug {
+class CachingAsyncHttpClient(underlying: AsyncHttpClient, ahcHttpCache: AhcHttpCache)
+    extends AsyncHttpClient
+    with TimeoutResponse
+    with Debug {
 
   import com.typesafe.play.cachecontrol.ResponseSelectionActions._
   import com.typesafe.play.cachecontrol.ResponseServeActions._
@@ -64,14 +63,16 @@ class CachingAsyncHttpClient(
   }
 
   @throws(classOf[IOException])
-  protected def execute[T](request: Request, handler: AsyncCompletionHandler[T], future: ListenableFuture[_])(implicit ec: ExecutionContext): ListenableFuture[T] = {
+  protected def execute[T](request: Request, handler: AsyncCompletionHandler[T], future: ListenableFuture[_])(
+      implicit ec: ExecutionContext
+  ): ListenableFuture[T] = {
     if (logger.isTraceEnabled) {
       logger.trace(s"execute: request = ${debug(request)}, handler = ${debug(handler)}, future = $future")
     }
 
     // Ask the cache if it has anything matching the primary key...
-    val key = EffectiveURIKey(request)
-    val requestTime = HttpDate.now
+    val key          = EffectiveURIKey(request)
+    val requestTime  = HttpDate.now
     val entryResults = Await.result(ahcHttpCache.get(key), cacheTimeout).toList
     if (logger.isDebugEnabled) {
       logger.debug(s"execute $key: results = $entryResults")
@@ -98,7 +99,12 @@ class CachingAsyncHttpClient(
   /**
    * Serves a future containing the response, based on the cache behavior.
    */
-  protected def serveResponse[T](handler: AsyncCompletionHandler[T], request: Request, entry: ResponseEntry, requestTime: ZonedDateTime)(implicit ec: ExecutionContext): ListenableFuture[T] = {
+  protected def serveResponse[T](
+      handler: AsyncCompletionHandler[T],
+      request: Request,
+      entry: ResponseEntry,
+      requestTime: ZonedDateTime
+  )(implicit ec: ExecutionContext): ListenableFuture[T] = {
 
     val key = EffectiveURIKey(request)
 
@@ -129,7 +135,7 @@ class CachingAsyncHttpClient(
         //    forwarded the request and having received a corresponding response.
 
         // Run a validation request in a future (which will update the cache later)...
-        val response = entry.response
+        val response          = entry.response
         val validationRequest = buildValidationRequest(request, response)
         underlying.executeRequest(validationRequest, backgroundAsyncHandler[AHCResponse](validationRequest))
 
@@ -143,7 +149,7 @@ class CachingAsyncHttpClient(
         // Stale response requires talking to the origin server first.
         // The origin server can return a 304 Not Modified with no body,
         // so the stale response could still be used... we just need to check.
-        val response = entry.response
+        val response          = entry.response
         val validationRequest = buildValidationRequest(request, response)
         underlying.executeRequest(validationRequest, cacheAsyncHandler(validationRequest, handler, Some(action)))
 
@@ -152,14 +158,18 @@ class CachingAsyncHttpClient(
 
         // Same as validate, but if the origin server cannot be reached, return a 504 gateway
         // timeout response instead of serving a stale response.
-        val response = entry.response
+        val response          = entry.response
         val validationRequest = buildValidationRequest(request, response)
         underlying.executeRequest(validationRequest, cacheAsyncHandler(request, handler, Some(action)))
     }
   }
 
-  protected def executeFromCache[T](handler: AsyncHandler[T], request: Request, response: CacheableResponse)(implicit ec: ExecutionContext): CacheFuture[T] = {
-    logger.trace(s"executeFromCache: handler = ${debug(handler)}, request = ${debug(request)}, response = ${debug(response)}")
+  protected def executeFromCache[T](handler: AsyncHandler[T], request: Request, response: CacheableResponse)(
+      implicit ec: ExecutionContext
+  ): CacheFuture[T] = {
+    logger.trace(
+      s"executeFromCache: handler = ${debug(handler)}, request = ${debug(request)}, response = ${debug(response)}"
+    )
 
     val cacheFuture = new CacheFuture[T](handler)
     ec.execute(new Runnable {
@@ -210,7 +220,7 @@ class CachingAsyncHttpClient(
   }
 
   protected def composeRequest(request: Request)(block: RequestBuilder => RequestBuilder): Request = {
-    val rb = new RequestBuilder(request)
+    val rb      = new RequestBuilder(request)
     val builder = block(rb)
     builder.build()
   }
@@ -219,12 +229,18 @@ class CachingAsyncHttpClient(
     new BackgroundAsyncHandler(request, ahcHttpCache, underlying.getConfig)
   }
 
-  protected def serveTimeout[T](request: Request, handler: AsyncHandler[T])(implicit ec: ExecutionContext): CacheFuture[T] = {
+  protected def serveTimeout[T](request: Request, handler: AsyncHandler[T])(
+      implicit ec: ExecutionContext
+  ): CacheFuture[T] = {
     val timeoutResponse = generateTimeoutResponse(request, underlying.getConfig)
     executeFromCache(handler, request, timeoutResponse)
   }
 
-  protected def cacheAsyncHandler[T](request: Request, handler: AsyncCompletionHandler[T], action: Option[ResponseServeAction] = None): AsyncCachingHandler[T] = {
+  protected def cacheAsyncHandler[T](
+      request: Request,
+      handler: AsyncCompletionHandler[T],
+      action: Option[ResponseServeAction] = None
+  ): AsyncCachingHandler[T] = {
     new AsyncCachingHandler(request, handler, ahcHttpCache, action, underlying.getConfig)
   }
 
@@ -296,7 +312,8 @@ class CachingAsyncHttpClient(
 
   override def getClientStats: ClientStats = underlying.getClientStats
 
-  override def flushChannelPoolPartitions(predicate: Predicate[AnyRef]): Unit = underlying.flushChannelPoolPartitions(predicate)
+  override def flushChannelPoolPartitions(predicate: Predicate[AnyRef]): Unit =
+    underlying.flushChannelPoolPartitions(predicate)
 
   override def getConfig: AsyncHttpClientConfig = underlying.getConfig
 }

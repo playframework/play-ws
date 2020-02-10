@@ -12,7 +12,9 @@ import org.specs2.mutable._
 import play.libs.oauth.OAuth
 import play.libs.ws._
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames
-import play.shaded.ahc.org.asynchttpclient.{ Request, RequestBuilderBase, SignatureCalculator }
+import play.shaded.ahc.org.asynchttpclient.Request
+import play.shaded.ahc.org.asynchttpclient.RequestBuilderBase
+import play.shaded.ahc.org.asynchttpclient.SignatureCalculator
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -23,14 +25,14 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
   "AhcWSRequest" should {
 
     "Have GET method as the default" in {
-      val client = mock[StandaloneAhcWSClient]
+      val client  = mock[StandaloneAhcWSClient]
       val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
       request.getMethod must be_==("GET")
       request.buildRequest().getMethod must be_==("GET")
     }
 
     "Set virtualHost appropriately" in {
-      val client = mock[StandaloneAhcWSClient]
+      val client  = mock[StandaloneAhcWSClient]
       val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
       request.setVirtualHost("foo.com")
       val actual = request.buildRequest().getVirtualHost()
@@ -39,10 +41,10 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
 
     "set the url" in {
       val client = mock[StandaloneAhcWSClient]
-      val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
-      req.getUrl must be_===("http://playframework.com/") and {
+      val req    = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
+      (req.getUrl must be_===("http://playframework.com/")).and {
         val setReq = req.setUrl("http://example.com")
-        setReq.getUrl must be_===("http://example.com") and {
+        (setReq.getUrl must be_===("http://example.com")).and {
           setReq must be_===(req)
         }
       }
@@ -82,12 +84,12 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
         val client = mock[StandaloneAhcWSClient]
         val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
           .setContentType("text/plain+hello") // set content type by hand
-          .setBody(body("HELLO WORLD")) // and body is set to string (see #5221)
+          .setBody(body("HELLO WORLD"))       // and body is set to string (see #5221)
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
 
         req.getHeaders.get(HttpHeaderNames.CONTENT_TYPE) must be_==("text/plain+hello; charset=UTF-8") // preserve the content type
-        req.getStringData must be_==("HELLO WORLD") // should result in byte data.
+        req.getStringData must be_==("HELLO WORLD")                                                    // should result in byte data.
       }
 
       "have form params when passing in map" in {
@@ -102,15 +104,17 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
         req.getHeaders.get("Content-Type") must be_==("application/x-www-form-urlencoded")
 
         // Note we use getFormParams instead of getByteData here.
-        req.getFormParams.asScala must containTheSameElementsAs(List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1")))
+        req.getFormParams.asScala must containTheSameElementsAs(
+          List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1"))
+        )
       }
 
       "have form params when content-type application/x-www-form-urlencoded and signed" in {
         import scala.collection.JavaConverters._
-        val client = mock[StandaloneAhcWSClient]
+        val client      = mock[StandaloneAhcWSClient]
         val consumerKey = new OAuth.ConsumerKey("key", "secret")
-        val token = new OAuth.RequestToken("token", "secret")
-        val calc = new OAuth.OAuthCalculator(consumerKey, token)
+        val token       = new OAuth.RequestToken("token", "secret")
+        val calc        = new OAuth.OAuthCalculator(consumerKey, token)
         val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
           .setContentType("application/x-www-form-urlencoded") // set content type by hand
           .setBody(body("param1=value1"))
@@ -118,15 +122,17 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
         // Note we use getFormParams instead of getByteData here.
-        req.getFormParams.asScala must containTheSameElementsAs(List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1")))
+        req.getFormParams.asScala must containTheSameElementsAs(
+          List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1"))
+        )
       }
 
       "remove a user defined content length header if we are parsing body explicitly when signed" in {
         import scala.collection.JavaConverters._
-        val client = mock[StandaloneAhcWSClient]
+        val client      = mock[StandaloneAhcWSClient]
         val consumerKey = new OAuth.ConsumerKey("key", "secret")
-        val token = new OAuth.RequestToken("token", "secret")
-        val calc = new OAuth.OAuthCalculator(consumerKey, token)
+        val token       = new OAuth.RequestToken("token", "secret")
+        val calc        = new OAuth.OAuthCalculator(consumerKey, token)
         val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
           .setContentType("application/x-www-form-urlencoded") // set content type by hand
           .setBody(body("param1=value1"))
@@ -136,7 +142,9 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
           .buildRequest()
 
         val headers = req.getHeaders
-        req.getFormParams.asScala must containTheSameElementsAs(List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1")))
+        req.getFormParams.asScala must containTheSameElementsAs(
+          List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1"))
+        )
         headers.get("Content-Length") must beNull // no content length!
       }
 
@@ -183,16 +191,16 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
     }
 
     "allow adding an explicit Content-Type header if the BodyWritable doesn't set the Content-Type" in {
-      val client = mock[StandaloneAhcWSClient]
+      val client  = mock[StandaloneAhcWSClient]
       val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
-      request.setBody(body("HELLO WORLD", null)) // content type is not set
+      request.setBody(body("HELLO WORLD", null))            // content type is not set
       request.addHeader("Content-Type", "application/json") // will be used as content type is not set with a body
       val req = request.buildRequest()
       req.getHeaders.get("Content-Type") must be_==("application/json")
     }
 
     "ignore explicit Content-Type header if the BodyWritable already set the Content-Type" in {
-      val client = mock[StandaloneAhcWSClient]
+      val client  = mock[StandaloneAhcWSClient]
       val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
       request.setBody(body("HELLO WORLD"))
       request.addHeader("Content-Type", "application/json") // will be ignored since body already sets content type
@@ -201,7 +209,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
     }
 
     "only send first Content-Type header and keep the charset when setting the Content-Type multiple times" in {
-      val client = mock[StandaloneAhcWSClient]
+      val client  = mock[StandaloneAhcWSClient]
       val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
       request.addHeader("Content-Type", "application/json; charset=US-ASCII")
       request.addHeader("Content-Type", "application/xml")
@@ -211,7 +219,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
     }
 
     "Set Realm.UsePreemptiveAuth to false when WSAuthScheme.DIGEST being used" in {
-      val client = mock[StandaloneAhcWSClient]
+      val client  = mock[StandaloneAhcWSClient]
       val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
       request.setAuth("usr", "pwd", WSAuthScheme.DIGEST)
       val req = request.buildRequest()
@@ -219,7 +227,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
     }
 
     "Set Realm.UsePreemptiveAuth to true when WSAuthScheme.DIGEST not being used" in {
-      val client = mock[StandaloneAhcWSClient]
+      val client  = mock[StandaloneAhcWSClient]
       val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
       request.setAuth("usr", "pwd", WSAuthScheme.BASIC)
       val req = request.buildRequest()
@@ -229,13 +237,14 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
     "For HTTP Headers" in {
 
       "add a new header" in {
-        val client = mock[StandaloneAhcWSClient]
+        val client  = mock[StandaloneAhcWSClient]
         val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
 
         request
           .addHeader("header1", "value1")
           .buildRequest()
-          .getHeaders.get("header1") must beEqualTo("value1")
+          .getHeaders
+          .get("header1") must beEqualTo("value1")
       }
 
       "add new value for existing header" in {
@@ -254,21 +263,18 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
       }
 
       "set all headers" in {
-        val client = mock[StandaloneAhcWSClient]
+        val client  = mock[StandaloneAhcWSClient]
         val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
 
         request
-          .setHeaders(Map(
-            "header1" -> Seq("value1").asJava,
-            "header2" -> Seq("value2").asJava).asJava
-          )
+          .setHeaders(Map("header1" -> Seq("value1").asJava, "header2" -> Seq("value2").asJava).asJava)
           .buildRequest()
           .getHeaders
           .get("header1") must beEqualTo("value1")
       }
 
       "keep existing headers when adding a new one" in {
-        val client = mock[StandaloneAhcWSClient]
+        val client  = mock[StandaloneAhcWSClient]
         val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
 
         val ahcReq = request
@@ -409,10 +415,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
       "set all the parameters" in {
         val client = mock[StandaloneAhcWSClient]
         val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
-          .setQueryString(Map(
-            "p1" -> Seq("v1").asJava,
-            "p2" -> Seq("v2").asJava).asJava
-          )
+          .setQueryString(Map("p1" -> Seq("v1").asJava, "p2" -> Seq("v2").asJava).asJava)
           .buildRequest()
 
         request.getUrl must contain("p1=v1")
@@ -448,10 +451,10 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
 
       "support a query string parameter with an encoded equals sign" in {
         import scala.collection.JavaConverters._
-        val client = mock[StandaloneAhcWSClient]
-        val request = new StandaloneAhcWSRequest(client, "http://example.com?bar=F%3Dma", /*materializer*/ null)
+        val client      = mock[StandaloneAhcWSClient]
+        val request     = new StandaloneAhcWSRequest(client, "http://example.com?bar=F%3Dma", /*materializer*/ null)
         val queryParams = request.buildRequest().getQueryParams.asScala
-        val p = queryParams(0)
+        val p           = queryParams(0)
 
         p.getName must beEqualTo("bar")
         p.getValue must beEqualTo("F%253Dma")
@@ -538,7 +541,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
   }
 
   def requestWithTimeout(timeout: Duration) = {
-    val client = mock[StandaloneAhcWSClient]
+    val client  = mock[StandaloneAhcWSClient]
     val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
     request.setRequestTimeout(timeout)
     request.buildRequest().getRequestTimeout()
@@ -546,7 +549,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
 
   def requestWithQueryString(query: String) = {
     import scala.collection.JavaConverters._
-    val client = mock[StandaloneAhcWSClient]
+    val client  = mock[StandaloneAhcWSClient]
     val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
     request.setQueryString(query)
     val queryParams = request.buildRequest().getQueryParams

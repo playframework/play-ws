@@ -6,11 +6,13 @@ package play.api.libs.ws.ahc
 
 import java.io.UnsupportedEncodingException
 import java.net.URI
-import java.nio.charset.{ Charset, StandardCharsets }
+import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
-import play.api.libs.ws.{ StandaloneWSRequest, _ }
+import play.api.libs.ws.StandaloneWSRequest
+import play.api.libs.ws._
 import play.shaded.ahc.io.netty.buffer.Unpooled
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
@@ -42,8 +44,11 @@ case class StandaloneAhcWSRequest(
     proxyServer: Option[WSProxyServer] = None,
     disableUrlEncoding: Option[Boolean] = None,
     private val filters: Seq[WSRequestFilter] = Nil
-)(implicit materializer: Materializer) extends StandaloneWSRequest with AhcUtilities with WSCookieConverter {
-  override type Self = StandaloneWSRequest
+)(implicit materializer: Materializer)
+    extends StandaloneWSRequest
+    with AhcUtilities
+    with WSCookieConverter {
+  override type Self     = StandaloneWSRequest
   override type Response = StandaloneWSResponse
 
   require(client != null, "A StandaloneAhcWSClient is required, but it is null")
@@ -53,13 +58,16 @@ case class StandaloneAhcWSRequest(
 
   override lazy val uri: URI = {
     val enc = (p: String) => java.net.URLEncoder.encode(p, "utf-8")
-    new java.net.URI(if (queryString.isEmpty) url else {
-      val qs = (for {
-        (n, vs) <- queryString
-        v <- vs
-      } yield s"${enc(n)}=${enc(v)}").mkString("&")
-      s"$url?$qs"
-    })
+    new java.net.URI(
+      if (queryString.isEmpty) url
+      else {
+        val qs = (for {
+          (n, vs) <- queryString
+          v       <- vs
+        } yield s"${enc(n)}=${enc(v)}").mkString("&")
+        s"$url?$qs"
+      }
+    )
   }
 
   override def sign(calc: WSSignatureCalculator): Self = copy(calc = Some(calc))
@@ -73,7 +81,7 @@ case class StandaloneAhcWSRequest(
   }
 
   override def withHttpHeaders(hdrs: (String, String)*): Self = {
-    val emptyMap = TreeMap[String, Seq[String]]()(CaseInsensitiveOrdered)
+    val emptyMap   = TreeMap[String, Seq[String]]()(CaseInsensitiveOrdered)
     val newHeaders = buildHeaders(emptyMap, hdrs: _*)
     copy(headers = newHeaders)
   }
@@ -122,7 +130,10 @@ case class StandaloneAhcWSRequest(
         copy(requestTimeout = Some(timeout))
       case d =>
         val millis = d.toMillis
-        require(millis >= 0 && millis <= Int.MaxValue, s"Request timeout must be between 0 and ${Int.MaxValue} milliseconds")
+        require(
+          millis >= 0 && millis <= Int.MaxValue,
+          s"Request timeout must be between 0 and ${Int.MaxValue} milliseconds"
+        )
         copy(requestTimeout = Some(timeout))
     }
   }
@@ -263,11 +274,13 @@ case class StandaloneAhcWSRequest(
     // The builder has a bunch of mutable state and is VERY fiddly, so
     // should not be exposed to the outside world.
 
-    val builder = disableUrlEncoding.map { disableEncodingFlag =>
-      new RequestBuilder(method, disableEncodingFlag)
-    }.getOrElse {
-      new RequestBuilder(method)
-    }
+    val builder = disableUrlEncoding
+      .map { disableEncodingFlag =>
+        new RequestBuilder(method, disableEncodingFlag)
+      }
+      .getOrElse {
+        new RequestBuilder(method)
+      }
 
     // Set the URL.
     builder.setUrl(url)
@@ -281,7 +294,7 @@ case class StandaloneAhcWSRequest(
     // queries
     for {
       (key, values) <- queryString
-      value <- values
+      value         <- values
     } builder.addQueryParam(key, value)
 
     // Configuration settings on the builder, if applicable
@@ -300,38 +313,43 @@ case class StandaloneAhcWSRequest(
       case InMemoryBody(bytes) =>
         val ct: String = contentType.getOrElse("text/plain")
 
-        val h = try {
-          // Only parse out the form body if we are doing the signature calculation.
-          if (ct.contains(HttpHeaders.Values.APPLICATION_X_WWW_FORM_URLENCODED) && calc.isDefined) {
-            // If we are taking responsibility for setting the request body, we should block any
-            // externally defined Content-Length field (see #5221 for the details)
-            val filteredHeaders = this.headers.filterNot { case (k, v) => k.equalsIgnoreCase(HttpHeaders.Names.CONTENT_LENGTH) }
+        val h =
+          try {
+            // Only parse out the form body if we are doing the signature calculation.
+            if (ct.contains(HttpHeaders.Values.APPLICATION_X_WWW_FORM_URLENCODED) && calc.isDefined) {
+              // If we are taking responsibility for setting the request body, we should block any
+              // externally defined Content-Length field (see #5221 for the details)
+              val filteredHeaders = this.headers.filterNot {
+                case (k, v) => k.equalsIgnoreCase(HttpHeaders.Names.CONTENT_LENGTH)
+              }
 
-            // extract the content type and the charset
-            val charsetOption = Option(HttpUtils.extractContentTypeCharsetAttribute(ct))
-            val charset = charsetOption.getOrElse {
-              StandardCharsets.UTF_8
-            }.name()
+              // extract the content type and the charset
+              val charsetOption = Option(HttpUtils.extractContentTypeCharsetAttribute(ct))
+              val charset = charsetOption
+                .getOrElse {
+                  StandardCharsets.UTF_8
+                }
+                .name()
 
-            // Get the string body given the given charset...
-            val stringBody = bytes.decodeString(charset)
-            // The Ahc signature calculator uses request.getFormParams() for calculation,
-            // so we have to parse it out and add it rather than using setBody.
+              // Get the string body given the given charset...
+              val stringBody = bytes.decodeString(charset)
+              // The Ahc signature calculator uses request.getFormParams() for calculation,
+              // so we have to parse it out and add it rather than using setBody.
 
-            val params = for {
-              (key, values) <- FormUrlEncodedParser.parse(stringBody).toSeq
-              value <- values
-            } yield new Param(key, value)
-            builder.setFormParams(params.asJava)
-            filteredHeaders
-          } else {
-            builder.setBody(bytes.toArray)
-            this.headers
+              val params = for {
+                (key, values) <- FormUrlEncodedParser.parse(stringBody).toSeq
+                value         <- values
+              } yield new Param(key, value)
+              builder.setFormParams(params.asJava)
+              filteredHeaders
+            } else {
+              builder.setBody(bytes.toArray)
+              this.headers
+            }
+          } catch {
+            case e: UnsupportedEncodingException =>
+              throw new RuntimeException(e)
           }
-        } catch {
-          case e: UnsupportedEncodingException =>
-            throw new RuntimeException(e)
-        }
 
         (builder, h)
       case SourceBody(source) =>
@@ -339,16 +357,26 @@ case class StandaloneAhcWSRequest(
         // else every content would be Transfer-Encoding: chunked
         // If the Content-Length is -1 Async-Http-Client sets a Transfer-Encoding: chunked
         // If the Content-Length is great than -1 Async-Http-Client will use the correct Content-Length
-        val filteredHeaders = this.headers.filterNot { case (k, v) => k.equalsIgnoreCase(HttpHeaders.Names.CONTENT_LENGTH) }
-        val contentLength = this.headers.find { case (k, _) => k.equalsIgnoreCase(HttpHeaders.Names.CONTENT_LENGTH) }.map(_._2.head.toLong)
+        val filteredHeaders = this.headers.filterNot {
+          case (k, v) => k.equalsIgnoreCase(HttpHeaders.Names.CONTENT_LENGTH)
+        }
+        val contentLength = this.headers
+          .find { case (k, _) => k.equalsIgnoreCase(HttpHeaders.Names.CONTENT_LENGTH) }
+          .map(_._2.head.toLong)
 
-        (builder.setBody(source.map(bs => Unpooled.wrappedBuffer(bs.toByteBuffer)).runWith(Sink.asPublisher(false)), contentLength.getOrElse(-1L)), filteredHeaders)
+        (
+          builder.setBody(
+            source.map(bs => Unpooled.wrappedBuffer(bs.toByteBuffer)).runWith(Sink.asPublisher(false)),
+            contentLength.getOrElse(-1L)
+          ),
+          filteredHeaders
+        )
     }
 
     // headers
     for {
       header <- updatedHeaders
-      value <- header._2
+      value  <- header._2
     } builder.addHeader(header._1, value)
 
     // Set the signature calculator.
@@ -356,7 +384,9 @@ case class StandaloneAhcWSRequest(
       case signatureCalculator: play.shaded.ahc.org.asynchttpclient.SignatureCalculator =>
         builderWithBody.setSignatureCalculator(signatureCalculator)
       case _ =>
-        throw new IllegalStateException("Unknown signature calculator found: use a class that implements SignatureCalculator")
+        throw new IllegalStateException(
+          "Unknown signature calculator found: use a class that implements SignatureCalculator"
+        )
     }
 
     // cookies
@@ -366,21 +396,25 @@ case class StandaloneAhcWSRequest(
   }
 
   private[libs] def authScheme(scheme: WSAuthScheme): Realm.AuthScheme = scheme match {
-    case WSAuthScheme.DIGEST => Realm.AuthScheme.DIGEST
-    case WSAuthScheme.BASIC => Realm.AuthScheme.BASIC
-    case WSAuthScheme.NTLM => Realm.AuthScheme.NTLM
-    case WSAuthScheme.SPNEGO => Realm.AuthScheme.SPNEGO
+    case WSAuthScheme.DIGEST   => Realm.AuthScheme.DIGEST
+    case WSAuthScheme.BASIC    => Realm.AuthScheme.BASIC
+    case WSAuthScheme.NTLM     => Realm.AuthScheme.NTLM
+    case WSAuthScheme.SPNEGO   => Realm.AuthScheme.SPNEGO
     case WSAuthScheme.KERBEROS => Realm.AuthScheme.KERBEROS
-    case _ => throw new RuntimeException("Unknown scheme " + scheme)
+    case _                     => throw new RuntimeException("Unknown scheme " + scheme)
   }
 
   /**
    * Add http auth headers. Defaults to HTTP Basic.
    */
-  private[libs] def auth(username: String, password: String, scheme: Realm.AuthScheme = Realm.AuthScheme.BASIC): Realm = {
+  private[libs] def auth(
+      username: String,
+      password: String,
+      scheme: Realm.AuthScheme = Realm.AuthScheme.BASIC
+  ): Realm = {
     val usePreemptiveAuth = scheme match {
       case AuthScheme.DIGEST => false
-      case _ => true
+      case _                 => true
     }
 
     new Realm.Builder(username, password)
@@ -393,13 +427,14 @@ case class StandaloneAhcWSRequest(
     val proxyBuilder = new AHCProxyServer.Builder(wsProxyServer.host, wsProxyServer.port)
     if (wsProxyServer.principal.isDefined) {
       val realmBuilder = new Realm.Builder(wsProxyServer.principal.orNull, wsProxyServer.password.orNull)
-      val scheme: Realm.AuthScheme = wsProxyServer.protocol.getOrElse("http").toLowerCase(java.util.Locale.ENGLISH) match {
-        case "http" | "https" => Realm.AuthScheme.BASIC
-        case "kerberos" => Realm.AuthScheme.KERBEROS
-        case "ntlm" => Realm.AuthScheme.NTLM
-        case "spnego" => Realm.AuthScheme.SPNEGO
-        case _ => scala.sys.error("Unrecognized protocol!")
-      }
+      val scheme: Realm.AuthScheme =
+        wsProxyServer.protocol.getOrElse("http").toLowerCase(java.util.Locale.ENGLISH) match {
+          case "http" | "https" => Realm.AuthScheme.BASIC
+          case "kerberos"       => Realm.AuthScheme.KERBEROS
+          case "ntlm"           => Realm.AuthScheme.NTLM
+          case "spnego"         => Realm.AuthScheme.SPNEGO
+          case _                => scala.sys.error("Unrecognized protocol!")
+        }
       realmBuilder.setScheme(scheme)
       wsProxyServer.encoding.foreach(enc => realmBuilder.setCharset(Charset.forName(enc)))
       wsProxyServer.ntlmDomain.foreach(realmBuilder.setNtlmDomain)

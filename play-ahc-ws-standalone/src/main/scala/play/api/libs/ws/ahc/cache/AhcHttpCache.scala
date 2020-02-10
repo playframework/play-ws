@@ -10,10 +10,12 @@ import java.time.ZonedDateTime
 import com.typesafe.play.cachecontrol._
 import play.api.libs.ws.{ ahc => standaloneAhc }
 import org.slf4j.LoggerFactory
-import play.shaded.ahc.io.netty.handler.codec.http.{ DefaultHttpHeaders, HttpHeaders }
+import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
+import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import play.shaded.ahc.org.asynchttpclient._
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 /**
  * Central HTTP cache.  This keeps a cache of HTTP responses according to
@@ -24,7 +26,10 @@ import scala.concurrent.{ ExecutionContext, Future }
  * to caching responses to GET, many caches simply decline other methods
  * and use only the URI as the primary cache key.
  */
-class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boolean = false)(implicit val executionContext: ExecutionContext) extends CacheDefaults with Debug {
+class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boolean = false)(
+    implicit val executionContext: ExecutionContext
+) extends CacheDefaults
+    with Debug {
   require(underlying != null, "null underlying!")
 
   private val logger = LoggerFactory.getLogger(this.getClass)
@@ -79,11 +84,11 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
   }
 
   def cachingAction(request: Request, response: CacheableResponse): ResponseCachingAction = {
-    val headers = response.headers
-    val statusCode = response.getStatusCode
-    val cacheRequest = generateCacheRequest(request)
+    val headers                        = response.headers
+    val statusCode                     = response.getStatusCode
+    val cacheRequest                   = generateCacheRequest(request)
     val originResponse: OriginResponse = generateOriginResponse(request, statusCode, headers)
-    val action = responseCachingCalculator.isCacheable(cacheRequest, originResponse)
+    val action                         = responseCachingCalculator.isCacheable(cacheRequest, originResponse)
     action
   }
 
@@ -97,7 +102,7 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
   }
 
   def serveAction(request: Request, entry: ResponseEntry, currentAge: Seconds): ResponseServeAction = {
-    val cacheRequest = generateCacheRequest(request)
+    val cacheRequest   = generateCacheRequest(request)
     val storedResponse = generateStoredResponse(entry.response, entry.requestMethod, entry.nominatedHeaders)
 
     responseServingCalculator.serveResponse(cacheRequest, storedResponse, currentAge)
@@ -107,11 +112,11 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
     if (heuristicsEnabled) {
       // https://publicobject.com/2015/03/26/how-do-http-caching-heuristics-work/
       response.headers.get(HeaderName("Last-Modified")).map { lastModifiedString =>
-        val lastModified = HttpDate.parse(lastModifiedString.head)
-        val lastRequestedAt = HttpDate.now
+        val lastModified                   = HttpDate.parse(lastModifiedString.head)
+        val lastRequestedAt                = HttpDate.now
         val timeSinceLastModified: Seconds = HttpDate.diff(start = lastModified, end = lastRequestedAt)
         // 10% of the duration
-        val scaledDownSeconds = (0.1 * timeSinceLastModified.seconds).toInt
+        val scaledDownSeconds      = (0.1 * timeSinceLastModified.seconds).toInt
         val scaledSeconds: Seconds = Seconds.seconds(scaledDownSeconds)
         scaledSeconds
       }
@@ -158,7 +163,8 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
    */
   def calculateCurrentAge(request: Request, entry: ResponseEntry, requestTime: ZonedDateTime): Seconds = {
     val cacheRequest: CacheRequest = generateCacheRequest(request)
-    val storedResponse: StoredResponse = generateStoredResponse(entry.response, entry.requestMethod, entry.nominatedHeaders)
+    val storedResponse: StoredResponse =
+      generateStoredResponse(entry.response, entry.requestMethod, entry.nominatedHeaders)
     val currentAge = calculateCurrentAge(cacheRequest, storedResponse, requestTime, responseTime = HttpDate.now)
     currentAge
   }
@@ -168,7 +174,8 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
    */
   def calculateFreshnessLifetime(request: Request, entry: ResponseEntry): Seconds = {
     val cacheRequest: CacheRequest = generateCacheRequest(request)
-    val storedResponse: StoredResponse = generateStoredResponse(entry.response, entry.requestMethod, entry.nominatedHeaders)
+    val storedResponse: StoredResponse =
+      generateStoredResponse(entry.response, entry.requestMethod, entry.nominatedHeaders)
     val freshnessLifetime = freshnessCalculator.calculateFreshnessLifetime(cacheRequest, storedResponse)
     freshnessLifetime
   }
@@ -256,14 +263,23 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
   /**
    * Calculates the current age of the stored response.
    */
-  protected def calculateCurrentAge(request: CacheRequest, response: StoredResponse, requestTime: ZonedDateTime, responseTime: ZonedDateTime): Seconds = {
+  protected def calculateCurrentAge(
+      request: CacheRequest,
+      response: StoredResponse,
+      requestTime: ZonedDateTime,
+      responseTime: ZonedDateTime
+  ): Seconds = {
     currentAgeCalculator.calculateCurrentAge(request, response, requestTime, responseTime)
   }
 
   /**
    * Calculates the time to live.  Currently hardcoded to 24 hours.
    */
-  protected def calculateTimeToLive(request: Request, status: CacheableHttpResponseStatus, headers: HttpHeaders): Option[ZonedDateTime] = {
+  protected def calculateTimeToLive(
+      request: Request,
+      status: CacheableHttpResponseStatus,
+      headers: HttpHeaders
+  ): Option[ZonedDateTime] = {
     Some(ZonedDateTime.now.plusHours(24))
   }
 
@@ -277,8 +293,8 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
     logger.debug(s"cacheResponse: strippedResponse = ${debug(strippedResponse)}")
 
     val nominated = calculateSecondaryKeys(request, strippedResponse).getOrElse(Map())
-    val ttl = calculateTimeToLive(request, strippedResponse.status, strippedResponse.headers)
-    val entry = ResponseEntry(strippedResponse, request.getMethod, nominated, ttl)
+    val ttl       = calculateTimeToLive(request, strippedResponse.status, strippedResponse.headers)
+    val entry     = ResponseEntry(strippedResponse, request.getMethod, nominated, ttl)
     put(EffectiveURIKey(request), entry)
   }
 
@@ -318,12 +334,16 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
     //
     //o  retain any Warning header fields in the stored response with
     //warn-code 2xx; and,
-    val headers = response.headers
+    val headers                 = response.headers
     val headersMap: HttpHeaders = new DefaultHttpHeaders().add(headers)
-    val filteredWarnings = headersMap.getAll("Warning").asScala.filter { line =>
-      val warning = WarningParser.parse(line)
-      warning.code < 200
-    }.asJava
+    val filteredWarnings = headersMap
+      .getAll("Warning")
+      .asScala
+      .filter { line =>
+        val warning = WarningParser.parse(line)
+        warning.code < 200
+      }
+      .asJava
     headersMap.set("Warning", filteredWarnings)
 
     //o  use other header fields provided in the 304 (Not Modified)
@@ -337,7 +357,12 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
   /**
    * Generates a response for the HTTP response with the appropriate headers.
    */
-  def generateCachedResponse(request: Request, entry: ResponseEntry, currentAge: Seconds, isFresh: Boolean): CacheableResponse = {
+  def generateCachedResponse(
+      request: Request,
+      entry: ResponseEntry,
+      currentAge: Seconds,
+      isFresh: Boolean
+  ): CacheableResponse = {
     replaceHeaders(entry.response) { headers =>
       //    When a stored response is used to satisfy a request without
       //    validation, a cache MUST generate an Age header field (Section 5.1),
@@ -386,9 +411,13 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
     CacheRequest(uri = uri, method = method, headers = headers)
   }
 
-  protected def generateStoredResponse(response: CacheableResponse, requestMethod: String, nominatedHeaders: Map[HeaderName, Seq[String]]): StoredResponse = {
-    val uri: URI = response.getUri.toJavaNetURI
-    val status: Int = response.getStatusCode
+  protected def generateStoredResponse(
+      response: CacheableResponse,
+      requestMethod: String,
+      nominatedHeaders: Map[HeaderName, Seq[String]]
+  ): StoredResponse = {
+    val uri: URI        = response.getUri.toJavaNetURI
+    val status: Int     = response.getStatusCode
     val responseHeaders = response.getHeaders
     val headers = headersToMap(responseHeaders).map {
       case (name, values) =>
@@ -400,7 +429,8 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
       status = status,
       headers = headers,
       requestMethod = requestMethod,
-      nominatedHeaders = nominatedHeaders)
+      nominatedHeaders = nominatedHeaders
+    )
   }
 
   protected def generateOriginResponse(request: Request, status: Int, responseHeaders: HttpHeaders): OriginResponse = {
@@ -417,7 +447,7 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
    */
   protected def stripHeaders(request: Request, httpResponse: CacheableResponse): CacheableResponse = {
     val originResponse = generateOriginResponse(request, httpResponse.getStatusCode, httpResponse.headers)
-    val stripSet = stripHeaderCalculator.stripHeaders(originResponse)
+    val stripSet       = stripHeaderCalculator.stripHeaders(originResponse)
 
     val r = if (stripSet.nonEmpty) {
       import scala.collection.JavaConverters._

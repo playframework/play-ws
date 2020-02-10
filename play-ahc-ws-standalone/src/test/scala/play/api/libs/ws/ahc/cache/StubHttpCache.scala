@@ -13,7 +13,8 @@ class StubHttpCache extends Cache {
 
   override def remove(key: EffectiveURIKey): Future[Unit] = Future.successful(underlying.remove(key))
 
-  override def put(key: EffectiveURIKey, entry: ResponseEntry): Future[Unit] = Future.successful(underlying.put(key, entry))
+  override def put(key: EffectiveURIKey, entry: ResponseEntry): Future[Unit] =
+    Future.successful(underlying.put(key, entry))
 
   override def get(key: EffectiveURIKey): Future[Option[ResponseEntry]] = Future.successful(underlying.get(key))
 

@@ -5,7 +5,8 @@
 
 // https://github.com/sbt/sbt-dirty-money/blob/master/src/main/scala/sbtdirtymoney/DirtyMoneyPlugin.scala
 
-import sbt._, Keys._
+import sbt._
+import Keys._
 
 object CleanShadedPlugin extends AutoPlugin {
   override def requires = plugins.IvyPlugin
@@ -48,16 +49,16 @@ object CleanShadedPlugin extends AutoPlugin {
   }
 
   override def projectSettings = Seq(
-    cleanCacheIvyDirectory := ivyPaths.value.ivyHome getOrElse (Path.userHome / ".ivy2"),
+    cleanCacheIvyDirectory := ivyPaths.value.ivyHome.getOrElse(Path.userHome / ".ivy2"),
     cleanCache := IO.delete(cleanCacheFiles.evaluated),
     cleanLocal := IO.delete(cleanLocalFiles.evaluated),
     cleanCacheFiles := {
-      val base = cleanCacheIvyDirectory.value / "cache"
+      val base  = cleanCacheIvyDirectory.value / "cache"
       val param = CleanShaded.parseParam.parsed
       CleanShaded.query(base, param, organization.value, moduleName.value)
     },
     cleanLocalFiles := {
-      val base = cleanCacheIvyDirectory.value / "local"
+      val base  = cleanCacheIvyDirectory.value / "local"
       val param = CleanShaded.parseParam.parsed
       CleanShaded.query(base, param, organization.value, moduleName.value)
     }

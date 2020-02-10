@@ -9,7 +9,8 @@ import java.nio.ByteBuffer
 import java.util.function.Supplier
 
 import akka.stream.scaladsl.StreamConverters.fromInputStream
-import akka.stream.scaladsl.{ FileIO, Source }
+import akka.stream.scaladsl.FileIO
+import akka.stream.scaladsl.Source
 import akka.util.ByteString
 
 import scala.compat.java8.FunctionConverters.asScalaFromSupplier
@@ -104,8 +105,13 @@ trait DefaultBodyWritables {
     import java.net.URLEncoder
     BodyWritable(
       formData =>
-        InMemoryBody(ByteString.fromString(formData.flatMap(item => item._2.map(c => s"${item._1}=${URLEncoder.encode(c, "UTF-8")}")).mkString("&"))),
-      "application/x-www-form-urlencoded")
+        InMemoryBody(
+          ByteString.fromString(
+            formData.flatMap(item => item._2.map(c => s"${item._1}=${URLEncoder.encode(c, "UTF-8")}")).mkString("&")
+          )
+        ),
+      "application/x-www-form-urlencoded"
+    )
   }
 
   implicit val writeableOf_urlEncodedSimpleForm: BodyWritable[Map[String, String]] = {

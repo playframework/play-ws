@@ -19,7 +19,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
 
     "return the underlying response" in {
       val srcResponse = mock[Response]
-      val response = new StandaloneAhcWSResponse(srcResponse)
+      val response    = new StandaloneAhcWSResponse(srcResponse)
       response.getUnderlying must_== srcResponse
     }
 
@@ -34,9 +34,9 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
         .add("foo", "b")
         .add("FOO", "b")
         .add("Bar", "baz")
-      srcResponse.getHeaders returns srcHeaders
+      srcResponse.getHeaders.returns(srcHeaders)
       val response = new StandaloneAhcWSResponse(srcResponse)
-      val headers = response.getHeaders
+      val headers  = response.getHeaders
       headers.get("foo").asScala must_== Seq("a", "b", "b")
       headers.get("BAR").asScala must_== Seq("baz")
     }
@@ -48,7 +48,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
         .add("foo", "b")
         .add("FOO", "b")
         .add("Bar", "baz")
-      srcResponse.getHeaders returns srcHeaders
+      srcResponse.getHeaders.returns(srcHeaders)
       val response = new StandaloneAhcWSResponse(srcResponse)
 
       response.getSingleHeader("Foo").asScala must beSome("a")
@@ -62,7 +62,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
         .add("foo", "b")
         .add("FOO", "b")
         .add("Bar", "baz")
-      srcResponse.getHeaders returns srcHeaders
+      srcResponse.getHeaders.returns(srcHeaders)
       val response = new StandaloneAhcWSResponse(srcResponse)
 
       response.getSingleHeader("Non").asScala must beNone
@@ -75,7 +75,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
         .add("foo", "b")
         .add("FOO", "b")
         .add("Bar", "baz")
-      srcResponse.getHeaders returns srcHeaders
+      srcResponse.getHeaders.returns(srcHeaders)
       val response = new StandaloneAhcWSResponse(srcResponse)
 
       response.getHeaderValues("Foo").asScala must containTheSameElementsAs(Seq("a", "b", "b"))
@@ -94,6 +94,6 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
     getBodyAsStream
     asByteArray
     getUriOption
-    */
+ */
 
 }

@@ -35,8 +35,10 @@ Global / onLoad := (Global / onLoad).value.andThen { s =>
 }
 
 val javacSettings = Seq(
-  "-source", "1.8",
-  "-target", "1.8",
+  "-source",
+  "1.8",
+  "-target",
+  "1.8",
   "-Xlint:deprecation",
   "-Xlint:unchecked"
 )
@@ -44,13 +46,12 @@ val javacSettings = Seq(
 def scalacOpts: Seq[String] = Seq(
   "-target:jvm-1.8",
   "-deprecation",
-  "-encoding", "UTF-8",
+  "-encoding",
+  "UTF-8",
   "-feature",
   "-unchecked",
-
   "-Ywarn-unused:imports",
   "-Xlint:nullary-unit",
-
   "-Xlint",
   "-Ywarn-dead-code",
 )
@@ -62,7 +63,6 @@ ThisBuild / mimaFailOnNoPrevious := false
 
 lazy val mimaSettings = mimaDefaultSettings ++ Seq(
   mimaPreviousArtifacts := previousVersion.map(organization.value %% name.value % _).toSet,
-  
   // these exclusions are only for master branch and are targeting 2.2.x
   mimaBinaryIssueFilters ++= Seq(
     ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.ahc.AhcWSClientConfig$"),
@@ -88,12 +88,10 @@ lazy val commonSettings = Def.settings(
   scalacOptions ++= scalacOpts,
   scalacOptions in (Compile, doc) ++= Seq(
     "-Xfatal-warnings",
-
     // Work around 2.12 bug which prevents javadoc in nested java classes from compiling.
     "-no-java-comments",
   ),
-  pomExtra := (
-    <url>https://github.com/playframework/play-ws</url>
+  pomExtra := (<url>https://github.com/playframework/play-ws</url>
       <licenses>
         <license>
           <name>Apache License, Version 2.0</name>
@@ -115,9 +113,11 @@ lazy val commonSettings = Def.settings(
   javacOptions in Compile ++= javacSettings,
   javacOptions in Test ++= javacSettings,
   headerLicense := {
-    Some(HeaderLicense.Custom(
-      s"Copyright (C) Lightbend Inc. <https://www.lightbend.com>"
-    ))
+    Some(
+      HeaderLicense.Custom(
+        s"Copyright (C) Lightbend Inc. <https://www.lightbend.com>"
+      )
+    )
   }
 )
 
@@ -134,7 +134,6 @@ val disablePublishing = Seq[Setting[_]](
 lazy val shadedCommonSettings = Seq(
   scalaVersion := scala213,
   crossScalaVersions := Seq(scala213),
-
   // No need to cross publish the shaded libraries
   crossPaths := false,
 )
@@ -166,7 +165,7 @@ lazy val shadeAssemblySettings = commonSettings ++ shadedCommonSettings ++ Seq(
 val ahcMerge: MergeStrategy = new MergeStrategy {
   def apply(tempDir: File, path: String, files: Seq[File]): Either[String, Seq[(File, String)]] = {
     import scala.collection.JavaConverters._
-    val file = MergeStrategy.createMergeTarget(tempDir, path)
+    val file  = MergeStrategy.createMergeTarget(tempDir, path)
     val lines = java.nio.file.Files.readAllLines(files.head.toPath).asScala
     lines.foreach { line =>
       // In AsyncHttpClientConfigDefaults.java, the shading renames the resource keys
@@ -183,21 +182,26 @@ val ahcMerge: MergeStrategy = new MergeStrategy {
   override val name: String = "ahcMerge"
 }
 
-import scala.xml.transform.{RewriteRule, RuleTransformer}
-import scala.xml.{Elem, NodeSeq, Node => XNode}
+import scala.xml.transform.RewriteRule
+import scala.xml.transform.RuleTransformer
+import scala.xml.Elem
+import scala.xml.NodeSeq
+import scala.xml.{ Node => XNode }
 
-def dependenciesFilter(n: XNode) = new RuleTransformer(new RewriteRule {
-  override def transform(n: XNode): NodeSeq = n match {
-    case e: Elem if e.label == "dependencies" => NodeSeq.Empty
-    case other => other
-  }
-}).transform(n).head
+def dependenciesFilter(n: XNode) =
+  new RuleTransformer(new RewriteRule {
+    override def transform(n: XNode): NodeSeq = n match {
+      case e: Elem if e.label == "dependencies" => NodeSeq.Empty
+      case other                                => other
+    }
+  }).transform(n).head
 
 //---------------------------------------------------------------
 // Shaded AsyncHttpClient implementation
 //---------------------------------------------------------------
 
-lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
+lazy val `shaded-asynchttpclient` = project
+  .in(file("shaded/asynchttpclient"))
   .settings(commonSettings)
   .settings(shadeAssemblySettings)
   .settings(
@@ -219,22 +223,20 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
     //logLevel in assembly := Level.Debug,
     assemblyShadeRules in assembly := Seq(
       ShadeRule.rename("org.asynchttpclient.**" -> "play.shaded.ahc.@0").inAll,
-      ShadeRule.rename("io.netty.**" -> "play.shaded.ahc.@0").inAll,
-      ShadeRule.rename("javassist.**" -> "play.shaded.ahc.@0").inAll,
-      ShadeRule.rename("com.typesafe.netty.**" -> "play.shaded.ahc.@0").inAll,
-      ShadeRule.rename("javax.activation.**" -> "play.shaded.ahc.@0").inAll,
-      ShadeRule.rename("com.sun.activation.**" -> "play.shaded.ahc.@0").inAll,
+      ShadeRule.rename("io.netty.**"            -> "play.shaded.ahc.@0").inAll,
+      ShadeRule.rename("javassist.**"           -> "play.shaded.ahc.@0").inAll,
+      ShadeRule.rename("com.typesafe.netty.**"  -> "play.shaded.ahc.@0").inAll,
+      ShadeRule.rename("javax.activation.**"    -> "play.shaded.ahc.@0").inAll,
+      ShadeRule.rename("com.sun.activation.**"  -> "play.shaded.ahc.@0").inAll,
       ShadeRule.zap("org.reactivestreams.**").inAll,
       ShadeRule.zap("org.slf4j.**").inAll
     ),
-
     // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom
     // Remove dependencies from the POM because we have a FAT jar here.
     makePomConfiguration := makePomConfiguration.value.withProcess(process = dependenciesFilter),
     //ivyXML := <dependencies></dependencies>,
     //ivyLoggingLevel := UpdateLogging.Full,
     //logLevel := Level.Debug,
-
     assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeBin = false, includeScala = false),
     packageBin in Compile := assembly.value
   )
@@ -243,7 +245,8 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
 // Shaded oauth
 //---------------------------------------------------------------
 
-lazy val `shaded-oauth` = project.in(file("shaded/oauth"))
+lazy val `shaded-oauth` = project
+  .in(file("shaded/oauth"))
   .settings(commonSettings)
   .settings(shadeAssemblySettings)
   .settings(
@@ -251,14 +254,12 @@ lazy val `shaded-oauth` = project.in(file("shaded/oauth"))
     name := "shaded-oauth",
     //logLevel in assembly := Level.Debug,
     assemblyShadeRules in assembly := Seq(
-      ShadeRule.rename("oauth.**" -> "play.shaded.oauth.@0").inAll,
+      ShadeRule.rename("oauth.**"              -> "play.shaded.oauth.@0").inAll,
       ShadeRule.rename("org.apache.commons.**" -> "play.shaded.oauth.@0").inAll
     ),
-
     // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom
     // Remove dependencies from the POM because we have a FAT jar here.
     makePomConfiguration := makePomConfiguration.value.withProcess(process = dependenciesFilter),
-
     assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeBin = false, includeScala = false),
     packageBin in Compile := assembly.value
   )
@@ -276,11 +277,12 @@ val shadedOAuthSettings = Seq(
 // Shaded aggregate project
 //---------------------------------------------------------------
 
-lazy val shaded = Project(id = "shaded", base = file("shaded") )
+lazy val shaded = Project(id = "shaded", base = file("shaded"))
   .aggregate(
     `shaded-asynchttpclient`,
     `shaded-oauth`
-  ).disablePlugins(sbtassembly.AssemblyPlugin, HeaderPlugin)
+  )
+  .disablePlugins(sbtassembly.AssemblyPlugin, HeaderPlugin)
   .settings(
     disableDocs,
     disablePublishing,
@@ -320,31 +322,36 @@ def addShadedDeps(deps: Seq[xml.Node], node: xml.Node): xml.Node = {
 // Standalone implementation using AsyncHttpClient
 lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
-  .settings(commonSettings ++ shadedAhcSettings ++ shadedOAuthSettings ++ Seq(
-    fork in Test := true,
-    testOptions in Test := Seq(
-      Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
-    libraryDependencies ++= standaloneAhcWSDependencies,
-    // This will not work if you do a publishLocal, because that uses ivy...
-    pomPostProcess := {
-      (node: xml.Node) => addShadedDeps(List(
-        <dependency>
+  .settings(
+    commonSettings ++ shadedAhcSettings ++ shadedOAuthSettings ++ Seq(
+      fork in Test := true,
+      testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
+      libraryDependencies ++= standaloneAhcWSDependencies,
+      // This will not work if you do a publishLocal, because that uses ivy...
+      pomPostProcess := { (node: xml.Node) =>
+        addShadedDeps(
+          List(
+            <dependency>
           <groupId>com.typesafe.play</groupId>
           <artifactId>shaded-asynchttpclient</artifactId>
           <version>{version.value}</version>
         </dependency>,
-        <dependency>
+            <dependency>
           <groupId>com.typesafe.play</groupId>
           <artifactId>shaded-oauth</artifactId>
           <version>{version.value}</version>
         </dependency>
-      ), node)
-    }
-  ))
+          ),
+          node
+        )
+      }
+    )
+  )
   .settings(mimaSettings)
   .dependsOn(
     `play-ws-standalone`
-  ).disablePlugins(sbtassembly.AssemblyPlugin)
+  )
+  .disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
 // JSON Readables and Writables
@@ -361,7 +368,8 @@ lazy val `play-ws-standalone-json` = project
   )
   .dependsOn(
     `play-ws-standalone`
-  ).disablePlugins(sbtassembly.AssemblyPlugin)
+  )
+  .disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
 // XML Readables and Writables
@@ -378,13 +386,15 @@ lazy val `play-ws-standalone-xml` = project
   )
   .dependsOn(
     `play-ws-standalone`
-  ).disablePlugins(sbtassembly.AssemblyPlugin)
+  )
+  .disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
 // Integration Tests
 //---------------------------------------------------------------
 
-lazy val `integration-tests` = project.in(file("integration-tests"))
+lazy val `integration-tests` = project
+  .in(file("integration-tests"))
   .settings(commonSettings)
   .settings(disableDocs)
   .settings(disablePublishing)
@@ -476,8 +486,12 @@ checkCodeFormat := {
         |ERROR: Scalariform check failed, see differences above.
         |To fix, format your sources using sbt scalariformFormat test:scalariformFormat before submitting a pull request.
         |Additionally, please squash your commits (eg, use git commit --amend) if you're going to update this pull request.
-      """.stripMargin)
+      """.stripMargin
+    )
   }
 }
 
-addCommandAlias("validateCode", ";scalariformFormat;test:scalariformFormat;headerCheck;test:headerCheck;checkCodeFormat")
+addCommandAlias(
+  "validateCode",
+  ";scalariformFormat;test:scalariformFormat;headerCheck;test:headerCheck;checkCodeFormat"
+)
