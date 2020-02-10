@@ -251,31 +251,39 @@ In Java the API is much the same, except that an instance of AsyncHttpClient has
 package playwsclient;
 
 import akka.actor.ActorSystem;
-import akka.stream.ActorMaterializer;
-import akka.stream.ActorMaterializerSettings;
+import akka.stream.Materializer;
 import com.typesafe.config.ConfigFactory;
 
 import play.libs.ws.*;
 import play.libs.ws.ahc.*;
 
-import java.util.concurrent.CompletionStage;
-
 public class JavaClient implements DefaultBodyReadables {
+    private final StandaloneAhcWSClient client;
+    private final ActorSystem system;
 
     public static void main(String[] args) {
         // Set up Akka materializer to handle streaming
         final String name = "wsclient";
         ActorSystem system = ActorSystem.create(name);
         system.registerOnTermination(() -> System.exit(0));
-        final ActorMaterializerSettings settings = ActorMaterializerSettings.create(system);
-        final ActorMaterializer materializer = ActorMaterializer.create(settings, system, name);
+        final Materializer materializer = Materializer.matFromSystem(system);
 
         // Create the WS client from the `application.conf` file, the current classloader and materializer.
-        StandaloneAhcWSClient client = StandaloneAhcWSClient.create(
+        StandaloneAhcWSClient ws = StandaloneAhcWSClient.create(
                 AhcWSClientConfigFactory.forConfig(ConfigFactory.load(), system.getClass().getClassLoader()),
                 materializer
         );
 
+        JavaClient javaClient = new JavaClient(system, ws);
+        javaClient.run();
+    }
+
+    JavaClient(ActorSystem system, StandaloneAhcWSClient client) {
+        this.system = system;
+        this.client = client;
+    }
+
+    public void run() {
         client.url("http://www.google.com").get()
                 .whenComplete((response, throwable) -> {
                     String statusText = response.getStatusText();
