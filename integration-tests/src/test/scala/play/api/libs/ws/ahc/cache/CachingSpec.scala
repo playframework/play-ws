@@ -18,14 +18,15 @@ import play.shaded.ahc.org.asynchttpclient._
 
 import scala.concurrent.Future
 
-class CachingSpec(implicit val executionEnv: ExecutionEnv) extends Specification
-  with AkkaServerProvider
-  with AfterAll
-  with FutureMatchers
-  with Mockito {
+class CachingSpec(implicit val executionEnv: ExecutionEnv)
+    extends Specification
+    with AkkaServerProvider
+    with AfterAll
+    with FutureMatchers
+    with Mockito {
 
   val asyncHttpClient: AsyncHttpClient = {
-    val config = AhcWSClientConfigFactory.forClientConfig()
+    val config                           = AhcWSClientConfigFactory.forClientConfig()
     val ahcConfig: AsyncHttpClientConfig = new AhcConfigBuilder(config).build()
     new DefaultAsyncHttpClient(ahcConfig)
   }
@@ -49,16 +50,19 @@ class CachingSpec(implicit val executionEnv: ExecutionEnv) extends Specification
 
     "work once" in {
       val cache = mock[Cache]
-      cache.get(any[EffectiveURIKey]()) returns Future.successful(None)
+      cache.get(any[EffectiveURIKey]()).returns(Future.successful(None))
 
       val cachingAsyncHttpClient = new CachingAsyncHttpClient(asyncHttpClient, new AhcHttpCache(cache))
-      val ws = new StandaloneAhcWSClient(cachingAsyncHttpClient)
+      val ws                     = new StandaloneAhcWSClient(cachingAsyncHttpClient)
 
-      ws.url(s"http://localhost:$testServerPort/hello").get().map { response =>
-        response.body must be_==("<h1>Say hello to akka-http</h1>")
-      }.await
+      ws.url(s"http://localhost:$testServerPort/hello")
+        .get()
+        .map { response =>
+          response.body must be_==("<h1>Say hello to akka-http</h1>")
+        }
+        .await
 
-      there was one(cache).get(EffectiveURIKey("GET", new java.net.URI(s"http://localhost:$testServerPort/hello")))
+      there.was(one(cache).get(EffectiveURIKey("GET", new java.net.URI(s"http://localhost:$testServerPort/hello"))))
     }
   }
 }

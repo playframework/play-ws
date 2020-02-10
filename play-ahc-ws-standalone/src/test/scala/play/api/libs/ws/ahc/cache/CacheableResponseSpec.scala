@@ -16,19 +16,24 @@ class CacheableResponseSpec extends Specification {
     "get body" in {
 
       "when it is text/plain" in {
-        val response = CacheableResponse(200, "https://playframework.com/", "PlayFramework Homepage", achConfig).withHeaders(CONTENT_TYPE -> "text/plain")
+        val response = CacheableResponse(200, "https://playframework.com/", "PlayFramework Homepage", achConfig)
+          .withHeaders(CONTENT_TYPE -> "text/plain")
         response.getResponseBody must beEqualTo("PlayFramework Homepage")
         response.getContentType must beEqualTo("text/plain")
       }
 
       "when it is application/json" in {
-        val response = CacheableResponse(200, "https://playframework.com/", """{ "a": "b" }""", achConfig).withHeaders("Content-Type" -> "application/json")
+        val response = CacheableResponse(200, "https://playframework.com/", """{ "a": "b" }""", achConfig).withHeaders(
+          "Content-Type" -> "application/json"
+        )
         response.getResponseBody must beEqualTo("""{ "a": "b" }""")
         response.getContentType must beEqualTo("application/json")
       }
 
       "when it is application/json; charset=utf-8" in {
-        val response = CacheableResponse(200, "https://playframework.com/", """{ "a": "b" }""", achConfig).withHeaders("Content-Type" -> "application/json; charset=utf-8")
+        val response = CacheableResponse(200, "https://playframework.com/", """{ "a": "b" }""", achConfig).withHeaders(
+          "Content-Type" -> "application/json; charset=utf-8"
+        )
         response.getResponseBody must beEqualTo("""{ "a": "b" }""")
         response.getContentType must beEqualTo("application/json; charset=utf-8")
       }

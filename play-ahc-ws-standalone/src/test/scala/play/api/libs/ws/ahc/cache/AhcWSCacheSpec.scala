@@ -9,8 +9,11 @@ import java.net.URI
 import com.typesafe.play.cachecontrol.HttpDate._
 import com.typesafe.play.cachecontrol._
 import org.specs2.mutable.Specification
-import play.shaded.ahc.io.netty.handler.codec.http.{ DefaultHttpHeaders, HttpHeaders }
-import play.shaded.ahc.org.asynchttpclient.{ DefaultAsyncHttpClientConfig, Request, RequestBuilder }
+import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
+import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
+import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClientConfig
+import play.shaded.ahc.org.asynchttpclient.Request
+import play.shaded.ahc.org.asynchttpclient.RequestBuilder
 
 class AhcWSCacheSpec extends Specification {
 
@@ -20,17 +23,18 @@ class AhcWSCacheSpec extends Specification {
       import scala.concurrent.ExecutionContext.Implicits.global
 
       implicit val cache = new AhcHttpCache(new StubHttpCache(), true)
-      val url = "http://localhost:9000"
+      val url            = "http://localhost:9000"
 
-      val uri = new URI(url)
+      val uri                      = new URI(url)
       val lastModifiedDate: String = format(now.minusHours(1))
-      val request: CacheRequest = CacheRequest(uri, "GET", Map())
-      val response: CacheResponse = StoredResponse(uri, 200, Map(HeaderName("Last-Modified") -> Seq(lastModifiedDate)), "GET", Map())
+      val request: CacheRequest    = CacheRequest(uri, "GET", Map())
+      val response: CacheResponse =
+        StoredResponse(uri, 200, Map(HeaderName("Last-Modified") -> Seq(lastModifiedDate)), "GET", Map())
 
       val actual = cache.calculateFreshnessFromHeuristic(request, response)
 
       actual must beSome.which {
-        case value => value must be_== (Seconds.seconds(360)) // 0.1 hours
+        case value => value must be_==(Seconds.seconds(360)) // 0.1 hours
       }
     }
 
@@ -38,12 +42,13 @@ class AhcWSCacheSpec extends Specification {
       import scala.concurrent.ExecutionContext.Implicits.global
 
       implicit val cache = new AhcHttpCache(new StubHttpCache(), false)
-      val url = "http://localhost:9000"
+      val url            = "http://localhost:9000"
 
-      val uri = new URI(url)
+      val uri                      = new URI(url)
       val lastModifiedDate: String = "Wed, 09 Apr 2008 23:55:38 GMT"
-      val request: CacheRequest = CacheRequest(uri, "GET", Map())
-      val response: CacheResponse = StoredResponse(uri, 200, Map(HeaderName("Last-Modified") -> Seq(lastModifiedDate)), "GET", Map())
+      val request: CacheRequest    = CacheRequest(uri, "GET", Map())
+      val response: CacheResponse =
+        StoredResponse(uri, 200, Map(HeaderName("Last-Modified") -> Seq(lastModifiedDate)), "GET", Map())
 
       val actual = cache.calculateFreshnessFromHeuristic(request, response)
 
@@ -58,11 +63,11 @@ class AhcWSCacheSpec extends Specification {
       import scala.concurrent.ExecutionContext.Implicits.global
 
       implicit val cache = new AhcHttpCache(new StubHttpCache(), false)
-      val achConfig = new DefaultAsyncHttpClientConfig.Builder().build()
+      val achConfig      = new DefaultAsyncHttpClientConfig.Builder().build()
 
       val url = "http://localhost:9000"
 
-      val request = generateRequest(url)(headers => headers.add("Accept-Encoding", "gzip"))
+      val request  = generateRequest(url)(headers => headers.add("Accept-Encoding", "gzip"))
       val response = CacheableResponse(200, url, achConfig).withHeaders("Vary" -> "Accept-Encoding")
 
       val actual = cache.calculateSecondaryKeys(request, response)

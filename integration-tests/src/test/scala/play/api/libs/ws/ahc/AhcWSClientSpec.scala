@@ -5,13 +5,17 @@
 package play.api.libs.ws.ahc
 
 import akka.http.scaladsl.model.StatusCodes.Redirection
-import akka.http.scaladsl.model.headers.{ HttpCookie, RawHeader }
-import akka.http.scaladsl.model.{ StatusCode, StatusCodes }
+import akka.http.scaladsl.model.headers.HttpCookie
+import akka.http.scaladsl.model.headers.RawHeader
+import akka.http.scaladsl.model.StatusCode
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.{ MissingCookieRejection, Route }
+import akka.http.scaladsl.server.MissingCookieRejection
+import akka.http.scaladsl.server.Route
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
-import org.specs2.concurrent.{ ExecutionEnv, FutureAwait }
+import org.specs2.concurrent.ExecutionEnv
+import org.specs2.concurrent.FutureAwait
 import org.specs2.execute.Result
 import org.specs2.matcher.FutureMatchers
 import org.specs2.mutable.Specification
@@ -21,15 +25,18 @@ import play.shaded.ahc.org.asynchttpclient.handler.MaxRedirectException
 
 import scala.concurrent._
 
-class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv) extends Specification
-  with AkkaServerProvider
-  with StandaloneWSClientSupport
-  with FutureMatchers
-  with FutureAwait
-  with DefaultBodyReadables
-  with DefaultBodyWritables {
+class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
+    extends Specification
+    with AkkaServerProvider
+    with StandaloneWSClientSupport
+    with FutureMatchers
+    with FutureAwait
+    with DefaultBodyReadables
+    with DefaultBodyWritables {
 
-  def withClientFollowingRedirect(config: AhcWSClientConfig = AhcWSClientConfigFactory.forConfig())(block: StandaloneAhcWSClient => Result): Result = {
+  def withClientFollowingRedirect(
+      config: AhcWSClientConfig = AhcWSClientConfigFactory.forConfig()
+  )(block: StandaloneAhcWSClient => Result): Result = {
     withClient(
       config.copy(
         wsClientConfig = config.wsClientConfig.copy(followRedirects = true)
@@ -64,7 +71,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv) extends Specifica
         get {
           optionalCookie("flash") {
             case Some(c) => complete(s"Cookie value => ${c.value}")
-            case None => reject(MissingCookieRejection("flash"))
+            case None    => reject(MissingCookieRejection("flash"))
           }
         }
       }
@@ -111,7 +118,10 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv) extends Specifica
 
     "request a url as an in memory string" in {
       withClient() { client =>
-        val result = Await.result(client.url(s"http://localhost:$testServerPort/index").get().map(res => res.body[String]), defaultTimeout)
+        val result = Await.result(
+          client.url(s"http://localhost:$testServerPort/index").get().map(res => res.body[String]),
+          defaultTimeout
+        )
         result must beEqualTo("Say hello to akka-http")
       }
     }
@@ -126,14 +136,20 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv) extends Specifica
       }
 
       withClient() { client =>
-        val result = Await.result(client.url(s"http://localhost:$testServerPort/index").get().map(res => res.body[Foo]), defaultTimeout)
+        val result = Await.result(
+          client.url(s"http://localhost:$testServerPort/index").get().map(res => res.body[Foo]),
+          defaultTimeout
+        )
         result must beEqualTo(Foo("Say hello to akka-http"))
       }
     }
 
     "request a url as a stream" in {
       withClient() { client =>
-        val resultSource = Await.result(client.url(s"http://localhost:$testServerPort/index").stream().map(_.bodyAsSource), defaultTimeout)
+        val resultSource = Await.result(
+          client.url(s"http://localhost:$testServerPort/index").stream().map(_.bodyAsSource),
+          defaultTimeout
+        )
         val bytes: ByteString = Await.result(resultSource.runWith(Sink.head), defaultTimeout)
         bytes.utf8String must beEqualTo("Say hello to akka-http")
       }
@@ -146,7 +162,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv) extends Specifica
         withClientFollowingRedirect() { client =>
           {
             val request = client
-              // 2. Ask to redirect 10 times
+            // 2. Ask to redirect 10 times
               .url(s"http://localhost:$testServerPort/redirects/302/10")
               .get()
             Await.result(request, defaultTimeout)
@@ -156,13 +172,16 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv) extends Specifica
 
       "should follow a redirect when configured to" in {
         withClientFollowingRedirect() { client =>
-          val result = Await.result(client.url(s"http://localhost:$testServerPort/redirect/302").get().map(res => res.body[String]), defaultTimeout)
+          val result = Await.result(
+            client.url(s"http://localhost:$testServerPort/redirect/302").get().map(res => res.body[String]),
+            defaultTimeout
+          )
           result must beEqualTo("Say hello to akka-http")
         }
       }
 
       "should not follow redirect if client is configured not to" in {
-        val wsConfig = WSClientConfig().copy(followRedirects = false)
+        val wsConfig    = WSClientConfig().copy(followRedirects = false)
         val ahcWsConfig = AhcWSClientConfigFactory.forConfig().copy(wsClientConfig = wsConfig)
         withClient(config = ahcWsConfig) { client =>
           val result = Await.result(client.url(s"http://localhost:$testServerPort/redirect/302").get(), defaultTimeout)
@@ -185,35 +204,50 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv) extends Specifica
 
       "follow redirect for HTTP 301 Moved Permanently" in {
         withClientFollowingRedirect() { client =>
-          val result = Await.result(client.url(s"http://localhost:$testServerPort/redirect/301").get().map(res => res.body[String]), defaultTimeout)
+          val result = Await.result(
+            client.url(s"http://localhost:$testServerPort/redirect/301").get().map(res => res.body[String]),
+            defaultTimeout
+          )
           result must beEqualTo("Say hello to akka-http")
         }
       }
 
       "follow redirect for HTTP 302 Found" in {
         withClientFollowingRedirect() { client =>
-          val result = Await.result(client.url(s"http://localhost:$testServerPort/redirect/302").get().map(res => res.body[String]), defaultTimeout)
+          val result = Await.result(
+            client.url(s"http://localhost:$testServerPort/redirect/302").get().map(res => res.body[String]),
+            defaultTimeout
+          )
           result must beEqualTo("Say hello to akka-http")
         }
       }
 
       "follow redirect for HTTP 303 See Other" in {
         withClientFollowingRedirect() { client =>
-          val result = Await.result(client.url(s"http://localhost:$testServerPort/redirect/303").get().map(res => res.body[String]), defaultTimeout)
+          val result = Await.result(
+            client.url(s"http://localhost:$testServerPort/redirect/303").get().map(res => res.body[String]),
+            defaultTimeout
+          )
           result must beEqualTo("Say hello to akka-http")
         }
       }
 
       "follow redirect for HTTP 307 Temporary Redirect" in {
         withClientFollowingRedirect() { client =>
-          val result = Await.result(client.url(s"http://localhost:$testServerPort/redirect/307").get().map(res => res.body[String]), defaultTimeout)
+          val result = Await.result(
+            client.url(s"http://localhost:$testServerPort/redirect/307").get().map(res => res.body[String]),
+            defaultTimeout
+          )
           result must beEqualTo("Say hello to akka-http")
         }
       }
 
       "follow redirect for HTTP 308 Permanent Redirect" in {
         withClientFollowingRedirect() { client =>
-          val result = Await.result(client.url(s"http://localhost:$testServerPort/redirect/308").get().map(res => res.body[String]), defaultTimeout)
+          val result = Await.result(
+            client.url(s"http://localhost:$testServerPort/redirect/308").get().map(res => res.body[String]),
+            defaultTimeout
+          )
           result must beEqualTo("Say hello to akka-http")
         }
       }
@@ -253,7 +287,10 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv) extends Specifica
 
       "keep cookie when following redirect automatically and cookie store is configured" in {
         withClientFollowingRedirect(AhcWSClientConfigFactory.forConfig().copy(useCookieStore = true)) { client =>
-          val result = Await.result(client.url(s"http://localhost:$testServerPort/cookie").get().map(res => res.body[String]), defaultTimeout)
+          val result = Await.result(
+            client.url(s"http://localhost:$testServerPort/cookie").get().map(res => res.body[String]),
+            defaultTimeout
+          )
           result must beEqualTo(s"Cookie value => redirect-cookie")
         }
       }
@@ -261,10 +298,16 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv) extends Specifica
       "not keep cookie when repeating the request" in {
         withClientFollowingRedirect() { client =>
           // First let's do a request that sets a cookie
-          Await.result(client.url(s"http://localhost:$testServerPort/cookie").get().map(res => res.body[String]), defaultTimeout)
+          Await.result(
+            client.url(s"http://localhost:$testServerPort/cookie").get().map(res => res.body[String]),
+            defaultTimeout
+          )
 
           // Then run a request to a url that checks the cookie, but without setting it
-          val res2 = Await.result(client.url(s"http://localhost:$testServerPort/cookie-destination").get().map(res => res.body[String]), defaultTimeout)
+          val res2 = Await.result(
+            client.url(s"http://localhost:$testServerPort/cookie-destination").get().map(res => res.body[String]),
+            defaultTimeout
+          )
           res2 must beEqualTo(s"Request is missing required cookie 'flash'")
         }
       }

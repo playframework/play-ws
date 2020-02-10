@@ -5,7 +5,8 @@
 package play.api.libs.ws.ahc.cache
 
 import java.net.URI
-import java.time.{ Instant, ZonedDateTime }
+import java.time.Instant
+import java.time.ZonedDateTime
 
 import com.typesafe.play.cachecontrol.HeaderName
 import play.shaded.ahc.org.asynchttpclient._
@@ -28,7 +29,8 @@ case class ResponseEntry(
     response: CacheableResponse,
     requestMethod: String,
     nominatedHeaders: Map[HeaderName, Seq[String]],
-    expiresAt: Option[ZonedDateTime]) {
+    expiresAt: Option[ZonedDateTime]
+) {
 
   /**
    * Has the entry expired yet?

@@ -5,20 +5,26 @@
 package play.api.libs.ws.ahc
 
 import akka.http.scaladsl.server.Route
-import org.specs2.concurrent.{ ExecutionEnv, FutureAwait }
+import org.specs2.concurrent.ExecutionEnv
+import org.specs2.concurrent.FutureAwait
 import org.specs2.mutable.Specification
 import play.AkkaServerProvider
-import play.api.libs.ws.{ DefaultBodyWritables, DefaultWSCookie, EmptyBody, WSAuthScheme }
+import play.api.libs.ws.DefaultBodyWritables
+import play.api.libs.ws.DefaultWSCookie
+import play.api.libs.ws.EmptyBody
+import play.api.libs.ws.WSAuthScheme
 import uk.org.lidalia.slf4jext.Level
-import uk.org.lidalia.slf4jtest.{ TestLogger, TestLoggerFactory }
+import uk.org.lidalia.slf4jtest.TestLogger
+import uk.org.lidalia.slf4jtest.TestLoggerFactory
 
 import scala.collection.JavaConverters._
 
-class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv) extends Specification
-  with AkkaServerProvider
-  with StandaloneWSClientSupport
-  with FutureAwait
-  with DefaultBodyWritables {
+class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv)
+    extends Specification
+    with AkkaServerProvider
+    with StandaloneWSClientSupport
+    with FutureAwait
+    with DefaultBodyWritables {
 
   override def routes: Route = {
     import akka.http.scaladsl.server.Directives._
@@ -38,11 +44,11 @@ class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv) extends 
   "Logging request as curl" should {
 
     "be verbose" in withClient() { client =>
-
-      val testLogger = createTestLogger
+      val testLogger        = createTestLogger
       val curlRequestLogger = AhcCurlRequestLogger(testLogger)
 
-      client.url(s"http://localhost:$testServerPort/")
+      client
+        .url(s"http://localhost:$testServerPort/")
         .withRequestFilter(curlRequestLogger)
         .get()
         .awaitFor(defaultTimeout)
@@ -51,11 +57,11 @@ class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv) extends 
     }
 
     "add all headers" in withClient() { client =>
-
-      val testLogger = createTestLogger
+      val testLogger        = createTestLogger
       val curlRequestLogger = AhcCurlRequestLogger(testLogger)
 
-      client.url(s"http://localhost:$testServerPort/")
+      client
+        .url(s"http://localhost:$testServerPort/")
         .addHttpHeaders("My-Header" -> "My-Header-Value")
         .withRequestFilter(curlRequestLogger)
         .get()
@@ -67,11 +73,11 @@ class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv) extends 
     }
 
     "add all cookies" in withClient() { client =>
-
-      val testLogger = createTestLogger
+      val testLogger        = createTestLogger
       val curlRequestLogger = AhcCurlRequestLogger(testLogger)
 
-      client.url(s"http://localhost:$testServerPort/")
+      client
+        .url(s"http://localhost:$testServerPort/")
         .addCookies(DefaultWSCookie("cookie1", "value1"))
         .withRequestFilter(curlRequestLogger)
         .get()
@@ -83,11 +89,11 @@ class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv) extends 
     }
 
     "add method" in withClient() { client =>
-
-      val testLogger = createTestLogger
+      val testLogger        = createTestLogger
       val curlRequestLogger = AhcCurlRequestLogger(testLogger)
 
-      client.url(s"http://localhost:$testServerPort/")
+      client
+        .url(s"http://localhost:$testServerPort/")
         .withRequestFilter(curlRequestLogger)
         .get()
         .awaitFor(defaultTimeout)
@@ -96,27 +102,29 @@ class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv) extends 
     }
 
     "add authorization header" in withClient() { client =>
-
-      val testLogger = createTestLogger
+      val testLogger        = createTestLogger
       val curlRequestLogger = AhcCurlRequestLogger(testLogger)
 
-      client.url(s"http://localhost:$testServerPort/")
+      client
+        .url(s"http://localhost:$testServerPort/")
         .withAuth("username", "password", WSAuthScheme.BASIC)
         .withRequestFilter(curlRequestLogger)
         .get()
         .awaitFor(defaultTimeout)
 
-      testLogger.getLoggingEvents.asScala.map(_.getMessage) must containMatch("""--header 'Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ='""")
+      testLogger.getLoggingEvents.asScala.map(_.getMessage) must containMatch(
+        """--header 'Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ='"""
+      )
     }
 
     "handle body" in {
 
       "add when in memory" in withClient() { client =>
-
-        val testLogger = createTestLogger
+        val testLogger        = createTestLogger
         val curlRequestLogger = AhcCurlRequestLogger(testLogger)
 
-        client.url(s"http://localhost:$testServerPort/")
+        client
+          .url(s"http://localhost:$testServerPort/")
           .withBody("the-body")
           .withRequestFilter(curlRequestLogger)
           .get()
@@ -126,11 +134,11 @@ class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv) extends 
       }
 
       "do nothing for empty bodies" in withClient() { client =>
-
-        val testLogger = createTestLogger
+        val testLogger        = createTestLogger
         val curlRequestLogger = AhcCurlRequestLogger(testLogger)
 
-        client.url(s"http://localhost:$testServerPort/")
+        client
+          .url(s"http://localhost:$testServerPort/")
           .withBody(EmptyBody)
           .withRequestFilter(curlRequestLogger)
           .get()
@@ -141,11 +149,11 @@ class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv) extends 
     }
 
     "print complete curl command" in withClient() { client =>
-
-      val testLogger = createTestLogger
+      val testLogger        = createTestLogger
       val curlRequestLogger = AhcCurlRequestLogger(testLogger)
 
-      client.url(s"http://localhost:$testServerPort/")
+      client
+        .url(s"http://localhost:$testServerPort/")
         .withBody("the-body")
         .addHttpHeaders("My-Header" -> "My-Header-Value")
         .withAuth("username", "password", WSAuthScheme.BASIC)
@@ -153,16 +161,15 @@ class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv) extends 
         .get()
         .awaitFor(defaultTimeout)
 
-      testLogger.getLoggingEvents.get(0).getMessage must beEqualTo(
-        s"""
-          |curl \\
-          |  --verbose \\
-          |  --request GET \\
-          |  --header 'Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=' \\
-          |  --header 'My-Header: My-Header-Value' \\
-          |  --header 'Content-Type: text/plain' \\
-          |  --data 'the-body' \\
-          |  'http://localhost:$testServerPort/'
+      testLogger.getLoggingEvents.get(0).getMessage must beEqualTo(s"""
+                                                                      |curl \\
+                                                                      |  --verbose \\
+                                                                      |  --request GET \\
+                                                                      |  --header 'Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=' \\
+                                                                      |  --header 'My-Header: My-Header-Value' \\
+                                                                      |  --header 'Content-Type: text/plain' \\
+                                                                      |  --data 'the-body' \\
+                                                                      |  'http://localhost:$testServerPort/'
         """.stripMargin.trim)
     }
   }

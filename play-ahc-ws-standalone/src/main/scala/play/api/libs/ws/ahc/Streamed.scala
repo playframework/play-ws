@@ -6,7 +6,9 @@ package play.api.libs.ws.ahc
 
 import java.net.URI
 
-import org.reactivestreams.{ Subscriber, Subscription, Publisher }
+import org.reactivestreams.Subscriber
+import org.reactivestreams.Subscription
+import org.reactivestreams.Publisher
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import akka.Done
 import play.shaded.ahc.org.asynchttpclient.AsyncHandler.State
@@ -28,7 +30,7 @@ class DefaultStreamedAsyncHandler[T](
     streamStarted: Promise[T],
     streamDone: Promise[Done]
 ) extends StreamedAsyncHandler[Unit]
-  with AhcUtilities {
+    with AhcUtilities {
   private var state = StreamedState()
 
   def onStream(publisher: Publisher[HttpResponseBodyPart]): State = {
@@ -85,6 +87,6 @@ private case object EmptyPublisher extends Publisher[HttpResponseBodyPart] {
   }
   private case object CancelledSubscription extends Subscription {
     override def request(elements: Long): Unit = ()
-    override def cancel(): Unit = ()
+    override def cancel(): Unit                = ()
   }
 }

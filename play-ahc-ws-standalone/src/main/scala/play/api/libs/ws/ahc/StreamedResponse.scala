@@ -7,7 +7,8 @@ package play.api.libs.ws.ahc
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import org.reactivestreams.Publisher
-import play.api.libs.ws.{ StandaloneWSResponse, WSCookie }
+import play.api.libs.ws.StandaloneWSResponse
+import play.api.libs.ws.WSCookie
 import play.shaded.ahc.org.asynchttpclient.HttpResponseBodyPart
 
 /**
@@ -40,7 +41,9 @@ class StreamedResponse(
     val uri: java.net.URI,
     val headers: Map[String, scala.collection.Seq[String]],
     publisher: Publisher[HttpResponseBodyPart],
-    val useLaxCookieEncoder: Boolean) extends StandaloneWSResponse with CookieBuilder {
+    val useLaxCookieEncoder: Boolean
+) extends StandaloneWSResponse
+    with CookieBuilder {
 
   /**
    * Get the underlying response object.
@@ -78,7 +81,9 @@ class StreamedResponse(
   override lazy val bodyAsBytes: ByteString = client.blockingToByteString(bodyAsSource)
 
   override lazy val bodyAsSource: Source[ByteString, _] = {
-    Source.fromPublisher(publisher).map((bodyPart: HttpResponseBodyPart) => ByteString.fromArray(bodyPart.getBodyPartBytes))
+    Source
+      .fromPublisher(publisher)
+      .map((bodyPart: HttpResponseBodyPart) => ByteString.fromArray(bodyPart.getBodyPartBytes))
   }
 
 }

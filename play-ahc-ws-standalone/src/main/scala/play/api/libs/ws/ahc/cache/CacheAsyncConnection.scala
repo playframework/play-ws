@@ -4,10 +4,15 @@
 
 package play.api.libs.ws.ahc.cache
 
-import java.util.concurrent.{ Callable, CompletableFuture, Executor, TimeUnit }
+import java.util.concurrent.Callable
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
 
-import play.shaded.ahc.org.asynchttpclient.{ AsyncHandler, ListenableFuture, Request }
+import play.shaded.ahc.org.asynchttpclient.AsyncHandler
+import play.shaded.ahc.org.asynchttpclient.ListenableFuture
+import play.shaded.ahc.org.asynchttpclient.Request
 import org.slf4j.LoggerFactory
 import play.shaded.ahc.org.asynchttpclient.handler.ProgressAsyncHandler
 
@@ -18,8 +23,9 @@ class AsyncCacheableConnection[T](
     asyncHandler: AsyncHandler[T],
     request: Request,
     response: CacheableResponse,
-    future: ListenableFuture[T])
-  extends Callable[T] with Debug {
+    future: ListenableFuture[T]
+) extends Callable[T]
+    with Debug {
 
   import AsyncCacheableConnection._
 
@@ -86,11 +92,9 @@ class CacheFuture[T](handler: AsyncHandler[T]) extends ListenableFuture[T] {
 
   override def isDone: Boolean = innerFuture.isDone
 
-  override def done(): Unit = {
-  }
+  override def done(): Unit = {}
 
-  override def touch(): Unit = {
-  }
+  override def touch(): Unit = {}
 
   override def abort(t: Throwable): Unit = {
     innerFuture.completeExceptionally(t)

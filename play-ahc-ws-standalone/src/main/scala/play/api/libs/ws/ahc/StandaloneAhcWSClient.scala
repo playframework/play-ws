@@ -73,7 +73,7 @@ class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(
   }
 
   private[ahc] def execute(
-    request: Request
+      request: Request
   ): Future[StandaloneAhcWSResponse] = {
     val result = Promise[StandaloneAhcWSResponse]()
     val handler = new AsyncCompletionHandler[AHCResponse]() {
@@ -104,46 +104,45 @@ class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(
   }
 
   private[ahc] def executeStream(request: Request): Future[StreamedResponse] = {
-    val streamStarted = Promise[StreamedResponse]()
+    val streamStarted    = Promise[StreamedResponse]()
     val streamCompletion = Promise[Done]()
 
     val client = this
 
-    val function: JFunction[StreamedState, StreamedResponse] = {
-      state: StreamedState =>
-        val publisher = state.publisher
+    val function: JFunction[StreamedState, StreamedResponse] = { state: StreamedState =>
+      val publisher = state.publisher
 
-        val wrap = new Publisher[HttpResponseBodyPart]() {
-          override def subscribe(
+      val wrap = new Publisher[HttpResponseBodyPart]() {
+        override def subscribe(
             s: Subscriber[_ >: HttpResponseBodyPart]
-          ): Unit = {
-            publisher.subscribe(new Subscriber[HttpResponseBodyPart] {
-              override def onSubscribe(sub: Subscription): Unit =
-                s.onSubscribe(sub)
+        ): Unit = {
+          publisher.subscribe(new Subscriber[HttpResponseBodyPart] {
+            override def onSubscribe(sub: Subscription): Unit =
+              s.onSubscribe(sub)
 
-              override def onNext(t: HttpResponseBodyPart): Unit = s.onNext(t)
+            override def onNext(t: HttpResponseBodyPart): Unit = s.onNext(t)
 
-              override def onError(t: Throwable): Unit = s.onError(t)
+            override def onError(t: Throwable): Unit = s.onError(t)
 
-              override def onComplete(): Unit = {
-                streamCompletion.future.onComplete {
-                  case Success(_) => s.onComplete()
-                  case Failure(t) => s.onError(t)
-                }(materializer.executionContext)
-              }
-            })
-          }
-
+            override def onComplete(): Unit = {
+              streamCompletion.future.onComplete {
+                case Success(_) => s.onComplete()
+                case Failure(t) => s.onError(t)
+              }(materializer.executionContext)
+            }
+          })
         }
-        new StreamedResponse(
-          client,
-          state.statusCode,
-          state.statusText,
-          state.uriOption.get,
-          state.responseHeaders,
-          wrap,
-          asyncHttpClient.getConfig.isUseLaxCookieEncoder
-        )
+
+      }
+      new StreamedResponse(
+        client,
+        state.statusCode,
+        state.statusText,
+        state.uriOption.get,
+        state.responseHeaders,
+        wrap,
+        asyncHttpClient.getConfig.isUseLaxCookieEncoder
+      )
 
     }.asJava
     asyncHttpClient.executeRequest(
@@ -180,8 +179,8 @@ object StandaloneAhcWSClient {
 
   import scala.concurrent.duration._
   val blockingTimeout = 50.milliseconds
-  val elementLimit = 13 // 13 8192k blocks is roughly 100k
-  private val logger = org.slf4j.LoggerFactory.getLogger(this.getClass)
+  val elementLimit    = 13 // 13 8192k blocks is roughly 100k
+  private val logger  = org.slf4j.LoggerFactory.getLogger(this.getClass)
 
   private[ahc] val loggerFactory = new AhcLoggerFactory(
     org.slf4j.LoggerFactory.getILoggerFactory
@@ -214,10 +213,10 @@ object StandaloneAhcWSClient {
    * @param materializer the akka materializer.
    */
   def apply(
-    config: AhcWSClientConfig = AhcWSClientConfigFactory.forConfig(),
-    httpCache: Option[AhcHttpCache] = None
+      config: AhcWSClientConfig = AhcWSClientConfigFactory.forConfig(),
+      httpCache: Option[AhcHttpCache] = None
   )(implicit materializer: Materializer): StandaloneAhcWSClient = {
-    val ahcConfig = new AhcConfigBuilder(config).build()
+    val ahcConfig       = new AhcConfigBuilder(config).build()
     val asyncHttpClient = new DefaultAsyncHttpClient(ahcConfig)
     val wsClient = new StandaloneAhcWSClient(
       httpCache

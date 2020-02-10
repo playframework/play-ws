@@ -5,8 +5,10 @@
 package play.api.libs.ws
 
 import akka.util.ByteString
-import com.fasterxml.jackson.databind.{ JsonNode, ObjectMapper }
-import play.api.libs.json.{ JsValue, Json }
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
+import play.api.libs.json.JsValue
+import play.api.libs.json.Json
 
 trait JsonBodyWritables {
 
@@ -17,8 +19,11 @@ trait JsonBodyWritables {
     BodyWritable(a => InMemoryBody(ByteString.fromArrayUnsafe(Json.toBytes(a))), "application/json")
   }
 
-  def body(objectMapper: ObjectMapper): BodyWritable[JsonNode] = BodyWritable(json =>
-    InMemoryBody(ByteString.fromArrayUnsafe(objectMapper.writer.writeValueAsBytes(json))), "application/json")
+  def body(objectMapper: ObjectMapper): BodyWritable[JsonNode] =
+    BodyWritable(
+      json => InMemoryBody(ByteString.fromArrayUnsafe(objectMapper.writer.writeValueAsBytes(json))),
+      "application/json"
+    )
 }
 
 object JsonBodyWritables extends JsonBodyWritables

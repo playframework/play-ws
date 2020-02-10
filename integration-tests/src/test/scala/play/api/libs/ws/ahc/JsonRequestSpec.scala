@@ -9,13 +9,18 @@ import java.nio.charset.StandardCharsets
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.util.ByteString
-import org.mockito.Mockito.{ times, verify, when }
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.when
 import org.specs2.mock.Mockito
 
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
-import play.api.libs.json.{ JsString, JsValue, Json }
-import play.api.libs.ws.{ JsonBodyReadables, JsonBodyWritables }
+import play.api.libs.json.JsString
+import play.api.libs.json.JsValue
+import play.api.libs.json.Json
+import play.api.libs.ws.JsonBodyReadables
+import play.api.libs.ws.JsonBodyWritables
 import play.libs.ws.DefaultObjectMapper
 import play.shaded.ahc.org.asynchttpclient.Response
 
@@ -27,7 +32,7 @@ import scala.io.Codec
 class JsonRequestSpec extends Specification with Mockito with AfterAll with JsonBodyWritables {
   sequential
 
-  implicit val system = ActorSystem()
+  implicit val system       = ActorSystem()
   implicit val materializer = Materializer.matFromSystem
 
   override def afterAll: Unit = {
@@ -36,7 +41,7 @@ class JsonRequestSpec extends Specification with Mockito with AfterAll with Json
 
   "set a json node" in {
     val jsValue = Json.obj("k1" -> JsString("v1"))
-    val client = mock[StandaloneAhcWSClient]
+    val client  = mock[StandaloneAhcWSClient]
     val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
       .withBody(jsValue)
       .asInstanceOf[StandaloneAhcWSRequest]
@@ -50,8 +55,8 @@ class JsonRequestSpec extends Specification with Mockito with AfterAll with Json
     val objectMapper = DefaultObjectMapper.instance
 
     implicit val jsonReadable = body(objectMapper)
-    val jsonNode = objectMapper.readTree("""{"k1":"v1"}""")
-    val client = mock[StandaloneAhcWSClient]
+    val jsonNode              = objectMapper.readTree("""{"k1":"v1"}""")
+    val client                = mock[StandaloneAhcWSClient]
     val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
       .withBody(jsonNode)
       .asInstanceOf[StandaloneAhcWSRequest]
@@ -65,7 +70,7 @@ class JsonRequestSpec extends Specification with Mockito with AfterAll with Json
     val json = io.Source.fromResource("test.json")(Codec.ISO8859).getLines.mkString
 
     val ahcResponse = mock[Response]
-    val response = new StandaloneAhcWSResponse(ahcResponse)
+    val response    = new StandaloneAhcWSResponse(ahcResponse)
 
     when(ahcResponse.getResponseBody(StandardCharsets.UTF_8)).thenReturn(json)
     when(ahcResponse.getContentType).thenReturn("application/json")
@@ -80,7 +85,7 @@ class JsonRequestSpec extends Specification with Mockito with AfterAll with Json
     val json = io.Source.fromResource("test.json")(Codec.ISO8859).getLines.mkString
 
     val ahcResponse = mock[Response]
-    val response = new StandaloneAhcWSResponse(ahcResponse)
+    val response    = new StandaloneAhcWSResponse(ahcResponse)
 
     when(ahcResponse.getResponseBody(StandardCharsets.ISO_8859_1)).thenReturn(json)
     when(ahcResponse.getContentType).thenReturn("application/json;charset=iso-8859-1")

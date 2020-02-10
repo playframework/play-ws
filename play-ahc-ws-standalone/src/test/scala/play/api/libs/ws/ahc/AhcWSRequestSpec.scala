@@ -16,19 +16,28 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
 
-import play.api.libs.oauth.{ ConsumerKey, RequestToken, OAuthCalculator }
+import play.api.libs.oauth.ConsumerKey
+import play.api.libs.oauth.RequestToken
+import play.api.libs.oauth.OAuthCalculator
 import play.api.libs.ws._
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames
 import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
-import play.shaded.ahc.org.asynchttpclient.{ SignatureCalculator, Param, Request => AHCRequest }
+import play.shaded.ahc.org.asynchttpclient.SignatureCalculator
+import play.shaded.ahc.org.asynchttpclient.Param
+import play.shaded.ahc.org.asynchttpclient.{ Request => AHCRequest }
 
-class AhcWSRequestSpec extends Specification with Mockito with AfterAll with DefaultBodyReadables with DefaultBodyWritables {
+class AhcWSRequestSpec
+    extends Specification
+    with Mockito
+    with AfterAll
+    with DefaultBodyReadables
+    with DefaultBodyWritables {
 
   sequential
 
-  implicit val system = ActorSystem()
+  implicit val system       = ActorSystem()
   implicit val materializer = Materializer.matFromSystem
-  val wsClient = StandaloneAhcWSClient()
+  val wsClient              = StandaloneAhcWSClient()
 
   override def afterAll: Unit = {
     wsClient.close()
@@ -42,14 +51,16 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
   "Given the full URL" in {
 
     implicit val materializer = mock[akka.stream.Materializer]
-    val client = mock[StandaloneAhcWSClient]
+    val client                = mock[StandaloneAhcWSClient]
 
     "request withQueryStringParameters" in {
       val request = StandaloneAhcWSRequest(client, "http://example.com")
 
       request.uri.toString must equalTo("http://example.com")
       request.withQueryStringParameters("bar" -> "baz").uri.toString must equalTo("http://example.com?bar=baz")
-      request.withQueryStringParameters("bar" -> "baz", "bar" -> "bah").uri.toString must equalTo("http://example.com?bar=bah&bar=baz")
+      request.withQueryStringParameters("bar" -> "baz", "bar" -> "bah").uri.toString must equalTo(
+        "http://example.com?bar=bah&bar=baz"
+      )
     }
 
     "correctly URL-encode the query string part" in {
@@ -62,7 +73,9 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
       val request = StandaloneAhcWSRequest(client, "http://example.com")
 
       request.withQueryStringParameters("bar" -> "baz").uri.toString must equalTo("http://example.com?bar=baz")
-      request.withQueryStringParameters("bar" -> "baz", "bar" -> "bah").uri.toString must equalTo("http://example.com?bar=bah&bar=baz")
+      request.withQueryStringParameters("bar" -> "baz", "bar" -> "bah").uri.toString must equalTo(
+        "http://example.com?bar=bah&bar=baz"
+      )
     }
 
     "discard old query parameters when setting new ones" in {
@@ -71,7 +84,8 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
       request
         .withQueryStringParameters("bar" -> "baz")
         .withQueryStringParameters("bar" -> "bah")
-        .uri.toString must equalTo("http://example.com?bar=bah")
+        .uri
+        .toString must equalTo("http://example.com?bar=bah")
     }
 
     "add query string param" in {
@@ -80,7 +94,8 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
       request
         .withQueryStringParameters("bar" -> "baz")
         .addQueryStringParameters("bar" -> "bah")
-        .uri.toString must equalTo("http://example.com?bar=bah&bar=baz")
+        .uri
+        .toString must equalTo("http://example.com?bar=bah&bar=baz")
     }
 
     "support adding several query string values for a parameter" in {
@@ -96,7 +111,8 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
 
     "support several query string values for  a parameter" in {
       withClient { client =>
-        val req: AHCRequest = client.url("http://playframework.com/")
+        val req: AHCRequest = client
+          .url("http://playframework.com/")
           .withQueryStringParameters("foo" -> "foo1", "foo" -> "foo2")
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
@@ -252,12 +268,15 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
       withClient { client =>
         import scala.collection.JavaConverters._
 
-        val req: AHCRequest = client.url("http://playframework.com/")
+        val req: AHCRequest = client
+          .url("http://playframework.com/")
           .withHttpHeaders("content-type" -> "fake/contenttype; charset=utf-8")
           .withBody("I am a text/plain body")
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
-        req.getHeaders.getAll(HttpHeaderNames.CONTENT_TYPE.toString()).asScala must_== Seq("fake/contenttype; charset=utf-8")
+        req.getHeaders.getAll(HttpHeaderNames.CONTENT_TYPE.toString()).asScala must_== Seq(
+          "fake/contenttype; charset=utf-8"
+        )
       }
     }
 
@@ -328,7 +347,8 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
 
     "Have form params for content type application/x-www-form-urlencoded" in {
       withClient { client =>
-        val req: AHCRequest = client.url("http://playframework.com/")
+        val req: AHCRequest = client
+          .url("http://playframework.com/")
           .withBody(Map("param1" -> Seq("value1")))
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
@@ -339,15 +359,19 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
     "Have form params for content type application/x-www-form-urlencoded when signed" in {
       withClient { client =>
         import scala.collection.JavaConverters._
-        val consumerKey = ConsumerKey("key", "secret")
+        val consumerKey  = ConsumerKey("key", "secret")
         val requestToken = RequestToken("token", "secret")
-        val calc = OAuthCalculator(consumerKey, requestToken)
-        val req: AHCRequest = client.url("http://playframework.com/").withBody(Map("param1" -> Seq("value1")))
+        val calc         = OAuthCalculator(consumerKey, requestToken)
+        val req: AHCRequest = client
+          .url("http://playframework.com/")
+          .withBody(Map("param1" -> Seq("value1")))
           .sign(calc)
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
         // Note we use getFormParams instead of getByteData here.
-        req.getFormParams.asScala must containTheSameElementsAs(List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1")))
+        req.getFormParams.asScala must containTheSameElementsAs(
+          List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1"))
+        )
         req.getByteData must beNull // should NOT result in byte data.
 
         val headers = req.getHeaders
@@ -357,10 +381,11 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
 
     "Parse no params for empty params map" in {
       withClient { client =>
-        val consumerKey = ConsumerKey("key", "secret")
+        val consumerKey  = ConsumerKey("key", "secret")
         val requestToken = RequestToken("token", "secret")
-        val calc = OAuthCalculator(consumerKey, requestToken)
-        val reqEmptyParams: AHCRequest = client.url("http://playframework.com/")
+        val calc         = OAuthCalculator(consumerKey, requestToken)
+        val reqEmptyParams: AHCRequest = client
+          .url("http://playframework.com/")
           .withBody(Map.empty[String, Seq[String]])
           .sign(calc)
           .asInstanceOf[StandaloneAhcWSRequest]
@@ -372,7 +397,8 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
 
     "Have form body for content type text/plain" in {
       withClient { client =>
-        val req: AHCRequest = client.url("http://playframework.com/")
+        val req: AHCRequest = client
+          .url("http://playframework.com/")
           .withHttpHeaders(HttpHeaderNames.CONTENT_TYPE.toString() -> "text/plain")
           .withBody("HELLO WORLD")
           .asInstanceOf[StandaloneAhcWSRequest]
@@ -386,7 +412,8 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
 
     "Have form body for content type application/x-www-form-urlencoded explicitly set" in {
       withClient { client =>
-        val req: AHCRequest = client.url("http://playframework.com/")
+        val req: AHCRequest = client
+          .url("http://playframework.com/")
           .withHttpHeaders(HttpHeaderNames.CONTENT_TYPE.toString() -> "application/x-www-form-urlencoded") // set content type by hand
           .withBody("HELLO WORLD") // and body is set to string (see #5221)
           .asInstanceOf[StandaloneAhcWSRequest]
@@ -397,7 +424,8 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
 
     "Send binary data as is" in withClient { client =>
       val binData = ByteString((0 to 511).map(_.toByte).toArray)
-      val req: AHCRequest = client.url("http://playframework.com/")
+      val req: AHCRequest = client
+        .url("http://playframework.com/")
         .addHttpHeaders(HttpHeaderNames.CONTENT_TYPE.toString() -> "application/x-custom-bin-data")
         .withBody(binData)
         .asInstanceOf[StandaloneAhcWSRequest]
@@ -408,7 +436,8 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
 
     "Preserve existing headers when setting the body" in {
       withClient { client =>
-        val req: AHCRequest = client.url("http://playframework.com/")
+        val req: AHCRequest = client
+          .url("http://playframework.com/")
           .withHttpHeaders("Some-Header" -> "Some-Value")
           .withBody("HELLO WORLD") // will set content-type header
           .asInstanceOf[StandaloneAhcWSRequest]
@@ -421,37 +450,62 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
   "When using a Proxy Server" in {
 
     "support a proxy server with basic" in withClient { client =>
-      val proxy = DefaultWSProxyServer(protocol = Some("https"), host = "localhost", port = 8080, principal = Some("principal"), password = Some("password"))
-      val req: AHCRequest = client.url("http://playframework.com/").withProxyServer(proxy).asInstanceOf[StandaloneAhcWSRequest].buildRequest()
+      val proxy = DefaultWSProxyServer(
+        protocol = Some("https"),
+        host = "localhost",
+        port = 8080,
+        principal = Some("principal"),
+        password = Some("password")
+      )
+      val req: AHCRequest = client
+        .url("http://playframework.com/")
+        .withProxyServer(proxy)
+        .asInstanceOf[StandaloneAhcWSRequest]
+        .buildRequest()
       val actual = req.getProxyServer
 
-      actual.getHost must be equalTo "localhost"
-      actual.getPort must be equalTo 8080
-      actual.getRealm.getPrincipal must be equalTo "principal"
-      actual.getRealm.getPassword must be equalTo "password"
-      actual.getRealm.getScheme must be equalTo AuthScheme.BASIC
+      (actual.getHost must be).equalTo("localhost")
+      (actual.getPort must be).equalTo(8080)
+      (actual.getRealm.getPrincipal must be).equalTo("principal")
+      (actual.getRealm.getPassword must be).equalTo("password")
+      (actual.getRealm.getScheme must be).equalTo(AuthScheme.BASIC)
     }
 
     "support a proxy server with NTLM" in withClient { client =>
-      val proxy = DefaultWSProxyServer(protocol = Some("ntlm"), host = "localhost", port = 8080, principal = Some("principal"), password = Some("password"), ntlmDomain = Some("somentlmdomain"))
-      val req: AHCRequest = client.url("http://playframework.com/").withProxyServer(proxy).asInstanceOf[StandaloneAhcWSRequest].buildRequest()
+      val proxy = DefaultWSProxyServer(
+        protocol = Some("ntlm"),
+        host = "localhost",
+        port = 8080,
+        principal = Some("principal"),
+        password = Some("password"),
+        ntlmDomain = Some("somentlmdomain")
+      )
+      val req: AHCRequest = client
+        .url("http://playframework.com/")
+        .withProxyServer(proxy)
+        .asInstanceOf[StandaloneAhcWSRequest]
+        .buildRequest()
       val actual = req.getProxyServer
 
-      actual.getHost must be equalTo "localhost"
-      actual.getPort must be equalTo 8080
-      actual.getRealm.getPrincipal must be equalTo "principal"
-      actual.getRealm.getPassword must be equalTo "password"
-      actual.getRealm.getNtlmDomain must be equalTo "somentlmdomain"
-      actual.getRealm.getScheme must be equalTo AuthScheme.NTLM
+      (actual.getHost must be).equalTo("localhost")
+      (actual.getPort must be).equalTo(8080)
+      (actual.getRealm.getPrincipal must be).equalTo("principal")
+      (actual.getRealm.getPassword must be).equalTo("password")
+      (actual.getRealm.getNtlmDomain must be).equalTo("somentlmdomain")
+      (actual.getRealm.getScheme must be).equalTo(AuthScheme.NTLM)
     }
 
     "support a proxy server" in withClient { client =>
       val proxy = DefaultWSProxyServer(host = "localhost", port = 8080)
-      val req: AHCRequest = client.url("http://playframework.com/").withProxyServer(proxy).asInstanceOf[StandaloneAhcWSRequest].buildRequest()
+      val req: AHCRequest = client
+        .url("http://playframework.com/")
+        .withProxyServer(proxy)
+        .asInstanceOf[StandaloneAhcWSRequest]
+        .buildRequest()
       val actual = req.getProxyServer
 
-      actual.getHost must be equalTo "localhost"
-      actual.getPort must be equalTo 8080
+      (actual.getHost must be).equalTo("localhost")
+      (actual.getPort must be).equalTo(8080)
       actual.getRealm must beNull
     }
   }
@@ -459,7 +513,8 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
   "StandaloneAhcWSRequest supports" in {
 
     "replace url" in withClient { client =>
-      val req = client.url("http://playframework.com/")
+      val req = client
+        .url("http://playframework.com/")
         .withUrl("http://www.example.com/")
       req.url must_=== "http://www.example.com/"
     }
@@ -468,13 +523,16 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
       var called = false
       val calc = new SignatureCalculator with WSSignatureCalculator {
         override def calculateAndAddSignature(
-          request: play.shaded.ahc.org.asynchttpclient.Request,
-          requestBuilder: play.shaded.ahc.org.asynchttpclient.RequestBuilderBase[_]): Unit = {
+            request: play.shaded.ahc.org.asynchttpclient.Request,
+            requestBuilder: play.shaded.ahc.org.asynchttpclient.RequestBuilderBase[_]
+        ): Unit = {
           called = true
         }
       }
       withClient { client =>
-        client.url("http://playframework.com/").sign(calc)
+        client
+          .url("http://playframework.com/")
+          .sign(calc)
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
         called must beTrue
@@ -482,31 +540,39 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
     }
 
     "a virtual host" in withClient { client =>
-      val req: AHCRequest = client.url("http://playframework.com/")
-        .withVirtualHost("192.168.1.1").asInstanceOf[StandaloneAhcWSRequest]
+      val req: AHCRequest = client
+        .url("http://playframework.com/")
+        .withVirtualHost("192.168.1.1")
+        .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
-      req.getVirtualHost must be equalTo "192.168.1.1"
+      (req.getVirtualHost must be).equalTo("192.168.1.1")
     }
 
     "follow redirects" in withClient { client =>
-      val req: AHCRequest = client.url("http://playframework.com/")
-        .withFollowRedirects(follow = true).asInstanceOf[StandaloneAhcWSRequest]
+      val req: AHCRequest = client
+        .url("http://playframework.com/")
+        .withFollowRedirects(follow = true)
+        .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
       req.getFollowRedirect must beEqualTo(true)
     }
 
     "finite timeout" in withClient { client =>
-      val req: AHCRequest = client.url("http://playframework.com/")
-        .withRequestTimeout(1000.millis).asInstanceOf[StandaloneAhcWSRequest]
+      val req: AHCRequest = client
+        .url("http://playframework.com/")
+        .withRequestTimeout(1000.millis)
+        .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
-      req.getRequestTimeout must be equalTo 1000
+      (req.getRequestTimeout must be).equalTo(1000)
     }
 
     "infinite timeout" in withClient { client =>
-      val req: AHCRequest = client.url("http://playframework.com/")
-        .withRequestTimeout(Duration.Inf).asInstanceOf[StandaloneAhcWSRequest]
+      val req: AHCRequest = client
+        .url("http://playframework.com/")
+        .withRequestTimeout(Duration.Inf)
+        .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
-      req.getRequestTimeout must be equalTo -1
+      (req.getRequestTimeout must be).equalTo(-1)
     }
 
     "no negative timeout" in withClient { client =>
@@ -514,13 +580,16 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
     }
 
     "no timeout greater than Int.MaxValue" in withClient { client =>
-      client.url("http://playframework.com/").withRequestTimeout((Int.MaxValue.toLong + 1).millis) should throwAn[IllegalArgumentException]
+      client
+        .url("http://playframework.com/")
+        .withRequestTimeout((Int.MaxValue.toLong + 1).millis) should throwAn[IllegalArgumentException]
     }
   }
 
   "Set Realm.UsePreemptiveAuth" in {
     "to false when WSAuthScheme.DIGEST being used" in withClient { client =>
-      val req = client.url("http://playframework.com/")
+      val req = client
+        .url("http://playframework.com/")
         .withAuth("usr", "pwd", WSAuthScheme.DIGEST)
         .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
@@ -528,7 +597,8 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
     }
 
     "to true when WSAuthScheme.DIGEST not being used" in withClient { client =>
-      val req = client.url("http://playframework.com/")
+      val req = client
+        .url("http://playframework.com/")
         .withAuth("usr", "pwd", WSAuthScheme.BASIC)
         .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
@@ -537,7 +607,9 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
   }
 
   "Not remove a user defined content length header" in withClient { client =>
-    val req: AHCRequest = client.url("http://playframework.com/").withBody(Map("param1" -> Seq("value1")))
+    val req: AHCRequest = client
+      .url("http://playframework.com/")
+      .withBody(Map("param1" -> Seq("value1")))
       .withHttpHeaders("Content-Length" -> "9001") // add a meaningless content length here...
       .asInstanceOf[StandaloneAhcWSRequest]
       .buildRequest()
@@ -550,10 +622,12 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
 
   "Remove a user defined content length header if we are parsing body explicitly when signed" in withClient { client =>
     import scala.collection.JavaConverters._
-    val consumerKey = ConsumerKey("key", "secret")
+    val consumerKey  = ConsumerKey("key", "secret")
     val requestToken = RequestToken("token", "secret")
-    val calc = OAuthCalculator(consumerKey, requestToken)
-    val req: AHCRequest = client.url("http://playframework.com/").withBody(Map("param1" -> Seq("value1")))
+    val calc         = OAuthCalculator(consumerKey, requestToken)
+    val req: AHCRequest = client
+      .url("http://playframework.com/")
+      .withBody(Map("param1" -> Seq("value1")))
       .withHttpHeaders("Content-Length" -> "9001") // add a meaningless content length here...
       .sign(calc) // this is signed, so content length is no longer valid per #5221
       .asInstanceOf[StandaloneAhcWSRequest]
@@ -561,13 +635,16 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
 
     val headers = req.getHeaders
     req.getByteData must beNull // should NOT result in byte data.
-    req.getFormParams.asScala must containTheSameElementsAs(List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1")))
+    req.getFormParams.asScala must containTheSameElementsAs(
+      List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1"))
+    )
     headers.get("Content-Length") must beNull // no content length!
   }
 
   "Verify Content-Type header is passed through correctly" in withClient { client =>
     import scala.collection.JavaConverters._
-    val req: AHCRequest = client.url("http://playframework.com/")
+    val req: AHCRequest = client
+      .url("http://playframework.com/")
       .withHttpHeaders(HttpHeaderNames.CONTENT_TYPE.toString() -> "text/plain; charset=US-ASCII")
       .withBody("HELLO WORLD")
       .asInstanceOf[StandaloneAhcWSRequest]

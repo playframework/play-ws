@@ -11,6 +11,7 @@ import scala.xml.InputSource
 trait XMLBodyReadables {
 
   import scala.xml.Elem
+
   /**
    * Converts a response body into XML document:
    *

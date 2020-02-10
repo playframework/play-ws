@@ -11,7 +11,8 @@ import org.specs2.concurrent.ExecutionEnv
 import org.specs2.specification.BeforeAfterAll
 
 import scala.concurrent.duration._
-import scala.concurrent.{ Await, Future }
+import scala.concurrent.Await
+import scala.concurrent.Future
 import akka.stream.Materializer
 
 trait AkkaServerProvider extends BeforeAfterAll {
@@ -26,11 +27,11 @@ trait AkkaServerProvider extends BeforeAfterAll {
    */
   def executionEnv: ExecutionEnv
 
-  var testServerPort: Int = _
+  var testServerPort: Int            = _
   val defaultTimeout: FiniteDuration = 5.seconds
 
   // Create Akka system for thread and streaming management
-  implicit val system = ActorSystem()
+  implicit val system       = ActorSystem()
   implicit val materializer = Materializer.matFromSystem
 
   lazy val futureServer: Future[Http.ServerBinding] = {

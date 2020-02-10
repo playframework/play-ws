@@ -11,6 +11,7 @@ import akka.util.ByteString
  * A WS HTTP response.
  */
 trait StandaloneWSResponse {
+
   /**
    * Returns the URI for this response, which can differ from the request one
    * in case of redirection.

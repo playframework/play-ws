@@ -67,18 +67,20 @@ trait WSCookie {
 }
 
 case class DefaultWSCookie(
-  name: String,
-  value: String,
-  domain: Option[String] = None,
-  path: Option[String] = None,
-  maxAge: Option[Long] = None,
-  secure: Boolean = false,
-  httpOnly: Boolean = false) extends WSCookie
+    name: String,
+    value: String,
+    domain: Option[String] = None,
+    path: Option[String] = None,
+    maxAge: Option[Long] = None,
+    secure: Boolean = false,
+    httpOnly: Boolean = false
+) extends WSCookie
 
 /**
  * A WS proxy.
  */
 trait WSProxyServer {
+
   /** The hostname of the proxy server. */
   def host: String
 
@@ -106,27 +108,21 @@ trait WSProxyServer {
  * A WS proxy.
  */
 case class DefaultWSProxyServer(
-  /* The hostname of the proxy server. */
-  host: String,
-
-  /* The port of the proxy server. */
-  port: Int,
-
-  /* The protocol of the proxy server.  Use "http" or "https".  Defaults to "http" if not specified. */
-  protocol: Option[String] = None,
-
-  /* The principal (aka username) of the credentials for the proxy server. */
-  principal: Option[String] = None,
-
-  /* The password for the credentials for the proxy server. */
-  password: Option[String] = None,
-
-  ntlmDomain: Option[String] = None,
-
-  /* The realm's charset. */
-  encoding: Option[String] = None,
-
-  nonProxyHosts: Option[Seq[String]] = None) extends WSProxyServer
+    /* The hostname of the proxy server. */
+    host: String,
+    /* The port of the proxy server. */
+    port: Int,
+    /* The protocol of the proxy server.  Use "http" or "https".  Defaults to "http" if not specified. */
+    protocol: Option[String] = None,
+    /* The principal (aka username) of the credentials for the proxy server. */
+    principal: Option[String] = None,
+    /* The password for the credentials for the proxy server. */
+    password: Option[String] = None,
+    ntlmDomain: Option[String] = None,
+    /* The realm's charset. */
+    encoding: Option[String] = None,
+    nonProxyHosts: Option[Seq[String]] = None
+) extends WSProxyServer
 
 /**
  * Sign a WS call with OAuth.

@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory
 import play.api.libs.ws._
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils
 import play.api.libs.ws.EmptyBody
+
 /**
  * Logs StandaloneWSRequest and pulls information into Curl format to an SLF4J logger.
  *
@@ -55,7 +56,8 @@ trait CurlFormat {
     //authentication
     request.auth match {
       case Some((userName, password, WSAuthScheme.BASIC)) =>
-        val encodedPassword = Base64.getUrlEncoder.encodeToString(s"$userName:$password".getBytes(StandardCharsets.US_ASCII))
+        val encodedPassword =
+          Base64.getUrlEncoder.encodeToString(s"$userName:$password".getBytes(StandardCharsets.US_ASCII))
         b.append(s"""  --header 'Authorization: Basic ${quote(encodedPassword)}'""")
         b.append(" \\\n")
       case _ => ()
@@ -79,7 +81,7 @@ trait CurlFormat {
     // body (note that this has only been checked for text, not binary)
     request.body match {
       case (InMemoryBody(byteString)) =>
-        val charset = findCharset(request)
+        val charset    = findCharset(request)
         val bodyString = byteString.decodeString(charset)
         // XXX Need to escape any quotes within the body of the string.
         b.append(s"  --data '${quote(bodyString)}'")
@@ -92,7 +94,7 @@ trait CurlFormat {
     // pull out some underlying values from the request.  This creates a new Request
     // but should be harmless.
     val asyncHttpRequest = request.buildRequest()
-    val proxyServer = asyncHttpRequest.getProxyServer
+    val proxyServer      = asyncHttpRequest.getProxyServer
     if (proxyServer != null) {
       b.append(s"  --proxy ${proxyServer.getHost}:${proxyServer.getPort}")
       b.append(" \\\n")
@@ -106,11 +108,15 @@ trait CurlFormat {
   }
 
   protected def findCharset(request: StandaloneAhcWSRequest): String = {
-    request.contentType.map { ct =>
-      Option(HttpUtils.extractContentTypeCharsetAttribute(ct)).getOrElse {
-        StandardCharsets.UTF_8
-      }.name()
-    }.getOrElse(HttpUtils.extractContentTypeCharsetAttribute("UTF-8").name())
+    request.contentType
+      .map { ct =>
+        Option(HttpUtils.extractContentTypeCharsetAttribute(ct))
+          .getOrElse {
+            StandardCharsets.UTF_8
+          }
+          .name()
+      }
+      .getOrElse(HttpUtils.extractContentTypeCharsetAttribute("UTF-8").name())
   }
 
   def quote(unsafe: String): String = unsafe.replace("'", "'\\''")
