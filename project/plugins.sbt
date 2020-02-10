@@ -1,7 +1,7 @@
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
 resolvers += Resolver.typesafeRepo("releases")
 
-val scalafmt = "2.0.1"
+val scalafmt = "2.0.7"
 
 // TODO remove when https://github.com/lightbend/mima/issues/422 is fixed
 resolvers += Resolver.url(
@@ -11,7 +11,7 @@ resolvers += Resolver.url(
 
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.8.1")
 
-addSbtPlugin("com.jsuereth" % "sbt-pgp" % "2.0.1")
+addSbtPlugin("com.jsuereth" % "sbt-pgp" % "2.0.7")
 
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.10")
 
