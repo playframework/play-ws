@@ -12,7 +12,7 @@ scala:
   - 2.13.1
 
 before_install: curl -Ls https://git.io/jabba | bash && . ~/.jabba/jabba.sh
-install: jabba install "adopt@~1.$TRAVIS_JDK.0-0" && jabba use "$_" && java -Xmx32m -version
+install: jabba install $(jabba ls-remote "adopt@~1.$TRAVIS_JDK.0-0" --latest=patch) && jabba use "$_" && java -Xmx32m -version
 
 script:
   - sbt ++$TRAVIS_SCALA_VERSION 'testOnly -- xonly timefactor 5' mimaReportBinaryIssues validateCode doc
