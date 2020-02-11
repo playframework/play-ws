@@ -239,7 +239,7 @@ In Scala, the way to call out to a web service and close down the client:
 package playwsclient
 
 import akka.actor.ActorSystem
-import akka.stream.Materializer
+import akka.stream._
 import play.api.libs.ws._
 import play.api.libs.ws.ahc._
 
@@ -256,7 +256,7 @@ object ScalaClient {
       System.exit(0)
     }
 
-    implicit val materializer = Materializer.matFromSystem
+    implicit val materializer = SystemMaterializer(actorSystem).materializer
 
     // Create the standalone WS client
     // no argument defaults to a AhcWSClientConfig created from
@@ -286,7 +286,7 @@ In Java the API is much the same, except that an instance of AsyncHttpClient has
 package playwsclient;
 
 import akka.actor.ActorSystem;
-import akka.stream.Materializer;
+import akka.stream.*;
 import com.typesafe.config.ConfigFactory;
 
 import play.libs.ws.*;
@@ -301,7 +301,7 @@ public class JavaClient implements DefaultBodyReadables {
         final String name = "wsclient";
         ActorSystem system = ActorSystem.create(name);
         system.registerOnTermination(() -> System.exit(0));
-        final Materializer materializer = Materializer.matFromSystem(system);
+        Materializer materializer = SystemMaterializer.get(system).materializer();
 
         // Create the WS client from the `application.conf` file, the current classloader and materializer.
         StandaloneAhcWSClient ws = StandaloneAhcWSClient.create(
