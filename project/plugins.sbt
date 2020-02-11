@@ -3,12 +3,6 @@ resolvers += Resolver.typesafeRepo("releases")
 
 val scalafmt = "2.0.1"
 
-// TODO remove when https://github.com/lightbend/mima/issues/422 is fixed
-resolvers += Resolver.url(
-  "typesafe sbt-plugins",
-  url("https://dl.bintray.com/typesafe/sbt-plugins")
-)(Resolver.ivyStylePatterns)
-
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.8.1")
 
 addSbtPlugin("com.jsuereth" % "sbt-pgp" % "2.0.1")
