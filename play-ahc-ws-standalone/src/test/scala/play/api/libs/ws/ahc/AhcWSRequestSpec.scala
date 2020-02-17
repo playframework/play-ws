@@ -414,7 +414,10 @@ class AhcWSRequestSpec
       withClient { client =>
         val req: AHCRequest = client
           .url("http://playframework.com/")
-          .withHttpHeaders(HttpHeaderNames.CONTENT_TYPE.toString() -> "application/x-www-form-urlencoded") // set content type by hand
+          .withHttpHeaders(
+            // set content type by hand
+            HttpHeaderNames.CONTENT_TYPE.toString() -> "application/x-www-form-urlencoded"
+          )
           .withBody("HELLO WORLD") // and body is set to string (see #5221)
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
