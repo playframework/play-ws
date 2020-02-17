@@ -88,8 +88,12 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
 
-        req.getHeaders.get(HttpHeaderNames.CONTENT_TYPE) must be_==("text/plain+hello; charset=UTF-8") // preserve the content type
-        req.getStringData must be_==("HELLO WORLD")                                                    // should result in byte data.
+        // preserve the content type
+        req.getHeaders.get(HttpHeaderNames.CONTENT_TYPE) must be_==(
+          "text/plain+hello; charset=UTF-8"
+        )
+        // should result in byte data.
+        req.getStringData must be_==("HELLO WORLD")
       }
 
       "have form params when passing in map" in {
