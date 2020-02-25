@@ -356,6 +356,14 @@ public interface StandaloneWSRequest {
      */
     StandaloneWSRequest setContentType(String contentType);
 
+    /**
+     * Sets the proxy server.
+     *
+     * @param proxyServer the proxy server
+     * @return the modified WSRequest
+     */
+    StandaloneWSRequest setProxyServer(WSProxyServer proxyServer);
+
     //-------------------------------------------------------------------------
     // Getters
     //-------------------------------------------------------------------------
@@ -440,6 +448,8 @@ public interface StandaloneWSRequest {
      * @see WSAuthInfo
      */
     Optional<WSAuthInfo> getAuth();
+
+    Optional<WSProxyServer> getProxyServer();
 
     /**
      * @return the signature calculator (example: OAuth), or Optional.empty() if none is set.

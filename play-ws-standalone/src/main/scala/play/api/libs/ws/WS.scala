@@ -86,8 +86,11 @@ trait WSProxyServer {
   /** The port of the proxy server. */
   def port: Int
 
-  /** The protocol of the proxy server.  Use "http" or "https".  Defaults to "http" if not specified. */
+  /** The protocol of the proxy server: "kerberos", "ntlm", "https" etc.  Defaults to "http" if not specified. */
   def protocol: Option[String]
+
+  /** The proxy type, "http", "socksv4", or "socksv5".  Defaults to "http" if not specified. */
+  def proxyType: Option[String]
 
   /** The principal (aka username) of the credentials for the proxy server. */
   def principal: Option[String]
@@ -107,18 +110,13 @@ trait WSProxyServer {
  * A WS proxy.
  */
 case class DefaultWSProxyServer(
-    /* The hostname of the proxy server. */
     host: String,
-    /* The port of the proxy server. */
     port: Int,
-    /* The protocol of the proxy server.  Use "http" or "https".  Defaults to "http" if not specified. */
     protocol: Option[String] = None,
-    /* The principal (aka username) of the credentials for the proxy server. */
+    proxyType: Option[String] = None,
     principal: Option[String] = None,
-    /* The password for the credentials for the proxy server. */
     password: Option[String] = None,
     ntlmDomain: Option[String] = None,
-    /* The realm's charset. */
     encoding: Option[String] = None,
     nonProxyHosts: Option[Seq[String]] = None
 ) extends WSProxyServer
