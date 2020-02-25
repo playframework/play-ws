@@ -13,9 +13,11 @@ import org.specs2.mutable._
 import play.libs.oauth.OAuth
 import play.libs.ws._
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames
+import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
 import play.shaded.ahc.org.asynchttpclient.Request
 import play.shaded.ahc.org.asynchttpclient.RequestBuilderBase
 import play.shaded.ahc.org.asynchttpclient.SignatureCalculator
+import play.shaded.ahc.org.asynchttpclient.proxy.ProxyType
 
 import scala.jdk.CollectionConverters._
 import scala.collection.mutable
@@ -173,6 +175,36 @@ class AhcWSRequestSpec extends Specification with DefaultBodyReadables with Defa
         headers.get("Content-Length") must beNull // no content length!
       }
 
+    }
+
+    "Use a proxy server" in {
+      val client = StandaloneAhcWSClient.create(
+        AhcWSClientConfigFactory.forConfig(ConfigFactory.load(), this.getClass.getClassLoader), /*materializer*/ null
+      )
+      val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+      val proxyServer = DefaultWSProxyServer
+        .builder()
+        .withHost("localhost")
+        .withPort(8080)
+        .withPrincipal("principal")
+        .withPassword("password")
+        .withProxyType("socksv5")
+        .withNonProxyHosts(java.util.Arrays.asList("derp"))
+        .build()
+
+      val req = request
+        .setProxyServer(proxyServer)
+        .asInstanceOf[StandaloneAhcWSRequest]
+        .buildRequest()
+      val actual = req.getProxyServer
+
+      (actual.getHost must be).equalTo("localhost")
+      (actual.getPort must be).equalTo(8080)
+      (actual.getRealm.getPrincipal must be).equalTo("principal")
+      (actual.getRealm.getPassword must be).equalTo("password")
+      (actual.getRealm.getScheme must be).equalTo(AuthScheme.BASIC)
+      (actual.getProxyType must be).equalTo(ProxyType.SOCKS_V5)
+      (actual.getNonProxyHosts.asScala must contain("derp"))
     }
 
     "Use a custom signature calculator" in {
