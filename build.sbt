@@ -5,6 +5,7 @@ import Dependencies._
 import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
 import com.typesafe.tools.mima.core.ProblemFilters
 import com.typesafe.tools.mima.core._
+import play.ws.AutomaticModuleName
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
 import org.scalafmt.sbt.ScalafmtPlugin
@@ -299,6 +300,7 @@ lazy val `play-ws-standalone` = project
   .settings(commonSettings)
   .settings(mimaSettings)
   .settings(libraryDependencies ++= standaloneApiWSDependencies)
+  .settings(AutomaticModuleName.settings("play.ws.standalone"))
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
@@ -348,6 +350,7 @@ lazy val `play-ahc-ws-standalone` = project
     )
   )
   .settings(mimaSettings)
+  .settings(AutomaticModuleName.settings("play.ws.standalone.ahc"))
   .dependsOn(
     `play-ws-standalone`
   )
@@ -366,6 +369,7 @@ lazy val `play-ws-standalone-json` = project
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
     libraryDependencies ++= standaloneAhcWSJsonDependencies
   )
+  .settings(AutomaticModuleName.settings("play.ws.standalone.json"))
   .dependsOn(
     `play-ws-standalone`
   )
@@ -384,6 +388,7 @@ lazy val `play-ws-standalone-xml` = project
     testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
     libraryDependencies ++= standaloneAhcWSXMLDependencies
   )
+  .settings(AutomaticModuleName.settings("play.ws.standalone.xml"))
   .dependsOn(
     `play-ws-standalone`
   )
