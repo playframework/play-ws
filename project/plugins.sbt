@@ -13,7 +13,7 @@ addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.13")
 
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % scalafmt)
 
-addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.6.4")
+addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.7.0")
 
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.4.0")
 
