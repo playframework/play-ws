@@ -21,7 +21,7 @@ object Dependencies {
 
   val junitInterface = Seq("com.novocode" % "junit-interface" % "0.11")
 
-  val scalaJava8Compat = Seq("org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0")
+  val scalaJava8Compat = Seq("org.scala-lang.modules" %% "scala-java8-compat" % "0.9.1")
 
   val playJsonVersion = "2.8.1"
   val playJson        = Seq("com.typesafe.play" %% "play-json" % playJsonVersion)
@@ -30,7 +30,7 @@ object Dependencies {
 
   val javaxInject = Seq("javax.inject" % "javax.inject" % "1")
 
-  val sslConfigVersion = "0.4.1"
+  val sslConfigVersion = "0.4.2"
   val sslConfigCore    = Seq("com.typesafe" %% "ssl-config-core" % sslConfigVersion)
 
   val scalaXmlVersion = "1.2.0"

@@ -209,8 +209,8 @@ class AhcConfigBuilderSpec extends Specification with Mockito {
           import scala.collection.JavaConverters._
           // Pass in a configuration which is guaranteed to fail, by banning RSA, DSA and EC certificates
           val underlyingConfig  = parseSSLConfig("""
-                                                  |play.ws.ssl.default=true
-                                                  |play.ws.ssl.disabledKeyAlgorithms=["RSA", "DSA", "EC"]
+                                                   |play.ws.ssl.default=true
+                                                   |play.ws.ssl.disabledKeyAlgorithms=["RSA", "DSA", "EC"]
             """.stripMargin)
           val sslConfigSettings = SSLConfigFactory.parse(underlyingConfig)
 

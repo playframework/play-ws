@@ -278,9 +278,29 @@ object ScalaClient {
 }
 ```
 
+You can also create the standalone client directly from an AsyncHttpClient instance:
+
+```scala
+object ScalaClient {
+  def main(args: Array[String]): Unit = {
+    // Use 
+    import play.shaded.ahc.org.asynchttpclient._
+    val asyncHttpClientConfig = new DefaultAsyncHttpClientConfig.Builder()
+      .setMaxRequestRetry(0)
+      .setShutdownQuietPeriod(0)
+      .setShutdownTimeout(0).build
+    val asyncHttpClient = new DefaultAsyncHttpClient(asyncHttpClientConfig)
+    val wsClient = new StandaloneAhcWSClient(asyncHttpClient)
+    /// ...
+  }
+}
+```
+
+This is useful when there is an AsyncHttpClient configuration option that is not available in the WS config layer.
+
 ### Java
 
-In Java the API is much the same, except that an instance of AsyncHttpClient has to be passed in explicitly:
+In Java the API is much the same:
 
 ```java
 package playwsclient;
@@ -333,6 +353,28 @@ public class JavaClient implements DefaultBodyReadables {
                     }
                 })
                 .thenRun(system::terminate);
+    }
+}
+```
+
+Likewise, you can provide the AsyncHttpClient client explicitly from configuration:
+
+```java
+public class JavaClient implements DefaultBodyReadables {
+     public static void main(String[] args) { 
+        // ...
+        // Set up AsyncHttpClient directly from config
+        AsyncHttpClientConfig asyncHttpClientConfig =
+            new DefaultAsyncHttpClientConfig.Builder()
+                .setMaxRequestRetry(0)
+                .setShutdownQuietPeriod(0)
+                .setShutdownTimeout(0)
+                .build();
+        AsyncHttpClient asyncHttpClient = new DefaultAsyncHttpClient(asyncHttpClientConfig);
+    
+        // Set up WSClient instance directly from asynchttpclient.
+        WSClient client = new AhcWSClient(asyncHttpClient, materializer);
+        // ...
     }
 }
 ```
