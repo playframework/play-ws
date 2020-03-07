@@ -6,16 +6,13 @@ package play.api.libs.ws.ahc
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
-
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.util.ByteString
-
 import org.specs2.execute.Result
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
-
 import play.api.libs.oauth.ConsumerKey
 import play.api.libs.oauth.RequestToken
 import play.api.libs.oauth.OAuthCalculator
@@ -24,6 +21,7 @@ import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames
 import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
 import play.shaded.ahc.org.asynchttpclient.SignatureCalculator
 import play.shaded.ahc.org.asynchttpclient.Param
+import play.shaded.ahc.org.asynchttpclient.proxy.ProxyType
 import play.shaded.ahc.org.asynchttpclient.{ Request => AHCRequest }
 
 class AhcWSRequestSpec
@@ -457,8 +455,10 @@ class AhcWSRequestSpec
         protocol = Some("https"),
         host = "localhost",
         port = 8080,
+        proxyType = Some("socksv5"),
         principal = Some("principal"),
-        password = Some("password")
+        password = Some("password"),
+        nonProxyHosts = Some(List("derp"))
       )
       val req: AHCRequest = client
         .url("http://playframework.com/")
@@ -472,6 +472,8 @@ class AhcWSRequestSpec
       (actual.getRealm.getPrincipal must be).equalTo("principal")
       (actual.getRealm.getPassword must be).equalTo("password")
       (actual.getRealm.getScheme must be).equalTo(AuthScheme.BASIC)
+      (actual.getProxyType must be).equalTo(ProxyType.SOCKS_V5)
+      (actual.getNonProxyHosts.asScala must contain("derp"))
     }
 
     "support a proxy server with NTLM" in withClient { client =>

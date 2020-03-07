@@ -1,10 +1,8 @@
 import java.io.File
 
 import Dependencies._
-
 import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
-import com.typesafe.tools.mima.core.ProblemFilters
-import com.typesafe.tools.mima.core._
+import com.typesafe.tools.mima.core.{ProblemFilters, _}
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
 import org.scalafmt.sbt.ScalafmtPlugin
@@ -77,7 +75,27 @@ lazy val mimaSettings = mimaDefaultSettings ++ Seq(
     ProblemFilters.exclude[IncompatibleSignatureProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.curried"),
     ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.apply"),
     ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.copy"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.this")
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.this"),
+
+    // ProxyServer support
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getProxyServer"),
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.setProxyServer"),
+    ProblemFilters.exclude[IncompatibleSignatureProblem]("play.api.libs.ws.DefaultWSProxyServer.<init>$default$8"),
+    ProblemFilters.exclude[IncompatibleSignatureProblem]("play.api.libs.ws.DefaultWSProxyServer.unapply"),
+    ProblemFilters.exclude[IncompatibleSignatureProblem]("play.api.libs.ws.DefaultWSProxyServer.apply$default$8"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.DefaultWSProxyServer.apply"),
+    ProblemFilters.exclude[IncompatibleSignatureProblem]("play.api.libs.ws.DefaultWSProxyServer.tupled"),
+    ProblemFilters.exclude[IncompatibleSignatureProblem]("play.api.libs.ws.DefaultWSProxyServer.curried"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.DefaultWSProxyServer.copy"),
+    ProblemFilters.exclude[IncompatibleSignatureProblem]("play.api.libs.ws.DefaultWSProxyServer.copy$default$8"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.DefaultWSProxyServer.this"),
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.api.libs.ws.WSProxyServer.proxyType"),
+    ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.DefaultWSProxyServer$"),
+    ProblemFilters.exclude[IncompatibleSignatureProblem]("play.api.libs.ws.DefaultWSProxyServer.<init>$default$8"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.DefaultWSProxyServer.apply"),
+    ProblemFilters.exclude[IncompatibleSignatureProblem]("play.api.libs.ws.DefaultWSProxyServer.apply$default$8"),
+    ProblemFilters.exclude[IncompatibleSignatureProblem]("play.api.libs.ws.DefaultWSProxyServer.unapply")
+
   )
 )
 

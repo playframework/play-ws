@@ -25,22 +25,17 @@ import play.shaded.ahc.org.asynchttpclient.Request;
 import play.shaded.ahc.org.asynchttpclient.RequestBuilder;
 import play.shaded.ahc.org.asynchttpclient.SignatureCalculator;
 
+import play.shaded.ahc.org.asynchttpclient.proxy.ProxyServer;
+import play.shaded.ahc.org.asynchttpclient.proxy.ProxyType;
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils;
 
 import java.net.MalformedURLException;
+import java.net.Proxy;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletionStage;
 
 import static java.util.Collections.singletonList;
@@ -66,6 +61,8 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
     private WSAuthInfo auth;
     private WSSignatureCalculator calculator;
+    private WSProxyServer proxyServer;
+
     private final StandaloneAhcWSClient client;
 
     private final Materializer materializer;
@@ -236,6 +233,15 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     @Override
+    public StandaloneWSRequest setProxyServer(WSProxyServer proxyServer) {
+        if (proxyServer == null) {
+            throw new IllegalArgumentException("proxyServer must not be null.");
+        }
+        this.proxyServer = proxyServer;
+        return this;
+    }
+
+    @Override
     public Optional<String> getContentType() {
         return getHeader(CONTENT_TYPE.toString());
     }
@@ -314,6 +320,11 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     @Override
     public Optional<WSAuthInfo> getAuth() {
         return Optional.ofNullable(this.auth);
+    }
+
+    @Override
+    public Optional<WSProxyServer> getProxyServer() {
+        return Optional.ofNullable(this.proxyServer);
     }
 
     @Override
@@ -509,7 +520,50 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
             builder.addCookie(ahcCookie);
         });
 
+        getProxyServer().ifPresent(ps -> builder.setProxyServer(createProxy(ps)));
+
         return builder.build();
+    }
+
+    private ProxyServer createProxy(WSProxyServer proxyServer) {
+        String host = proxyServer.getHost();
+        int port = proxyServer.getPort();
+        ProxyServer.Builder proxyBuilder = new ProxyServer.Builder(host, port);
+
+        proxyServer.getPrincipal().ifPresent(principal -> {
+            Realm.Builder realmBuilder = new Realm.Builder(principal, proxyServer.getPassword().orElse(null));
+            String protocol = proxyServer.getProtocol().orElse("http").toLowerCase(Locale.ENGLISH);
+            switch (protocol) {
+                case "http":
+                case "https":
+                    realmBuilder.setScheme(Realm.AuthScheme.BASIC);
+                case "kerberos":
+                    realmBuilder.setScheme(Realm.AuthScheme.KERBEROS);
+                case "ntlm":
+                    realmBuilder.setScheme(Realm.AuthScheme.NTLM);
+                case "spnego":
+                    realmBuilder.setScheme(Realm.AuthScheme.SPNEGO);
+                default:
+                    // Default to BASIC rather than throwing an error.
+                    realmBuilder.setScheme(Realm.AuthScheme.BASIC);
+            }
+            proxyServer.getEncoding().ifPresent(enc -> realmBuilder.setCharset(Charset.forName(enc)));
+            proxyServer.getNtlmDomain().ifPresent(realmBuilder::setNtlmDomain);
+            proxyBuilder.setRealm(realmBuilder);
+        });
+
+        String proxyType = proxyServer.getProxyType().orElse("http").toLowerCase(Locale.ENGLISH);
+        switch (proxyType) {
+            case "http":
+                proxyBuilder.setProxyType(ProxyType.HTTP);
+            case "socksv4":
+                proxyBuilder.setProxyType(ProxyType.SOCKS_V4);
+            case "socksv5":
+                proxyBuilder.setProxyType(ProxyType.SOCKS_V5);
+        }
+
+        proxyServer.getNonProxyHosts().ifPresent(proxyBuilder::setNonProxyHosts);
+        return proxyBuilder.build();
     }
 
     private static void addValueTo(Map<String, List<String>> map, String name, String value) {
