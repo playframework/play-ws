@@ -42,7 +42,7 @@ object Dependencies {
   val cachecontrolVersion = "2.0.0"
   val cachecontrol        = Seq("com.typesafe.play" %% "cachecontrol" % cachecontrolVersion)
 
-  val asyncHttpClientVersion = "2.10.5"
+  val asyncHttpClientVersion = "2.12.1"
   val asyncHttpClient        = Seq("org.asynchttpclient" % "async-http-client" % asyncHttpClientVersion)
 
   val akkaVersion = "2.6.3"
