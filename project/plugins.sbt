@@ -1,7 +1,7 @@
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
 resolvers += Resolver.typesafeRepo("releases")
 
-val scalafmt = "2.3.2"
+val scalafmt = "2.3.3"
 
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.2")
 
