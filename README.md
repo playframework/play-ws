@@ -256,7 +256,7 @@ object ScalaClient {
       System.exit(0)
     }
 
-    implicit val materializer = SystemMaterializer(actorSystem).materializer
+    implicit val materializer = SystemMaterializer(system).materializer
 
     // Create the standalone WS client
     // no argument defaults to a AhcWSClientConfig created from
@@ -430,7 +430,7 @@ There are a number of guides that help with putting together Cache-Control heade
 
 ## Releasing
 
-This project uses `sbt-release` to push to Sonatype and Maven.  You will need Lightbend Sonatype credentials and a GPG key that is available on one of the public keyservers to release this project.
+This project uses `sbt-release` to push to Sonatype and Maven. You will need Lightbend Sonatype credentials and a GPG key that is available on one of the public keyservers to release this project.
 
 To release cleanly, you should clone this project fresh into a directory with writable credentials (i.e. you have ssh key to github):
 
