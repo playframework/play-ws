@@ -33,7 +33,7 @@ object Dependencies {
   val sslConfigVersion = "0.4.2"
   val sslConfigCore    = Seq("com.typesafe" %% "ssl-config-core" % sslConfigVersion)
 
-  val scalaXmlVersion = "1.2.0"
+  val scalaXmlVersion = "1.3.0"
   val scalaXml        = Seq("org.scala-lang.modules" %% "scala-xml" % scalaXmlVersion)
 
   val signpostVersion = "1.2.1.2"
