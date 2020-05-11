@@ -123,9 +123,12 @@ class CacheFuture[T](handler: AsyncHandler[T]) extends ListenableFuture[T] {
   override def toCompletableFuture: CompletableFuture[T] = innerFuture
 
   override def addListener(listener: Runnable, executor: Executor): ListenableFuture[T] = {
-    innerFuture.whenCompleteAsync(new BiConsumer[T, Throwable]() {
-      override def accept(t: T, u: Throwable): Unit = listener.run()
-    }, executor)
+    innerFuture.whenCompleteAsync(
+      new BiConsumer[T, Throwable]() {
+        override def accept(t: T, u: Throwable): Unit = listener.run()
+      },
+      executor
+    )
     this
   }
 }
