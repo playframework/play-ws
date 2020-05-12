@@ -36,7 +36,7 @@ object Dependencies {
   val scalaXmlVersion = "1.3.0"
   val scalaXml        = Seq("org.scala-lang.modules" %% "scala-xml" % scalaXmlVersion)
 
-  val signpostVersion = "1.2.1.2"
+  val signpostVersion = "2.0.0"
   val oauth           = Seq("oauth.signpost" % "signpost-core" % signpostVersion)
 
   val cachecontrolVersion = "2.0.0"
