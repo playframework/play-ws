@@ -40,8 +40,7 @@ import scala.util.Success
  *                        also close asyncHttpClient.
  * @param materializer A materializer, meant to execute the stream
  */
-class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(
-    implicit
+class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(implicit
     materializer: Materializer
 ) extends StandaloneWSClient {
 
