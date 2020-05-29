@@ -44,18 +44,19 @@ val javacSettings = Seq(
   "-Xlint:unchecked"
 )
 
-def scalacOpts: Seq[String] = Seq(
-  "-target:jvm-1.8",
-  "-deprecation",
-  "-encoding",
-  "UTF-8",
-  "-feature",
-  "-unchecked",
-  "-Ywarn-unused:imports",
-  "-Xlint:nullary-unit",
-  "-Xlint",
-  "-Ywarn-dead-code",
-)
+def scalacOpts: Seq[String] =
+  Seq(
+    "-target:jvm-1.8",
+    "-deprecation",
+    "-encoding",
+    "UTF-8",
+    "-feature",
+    "-unchecked",
+    "-Ywarn-unused:imports",
+    "-Xlint:nullary-unit",
+    "-Xlint",
+    "-Ywarn-dead-code",
+  )
 
 // Binary compatibility is this version
 val previousVersion: Option[String] = Some("2.1.2")
@@ -191,10 +192,11 @@ import scala.xml.{ Node => XNode }
 
 def dependenciesFilter(n: XNode) =
   new RuleTransformer(new RewriteRule {
-    override def transform(n: XNode): NodeSeq = n match {
-      case e: Elem if e.label == "dependencies" => NodeSeq.Empty
-      case other                                => other
-    }
+    override def transform(n: XNode): NodeSeq =
+      n match {
+        case e: Elem if e.label == "dependencies" => NodeSeq.Empty
+        case other                                => other
+      }
   }).transform(n).head
 
 //---------------------------------------------------------------
@@ -224,11 +226,11 @@ lazy val `shaded-asynchttpclient` = project
     //logLevel in assembly := Level.Debug,
     assemblyShadeRules in assembly := Seq(
       ShadeRule.rename("org.asynchttpclient.**" -> "play.shaded.ahc.@0").inAll,
-      ShadeRule.rename("io.netty.**"            -> "play.shaded.ahc.@0").inAll,
-      ShadeRule.rename("javassist.**"           -> "play.shaded.ahc.@0").inAll,
-      ShadeRule.rename("com.typesafe.netty.**"  -> "play.shaded.ahc.@0").inAll,
-      ShadeRule.rename("javax.activation.**"    -> "play.shaded.ahc.@0").inAll,
-      ShadeRule.rename("com.sun.activation.**"  -> "play.shaded.ahc.@0").inAll,
+      ShadeRule.rename("io.netty.**" -> "play.shaded.ahc.@0").inAll,
+      ShadeRule.rename("javassist.**" -> "play.shaded.ahc.@0").inAll,
+      ShadeRule.rename("com.typesafe.netty.**" -> "play.shaded.ahc.@0").inAll,
+      ShadeRule.rename("javax.activation.**" -> "play.shaded.ahc.@0").inAll,
+      ShadeRule.rename("com.sun.activation.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.zap("org.reactivestreams.**").inAll,
       ShadeRule.zap("org.slf4j.**").inAll
     ),
@@ -255,7 +257,7 @@ lazy val `shaded-oauth` = project
     name := "shaded-oauth",
     //logLevel in assembly := Level.Debug,
     assemblyShadeRules in assembly := Seq(
-      ShadeRule.rename("oauth.**"              -> "play.shaded.oauth.@0").inAll,
+      ShadeRule.rename("oauth.**" -> "play.shaded.oauth.@0").inAll,
       ShadeRule.rename("org.apache.commons.**" -> "play.shaded.oauth.@0").inAll
     ),
     // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom

@@ -32,7 +32,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
       }
     } ~ {
       get {
-        parameters("key".as[String]) { (key) =>
+        parameters("key".as[String]) { key =>
           val httpEntity = HttpEntity(ContentTypes.`text/html(UTF-8)`, s"<h1>Say hello to akka-http, key = $key</h1>")
           complete(httpEntity)
         }

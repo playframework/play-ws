@@ -94,6 +94,6 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
     getBodyAsStream
     asByteArray
     getUriOption
- */
+   */
 
 }

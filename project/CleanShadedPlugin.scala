@@ -48,19 +48,20 @@ object CleanShadedPlugin extends AutoPlugin {
     private def stringToGlob(s: String) = if (s == "*") "*" else s"*$s*"
   }
 
-  override def projectSettings = Seq(
-    cleanCacheIvyDirectory := ivyPaths.value.ivyHome.getOrElse(Path.userHome / ".ivy2"),
-    cleanCache := IO.delete(cleanCacheFiles.evaluated),
-    cleanLocal := IO.delete(cleanLocalFiles.evaluated),
-    cleanCacheFiles := {
-      val base  = cleanCacheIvyDirectory.value / "cache"
-      val param = CleanShaded.parseParam.parsed
-      CleanShaded.query(base, param, organization.value, moduleName.value)
-    },
-    cleanLocalFiles := {
-      val base  = cleanCacheIvyDirectory.value / "local"
-      val param = CleanShaded.parseParam.parsed
-      CleanShaded.query(base, param, organization.value, moduleName.value)
-    }
-  )
+  override def projectSettings =
+    Seq(
+      cleanCacheIvyDirectory := ivyPaths.value.ivyHome.getOrElse(Path.userHome / ".ivy2"),
+      cleanCache := IO.delete(cleanCacheFiles.evaluated),
+      cleanLocal := IO.delete(cleanLocalFiles.evaluated),
+      cleanCacheFiles := {
+        val base  = cleanCacheIvyDirectory.value / "cache"
+        val param = CleanShaded.parseParam.parsed
+        CleanShaded.query(base, param, organization.value, moduleName.value)
+      },
+      cleanLocalFiles := {
+        val base  = cleanCacheIvyDirectory.value / "local"
+        val param = CleanShaded.parseParam.parsed
+        CleanShaded.query(base, param, organization.value, moduleName.value)
+      }
+    )
 }
