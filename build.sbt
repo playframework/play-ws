@@ -415,6 +415,7 @@ lazy val bench = project
     `play-ahc-ws-standalone`
   )
   .settings(commonSettings)
+  .settings(scalacOptions in (Compile, doc) -= "-Xfatal-warnings")
   .settings(publish / skip := true)
 
 //---------------------------------------------------------------
