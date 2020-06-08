@@ -2,20 +2,15 @@ import java.io.File
 
 import Dependencies._
 
-import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
 import com.typesafe.tools.mima.core.ProblemFilters
 import com.typesafe.tools.mima.core._
 import play.ws.AutomaticModuleName
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
-import org.scalafmt.sbt.ScalafmtPlugin
 
 //---------------------------------------------------------------
 // Shading and Project Settings
 //---------------------------------------------------------------
-
-val scala212 = "2.12.10"
-val scala213 = "2.13.1"
 
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
 resolvers in ThisBuild += Resolver.sonatypeRepo("public")
@@ -58,13 +53,11 @@ def scalacOpts: Seq[String] =
     "-Ywarn-dead-code",
   )
 
-// Binary compatibility is this version
-val previousVersion: Option[String] = Some("2.1.2")
-
-ThisBuild / mimaFailOnNoPrevious := false
-
-lazy val mimaSettings = mimaDefaultSettings ++ Seq(
-  mimaPreviousArtifacts := previousVersion.map(organization.value %% name.value % _).toSet,
+lazy val mimaSettings = Seq(
+  mimaPreviousArtifacts := Set(
+    organization.value %% name.value % previousStableVersion.value
+      .getOrElse(throw new Error("Unable to determine previous version"))
+  ),
   // these exclusions are only for master branch and are targeting 2.2.x
   mimaBinaryIssueFilters ++= Seq(
     ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.ahc.AhcWSClientConfig$"),
@@ -123,15 +116,6 @@ lazy val commonSettings = Def.settings(
   }
 )
 
-val disableDocs = Seq[Setting[_]](
-  sources in (Compile, doc) := Seq.empty,
-  publishArtifact in (Compile, packageDoc) := false
-)
-
-val disablePublishing = Seq[Setting[_]](
-  publishArtifact := false,
-  skip in publish := true
-)
 
 lazy val shadedCommonSettings = Seq(
   scalaVersion := scala213,
@@ -205,6 +189,7 @@ def dependenciesFilter(n: XNode) =
 
 lazy val `shaded-asynchttpclient` = project
   .in(file("shaded/asynchttpclient"))
+  .disablePlugins(MimaPlugin)
   .settings(commonSettings)
   .settings(shadeAssemblySettings)
   .settings(
@@ -250,6 +235,7 @@ lazy val `shaded-asynchttpclient` = project
 
 lazy val `shaded-oauth` = project
   .in(file("shaded/oauth"))
+  .disablePlugins(MimaPlugin)
   .settings(commonSettings)
   .settings(shadeAssemblySettings)
   .settings(
@@ -285,10 +271,9 @@ lazy val shaded = Project(id = "shaded", base = file("shaded"))
     `shaded-asynchttpclient`,
     `shaded-oauth`
   )
-  .disablePlugins(sbtassembly.AssemblyPlugin, HeaderPlugin)
+  .disablePlugins(sbtassembly.AssemblyPlugin, HeaderPlugin, MimaPlugin)
   .settings(
-    disableDocs,
-    disablePublishing,
+    publish / skip := true,
     shadedCommonSettings,
   )
 
@@ -402,9 +387,9 @@ lazy val `play-ws-standalone-xml` = project
 
 lazy val `integration-tests` = project
   .in(file("integration-tests"))
+  .disablePlugins(MimaPlugin, sbtassembly.AssemblyPlugin)
   .settings(commonSettings)
-  .settings(disableDocs)
-  .settings(disablePublishing)
+  .settings(publish / skip := true)
   .settings(
     fork in Test := true,
     concurrentRestrictions += Tags.limitAll(1), // only one integration test at a time
@@ -418,7 +403,6 @@ lazy val `integration-tests` = project
     `play-ws-standalone-json`,
     `play-ws-standalone-xml`
   )
-  .disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
 // Benchmarks (run manually)
@@ -427,6 +411,7 @@ lazy val `integration-tests` = project
 lazy val bench = project
   .in(file("bench"))
   .enablePlugins(JmhPlugin)
+  .disablePlugins(MimaPlugin)
   .dependsOn(
     `play-ws-standalone`,
     `play-ws-standalone-json`,
@@ -434,8 +419,7 @@ lazy val bench = project
     `play-ahc-ws-standalone`
   )
   .settings(commonSettings)
-  .settings(disableDocs)
-  .settings(disablePublishing)
+  .settings(publish / skip := true)
 
 //---------------------------------------------------------------
 // Root Project
@@ -443,6 +427,7 @@ lazy val bench = project
 
 lazy val root = project
   .in(file("."))
+  .disablePlugins(MimaPlugin, sbtassembly.AssemblyPlugin)
   .settings(
     name := "play-ws-standalone-root",
     // otherwise same as orgname, and "sonatypeList"
@@ -450,8 +435,7 @@ lazy val root = project
     sonatypeProfileName := "com.typesafe"
   )
   .settings(commonSettings)
-  .settings(disableDocs)
-  .settings(disablePublishing)
+  .settings(publish / skip := true)
   .settings(crossScalaVersions := Seq(scala213))
   .aggregate(
     `shaded`,
@@ -462,7 +446,6 @@ lazy val root = project
     `integration-tests`,
     bench
   )
-  .disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
 // Release
