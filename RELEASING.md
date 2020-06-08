@@ -1,20 +1,21 @@
 ## Releasing
 
-This project uses `sbt-release` to push to Sonatype and Maven. You will need Lightbend Sonatype credentials and a GPG key that is available on one of the public keyservers to release this project.
+This is released from the `master` branch from `2.2.0` forward. Unless an older version needs patching, then it must be released from the maintenance branch, for instance `2.1.x` branch. If there is no maintenance branch for the release that needs patching, create it from the tag.
 
-To release cleanly, you should clone this project fresh into a directory with writable credentials (i.e. you have ssh key to github):
+## Cutting the release
 
-```bash
-mkdir releases
-cd releases
-git clone git@github.com:playframework/play-ws.git
-```
+### Requires contributor access
 
-and from there you can release:
+- Check the [draft release notes](https://github.com/playframework/play-ws/releases) to see if everything is there
+- Wait until [master build finished](https://travis-ci.com/github/playframework/play-ws/builds) after merging the last PR
+- Update the [draft release](https://github.com/playframework/play-ws/releases) with the next tag version (eg. `2.2.0`), title and release description
+- Check that Travis CI release build has executed successfully (Travis will start a [CI build](https://travis-ci.com/github/playframework/play-ws/builds) for the new tag and publish artifacts to Bintray)
 
-```bash
-cd play-ws
-./release
-```
+### Requires Bintray access
 
-The script will walk you through integration tests and publishing.
+- Go to [Bintray](https://bintray.com/playframework/maven/play-ws) and select the just released version
+- Go to the Maven Central tab and sync with Sonatype (using your Sonatype TOKEN key and password) (you may watch progress in the [Staging repository](https://oss.sonatype.org/#stagingRepositories))
+
+### Check Maven Central
+
+- The artifacts will become visible at https://repo1.maven.org/maven2/com/typesafe/play/ 

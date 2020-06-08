@@ -78,6 +78,15 @@ lazy val mimaSettings = Seq(
 
 lazy val commonSettings = Def.settings(
   organization := "com.typesafe.play",
+  organizationName := "Lightbend Inc.",
+  organizationHomepage := Some(url("https://www.lightbend.com/")),
+  homepage := Some(url("https://www.playframework.com/documentation/latest/")),
+  scmInfo := Some(ScmInfo(url("https://github.com/playframework/play-ws"), "git@github.com:playframework/play-ws.git")),
+  developers += Developer("contributors",
+    "Contributors",
+    "https://gitter.im/playframework/",
+    url("https://gitter.im/playframework/contributors")),
+  licenses := Seq("Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0")),
   scalaVersion := scala213,
   crossScalaVersions := Seq(scala213, scala212),
   scalacOptions ++= scalacOpts,
@@ -86,25 +95,6 @@ lazy val commonSettings = Def.settings(
     // Work around 2.12 bug which prevents javadoc in nested java classes from compiling.
     "-no-java-comments",
   ),
-  pomExtra := (<url>https://github.com/playframework/play-ws</url>
-      <licenses>
-        <license>
-          <name>Apache License, Version 2.0</name>
-          <url>http://www.apache.org/licenses/LICENSE-2.0</url>
-          <distribution>repo</distribution>
-        </license>
-      </licenses>
-      <scm>
-        <url>https://github.com/playframework/play-ws</url>
-        <connection>scm:git:git@github.com/playframework/play-ws.git</connection>
-      </scm>
-      <developers>
-        <developer>
-          <id>playframework</id>
-          <name>Play Team</name>
-          <url>http://playframework.com/</url>
-        </developer>
-      </developers>),
   javacOptions in Compile ++= javacSettings,
   javacOptions in Test ++= javacSettings,
   headerLicense := {
@@ -189,6 +179,7 @@ def dependenciesFilter(n: XNode) =
 
 lazy val `shaded-asynchttpclient` = project
   .in(file("shaded/asynchttpclient"))
+  .enablePlugins(Publish)
   .disablePlugins(MimaPlugin)
   .settings(commonSettings)
   .settings(shadeAssemblySettings)
@@ -235,6 +226,7 @@ lazy val `shaded-asynchttpclient` = project
 
 lazy val `shaded-oauth` = project
   .in(file("shaded/oauth"))
+  .enablePlugins(Publish)
   .disablePlugins(MimaPlugin)
   .settings(commonSettings)
   .settings(shadeAssemblySettings)
@@ -284,6 +276,7 @@ lazy val shaded = Project(id = "shaded", base = file("shaded"))
 // WS API, no play dependencies
 lazy val `play-ws-standalone` = project
   .in(file("play-ws-standalone"))
+  .enablePlugins(Publish)
   .settings(commonSettings)
   .settings(mimaSettings)
   .settings(libraryDependencies ++= standaloneApiWSDependencies)
@@ -311,6 +304,7 @@ def addShadedDeps(deps: Seq[xml.Node], node: xml.Node): xml.Node = {
 // Standalone implementation using AsyncHttpClient
 lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
+  .enablePlugins(Publish)
   .settings(
     commonSettings ++ shadedAhcSettings ++ shadedOAuthSettings ++ Seq(
       fork in Test := true,
@@ -349,6 +343,7 @@ lazy val `play-ahc-ws-standalone` = project
 
 lazy val `play-ws-standalone-json` = project
   .in(file("play-ws-standalone-json"))
+  .enablePlugins(Publish)
   .settings(commonSettings)
   .settings(mimaSettings)
   .settings(
@@ -368,6 +363,7 @@ lazy val `play-ws-standalone-json` = project
 
 lazy val `play-ws-standalone-xml` = project
   .in(file("play-ws-standalone-xml"))
+  .enablePlugins(Publish)
   .settings(commonSettings)
   .settings(mimaSettings)
   .settings(
@@ -432,7 +428,7 @@ lazy val root = project
     name := "play-ws-standalone-root",
     // otherwise same as orgname, and "sonatypeList"
     // says "No staging profile is found for com.typesafe.play"
-    sonatypeProfileName := "com.typesafe"
+//    sonatypeProfileName := "com.typesafe"
   )
   .settings(commonSettings)
   .settings(publish / skip := true)
@@ -446,24 +442,6 @@ lazy val root = project
     `integration-tests`,
     bench
   )
-
-//---------------------------------------------------------------
-// Release
-//---------------------------------------------------------------
-import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
-
-// This automatically selects the snapshots or staging repository
-// according to the version value.
-publishTo in ThisBuild := sonatypePublishToBundle.value
-
-releaseProcess := Seq[ReleaseStep](
-  checkSnapshotDependencies,
-  runClean,
-  runTest,
-  releaseStepCommandAndRemaining("+publishSigned"),
-  releaseStepCommand("sonatypeBundleRelease"),
-  pushChanges
-)
 
 addCommandAlias(
   "validateCode",
