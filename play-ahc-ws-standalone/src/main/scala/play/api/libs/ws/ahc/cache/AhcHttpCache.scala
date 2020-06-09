@@ -26,8 +26,8 @@ import scala.concurrent.Future
  * to caching responses to GET, many caches simply decline other methods
  * and use only the URI as the primary cache key.
  */
-class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boolean = false)(
-    implicit val executionContext: ExecutionContext
+class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boolean = false)(implicit
+    val executionContext: ExecutionContext
 ) extends CacheDefaults
     with Debug {
   require(underlying != null, "null underlying!")

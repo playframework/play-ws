@@ -63,8 +63,8 @@ class CachingAsyncHttpClient(underlying: AsyncHttpClient, ahcHttpCache: AhcHttpC
   }
 
   @throws(classOf[IOException])
-  protected def execute[T](request: Request, handler: AsyncCompletionHandler[T], future: ListenableFuture[_])(
-      implicit ec: ExecutionContext
+  protected def execute[T](request: Request, handler: AsyncCompletionHandler[T], future: ListenableFuture[_])(implicit
+      ec: ExecutionContext
   ): ListenableFuture[T] = {
     if (logger.isTraceEnabled) {
       logger.trace(s"execute: request = ${debug(request)}, handler = ${debug(handler)}, future = $future")
@@ -164,8 +164,8 @@ class CachingAsyncHttpClient(underlying: AsyncHttpClient, ahcHttpCache: AhcHttpC
     }
   }
 
-  protected def executeFromCache[T](handler: AsyncHandler[T], request: Request, response: CacheableResponse)(
-      implicit ec: ExecutionContext
+  protected def executeFromCache[T](handler: AsyncHandler[T], request: Request, response: CacheableResponse)(implicit
+      ec: ExecutionContext
   ): CacheFuture[T] = {
     logger.trace(
       s"executeFromCache: handler = ${debug(handler)}, request = ${debug(request)}, response = ${debug(response)}"
@@ -229,8 +229,8 @@ class CachingAsyncHttpClient(underlying: AsyncHttpClient, ahcHttpCache: AhcHttpC
     new BackgroundAsyncHandler(request, ahcHttpCache, underlying.getConfig)
   }
 
-  protected def serveTimeout[T](request: Request, handler: AsyncHandler[T])(
-      implicit ec: ExecutionContext
+  protected def serveTimeout[T](request: Request, handler: AsyncHandler[T])(implicit
+      ec: ExecutionContext
   ): CacheFuture[T] = {
     val timeoutResponse = generateTimeoutResponse(request, underlying.getConfig)
     executeFromCache(handler, request, timeoutResponse)
