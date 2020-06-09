@@ -395,14 +395,15 @@ case class StandaloneAhcWSRequest(
     builderWithBody.build()
   }
 
-  private[libs] def authScheme(scheme: WSAuthScheme): Realm.AuthScheme = scheme match {
-    case WSAuthScheme.DIGEST   => Realm.AuthScheme.DIGEST
-    case WSAuthScheme.BASIC    => Realm.AuthScheme.BASIC
-    case WSAuthScheme.NTLM     => Realm.AuthScheme.NTLM
-    case WSAuthScheme.SPNEGO   => Realm.AuthScheme.SPNEGO
-    case WSAuthScheme.KERBEROS => Realm.AuthScheme.KERBEROS
-    case _                     => throw new RuntimeException("Unknown scheme " + scheme)
-  }
+  private[libs] def authScheme(scheme: WSAuthScheme): Realm.AuthScheme =
+    scheme match {
+      case WSAuthScheme.DIGEST   => Realm.AuthScheme.DIGEST
+      case WSAuthScheme.BASIC    => Realm.AuthScheme.BASIC
+      case WSAuthScheme.NTLM     => Realm.AuthScheme.NTLM
+      case WSAuthScheme.SPNEGO   => Realm.AuthScheme.SPNEGO
+      case WSAuthScheme.KERBEROS => Realm.AuthScheme.KERBEROS
+      case _                     => throw new RuntimeException("Unknown scheme " + scheme)
+    }
 
   /**
    * Add http auth headers. Defaults to HTTP Basic.

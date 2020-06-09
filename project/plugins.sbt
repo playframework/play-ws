@@ -1,17 +1,11 @@
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
 resolvers += Resolver.typesafeRepo("releases")
 
-val scalafmt = "2.4.0"
-
-addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.2")
-
-addSbtPlugin("com.jsuereth" % "sbt-pgp" % "2.0.1")
+addSbtPlugin("org.foundweekends" % "sbt-bintray" % "0.5.6")
 
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.10")
 
-addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.13")
-
-addSbtPlugin("org.scalameta" % "sbt-scalafmt" % scalafmt)
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.3.4")
 
 addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.7.0")
 

@@ -2,20 +2,15 @@ import java.io.File
 
 import Dependencies._
 
-import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
 import com.typesafe.tools.mima.core.ProblemFilters
 import com.typesafe.tools.mima.core._
 import play.ws.AutomaticModuleName
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
-import org.scalafmt.sbt.ScalafmtPlugin
 
 //---------------------------------------------------------------
 // Shading and Project Settings
 //---------------------------------------------------------------
-
-val scala212 = "2.12.10"
-val scala213 = "2.13.1"
 
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
 resolvers in ThisBuild += Resolver.sonatypeRepo("public")
@@ -44,26 +39,25 @@ val javacSettings = Seq(
   "-Xlint:unchecked"
 )
 
-def scalacOpts: Seq[String] = Seq(
-  "-target:jvm-1.8",
-  "-deprecation",
-  "-encoding",
-  "UTF-8",
-  "-feature",
-  "-unchecked",
-  "-Ywarn-unused:imports",
-  "-Xlint:nullary-unit",
-  "-Xlint",
-  "-Ywarn-dead-code",
-)
+def scalacOpts: Seq[String] =
+  Seq(
+    "-target:jvm-1.8",
+    "-deprecation",
+    "-encoding",
+    "UTF-8",
+    "-feature",
+    "-unchecked",
+    "-Ywarn-unused:imports",
+    "-Xlint:nullary-unit",
+    "-Xlint",
+    "-Ywarn-dead-code",
+  )
 
-// Binary compatibility is this version
-val previousVersion: Option[String] = Some("2.1.2")
-
-ThisBuild / mimaFailOnNoPrevious := false
-
-lazy val mimaSettings = mimaDefaultSettings ++ Seq(
-  mimaPreviousArtifacts := previousVersion.map(organization.value %% name.value % _).toSet,
+lazy val mimaSettings = Seq(
+  mimaPreviousArtifacts := Set(
+    organization.value %% name.value % previousStableVersion.value
+      .getOrElse(throw new Error("Unable to determine previous version"))
+  ),
   // these exclusions are only for master branch and are targeting 2.2.x
   mimaBinaryIssueFilters ++= Seq(
     ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.ahc.AhcWSClientConfig$"),
@@ -84,6 +78,15 @@ lazy val mimaSettings = mimaDefaultSettings ++ Seq(
 
 lazy val commonSettings = Def.settings(
   organization := "com.typesafe.play",
+  organizationName := "Lightbend Inc.",
+  organizationHomepage := Some(url("https://www.lightbend.com/")),
+  homepage := Some(url("https://www.playframework.com/documentation/latest/")),
+  scmInfo := Some(ScmInfo(url("https://github.com/playframework/play-ws"), "git@github.com:playframework/play-ws.git")),
+  developers += Developer("contributors",
+    "Contributors",
+    "https://gitter.im/playframework/",
+    url("https://gitter.im/playframework/contributors")),
+  licenses := Seq("Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0")),
   scalaVersion := scala213,
   crossScalaVersions := Seq(scala213, scala212),
   scalacOptions ++= scalacOpts,
@@ -92,25 +95,6 @@ lazy val commonSettings = Def.settings(
     // Work around 2.12 bug which prevents javadoc in nested java classes from compiling.
     "-no-java-comments",
   ),
-  pomExtra := (<url>https://github.com/playframework/play-ws</url>
-      <licenses>
-        <license>
-          <name>Apache License, Version 2.0</name>
-          <url>http://www.apache.org/licenses/LICENSE-2.0</url>
-          <distribution>repo</distribution>
-        </license>
-      </licenses>
-      <scm>
-        <url>https://github.com/playframework/play-ws</url>
-        <connection>scm:git:git@github.com/playframework/play-ws.git</connection>
-      </scm>
-      <developers>
-        <developer>
-          <id>playframework</id>
-          <name>Play Team</name>
-          <url>http://playframework.com/</url>
-        </developer>
-      </developers>),
   javacOptions in Compile ++= javacSettings,
   javacOptions in Test ++= javacSettings,
   headerLicense := {
@@ -122,15 +106,6 @@ lazy val commonSettings = Def.settings(
   }
 )
 
-val disableDocs = Seq[Setting[_]](
-  sources in (Compile, doc) := Seq.empty,
-  publishArtifact in (Compile, packageDoc) := false
-)
-
-val disablePublishing = Seq[Setting[_]](
-  publishArtifact := false,
-  skip in publish := true
-)
 
 lazy val shadedCommonSettings = Seq(
   scalaVersion := scala213,
@@ -191,10 +166,11 @@ import scala.xml.{ Node => XNode }
 
 def dependenciesFilter(n: XNode) =
   new RuleTransformer(new RewriteRule {
-    override def transform(n: XNode): NodeSeq = n match {
-      case e: Elem if e.label == "dependencies" => NodeSeq.Empty
-      case other                                => other
-    }
+    override def transform(n: XNode): NodeSeq =
+      n match {
+        case e: Elem if e.label == "dependencies" => NodeSeq.Empty
+        case other                                => other
+      }
   }).transform(n).head
 
 //---------------------------------------------------------------
@@ -203,6 +179,8 @@ def dependenciesFilter(n: XNode) =
 
 lazy val `shaded-asynchttpclient` = project
   .in(file("shaded/asynchttpclient"))
+  .enablePlugins(Publish)
+  .disablePlugins(MimaPlugin)
   .settings(commonSettings)
   .settings(shadeAssemblySettings)
   .settings(
@@ -224,11 +202,11 @@ lazy val `shaded-asynchttpclient` = project
     //logLevel in assembly := Level.Debug,
     assemblyShadeRules in assembly := Seq(
       ShadeRule.rename("org.asynchttpclient.**" -> "play.shaded.ahc.@0").inAll,
-      ShadeRule.rename("io.netty.**"            -> "play.shaded.ahc.@0").inAll,
-      ShadeRule.rename("javassist.**"           -> "play.shaded.ahc.@0").inAll,
-      ShadeRule.rename("com.typesafe.netty.**"  -> "play.shaded.ahc.@0").inAll,
-      ShadeRule.rename("javax.activation.**"    -> "play.shaded.ahc.@0").inAll,
-      ShadeRule.rename("com.sun.activation.**"  -> "play.shaded.ahc.@0").inAll,
+      ShadeRule.rename("io.netty.**" -> "play.shaded.ahc.@0").inAll,
+      ShadeRule.rename("javassist.**" -> "play.shaded.ahc.@0").inAll,
+      ShadeRule.rename("com.typesafe.netty.**" -> "play.shaded.ahc.@0").inAll,
+      ShadeRule.rename("javax.activation.**" -> "play.shaded.ahc.@0").inAll,
+      ShadeRule.rename("com.sun.activation.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.zap("org.reactivestreams.**").inAll,
       ShadeRule.zap("org.slf4j.**").inAll
     ),
@@ -248,6 +226,8 @@ lazy val `shaded-asynchttpclient` = project
 
 lazy val `shaded-oauth` = project
   .in(file("shaded/oauth"))
+  .enablePlugins(Publish)
+  .disablePlugins(MimaPlugin)
   .settings(commonSettings)
   .settings(shadeAssemblySettings)
   .settings(
@@ -255,7 +235,7 @@ lazy val `shaded-oauth` = project
     name := "shaded-oauth",
     //logLevel in assembly := Level.Debug,
     assemblyShadeRules in assembly := Seq(
-      ShadeRule.rename("oauth.**"              -> "play.shaded.oauth.@0").inAll,
+      ShadeRule.rename("oauth.**" -> "play.shaded.oauth.@0").inAll,
       ShadeRule.rename("org.apache.commons.**" -> "play.shaded.oauth.@0").inAll
     ),
     // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom
@@ -283,10 +263,9 @@ lazy val shaded = Project(id = "shaded", base = file("shaded"))
     `shaded-asynchttpclient`,
     `shaded-oauth`
   )
-  .disablePlugins(sbtassembly.AssemblyPlugin, HeaderPlugin)
+  .disablePlugins(sbtassembly.AssemblyPlugin, HeaderPlugin, MimaPlugin)
   .settings(
-    disableDocs,
-    disablePublishing,
+    publish / skip := true,
     shadedCommonSettings,
   )
 
@@ -297,6 +276,7 @@ lazy val shaded = Project(id = "shaded", base = file("shaded"))
 // WS API, no play dependencies
 lazy val `play-ws-standalone` = project
   .in(file("play-ws-standalone"))
+  .enablePlugins(Publish)
   .settings(commonSettings)
   .settings(mimaSettings)
   .settings(libraryDependencies ++= standaloneApiWSDependencies)
@@ -324,6 +304,7 @@ def addShadedDeps(deps: Seq[xml.Node], node: xml.Node): xml.Node = {
 // Standalone implementation using AsyncHttpClient
 lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
+  .enablePlugins(Publish)
   .settings(
     commonSettings ++ shadedAhcSettings ++ shadedOAuthSettings ++ Seq(
       fork in Test := true,
@@ -362,6 +343,7 @@ lazy val `play-ahc-ws-standalone` = project
 
 lazy val `play-ws-standalone-json` = project
   .in(file("play-ws-standalone-json"))
+  .enablePlugins(Publish)
   .settings(commonSettings)
   .settings(mimaSettings)
   .settings(
@@ -381,6 +363,7 @@ lazy val `play-ws-standalone-json` = project
 
 lazy val `play-ws-standalone-xml` = project
   .in(file("play-ws-standalone-xml"))
+  .enablePlugins(Publish)
   .settings(commonSettings)
   .settings(mimaSettings)
   .settings(
@@ -400,9 +383,9 @@ lazy val `play-ws-standalone-xml` = project
 
 lazy val `integration-tests` = project
   .in(file("integration-tests"))
+  .disablePlugins(MimaPlugin, sbtassembly.AssemblyPlugin)
   .settings(commonSettings)
-  .settings(disableDocs)
-  .settings(disablePublishing)
+  .settings(publish / skip := true)
   .settings(
     fork in Test := true,
     concurrentRestrictions += Tags.limitAll(1), // only one integration test at a time
@@ -416,7 +399,6 @@ lazy val `integration-tests` = project
     `play-ws-standalone-json`,
     `play-ws-standalone-xml`
   )
-  .disablePlugins(sbtassembly.AssemblyPlugin)
 
 //---------------------------------------------------------------
 // Benchmarks (run manually)
@@ -425,6 +407,7 @@ lazy val `integration-tests` = project
 lazy val bench = project
   .in(file("bench"))
   .enablePlugins(JmhPlugin)
+  .disablePlugins(MimaPlugin)
   .dependsOn(
     `play-ws-standalone`,
     `play-ws-standalone-json`,
@@ -432,8 +415,8 @@ lazy val bench = project
     `play-ahc-ws-standalone`
   )
   .settings(commonSettings)
-  .settings(disableDocs)
-  .settings(disablePublishing)
+  .settings(scalacOptions in (Compile, doc) -= "-Xfatal-warnings")
+  .settings(publish / skip := true)
 
 //---------------------------------------------------------------
 // Root Project
@@ -441,15 +424,15 @@ lazy val bench = project
 
 lazy val root = project
   .in(file("."))
+  .disablePlugins(MimaPlugin, sbtassembly.AssemblyPlugin)
   .settings(
     name := "play-ws-standalone-root",
     // otherwise same as orgname, and "sonatypeList"
     // says "No staging profile is found for com.typesafe.play"
-    sonatypeProfileName := "com.typesafe"
+//    sonatypeProfileName := "com.typesafe"
   )
   .settings(commonSettings)
-  .settings(disableDocs)
-  .settings(disablePublishing)
+  .settings(publish / skip := true)
   .settings(crossScalaVersions := Seq(scala213))
   .aggregate(
     `shaded`,
@@ -460,25 +443,6 @@ lazy val root = project
     `integration-tests`,
     bench
   )
-  .disablePlugins(sbtassembly.AssemblyPlugin)
-
-//---------------------------------------------------------------
-// Release
-//---------------------------------------------------------------
-import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
-
-// This automatically selects the snapshots or staging repository
-// according to the version value.
-publishTo in ThisBuild := sonatypePublishToBundle.value
-
-releaseProcess := Seq[ReleaseStep](
-  checkSnapshotDependencies,
-  runClean,
-  runTest,
-  releaseStepCommandAndRemaining("+publishSigned"),
-  releaseStepCommand("sonatypeBundleRelease"),
-  pushChanges
-)
 
 addCommandAlias(
   "validateCode",
