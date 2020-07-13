@@ -18,7 +18,6 @@ import play.api.libs.ws._
 import scala.xml.Elem
 
 /**
- *
  */
 class XMLRequestSpec extends Specification with Mockito with AfterAll with MustMatchers {
   sequential

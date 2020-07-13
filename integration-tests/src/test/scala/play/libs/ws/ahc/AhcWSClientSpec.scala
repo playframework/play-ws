@@ -68,22 +68,21 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
       toScala {
         client.url(s"http://localhost:$testServerPort").post(body(document))
       }.map { response =>
-          import javax.xml.parsers.DocumentBuilderFactory
-          val dbf = DocumentBuilderFactory.newInstance
-          dbf.setNamespaceAware(true)
-          dbf.setCoalescing(true)
-          dbf.setIgnoringElementContentWhitespace(true)
-          dbf.setIgnoringComments(true)
-          dbf.newDocumentBuilder
+        import javax.xml.parsers.DocumentBuilderFactory
+        val dbf = DocumentBuilderFactory.newInstance
+        dbf.setNamespaceAware(true)
+        dbf.setCoalescing(true)
+        dbf.setIgnoringElementContentWhitespace(true)
+        dbf.setIgnoringComments(true)
+        dbf.newDocumentBuilder
 
-          val responseXml = response.getBody(xml())
-          responseXml.normalizeDocument()
+        val responseXml = response.getBody(xml())
+        responseXml.normalizeDocument()
 
-          (responseXml.isEqualNode(document) must beTrue).and {
-            response.getUri must beEqualTo(new java.net.URI(s"http://localhost:$testServerPort"))
-          }
+        (responseXml.isEqualNode(document) must beTrue).and {
+          response.getUri must beEqualTo(new java.net.URI(s"http://localhost:$testServerPort"))
         }
-        .await(retries = 0, timeout = 5.seconds)
+      }.await(retries = 0, timeout = 5.seconds)
     }
   }
 }

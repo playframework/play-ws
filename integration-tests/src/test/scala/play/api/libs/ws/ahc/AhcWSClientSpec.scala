@@ -162,7 +162,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
         withClientFollowingRedirect() { client =>
           {
             val request = client
-            // 2. Ask to redirect 10 times
+              // 2. Ask to redirect 10 times
               .url(s"http://localhost:$testServerPort/redirects/302/10")
               .get()
             Await.result(request, defaultTimeout)

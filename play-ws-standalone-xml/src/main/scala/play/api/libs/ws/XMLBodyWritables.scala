@@ -8,7 +8,6 @@ import akka.util.ByteString
 import org.w3c.dom.Document
 
 /**
- *
  */
 trait XMLBodyWritables {
 

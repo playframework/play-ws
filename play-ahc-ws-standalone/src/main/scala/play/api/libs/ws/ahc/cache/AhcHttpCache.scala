@@ -170,7 +170,6 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
   }
 
   /**
-   *
    */
   def calculateFreshnessLifetime(request: Request, entry: ResponseEntry): Seconds = {
     val cacheRequest: CacheRequest = generateCacheRequest(request)
@@ -299,7 +298,6 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
   }
 
   /**
-   *
    */
   def isUncachedResponse(any: Any): Boolean = {
     any match {
@@ -317,7 +315,6 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
   }
 
   /**
-   *
    */
   def freshenResponse(newHeaders: HttpHeaders, response: CacheableResponse): CacheableResponse = {
     if (logger.isTraceEnabled) {

@@ -5,7 +5,6 @@
 package play.api.libs.ws
 
 /**
- *
  */
 trait WSAuthScheme {
   // Purposely not sealed in case clients want to add their own auth schemes.

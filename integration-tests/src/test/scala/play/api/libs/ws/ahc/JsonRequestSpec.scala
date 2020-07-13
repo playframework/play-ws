@@ -27,7 +27,6 @@ import play.shaded.ahc.org.asynchttpclient.Response
 import scala.io.Codec
 
 /**
- *
  */
 class JsonRequestSpec extends Specification with Mockito with AfterAll with JsonBodyWritables {
   sequential
