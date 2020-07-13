@@ -82,10 +82,12 @@ lazy val commonSettings = Def.settings(
   organizationHomepage := Some(url("https://www.lightbend.com/")),
   homepage := Some(url("https://www.playframework.com/documentation/latest/")),
   scmInfo := Some(ScmInfo(url("https://github.com/playframework/play-ws"), "git@github.com:playframework/play-ws.git")),
-  developers += Developer("contributors",
+  developers += Developer(
+    "contributors",
     "Contributors",
     "https://gitter.im/playframework/",
-    url("https://gitter.im/playframework/contributors")),
+    url("https://gitter.im/playframework/contributors")
+  ),
   licenses := Seq("Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0")),
   scalaVersion := scala213,
   crossScalaVersions := Seq(scala213, scala212),
@@ -105,7 +107,6 @@ lazy val commonSettings = Def.settings(
     )
   }
 )
-
 
 lazy val shadedCommonSettings = Seq(
   scalaVersion := scala213,

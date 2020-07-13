@@ -20,7 +20,6 @@ import uk.org.lidalia.slf4jtest.TestLoggerFactory
 import scala.concurrent.duration._
 
 /**
- *
  */
 class AhcConfigBuilderSpec extends Specification with Mockito {
 
