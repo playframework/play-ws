@@ -157,21 +157,18 @@ case class StandaloneAhcWSRequest(
   }
 
   /**
-   *
    */
   override def patch[T: BodyWritable](body: T): Future[Response] = {
     withBody(body).execute("PATCH")
   }
 
   /**
-   *
    */
   override def post[T: BodyWritable](body: T): Future[Response] = {
     withBody(body).execute("POST")
   }
 
   /**
-   *
    */
   override def put[T: BodyWritable](body: T): Future[Response] = {
     withBody(body).execute("PUT")

@@ -11,7 +11,6 @@ import scala.xml.Elem
 import scala.xml.factory.XMLLoader
 
 /**
- *
  */
 object XML {
   import play.libs.ws.XML.Constants
