@@ -18,7 +18,7 @@ import scala.concurrent.duration._
  * @param useProxyProperties To use the JVM system’s HTTP proxy settings (http.proxyHost, http.proxyPort) (default is true).
  * @param userAgent  To configure the User-Agent header field (default is None).
  * @param compressionEnabled Set it to true to use gzip/deflater encoding (default is false).
- * @param ssl use custom SSL / TLS configuration, see https://typesafehub.github.io/ssl-config/ for documentation.
+ * @param ssl use custom SSL / TLS configuration, see https://lightbend.github.io/ssl-config/ for documentation.
  */
 case class WSClientConfig(
     connectionTimeout: Duration = 2.minutes,
