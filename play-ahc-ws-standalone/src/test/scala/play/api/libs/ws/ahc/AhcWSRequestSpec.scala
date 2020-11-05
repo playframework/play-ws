@@ -352,7 +352,7 @@ class AhcWSRequestSpec
           .withBody(Map("param1" -> Seq("value1")))
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
-        (new String(req.getByteData, "UTF-8")) must_== ("param1=value1")
+        (new String(req.getByteData, "UTF-8")) must_== "param1=value1"
       }
     }
 
@@ -620,7 +620,7 @@ class AhcWSRequestSpec
     (new String(req.getByteData, "UTF-8")) must be_==("param1=value1") // should result in byte data.
 
     val headers = req.getHeaders
-    headers.get("Content-Length") must_== ("9001")
+    headers.get("Content-Length") must_== "9001"
   }
 
   "Remove a user defined content length header if we are parsing body explicitly when signed" in withClient { client =>
