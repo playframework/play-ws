@@ -69,6 +69,12 @@ class AhcWSRequestSpec
       request.withQueryStringParameters("&" -> "=").uri.toString must equalTo("http://example.com?%26=%3D")
     }
 
+    "disable URL-encode with query string" in {
+      val request = StandaloneAhcWSRequest(client, "http://example.com", disableUrlEncoding = Option(true))
+
+      request.withQueryStringParameters("&" -> "=").uri.toString must equalTo("http://example.com?&==")
+    }
+
     "set all query string parameters" in {
       val request = StandaloneAhcWSRequest(client, "http://example.com")
 

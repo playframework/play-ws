@@ -57,18 +57,24 @@ case class StandaloneAhcWSRequest(
   override def contentType: Option[String] = this.headers.get(HttpHeaders.Names.CONTENT_TYPE).map(_.head)
 
   override lazy val uri: URI = {
-    val enc = (p: String) => java.net.URLEncoder.encode(p, "utf-8")
     new java.net.URI(
       if (queryString.isEmpty) url
       else {
         val qs = (for {
           (n, vs) <- queryString
           v       <- vs
-        } yield s"${enc(n)}=${enc(v)}").mkString("&")
+        } yield s"${encode(n)}=${encode(v)}").mkString("&")
         s"$url?$qs"
       }
     )
   }
+
+  private def encode(param: String): String =
+    if (this.disableUrlEncoding.getOrElse(false)) {
+      param
+    } else {
+      java.net.URLEncoder.encode(param, "utf-8")
+    }
 
   override def sign(calc: WSSignatureCalculator): Self = copy(calc = Some(calc))
 
