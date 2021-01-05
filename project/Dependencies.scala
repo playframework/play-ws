@@ -42,7 +42,7 @@ object Dependencies {
 
   val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % "2.0.0")
 
-  val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "2.12.1")
+  val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "2.12.2")
 
   val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % "2.6.6")
   val akkaHttp    = Seq("com.typesafe.akka" %% "akka-http" % "10.1.12")
