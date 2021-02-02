@@ -152,7 +152,7 @@ class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv)
           .toScala
           .awaitFor(defaultTimeout)
 
-        testLogger.getLoggingEvents.asScala.map(_.getMessage) must not containMatch ("--data")
+        testLogger.getLoggingEvents.asScala.map(_.getMessage) must not containMatch "--data"
       }
     }
 

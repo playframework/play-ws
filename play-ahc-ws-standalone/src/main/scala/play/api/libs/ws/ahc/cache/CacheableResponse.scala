@@ -86,9 +86,8 @@ case class CacheableResponse(
 
   def withHeaders(tuple: (String, String)*): CacheableResponse = {
     val headerMap = new DefaultHttpHeaders().add(this.headers)
-    tuple.foreach {
-      case (k, v) =>
-        headerMap.add(k, v)
+    tuple.foreach { case (k, v) =>
+      headerMap.add(k, v)
     }
     this.copy(headers = headerMap)
   }

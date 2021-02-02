@@ -33,8 +33,8 @@ class AhcWSCacheSpec extends Specification {
 
       val actual = cache.calculateFreshnessFromHeuristic(request, response)
 
-      actual must beSome.which {
-        case value => value must be_==(Seconds.seconds(360)) // 0.1 hours
+      actual must beSome.which { case value =>
+        value must be_==(Seconds.seconds(360)) // 0.1 hours
       }
     }
 

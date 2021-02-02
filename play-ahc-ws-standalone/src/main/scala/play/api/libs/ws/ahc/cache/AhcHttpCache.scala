@@ -251,9 +251,8 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
    */
   def calculateSecondaryKeys(request: Request, response: Response): Option[Map[HeaderName, Seq[String]]] = {
     val cacheRequest = generateCacheRequest(request)
-    val headers = headersToMap(response.getHeaders).map {
-      case (name, values) =>
-        (HeaderName(name), values)
+    val headers = headersToMap(response.getHeaders).map { case (name, values) =>
+      (HeaderName(name), values)
     }
 
     secondaryKeyCalculator.calculate(cacheRequest, headers)
@@ -400,9 +399,8 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
 
   protected def generateCacheRequest(request: Request): CacheRequest = {
     val uri = request.getUri.toJavaNetURI
-    val headers = headersToMap(request.getHeaders).map {
-      case (name, values) =>
-        (HeaderName(name), values)
+    val headers = headersToMap(request.getHeaders).map { case (name, values) =>
+      (HeaderName(name), values)
     }
     val method = request.getMethod
     CacheRequest(uri = uri, method = method, headers = headers)
@@ -416,9 +414,8 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
     val uri: URI        = response.getUri.toJavaNetURI
     val status: Int     = response.getStatusCode
     val responseHeaders = response.getHeaders
-    val headers = headersToMap(responseHeaders).map {
-      case (name, values) =>
-        (HeaderName(name), values)
+    val headers = headersToMap(responseHeaders).map { case (name, values) =>
+      (HeaderName(name), values)
     }
 
     StoredResponse(
@@ -432,9 +429,8 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
 
   protected def generateOriginResponse(request: Request, status: Int, responseHeaders: HttpHeaders): OriginResponse = {
     val uri = request.getUri.toJavaNetURI
-    val headers = headersToMap(responseHeaders).map {
-      case (name, values) =>
-        (HeaderName(name), values)
+    val headers = headersToMap(responseHeaders).map { case (name, values) =>
+      (HeaderName(name), values)
     }
     OriginResponse(uri, status, headers)
   }
