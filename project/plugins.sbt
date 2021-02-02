@@ -1,13 +1,13 @@
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
 resolvers += Resolver.typesafeRepo("releases")
 
-addSbtPlugin("org.foundweekends" % "sbt-bintray" % "0.5.6")
+addSbtPlugin("org.foundweekends" % "sbt-bintray" % "0.6.1")
 
-addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.10")
+addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.15.0")
 
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.2")
 
-addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.7.0")
+addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.8.1")
 
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.6.0")
 
