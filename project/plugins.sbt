@@ -1,7 +1,7 @@
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
 resolvers += Resolver.typesafeRepo("releases")
 
-addSbtPlugin("org.foundweekends" % "sbt-bintray" % "0.5.6")
+addSbtPlugin("org.foundweekends" % "sbt-bintray" % "0.6.1")
 
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.10")
 
