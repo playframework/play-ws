@@ -4,6 +4,8 @@
 
 package play.libs.ws.ahc
 
+import com.typesafe.config.ConfigFactory
+
 import java.time.Duration
 import java.util.Collections
 
@@ -466,6 +468,42 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
 
       "not support a query string if it starts with = and is empty" in {
         requestWithQueryString("=&src=typd") must throwA[RuntimeException]
+      }
+
+      "enable url encoding by default" in {
+        val client = StandaloneAhcWSClient.create(
+          AhcWSClientConfigFactory.forConfig(ConfigFactory.load(), this.getClass.getClassLoader), /*materializer*/ null
+        )
+        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+          .addQueryParameter("abc+def", "uvw+xyz")
+          .buildRequest()
+
+        request.getUrl must beEqualTo("http://example.com?abc%2Bdef=uvw%2Bxyz")
+      }
+
+      "disable url encoding globally via client config" in {
+        val client = StandaloneAhcWSClient.create(
+          AhcWSClientConfigFactory
+            .forConfig(ConfigFactory.load(), this.getClass.getClassLoader)
+            .copy(disableUrlEncoding = true), /*materializer*/ null
+        )
+        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+          .addQueryParameter("abc+def", "uvw+xyz")
+          .buildRequest()
+
+        request.getUrl must beEqualTo("http://example.com?abc+def=uvw+xyz")
+      }
+
+      "disable url encoding for specific request only" in {
+        val client = StandaloneAhcWSClient.create(
+          AhcWSClientConfigFactory.forConfig(ConfigFactory.load(), this.getClass.getClassLoader), /*materializer*/ null
+        )
+        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
+          .addQueryParameter("abc+def", "uvw+xyz")
+          .setDisableUrlEncoding(true)
+          .buildRequest()
+
+        request.getUrl must beEqualTo("http://example.com?abc+def=uvw+xyz")
       }
     }
 
