@@ -72,7 +72,10 @@ lazy val mimaSettings = Seq(
     ProblemFilters.exclude[IncompatibleSignatureProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.curried"),
     ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.apply"),
     ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.copy"),
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.this")
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.this"),
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.setDisableUrlEncoding"),
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.getDisableUrlEncoding"),
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.api.libs.ws.StandaloneWSRequest.withDisableUrlEncoding")
   )
 )
 
