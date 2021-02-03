@@ -8,6 +8,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.typesafe.config.ConfigFactory;
 import org.junit.Test;
 import play.libs.ws.*;
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames;
@@ -23,7 +24,8 @@ public class JsonRequestTest implements JsonBodyWritables {
     public void setJson() throws IOException {
         JsonNode node = DefaultObjectMapper.instance.readTree("{\"k1\":\"v2\"}");
 
-            StandaloneAhcWSClient client = mock(StandaloneAhcWSClient.class);
+        StandaloneAhcWSClient client = StandaloneAhcWSClient.create(
+                AhcWSClientConfigFactory.forConfig(ConfigFactory.load(), this.getClass().getClassLoader()), /*materializer*/ null);
         StandaloneAhcWSRequest ahcWSRequest = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
                 .setBody(body(node));
 
