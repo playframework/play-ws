@@ -185,11 +185,6 @@ trait StandaloneWSRequest {
   def withFollowRedirects(follow: Boolean): Self
 
   /**
-   * Sets whether url encoding should be disabled
-   */
-  def withDisableUrlEncoding(disableUrlEncoding: Boolean): Self
-
-  /**
    * Sets the maximum time you expect the request to take.
    * Use Duration.Inf to set an infinite request timeout.
    * Warning: a stream consumption will be interrupted when this time is reached unless Duration.Inf is set.

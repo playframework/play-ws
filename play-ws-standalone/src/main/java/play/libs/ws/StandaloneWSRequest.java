@@ -295,14 +295,6 @@ public interface StandaloneWSRequest {
     StandaloneWSRequest setFollowRedirects(boolean followRedirects);
 
     /**
-     * Sets whether url encoding should be disabled.
-     *
-     * @param disableUrlEncoding true if url encoding should be disabled
-     * @return the modified WSRequest
-     */
-    StandaloneWSRequest setDisableUrlEncoding(boolean disableUrlEncoding);
-
-    /**
      * Sets the virtual host as a "hostname:port" string.
      *
      * @param virtualHost the virtual host
@@ -457,11 +449,6 @@ public interface StandaloneWSRequest {
      * @return true if the request is configure to follow redirect, false if it is configure not to, Optional.empty() if nothing is configured and the global client preference should be used instead.
      */
     Optional<Boolean> getFollowRedirects();
-
-    /**
-     * @return true if the request is configure to disable url encoding, false if it is configure not to, Optional.empty() if nothing is configured and the global client preference should be used instead.
-     */
-    Optional<Boolean> getDisableUrlEncoding();
 
     /**
      * @return the content type, if any, or Optional.empty() if no content type is found.

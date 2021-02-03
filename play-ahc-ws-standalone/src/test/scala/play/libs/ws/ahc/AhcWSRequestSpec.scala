@@ -554,18 +554,6 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
 
         request.getUrl must beEqualTo("http://example.com?abc+def=uvw+xyz")
       }
-
-      "disable url encoding for specific request only" in {
-        val client = StandaloneAhcWSClient.create(
-          AhcWSClientConfigFactory.forConfig(ConfigFactory.load(), this.getClass.getClassLoader), /*materializer*/ null
-        )
-        val request = new StandaloneAhcWSRequest(client, "http://example.com", /*materializer*/ null)
-          .addQueryParameter("abc+def", "uvw+xyz")
-          .setDisableUrlEncoding(true)
-          .buildRequest()
-
-        request.getUrl must beEqualTo("http://example.com?abc+def=uvw+xyz")
-      }
     }
 
     "For Cookies" in {
