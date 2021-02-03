@@ -72,6 +72,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
     private Duration timeout = Duration.ZERO;
     private Boolean followRedirects = null;
+    private Boolean disableUrlEncoding = null;
     private String virtualHost = null;
 
     private final List<WSRequestFilter> filters = new ArrayList<>();
@@ -216,6 +217,12 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     @Override
+    public StandaloneAhcWSRequest setDisableUrlEncoding(boolean disableUrlEncoding) {
+        this.disableUrlEncoding = disableUrlEncoding;
+        return this;
+    }
+
+    @Override
     public StandaloneAhcWSRequest setVirtualHost(String virtualHost) {
         this.virtualHost = virtualHost;
         return this;
@@ -329,6 +336,11 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     @Override
     public Optional<Boolean> getFollowRedirects() {
         return Optional.ofNullable(this.followRedirects);
+    }
+
+    @Override
+    public Optional<Boolean> getDisableUrlEncoding() {
+        return Optional.ofNullable(this.disableUrlEncoding);
     }
 
     // Intentionally package public.
