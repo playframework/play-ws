@@ -20,6 +20,7 @@ import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames;
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders;
 import play.shaded.ahc.io.netty.handler.codec.http.cookie.Cookie;
 import play.shaded.ahc.io.netty.handler.codec.http.cookie.DefaultCookie;
+import play.shaded.ahc.org.asynchttpclient.AsyncHttpClient;
 import play.shaded.ahc.org.asynchttpclient.Realm;
 import play.shaded.ahc.org.asynchttpclient.Request;
 import play.shaded.ahc.org.asynchttpclient.RequestBuilder;
@@ -422,7 +423,12 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
         final HttpHeaders possiblyModifiedHeaders = new DefaultHttpHeaders(validate);
         this.headers.forEach(possiblyModifiedHeaders::add);
 
-        RequestBuilder builder = new RequestBuilder(method);
+        RequestBuilder builder = new RequestBuilder(method, disableUrlEncoding != null ?
+                    disableUrlEncoding :
+                    ((AsyncHttpClient) client
+                            .getUnderlying())
+                            .getConfig()
+                            .isDisableUrlEncodingForBoundRequests());
 
         builder.setUrl(url);
         builder.setQueryParams(queryParameters);

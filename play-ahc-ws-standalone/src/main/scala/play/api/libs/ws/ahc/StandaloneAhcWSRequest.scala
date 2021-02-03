@@ -279,7 +279,7 @@ case class StandaloneAhcWSRequest(
         new RequestBuilder(method, disableEncodingFlag)
       }
       .getOrElse {
-        new RequestBuilder(method)
+        new RequestBuilder(method, client.underlying[AsyncHttpClient].getConfig.isDisableUrlEncodingForBoundRequests)
       }
 
     // Set the URL.
