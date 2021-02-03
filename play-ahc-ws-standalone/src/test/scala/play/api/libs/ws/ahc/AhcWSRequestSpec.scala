@@ -495,6 +495,35 @@ class AhcWSRequestSpec extends Specification with Mockito with AfterAll with Def
       req.getFollowRedirect must beEqualTo(true)
     }
 
+    "enable url encoding by default" in withClient { client =>
+      val req: AHCRequest = client
+        .url("http://playframework.com/")
+        .addQueryStringParameters("abc+def" -> "uvw+xyz")
+        .asInstanceOf[StandaloneAhcWSRequest]
+        .buildRequest()
+      req.getUrl must beEqualTo("http://playframework.com/?abc%2Bdef=uvw%2Bxyz")
+    }
+
+    "disable url encoding globally via client config" in {
+      val client = StandaloneAhcWSClient(AhcWSClientConfigFactory.forConfig().copy(disableUrlEncoding = true))
+      val req: AHCRequest = client
+        .url("http://playframework.com/")
+        .addQueryStringParameters("abc+def" -> "uvw+xyz")
+        .asInstanceOf[StandaloneAhcWSRequest]
+        .buildRequest()
+      req.getUrl must beEqualTo("http://playframework.com/?abc+def=uvw+xyz")
+    }
+
+    "disable url encoding for specific request only" in withClient { client =>
+      val req: AHCRequest = client
+        .url("http://playframework.com/")
+        .addQueryStringParameters("abc+def" -> "uvw+xyz")
+        .withDisableUrlEncoding(disableUrlEncoding = true)
+        .asInstanceOf[StandaloneAhcWSRequest]
+        .buildRequest()
+      req.getUrl must beEqualTo("http://playframework.com/?abc+def=uvw+xyz")
+    }
+
     "finite timeout" in withClient { client =>
       val req: AHCRequest = client.url("http://playframework.com/")
         .withRequestTimeout(1000.millis).asInstanceOf[StandaloneAhcWSRequest]
