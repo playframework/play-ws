@@ -54,7 +54,7 @@ class XMLRequestSpec extends Specification with Mockito with AfterAll with MustM
     import XMLBodyWritables._
 
     val xml    = XML.parser.loadString("<hello><test></test></hello>")
-    val client = mock[StandaloneAhcWSClient]
+    val client = StandaloneAhcWSClient()
     val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
       .withBody(xml)
       .asInstanceOf[StandaloneAhcWSRequest]

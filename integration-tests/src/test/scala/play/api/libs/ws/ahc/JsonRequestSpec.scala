@@ -40,7 +40,7 @@ class JsonRequestSpec extends Specification with Mockito with AfterAll with Json
 
   "set a json node" in {
     val jsValue = Json.obj("k1" -> JsString("v1"))
-    val client  = mock[StandaloneAhcWSClient]
+    val client  = StandaloneAhcWSClient()
     val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
       .withBody(jsValue)
       .asInstanceOf[StandaloneAhcWSRequest]
@@ -55,7 +55,7 @@ class JsonRequestSpec extends Specification with Mockito with AfterAll with Json
 
     implicit val jsonReadable = body(objectMapper)
     val jsonNode              = objectMapper.readTree("""{"k1":"v1"}""")
-    val client                = mock[StandaloneAhcWSClient]
+    val client                = StandaloneAhcWSClient()
     val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
       .withBody(jsonNode)
       .asInstanceOf[StandaloneAhcWSRequest]

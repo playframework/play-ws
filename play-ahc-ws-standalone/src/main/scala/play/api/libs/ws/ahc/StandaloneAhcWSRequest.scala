@@ -124,6 +124,9 @@ case class StandaloneAhcWSRequest(
 
   override def withFollowRedirects(follow: Boolean): Self = copy(followRedirects = Some(follow))
 
+  override def withDisableUrlEncoding(disableUrlEncoding: Boolean): Self =
+    copy(disableUrlEncoding = Some(disableUrlEncoding))
+
   override def withRequestTimeout(timeout: Duration): Self = {
     timeout match {
       case Duration.Inf =>
@@ -276,7 +279,7 @@ case class StandaloneAhcWSRequest(
         new RequestBuilder(method, disableEncodingFlag)
       }
       .getOrElse {
-        new RequestBuilder(method)
+        new RequestBuilder(method, client.underlying[AsyncHttpClient].getConfig.isDisableUrlEncodingForBoundRequests)
       }
 
     // Set the URL.

@@ -6,14 +6,13 @@ package play.libs.ws.ahc;
 
 import static org.assertj.core.api.Assertions.*;
 
+import com.typesafe.config.ConfigFactory;
 import org.junit.Test;
 import org.w3c.dom.Document;
 import play.libs.ws.XML;
 import play.libs.ws.XMLBodyWritables;
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames;
 import play.shaded.ahc.org.asynchttpclient.Request;
-
-import static org.mockito.Mockito.mock;
 
 public class XMLRequestTest implements XMLBodyWritables {
 
@@ -25,7 +24,8 @@ public class XMLRequestTest implements XMLBodyWritables {
                   "<to>world</to>" +
                   "</note>");
 
-          StandaloneAhcWSClient client = mock(StandaloneAhcWSClient.class);
+          StandaloneAhcWSClient client = StandaloneAhcWSClient.create(
+                  AhcWSClientConfigFactory.forConfig(ConfigFactory.load(), this.getClass().getClassLoader()), /*materializer*/ null);
           StandaloneAhcWSRequest ahcWSRequest = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
                   .setBody(body(document));
 

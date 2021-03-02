@@ -20,6 +20,7 @@ import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames;
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders;
 import play.shaded.ahc.io.netty.handler.codec.http.cookie.Cookie;
 import play.shaded.ahc.io.netty.handler.codec.http.cookie.DefaultCookie;
+import play.shaded.ahc.org.asynchttpclient.AsyncHttpClient;
 import play.shaded.ahc.org.asynchttpclient.Realm;
 import play.shaded.ahc.org.asynchttpclient.Request;
 import play.shaded.ahc.org.asynchttpclient.RequestBuilder;
@@ -72,6 +73,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
     private Duration timeout = Duration.ZERO;
     private Boolean followRedirects = null;
+    private Boolean disableUrlEncoding = null;
     private String virtualHost = null;
 
     private final List<WSRequestFilter> filters = new ArrayList<>();
@@ -216,6 +218,12 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     @Override
+    public StandaloneAhcWSRequest setDisableUrlEncoding(boolean disableUrlEncoding) {
+        this.disableUrlEncoding = disableUrlEncoding;
+        return this;
+    }
+
+    @Override
     public StandaloneAhcWSRequest setVirtualHost(String virtualHost) {
         this.virtualHost = virtualHost;
         return this;
@@ -331,6 +339,11 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
         return Optional.ofNullable(this.followRedirects);
     }
 
+    @Override
+    public Optional<Boolean> getDisableUrlEncoding() {
+        return Optional.ofNullable(this.disableUrlEncoding);
+    }
+
     // Intentionally package public.
     Optional<String> getVirtualHost() {
         return Optional.ofNullable(this.virtualHost);
@@ -410,7 +423,12 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
         final HttpHeaders possiblyModifiedHeaders = new DefaultHttpHeaders(validate);
         this.headers.forEach(possiblyModifiedHeaders::add);
 
-        RequestBuilder builder = new RequestBuilder(method);
+        RequestBuilder builder = new RequestBuilder(method, disableUrlEncoding != null ?
+                    disableUrlEncoding :
+                    ((AsyncHttpClient) client
+                            .getUnderlying())
+                            .getConfig()
+                            .isDisableUrlEncodingForBoundRequests());
 
         builder.setUrl(url);
         builder.setQueryParams(queryParameters);
