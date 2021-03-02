@@ -266,7 +266,7 @@ case class StandaloneAhcWSRequest(
     val builder = disableUrlEncoding.map { disableEncodingFlag =>
       new RequestBuilder(method, disableEncodingFlag)
     }.getOrElse {
-      new RequestBuilder(method)
+      new RequestBuilder(method, client.underlying[AsyncHttpClient].getConfig.isDisableUrlEncodingForBoundRequests)
     }
 
     // Set the URL.
