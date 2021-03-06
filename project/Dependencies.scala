@@ -6,7 +6,7 @@ import sbt._
 object Dependencies {
 
   // must align with versions in .travis.yml
-  val scala212 = "2.12.10"
+  val scala212 = "2.12.13"
   val scala213 = "2.13.1"
 
   val logback = Seq("ch.qos.logback" % "logback-core" % "1.2.3")
