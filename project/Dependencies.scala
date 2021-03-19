@@ -21,7 +21,7 @@ object Dependencies {
 
   val junitInterface = Seq("com.novocode" % "junit-interface" % "0.11")
 
-  val scalaJava8Compat = Seq("org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0")
+  val scalaJava8Compat = Seq("org.scala-lang.modules" %% "scala-java8-compat" % "0.9.1")
 
   val playJsonVersion = "2.8.1"
   val playJson = Seq("com.typesafe.play" %% "play-json" % playJsonVersion)
@@ -42,7 +42,7 @@ object Dependencies {
   val cachecontrolVersion = "2.0.0"
   val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % cachecontrolVersion)
 
-  val asyncHttpClientVersion = "2.10.4"
+  val asyncHttpClientVersion = "2.10.5"
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % asyncHttpClientVersion)
 
   val akkaVersion = "2.6.1"
