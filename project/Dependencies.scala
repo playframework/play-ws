@@ -6,7 +6,7 @@ import sbt._
 object Dependencies {
 
   // must align with versions in .travis.yml
-  val scala212 = "2.12.10"
+  val scala212 = "2.12.13"
   val scala213 = "2.13.5"
 
   val logback = Seq("ch.qos.logback" % "logback-core" % "1.2.3")
@@ -45,7 +45,7 @@ object Dependencies {
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "2.12.2")
 
   val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % "2.6.10")
-  val akkaHttp    = Seq("com.typesafe.akka" %% "akka-http" % "10.1.13")
+  val akkaHttp    = Seq("com.typesafe.akka" %% "akka-http" % "10.1.14")
 
   val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.3")
 
