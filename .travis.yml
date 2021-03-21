@@ -31,7 +31,7 @@ jobs:
       name: "Validations"
       script: sbt mimaReportBinaryIssues validateCode doc
       env:
-        - TRAVIS_SCALA_VERSION=2.13.1
+        - TRAVIS_SCALA_VERSION=2.13.5
         - TRAVIS_JDK=11
 
     - name: "Run tests with Scala 2.12 and AdoptOpenJDK 11"
@@ -41,7 +41,7 @@ jobs:
 
     - name: "Run tests with Scala 2.13 and AdoptOpenJDK 11"
       env:
-        - TRAVIS_SCALA_VERSION=2.13.1
+        - TRAVIS_SCALA_VERSION=2.13.5
         - TRAVIS_JDK=11
 
     - name: "Run tests with Scala 2.12 and AdoptOpenJDK 8"
@@ -51,7 +51,7 @@ jobs:
 
     - name: "Run tests with Scala 2.13 and AdoptOpenJDK 8"
       env:
-        - TRAVIS_SCALA_VERSION=2.13.1
+        - TRAVIS_SCALA_VERSION=2.13.5
         - TRAVIS_JDK=8
 
     - stage: publish
