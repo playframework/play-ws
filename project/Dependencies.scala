@@ -34,7 +34,7 @@ object Dependencies {
 
   val javaxInject = Seq("javax.inject" % "javax.inject" % "1")
 
-  val sslConfigCore = Seq("com.typesafe" %% "ssl-config-core" % "0.4.2")
+  val sslConfigCore = Seq("com.typesafe" %% "ssl-config-core" % "0.4.3")
 
   val scalaXml = Seq("org.scala-lang.modules" %% "scala-xml" % "1.3.0")
 
