@@ -11,11 +11,11 @@ object Dependencies {
 
   val logback = Seq("ch.qos.logback" % "logback-core" % "1.2.3")
 
-  val assertj = Seq("org.assertj" % "assertj-core" % "3.18.1")
+  val assertj = Seq("org.assertj" % "assertj-core" % "3.19.0")
 
   val awaitility = Seq("org.awaitility" % "awaitility" % "4.0.3")
 
-  val specsVersion = "4.10.6"
+  val specsVersion = "4.11.0"
   val specsBuild = Seq(
     "specs2-core",
     "specs2-junit",
@@ -44,7 +44,7 @@ object Dependencies {
 
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "2.12.3")
 
-  val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % "2.6.13")
+  val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % "2.6.14")
   val akkaHttp    = Seq("com.typesafe.akka" %% "akka-http" % "10.1.14")
 
   val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.3")
