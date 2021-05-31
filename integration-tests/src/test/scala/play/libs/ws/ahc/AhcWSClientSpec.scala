@@ -50,7 +50,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
 
     "source successfully" in withClient() { client =>
       val future = toScala(client.url(s"http://localhost:$testServerPort").stream())
-      val result: Future[ByteString] = future.flatMap { response: StandaloneWSResponse =>
+      val result: Future[ByteString] = future.flatMap { (response: StandaloneWSResponse) =>
         toScala(response.getBodyAsSource.runWith(Sink.head[ByteString](), materializer))
       }
       val expected: ByteString = ByteString.fromString("<h1>Say hello to akka-http</h1>")

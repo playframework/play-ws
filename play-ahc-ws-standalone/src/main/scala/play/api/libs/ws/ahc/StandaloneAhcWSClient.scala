@@ -108,7 +108,7 @@ class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(implici
 
     val client = this
 
-    val function: JFunction[StreamedState, StreamedResponse] = { state: StreamedState =>
+    val function: JFunction[StreamedState, StreamedResponse] = { (state: StreamedState) =>
       val publisher = state.publisher
 
       val wrap = new Publisher[HttpResponseBodyPart]() {
