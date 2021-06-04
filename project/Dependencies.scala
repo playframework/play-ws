@@ -36,7 +36,7 @@ object Dependencies {
 
   val sslConfigCore = Seq("com.typesafe" %% "ssl-config-core" % "0.4.3")
 
-  val scalaXml = Seq("org.scala-lang.modules" %% "scala-xml" % "1.3.0")
+  val scalaXml = Seq("org.scala-lang.modules" %% "scala-xml" % "2.0.0")
 
   val oauth = Seq("oauth.signpost" % "signpost-core" % "2.1.1")
 
