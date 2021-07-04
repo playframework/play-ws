@@ -30,7 +30,7 @@ object Dependencies {
 
   val playJson = Seq("com.typesafe.play" %% "play-json" % "2.9.2")
 
-  val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "1.7.30")
+  val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "1.7.31")
 
   val javaxInject = Seq("javax.inject" % "javax.inject" % "1")
 
