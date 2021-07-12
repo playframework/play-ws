@@ -26,7 +26,7 @@ object Dependencies {
 
   val junitInterface = Seq("com.novocode" % "junit-interface" % "0.11")
 
-  val scalaJava8Compat = Seq("org.scala-lang.modules" %% "scala-java8-compat" % "0.9.1")
+  val scalaJava8Compat = Seq("org.scala-lang.modules" %% "scala-java8-compat" % "1.0.0")
 
   val playJson = Seq("com.typesafe.play" %% "play-json" % "2.9.2")
 
