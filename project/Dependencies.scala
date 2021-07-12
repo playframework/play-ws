@@ -13,7 +13,7 @@ object Dependencies {
 
   val assertj = Seq("org.assertj" % "assertj-core" % "3.20.2")
 
-  val awaitility = Seq("org.awaitility" % "awaitility" % "4.0.3")
+  val awaitility = Seq("org.awaitility" % "awaitility" % "4.1.0")
 
   val specsVersion = "4.12.2"
   val specsBuild = Seq(
