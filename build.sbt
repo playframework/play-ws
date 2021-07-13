@@ -13,11 +13,11 @@ import sbtassembly.MergeStrategy
 //---------------------------------------------------------------
 
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
-resolvers in ThisBuild += Resolver.sonatypeRepo("public")
-resolvers in ThisBuild += Resolver.bintrayRepo("akka", "snapshots")
+ThisBuild / resolvers += Resolver.sonatypeRepo("public")
+ThisBuild / resolvers += Resolver.bintrayRepo("akka", "snapshots")
 
 // Customise sbt-dynver's behaviour to make it work with tags which aren't v-prefixed
-dynverVTagPrefix in ThisBuild := false
+ThisBuild / dynverVTagPrefix := false
 
 // Sanity-check: assert that version comes from a tag (e.g. not a too-shallow clone)
 // https://github.com/dwijnand/sbt-dynver/#sanity-checking-the-version
@@ -95,13 +95,13 @@ lazy val commonSettings = Def.settings(
   scalaVersion := scala213,
   crossScalaVersions := Seq(scala213, scala212),
   scalacOptions ++= scalacOpts,
-  scalacOptions in (Compile, doc) ++= Seq(
+  Compile / doc / scalacOptions ++= Seq(
     "-Xfatal-warnings",
     // Work around 2.12 bug which prevents javadoc in nested java classes from compiling.
     "-no-java-comments",
   ),
-  javacOptions in Compile ++= javacSettings,
-  javacOptions in Test ++= javacSettings,
+  Compile / javacOptions ++= javacSettings,
+  Test / javacOptions ++= javacSettings,
   headerLicense := {
     Some(
       HeaderLicense.Custom(
@@ -119,12 +119,12 @@ lazy val shadedCommonSettings = Seq(
 )
 
 lazy val shadeAssemblySettings = commonSettings ++ shadedCommonSettings ++ Seq(
-  assemblyOption in assembly ~= (_.copy(includeScala = false)),
-  test in assembly := {},
-  assemblyOption in assembly ~= {
+  assembly / assemblyOption ~= (_.copy(includeScala = false)),
+  assembly / test := {},
+  assembly / assemblyOption ~= {
     _.copy(includeScala = false)
   },
-  assemblyJarName in assembly := {
+  assembly / assemblyJarName := {
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((epoch, major)) =>
         s"${name.value}.jar" // we are only shading java
@@ -132,7 +132,7 @@ lazy val shadeAssemblySettings = commonSettings ++ shadedCommonSettings ++ Seq(
         sys.error("Cannot find valid scala version!")
     }
   },
-  target in assembly := {
+  assembly / target := {
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((epoch, major)) =>
         baseDirectory.value.getParentFile / "target" / s"$epoch.$major"
@@ -190,8 +190,8 @@ lazy val `shaded-asynchttpclient` = project
   .settings(
     libraryDependencies ++= asyncHttpClient,
     name := "shaded-asynchttpclient",
-    logLevel in assembly := Level.Error,
-    assemblyMergeStrategy in assembly := {
+    assembly / logLevel := Level.Error,
+    assembly / assemblyMergeStrategy := {
       val NettyPropertiesPath = "META-INF" + File.separator + "io.netty.versions.properties"
       ({
         case NettyPropertiesPath =>
@@ -199,12 +199,12 @@ lazy val `shaded-asynchttpclient` = project
         case ahcProperties if ahcProperties.endsWith("ahc-default.properties") =>
           ahcMerge
         case x =>
-          val oldStrategy = (assemblyMergeStrategy in assembly).value
+          val oldStrategy = (assembly / assemblyMergeStrategy).value
           oldStrategy(x)
       }: String => MergeStrategy)
     },
     //logLevel in assembly := Level.Debug,
-    assemblyShadeRules in assembly := Seq(
+    assembly / assemblyShadeRules := Seq(
       ShadeRule.rename("org.asynchttpclient.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.rename("io.netty.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.rename("javassist.**" -> "play.shaded.ahc.@0").inAll,
@@ -220,8 +220,8 @@ lazy val `shaded-asynchttpclient` = project
     //ivyXML := <dependencies></dependencies>,
     //ivyLoggingLevel := UpdateLogging.Full,
     //logLevel := Level.Debug,
-    assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeBin = false, includeScala = false),
-    packageBin in Compile := assembly.value
+    assembly / assemblyOption := (assembly / assemblyOption).value.copy(includeBin = false, includeScala = false),
+    Compile / packageBin := assembly.value
   )
 
 //---------------------------------------------------------------
@@ -238,24 +238,24 @@ lazy val `shaded-oauth` = project
     libraryDependencies ++= oauth,
     name := "shaded-oauth",
     //logLevel in assembly := Level.Debug,
-    assemblyShadeRules in assembly := Seq(
+    assembly / assemblyShadeRules := Seq(
       ShadeRule.rename("oauth.**" -> "play.shaded.oauth.@0").inAll,
       ShadeRule.rename("org.apache.commons.**" -> "play.shaded.oauth.@0").inAll
     ),
     // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom
     // Remove dependencies from the POM because we have a FAT jar here.
     makePomConfiguration := makePomConfiguration.value.withProcess(process = dependenciesFilter),
-    assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeBin = false, includeScala = false),
-    packageBin in Compile := assembly.value
+    assembly / assemblyOption := (assembly / assemblyOption).value.copy(includeBin = false, includeScala = false),
+    Compile / packageBin := assembly.value
   )
 
 // Make the shaded version of AHC available downstream
 val shadedAhcSettings = Seq(
-  unmanagedJars in Compile += (packageBin in (`shaded-asynchttpclient`, Compile)).value
+  Compile / unmanagedJars += (`shaded-asynchttpclient` / Compile / packageBin).value
 )
 
 val shadedOAuthSettings = Seq(
-  unmanagedJars in Compile += (packageBin in (`shaded-oauth`, Compile)).value
+  Compile / unmanagedJars += (`shaded-oauth` / Compile / packageBin).value
 )
 
 //---------------------------------------------------------------
@@ -311,8 +311,8 @@ lazy val `play-ahc-ws-standalone` = project
   .enablePlugins(Publish)
   .settings(
     commonSettings ++ shadedAhcSettings ++ shadedOAuthSettings ++ Seq(
-      fork in Test := true,
-      testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
+      Test / fork := true,
+      Test / testOptions := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
       libraryDependencies ++= standaloneAhcWSDependencies,
       // This will not work if you do a publishLocal, because that uses ivy...
       pomPostProcess := { (node: xml.Node) =>
@@ -351,8 +351,8 @@ lazy val `play-ws-standalone-json` = project
   .settings(commonSettings)
   .settings(mimaSettings)
   .settings(
-    fork in Test := true,
-    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
+    Test / fork := true,
+    Test / testOptions := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
     libraryDependencies ++= standaloneAhcWSJsonDependencies
   )
   .settings(AutomaticModuleName.settings("play.ws.standalone.json"))
@@ -371,8 +371,8 @@ lazy val `play-ws-standalone-xml` = project
   .settings(commonSettings)
   .settings(mimaSettings)
   .settings(
-    fork in Test := true,
-    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
+    Test / fork := true,
+    Test / testOptions := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
     libraryDependencies ++= standaloneAhcWSXMLDependencies
   )
   .settings(AutomaticModuleName.settings("play.ws.standalone.xml"))
@@ -391,9 +391,9 @@ lazy val `integration-tests` = project
   .settings(commonSettings)
   .settings(publish / skip := true)
   .settings(
-    fork in Test := true,
+    Test / fork := true,
     concurrentRestrictions += Tags.limitAll(1), // only one integration test at a time
-    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
+    Test / testOptions := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
     libraryDependencies ++= akkaHttp.map(_ % Test) ++ testDependencies
   )
   .settings(shadedAhcSettings)
@@ -419,7 +419,7 @@ lazy val bench = project
     `play-ahc-ws-standalone`
   )
   .settings(commonSettings)
-  .settings(scalacOptions in (Compile, doc) -= "-Xfatal-warnings")
+  .settings(Compile / doc / scalacOptions -= "-Xfatal-warnings")
   .settings(publish / skip := true)
 
 //---------------------------------------------------------------
