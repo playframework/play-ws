@@ -22,8 +22,8 @@ import scala.xml.Elem
 class XMLRequestSpec extends Specification with Mockito with AfterAll with MustMatchers {
   sequential
 
-  implicit val system       = ActorSystem()
-  implicit val materializer = Materializer.matFromSystem
+  implicit val system: ActorSystem        = ActorSystem()
+  implicit val materializer: Materializer = Materializer.matFromSystem
 
   override def afterAll: Unit = {
     system.terminate()

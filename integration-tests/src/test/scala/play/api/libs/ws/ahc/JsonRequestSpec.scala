@@ -31,8 +31,8 @@ import scala.io.Codec
 class JsonRequestSpec extends Specification with Mockito with AfterAll with JsonBodyWritables {
   sequential
 
-  implicit val system       = ActorSystem()
-  implicit val materializer = Materializer.matFromSystem
+  implicit val system: ActorSystem        = ActorSystem()
+  implicit val materializer: Materializer = Materializer.matFromSystem
 
   override def afterAll: Unit = {
     system.terminate()
