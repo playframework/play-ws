@@ -48,8 +48,8 @@ case class StandaloneAhcWSRequest(
     extends StandaloneWSRequest
     with AhcUtilities
     with WSCookieConverter {
-  override type Self     = StandaloneWSRequest
-  override type Response = StandaloneWSResponse
+  override type Self     = StandaloneAhcWSRequest
+  override type Response = StandaloneAhcWSResponse
 
   require(client != null, "A StandaloneAhcWSClient is required, but it is null")
   require(url != null, "A url is required, but it is null")
@@ -75,7 +75,7 @@ case class StandaloneAhcWSRequest(
   override def withAuth(username: String, password: String, scheme: WSAuthScheme): Self =
     copy(auth = Some((username, password, scheme)))
 
-  override def addHttpHeaders(hdrs: (String, String)*): StandaloneWSRequest = {
+  override def addHttpHeaders(hdrs: (String, String)*): Self = {
     val newHeaders = buildHeaders(headers, hdrs: _*)
     copy(headers = newHeaders)
   }
@@ -104,7 +104,7 @@ case class StandaloneAhcWSRequest(
     newHeaders
   }
 
-  override def addQueryStringParameters(parameters: (String, String)*): StandaloneWSRequest = {
+  override def addQueryStringParameters(parameters: (String, String)*): Self = {
     val newQueryString = buildQueryParams(queryString, parameters: _*)
     copy(queryString = newQueryString)
   }
@@ -120,7 +120,7 @@ case class StandaloneAhcWSRequest(
     }
   }
 
-  override def withCookies(cookies: WSCookie*): StandaloneWSRequest = copy(cookies = cookies)
+  override def withCookies(cookies: WSCookie*): Self = copy(cookies = cookies)
 
   override def withFollowRedirects(follow: Boolean): Self = copy(followRedirects = Some(follow))
 
@@ -222,25 +222,31 @@ case class StandaloneAhcWSRequest(
 
   override def withMethod(method: String): Self = copy(method = method)
 
-  override def execute(): Future[Response] = {
-    val executor = filterWSRequestExecutor(WSRequestExecutor { request =>
-      client.execute(request.asInstanceOf[StandaloneAhcWSRequest].buildRequest())
+  private val executor: StandaloneAhcWSRequest => Future[Response] = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+    lazy val executor = filterWSRequestExecutor(WSRequestExecutor {
+      case ahcReq: StandaloneAhcWSRequest =>
+        client.execute(ahcReq.buildRequest())
+
+      case invalid =>
+        Future.failed[StandaloneAhcWSResponse](new IllegalArgumentException(s"Invalid request: ${invalid}"))
     })
 
-    executor(this)
+    { (req: StandaloneAhcWSRequest) =>
+      executor(req).collect { case resp: StandaloneAhcWSResponse =>
+        resp
+      }
+    }
   }
+
+  override def execute(): Future[Response] = executor(this)
 
   protected def filterWSRequestExecutor(next: WSRequestExecutor): WSRequestExecutor = {
     filters.foldRight(next)((filter, executor) => filter.apply(executor))
   }
 
-  override def stream(): Future[Response] = {
-    val executor = filterWSRequestExecutor(WSRequestExecutor { request =>
-      client.executeStream(request.asInstanceOf[StandaloneAhcWSRequest].buildRequest())
-    })
-
-    executor(this)
-  }
+  override def stream(): Future[Response] = executor(this)
 
   /**
    * Returns the HTTP header given by name, using the request builder.  This may be signed,

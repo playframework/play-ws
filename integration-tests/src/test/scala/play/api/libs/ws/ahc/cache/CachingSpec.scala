@@ -14,6 +14,7 @@ import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
 import play.AkkaServerProvider
 import play.api.libs.ws.ahc._
+import play.api.libs.ws.DefaultBodyReadables._
 import play.shaded.ahc.org.asynchttpclient._
 
 import scala.concurrent.Future
@@ -58,7 +59,7 @@ class CachingSpec(implicit val executionEnv: ExecutionEnv)
       ws.url(s"http://localhost:$testServerPort/hello")
         .get()
         .map { response =>
-          response.body must be_==("<h1>Say hello to akka-http</h1>")
+          response.body[String] must be_==("<h1>Say hello to akka-http</h1>")
         }
         .await
 
