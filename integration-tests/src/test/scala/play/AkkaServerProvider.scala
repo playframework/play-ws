@@ -31,8 +31,8 @@ trait AkkaServerProvider extends BeforeAfterAll {
   val defaultTimeout: FiniteDuration = 5.seconds
 
   // Create Akka system for thread and streaming management
-  implicit val system       = ActorSystem()
-  implicit val materializer = Materializer.matFromSystem
+  implicit val system: ActorSystem        = ActorSystem()
+  implicit val materializer: Materializer = Materializer.matFromSystem
 
   lazy val futureServer: Future[Http.ServerBinding] = {
     // Using 0 (zero) means that a random free port will be used.

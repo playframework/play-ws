@@ -35,9 +35,9 @@ class AhcWSRequestSpec
 
   sequential
 
-  implicit val system       = ActorSystem()
-  implicit val materializer = Materializer.matFromSystem
-  val wsClient              = StandaloneAhcWSClient()
+  implicit val system: ActorSystem        = ActorSystem()
+  implicit val materializer: Materializer = Materializer.matFromSystem
+  val wsClient                            = StandaloneAhcWSClient()
 
   override def afterAll: Unit = {
     wsClient.close()
