@@ -119,11 +119,8 @@ lazy val shadedCommonSettings = Seq(
 )
 
 lazy val shadeAssemblySettings = commonSettings ++ shadedCommonSettings ++ Seq(
-  assembly / assemblyOption ~= (_.copy(includeScala = false)),
+  assembly / assemblyOption ~= (_.withIncludeScala(false)),
   assembly / test := {},
-  assembly / assemblyOption ~= {
-    _.copy(includeScala = false)
-  },
   assembly / assemblyJarName := {
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((epoch, major)) =>
@@ -220,7 +217,7 @@ lazy val `shaded-asynchttpclient` = project
     //ivyXML := <dependencies></dependencies>,
     //ivyLoggingLevel := UpdateLogging.Full,
     //logLevel := Level.Debug,
-    assembly / assemblyOption := (assembly / assemblyOption).value.copy(includeBin = false, includeScala = false),
+    assembly / assemblyOption := (assembly / assemblyOption).value.withIncludeBin(false).withIncludeScala(false),
     Compile / packageBin := assembly.value
   )
 
@@ -245,7 +242,7 @@ lazy val `shaded-oauth` = project
     // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom
     // Remove dependencies from the POM because we have a FAT jar here.
     makePomConfiguration := makePomConfiguration.value.withProcess(process = dependenciesFilter),
-    assembly / assemblyOption := (assembly / assemblyOption).value.copy(includeBin = false, includeScala = false),
+    assembly / assemblyOption := (assembly / assemblyOption).value.withIncludeBin(false).withIncludeScala(false),
     Compile / packageBin := assembly.value
   )
 
