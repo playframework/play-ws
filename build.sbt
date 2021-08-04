@@ -12,10 +12,6 @@ import sbtassembly.MergeStrategy
 // Shading and Project Settings
 //---------------------------------------------------------------
 
-resolvers ++= DefaultOptions.resolvers(snapshot = true)
-ThisBuild / resolvers += Resolver.sonatypeRepo("public")
-ThisBuild / resolvers += Resolver.bintrayRepo("akka", "snapshots")
-
 // Customise sbt-dynver's behaviour to make it work with tags which aren't v-prefixed
 ThisBuild / dynverVTagPrefix := false
 
@@ -80,6 +76,7 @@ lazy val mimaSettings = Seq(
 )
 
 lazy val commonSettings = Def.settings(
+  // sonatypeProfileName := "com.typesafe",  // TODO uncomment when we add sbt-ci-release
   organization := "com.typesafe.play",
   organizationName := "Lightbend Inc.",
   organizationHomepage := Some(url("https://www.lightbend.com/")),
@@ -180,7 +177,6 @@ def dependenciesFilter(n: XNode) =
 
 lazy val `shaded-asynchttpclient` = project
   .in(file("shaded/asynchttpclient"))
-  .enablePlugins(Publish)
   .disablePlugins(MimaPlugin)
   .settings(commonSettings)
   .settings(shadeAssemblySettings)
@@ -227,7 +223,6 @@ lazy val `shaded-asynchttpclient` = project
 
 lazy val `shaded-oauth` = project
   .in(file("shaded/oauth"))
-  .enablePlugins(Publish)
   .disablePlugins(MimaPlugin)
   .settings(commonSettings)
   .settings(shadeAssemblySettings)
@@ -277,7 +272,6 @@ lazy val shaded = Project(id = "shaded", base = file("shaded"))
 // WS API, no play dependencies
 lazy val `play-ws-standalone` = project
   .in(file("play-ws-standalone"))
-  .enablePlugins(Publish)
   .settings(commonSettings)
   .settings(mimaSettings)
   .settings(libraryDependencies ++= standaloneApiWSDependencies)
@@ -305,7 +299,6 @@ def addShadedDeps(deps: Seq[xml.Node], node: xml.Node): xml.Node = {
 // Standalone implementation using AsyncHttpClient
 lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
-  .enablePlugins(Publish)
   .settings(
     commonSettings ++ shadedAhcSettings ++ shadedOAuthSettings ++ Seq(
       Test / fork := true,
@@ -344,7 +337,6 @@ lazy val `play-ahc-ws-standalone` = project
 
 lazy val `play-ws-standalone-json` = project
   .in(file("play-ws-standalone-json"))
-  .enablePlugins(Publish)
   .settings(commonSettings)
   .settings(mimaSettings)
   .settings(
@@ -364,7 +356,6 @@ lazy val `play-ws-standalone-json` = project
 
 lazy val `play-ws-standalone-xml` = project
   .in(file("play-ws-standalone-xml"))
-  .enablePlugins(Publish)
   .settings(commonSettings)
   .settings(mimaSettings)
   .settings(
