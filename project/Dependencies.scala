@@ -9,13 +9,13 @@ object Dependencies {
   val scala212 = "2.12.14"
   val scala213 = "2.13.6"
 
-  val logback = Seq("ch.qos.logback" % "logback-core" % "1.2.3")
+  val logback = Seq("ch.qos.logback" % "logback-core" % "1.2.5")
 
   val assertj = Seq("org.assertj" % "assertj-core" % "3.20.2")
 
   val awaitility = Seq("org.awaitility" % "awaitility" % "4.1.0")
 
-  val specsVersion = "4.12.2"
+  val specsVersion = "4.12.4-js-ec"
   val specsBuild = Seq(
     "specs2-core",
     "specs2-junit",
@@ -30,13 +30,13 @@ object Dependencies {
 
   val playJson = Seq("com.typesafe.play" %% "play-json" % "2.9.2")
 
-  val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "1.7.31")
+  val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "1.7.32")
 
   val javaxInject = Seq("javax.inject" % "javax.inject" % "1")
 
   val sslConfigCore = Seq("com.typesafe" %% "ssl-config-core" % "0.6.0")
 
-  val scalaXml = Seq("org.scala-lang.modules" %% "scala-xml" % "2.0.0")
+  val scalaXml = Seq("org.scala-lang.modules" %% "scala-xml" % "2.0.1")
 
   val oauth = Seq("oauth.signpost" % "signpost-core" % "2.1.1")
 

@@ -12,10 +12,6 @@ import sbtassembly.MergeStrategy
 // Shading and Project Settings
 //---------------------------------------------------------------
 
-resolvers ++= DefaultOptions.resolvers(snapshot = true)
-ThisBuild / resolvers += Resolver.sonatypeRepo("public")
-ThisBuild / resolvers += Resolver.bintrayRepo("akka", "snapshots")
-
 // Customise sbt-dynver's behaviour to make it work with tags which aren't v-prefixed
 ThisBuild / dynverVTagPrefix := false
 
@@ -58,7 +54,7 @@ lazy val mimaSettings = Seq(
     organization.value %% name.value % previousStableVersion.value
       .getOrElse(throw new Error("Unable to determine previous version"))
   ),
-  // these exclusions are only for master branch and are targeting 2.2.x
+  // these exclusions are only for main branch and are targeting 2.2.x
   mimaBinaryIssueFilters ++= Seq(
     ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.ahc.AhcWSClientConfig$"),
     ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.<init>$default$6"),
@@ -80,6 +76,7 @@ lazy val mimaSettings = Seq(
 )
 
 lazy val commonSettings = Def.settings(
+  // sonatypeProfileName := "com.typesafe",  // TODO uncomment when we add sbt-ci-release
   organization := "com.typesafe.play",
   organizationName := "Lightbend Inc.",
   organizationHomepage := Some(url("https://www.lightbend.com/")),
@@ -102,6 +99,8 @@ lazy val commonSettings = Def.settings(
   ),
   Compile / javacOptions ++= javacSettings,
   Test / javacOptions ++= javacSettings,
+  // Akka brings in 0.9.0, but we want 1.0.0:
+  libraryDependencySchemes += "org.scala-lang.modules" %% "scala-java8-compat" % "always",
   headerLicense := {
     Some(
       HeaderLicense.Custom(
@@ -180,7 +179,6 @@ def dependenciesFilter(n: XNode) =
 
 lazy val `shaded-asynchttpclient` = project
   .in(file("shaded/asynchttpclient"))
-  .enablePlugins(Publish)
   .disablePlugins(MimaPlugin)
   .settings(commonSettings)
   .settings(shadeAssemblySettings)
@@ -227,7 +225,6 @@ lazy val `shaded-asynchttpclient` = project
 
 lazy val `shaded-oauth` = project
   .in(file("shaded/oauth"))
-  .enablePlugins(Publish)
   .disablePlugins(MimaPlugin)
   .settings(commonSettings)
   .settings(shadeAssemblySettings)
@@ -277,7 +274,6 @@ lazy val shaded = Project(id = "shaded", base = file("shaded"))
 // WS API, no play dependencies
 lazy val `play-ws-standalone` = project
   .in(file("play-ws-standalone"))
-  .enablePlugins(Publish)
   .settings(commonSettings)
   .settings(mimaSettings)
   .settings(libraryDependencies ++= standaloneApiWSDependencies)
@@ -305,7 +301,6 @@ def addShadedDeps(deps: Seq[xml.Node], node: xml.Node): xml.Node = {
 // Standalone implementation using AsyncHttpClient
 lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
-  .enablePlugins(Publish)
   .settings(
     commonSettings ++ shadedAhcSettings ++ shadedOAuthSettings ++ Seq(
       Test / fork := true,
@@ -344,7 +339,6 @@ lazy val `play-ahc-ws-standalone` = project
 
 lazy val `play-ws-standalone-json` = project
   .in(file("play-ws-standalone-json"))
-  .enablePlugins(Publish)
   .settings(commonSettings)
   .settings(mimaSettings)
   .settings(
@@ -364,7 +358,6 @@ lazy val `play-ws-standalone-json` = project
 
 lazy val `play-ws-standalone-xml` = project
   .in(file("play-ws-standalone-xml"))
-  .enablePlugins(Publish)
   .settings(commonSettings)
   .settings(mimaSettings)
   .settings(

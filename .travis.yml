@@ -7,11 +7,6 @@ git:
 env:
   jobs:
     - TRAVIS_JDK=11
-  global:
-    # encrypt with: travis encrypt --pro BINTRAY_USER=...
-    - secure: "RZUI6IHOV95LVej30BSsU5Oi8pEoFJDEwaitRj6AxK11YEvheUbcXhudw7BLQjubVwOzsMcJvuo7WINigshYmZiBSbsinuFJMdhq6vJkmoKnrA6RvY3/jkPddSKBHpaaCAYW7hVX4SmvZZucM6NHtYY5R8BA3lVUZepG/402HANvx1hZEQ12mYSJxCUk4UBUWaXLb7sl21CcuIsaEMR9wY6qzirGsyQSXGALCi9y7txfzJvVrsmomIeDx3xdITP4GQ6UW9QhPdpqoNr9TaZG0mtCfzMEPqdBJ+eR/e7R6IxvDQQ+kb0wbviDaSvTPUgzDWApBmJhWiu1hzx+dxsVCbayon5nEAWMMqUaBHQvYuujn0YV0aE8Wca4yo0HT9lWwnW3EId5+f4Na99e2YwVp7OwPtBL1ISzojFTh3CzBqkzhiZRfuYVAHCIJgxOUwXvvSWYh4oc5JZDUef47RNkIGH/iBpJ6nBsTiR/S1ZaGVoqf6XZiRu8xVGpZTCAyMwofX6JJcaWJgX2mxz9kx5PadXb7eJPwOO9CsdhiNBEtDBZdKQbIMVCtFw/kjgujCtJsl7y5PcW0SOJeUG6M9V79hwDkni8PdV0xxlyR0GzI7fULDht+qE8xwUDuIh4J4EUp1RC+oqNAXVPlrNvSTCRsyYdPs9WhyPxmpR7eFiEFoo="
-    # encrypt with: travis encrypt --pro BINTRAY_PASS=...
-    - secure: "MFp03KTS8Xaigf5geg3cVRTN+yxUuON9T3bEAtCXIAdsIj0tPDTJJ8ilZ2qxSfrUdNXmXwcBhjcT8iAIpth1q5JUu2gUXWP/hTGktqrvMWEHbAxYC0FNZea53a6aow1EqbHZEL2t+Bi7SAUxbNtVFNPICfLxL0Y4wLpoCT0HBjfM+vnQ04L49YyGM1xECmkR3VD6d6qra71rmIwIr8yHU7NOd4dVXxSmTfAJU3NiKDYbJX2yOofW+Fo70HTghmCryjcK47DPmrHzeVGwhVlqPvcSY/Bf4Ib82mMR7g3+plVb48etJRfE/Bm+UzadcSzxx+PRfsu0qSwptwCmeDHB+wwfqu6NX5AZhuOjzXuctSqje5TDBjhmS9hIxOM8Abl3w4QVFLdk8bNc6sWJ7VyRxXt2VgIHEoN+cQwKbxAyrxokwp43O/tVB5+fho04vjwiX61pH4GKXzGTVaEZVCaEBmXqThVoeb9T+PxG/ofMGEqFT3NZVEhAZRx2AbqE7ALuDykKc5aIs4fFUZwnNYYoTWsnBHBaZZqVqeexVCt3cFAArNg6xhYujswOMWv9kkp2CgDY3jbqFisH9yanOuCoh2lKIgLzldv5q2kYoS4tUIKqqTnjMaB0/GyU5UT61IBxo5NMjDVb7YvhqgBXBzdoFQh1ODyKeNoKc/IWGbfXfYw="
 
 scala:
   - 2.13.6
@@ -61,13 +56,13 @@ jobs:
         - TRAVIS_JDK=8
 
     - stage: publish
-      name: "Publish artifacts to Bintray"
+      name: "Publish artifacts to Sonatype"
       script: sbt +publish
 
 stages:
   - name: test
   - name: publish
-    if: ((branch = master AND type = push) OR (tag IS present)) AND NOT fork
+    if: (tag IS present) AND NOT fork
 
 cache:
   directories:
@@ -82,5 +77,5 @@ before_cache:
 
 branches:
   only:
-    - master
+    - main
     - /^\d+\.\d+(\.\d+)?(-\S*)?$/
