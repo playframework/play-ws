@@ -67,7 +67,7 @@ jobs:
 stages:
   - name: test
   - name: publish
-    if: ((branch = master AND type = push) OR (tag IS present)) AND NOT fork
+    if: ((branch = main AND type = push) OR (tag IS present)) AND NOT fork
 
 cache:
   directories:
@@ -82,5 +82,5 @@ before_cache:
 
 branches:
   only:
-    - master
+    - main
     - /^\d+\.\d+(\.\d+)?(-\S*)?$/

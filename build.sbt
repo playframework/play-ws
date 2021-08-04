@@ -58,7 +58,7 @@ lazy val mimaSettings = Seq(
     organization.value %% name.value % previousStableVersion.value
       .getOrElse(throw new Error("Unable to determine previous version"))
   ),
-  // these exclusions are only for master branch and are targeting 2.2.x
+  // these exclusions are only for main branch and are targeting 2.2.x
   mimaBinaryIssueFilters ++= Seq(
     ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.ahc.AhcWSClientConfig$"),
     ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.<init>$default$6"),
