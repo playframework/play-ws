@@ -13,6 +13,7 @@ import scalariform.formatter.preferences._
 // Shading and Project Settings
 //---------------------------------------------------------------
 
+<<<<<<< HEAD
 val scala212 = "2.12.13"
 val scala213 = "2.13.5"
 
@@ -20,6 +21,8 @@ resolvers ++= DefaultOptions.resolvers(snapshot = true)
 resolvers in ThisBuild += Resolver.sonatypeRepo("public")
 resolvers in ThisBuild += Resolver.bintrayRepo("akka", "snapshots")
 
+=======
+>>>>>>> f261bff (remove old Bintray-based publishing)
 // Customise sbt-dynver's behaviour to make it work with tags which aren't v-prefixed
 dynverVTagPrefix in ThisBuild := false
 
@@ -65,6 +68,7 @@ lazy val mimaSettings = mimaDefaultSettings ++ Seq(
 )
 
 lazy val commonSettings = Def.settings(
+  // sonatypeProfileName := "com.typesafe",  // TODO uncomment when we add sbt-ci-release
   organization := "com.typesafe.play",
   scalaVersion := scala213,
   crossScalaVersions := Seq(scala213, scala212),
@@ -190,7 +194,13 @@ def dependenciesFilter(n: XNode) = new RuleTransformer(new RewriteRule {
 // Shaded AsyncHttpClient implementation
 //---------------------------------------------------------------
 
+<<<<<<< HEAD
 lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
+=======
+lazy val `shaded-asynchttpclient` = project
+  .in(file("shaded/asynchttpclient"))
+  .disablePlugins(MimaPlugin)
+>>>>>>> f261bff (remove old Bintray-based publishing)
   .settings(commonSettings)
   .settings(shadeAssemblySettings)
   .settings(
@@ -236,7 +246,13 @@ lazy val `shaded-asynchttpclient` = project.in(file("shaded/asynchttpclient"))
 // Shaded oauth
 //---------------------------------------------------------------
 
+<<<<<<< HEAD
 lazy val `shaded-oauth` = project.in(file("shaded/oauth"))
+=======
+lazy val `shaded-oauth` = project
+  .in(file("shaded/oauth"))
+  .disablePlugins(MimaPlugin)
+>>>>>>> f261bff (remove old Bintray-based publishing)
   .settings(commonSettings)
   .settings(shadeAssemblySettings)
   .settings(
@@ -313,6 +329,7 @@ def addShadedDeps(deps: Seq[xml.Node], node: xml.Node): xml.Node = {
 // Standalone implementation using AsyncHttpClient
 lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
+<<<<<<< HEAD
   .settings(commonSettings ++ formattingSettings ++ shadedAhcSettings ++ shadedOAuthSettings ++ Seq(
     fork in Test := true,
     testOptions in Test := Seq(
@@ -322,6 +339,18 @@ lazy val `play-ahc-ws-standalone` = project
     pomPostProcess := {
       (node: xml.Node) => addShadedDeps(List(
         <dependency>
+=======
+  .settings(
+    commonSettings ++ shadedAhcSettings ++ shadedOAuthSettings ++ Seq(
+      Test / fork := true,
+      Test / testOptions := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
+      libraryDependencies ++= standaloneAhcWSDependencies,
+      // This will not work if you do a publishLocal, because that uses ivy...
+      pomPostProcess := { (node: xml.Node) =>
+        addShadedDeps(
+          List(
+            <dependency>
+>>>>>>> f261bff (remove old Bintray-based publishing)
           <groupId>com.typesafe.play</groupId>
           <artifactId>shaded-asynchttpclient</artifactId>
           <version>{version.value}</version>
