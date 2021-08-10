@@ -4,8 +4,6 @@
 
 package play.api.libs.ws.ahc
 
-import java.security.KeyStore
-import java.security.cert.CertPathValidatorException
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -248,14 +246,6 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
         Protocols.recommendedProtocols.filter(existingProtocols.contains).toArray
     }
 
-    if (!sslConfig.loose.allowWeakProtocols) {
-      val deprecatedProtocols = Protocols.deprecatedProtocols
-      for (deprecatedProtocol <- deprecatedProtocols) {
-        if (definedProtocols.contains(deprecatedProtocol)) {
-          throw new IllegalStateException(s"Weak protocol $deprecatedProtocol found in ws.ssl.protocols!")
-        }
-      }
-    }
     definedProtocols
   }
 
@@ -266,17 +256,9 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
         configuredCiphers.filter(existingCiphers.contains(_)).toArray
 
       case None =>
-        Ciphers.recommendedCiphers.filter(existingCiphers.contains(_)).toArray
+        existingCiphers
     }
 
-    if (!sslConfig.loose.allowWeakCiphers) {
-      val deprecatedCiphers = Ciphers.deprecatedCiphers
-      for (deprecatedCipher <- deprecatedCiphers) {
-        if (definedCiphers.contains(deprecatedCipher)) {
-          throw new IllegalStateException(s"Weak cipher $deprecatedCipher found in ws.ssl.ciphers!")
-        }
-      }
-    }
     definedCiphers
   }
 
@@ -288,7 +270,6 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
     // context!
     val sslContext = if (sslConfig.default) {
       logger.info("buildSSLContext: play.ws.ssl.default is true, using default SSLContext")
-      validateDefaultTrustManager(sslConfig)
       SSLContext.getDefault
     } else {
       // break out the static methods as much as we can...
@@ -327,39 +308,5 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
 
   def buildTrustManagerFactory(ssl: SSLConfigSettings): TrustManagerFactoryWrapper = {
     new DefaultTrustManagerFactoryWrapper(ssl.trustManagerConfig.algorithm)
-  }
-
-  def validateDefaultTrustManager(sslConfig: SSLConfigSettings): Unit = {
-    // If we are using a default SSL context, we can't filter out certificates with weak algorithms
-    // We ALSO don't have access to the trust manager from the SSLContext without doing horrible things
-    // with reflection.
-    //
-    // However, given that the default SSLContextImpl will call out to the TrustManagerFactory and any
-    // configuration with system properties will also apply with the factory, we can use the factory
-    // method to recreate the trust manager and validate the trust certificates that way.
-    //
-    // This is really a last ditch attempt to satisfy https://wiki.mozilla.org/CA:MD5and1024 on root certificates.
-    //
-    // http://grepcode.com/file/repository.grepcode.com/java/root/jdk/openjdk/7-b147/sun/security/ssl/SSLContextImpl.java#79
-
-    val tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm)
-    tmf.init(null.asInstanceOf[KeyStore])
-    val trustManager: X509TrustManager = tmf.getTrustManagers()(0).asInstanceOf[X509TrustManager]
-
-    val constraints = sslConfig.disabledKeyAlgorithms
-      .map(a => AlgorithmConstraintsParser.parseAll(AlgorithmConstraintsParser.expression, a).get)
-      .toSet
-    val algorithmChecker = new AlgorithmChecker(loggerFactory, Set(), constraints)
-    for (cert <- trustManager.getAcceptedIssuers) {
-      try {
-        algorithmChecker.checkKeyAlgorithms(cert)
-      } catch {
-        case e: CertPathValidatorException =>
-          logger.warn(
-            "You are using play.ws.ssl.default=true and have a weak certificate in your default trust store!  (You can modify play.ws.ssl.disabledKeyAlgorithms to remove this message.)",
-            e
-          )
-      }
-    }
   }
 }
