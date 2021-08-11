@@ -14,7 +14,6 @@ import org.specs2.mutable.Specification
 import play.api.libs.ws.WSClientConfig
 import play.shaded.ahc.org.asynchttpclient.proxy.ProxyServerSelector
 import play.shaded.ahc.org.asynchttpclient.util.ProxyUtils
-import uk.org.lidalia.slf4jtest.TestLoggerFactory
 
 import scala.concurrent.duration._
 
