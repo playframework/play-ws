@@ -34,18 +34,18 @@ object Dependencies {
 
   val javaxInject = Seq("javax.inject" % "javax.inject" % "1")
 
-  val sslConfigCore = Seq("com.typesafe" %% "ssl-config-core" % "0.4.3")
+  val sslConfigCore = Seq("com.typesafe" %% "ssl-config-core" % "0.6.0")
 
   val scalaXml = Seq("org.scala-lang.modules" %% "scala-xml" % "2.0.1")
 
   val oauth = Seq("oauth.signpost" % "signpost-core" % "2.1.1")
 
-  val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % "2.0.0")
+  val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % "2.1.0")
 
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "2.12.3")
 
   val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % "2.6.15")
-  val akkaHttp    = Seq("com.typesafe.akka" %% "akka-http" % "10.1.14")
+  val akkaHttp    = Seq("com.typesafe.akka" %% "akka-http" % "10.2.6")
 
   val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.3")
 

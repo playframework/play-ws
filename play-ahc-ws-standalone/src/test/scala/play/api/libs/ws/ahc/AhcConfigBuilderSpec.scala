@@ -6,7 +6,6 @@ package play.api.libs.ws.ahc
 
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
-import com.typesafe.sslconfig.ssl.Ciphers
 import com.typesafe.sslconfig.ssl.Protocols
 import com.typesafe.sslconfig.ssl.SSLConfigFactory
 import com.typesafe.sslconfig.ssl.SSLConfigSettings
@@ -15,7 +14,6 @@ import org.specs2.mutable.Specification
 import play.api.libs.ws.WSClientConfig
 import play.shaded.ahc.org.asynchttpclient.proxy.ProxyServerSelector
 import play.shaded.ahc.org.asynchttpclient.util.ProxyUtils
-import uk.org.lidalia.slf4jtest.TestLoggerFactory
 
 import scala.concurrent.duration._
 
@@ -58,7 +56,6 @@ class AhcConfigBuilderSpec extends Specification with Mockito {
         actual.isFollowRedirect must_== defaultWsConfig.followRedirects
         actual.getCookieStore must_== null
 
-        actual.getEnabledCipherSuites.toSeq must not contain Ciphers.deprecatedCiphers
         actual.getEnabledProtocols.toSeq must not contain Protocols.deprecatedProtocols
       }
 
@@ -189,48 +186,6 @@ class AhcConfigBuilderSpec extends Specification with Mockito {
           asyncClientConfig.getSslEngineFactory must not(beNull)
         }
 
-        "use the default with a current certificate" in {
-          // You can't get the value of SSLContext out from the JSSE SSL engine factory, so
-          // checking SSLContext.getDefault from a default = true is hard.
-          // Unless we can mock this, it doesn't seem like it's easy to unit test.
-          pending("AHC 2.0 does not provide a reference to a configured SSLContext")
-
-          //val tmc = TrustManagerConfig()
-          //val wsConfig = defaultWsConfig.copy(ssl = SSLConfig(default = true, trustManagerConfig = tmc))
-          //val config = defaultConfig.copy(wsClientConfig = wsConfig)
-          //val builder = new AhcConfigBuilder(config)
-          //
-          //val asyncClientConfig = builder.build()
-          //val sslEngineFactory = asyncClientConfig.getSslEngineFactory
-        }
-
-        "log a warning if sslConfig.default is passed in with an weak certificate" in {
-          import scala.collection.JavaConverters._
-          // Pass in a configuration which is guaranteed to fail, by banning RSA, DSA and EC certificates
-          val underlyingConfig  = parseSSLConfig("""
-                                                  |play.ws.ssl.default=true
-                                                  |play.ws.ssl.disabledKeyAlgorithms=["RSA", "DSA", "EC"]
-            """.stripMargin)
-          val sslConfigSettings = SSLConfigFactory.parse(underlyingConfig)
-
-          val wsConfig = defaultWsConfig.copy(ssl = sslConfigSettings)
-          val config   = defaultConfig.copy(wsClientConfig = wsConfig)
-
-          // clear the logger of any messages...
-          TestLoggerFactory.clear()
-          val builder = new AhcConfigBuilder(config)
-
-          // Run method that will trigger the logger warning
-          builder.configureSSL(sslConfig = sslConfigSettings)
-
-          val loggerFactory = TestLoggerFactory.getInstance()
-          val logger        = loggerFactory.getLogger(builder.getClass)
-          val messages      = logger.getLoggingEvents.asList().asScala.map(_.getMessage)
-          messages must contain(
-            "You are using play.ws.ssl.default=true and have a weak certificate in your default trust store!  (You can modify play.ws.ssl.disabledKeyAlgorithms to remove this message.)"
-          )
-        }
-
         "should validate certificates" in {
           val sslConfig = SSLConfigSettings()
           val wsConfig  = defaultWsConfig.copy(ssl = sslConfig)
@@ -279,47 +234,6 @@ class AhcConfigBuilderSpec extends Specification with Mockito {
 
           actual.toSeq must containTheSameElementsAs(Seq("derp", "baz", "quux"))
         }
-
-        "throw exception on deprecated protocols from explicit list" in {
-          val deprecatedProtocol = Protocols.deprecatedProtocols.head
-
-          // the enabled protocol list has a deprecated protocol in it.
-          val underlyingConfig =
-            parseSSLConfig(s"""play.ws.ssl.enabledProtocols=["$deprecatedProtocol", "goodOne", "goodTwo"]""")
-          val sslConfig = SSLConfigFactory.parse(underlyingConfig)
-          val wsConfig  = defaultWsConfig.copy(ssl = sslConfig)
-          val config    = defaultConfig.copy(wsClientConfig = wsConfig)
-
-          val builder = new AhcConfigBuilder(config)
-
-          // The existing protocols is larger than the enabled list, and out of order.
-          val existingProtocols = Array("goodTwo", "badOne", "badTwo", deprecatedProtocol, "goodOne")
-
-          builder.configureProtocols(existingProtocols, sslConfig).must(throwAn[IllegalStateException])
-        }
-
-        "not throw exception on deprecated protocols from list if allowWeakProtocols is enabled" in {
-          val deprecatedProtocol = Protocols.deprecatedProtocols.head
-
-          // the enabled protocol list has a deprecated protocol in it.
-          val underlyingConfig = parseSSLConfig(s"""
-                                                   |play.ws.ssl.enabledProtocols=["$deprecatedProtocol", "goodOne", "goodTwo"]
-                                                   |play.ws.ssl.loose.allowWeakProtocols=true
-             """.stripMargin)
-          val sslConfig        = SSLConfigFactory.parse(underlyingConfig)
-          val wsConfig         = defaultWsConfig.copy(ssl = sslConfig)
-          val config           = defaultConfig.copy(wsClientConfig = wsConfig)
-
-          val builder = new AhcConfigBuilder(config)
-
-          // The existing protocols is larger than the enabled list, and out of order.
-          val existingProtocols = Array("goodTwo", "badOne", "badTwo", deprecatedProtocol, "goodOne")
-
-          val actual = builder.configureProtocols(existingProtocols, sslConfig)
-
-          // We should only have the list in order, including the deprecated protocol.
-          actual.toSeq must containTheSameElementsAs(Seq(deprecatedProtocol, "goodOne", "goodTwo"))
-        }
       }
 
       "with ciphers" should {
@@ -336,39 +250,6 @@ class AhcConfigBuilderSpec extends Specification with Mockito {
 
           actual.toSeq must containTheSameElementsAs(Seq("goodone", "goodtwo"))
         }
-
-        "throw exception on deprecated ciphers from the explicit cipher list" in {
-          val underlyingConfig = parseSSLConfig(
-            s"""play.ws.ssl.enabledCipherSuites=[${Ciphers.deprecatedCiphers.head}, "goodone", "goodtwo"]"""
-          )
-          val enabledCiphers  = Seq(Ciphers.deprecatedCiphers.head, "goodone", "goodtwo")
-          val sslConfig       = SSLConfigFactory.parse(underlyingConfig)
-          val wsConfig        = defaultWsConfig.copy(ssl = sslConfig)
-          val config          = defaultConfig.copy(wsClientConfig = wsConfig)
-          val builder         = new AhcConfigBuilder(config)
-          val existingCiphers = enabledCiphers.toArray
-
-          builder.configureCipherSuites(existingCiphers, sslConfig).must(throwAn[IllegalStateException])
-        }
-
-        "not throw exception on deprecated ciphers if allowWeakCiphers is enabled" in {
-          // User specifies list with deprecated ciphers...
-          val underlyingConfig = parseSSLConfig("""
-                                                  |play.ws.ssl.enabledCipherSuites=[badone, "goodone", "goodtwo"]
-                                                  |play.ws.ssl.loose.allowWeakCiphers=true
-            """.stripMargin)
-
-          val sslConfig       = SSLConfigFactory.parse(underlyingConfig)
-          val wsConfig        = defaultWsConfig.copy(ssl = sslConfig)
-          val config          = defaultConfig.copy(wsClientConfig = wsConfig)
-          val builder         = new AhcConfigBuilder(config)
-          val existingCiphers = Array("badone", "goodone", "goodtwo")
-
-          val actual = builder.configureCipherSuites(existingCiphers, sslConfig)
-
-          actual.toSeq must containTheSameElementsAs(Seq("badone", "goodone", "goodtwo"))
-        }
-
       }
     }
   }
