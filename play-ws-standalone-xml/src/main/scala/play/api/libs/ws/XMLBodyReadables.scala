@@ -25,7 +25,7 @@ trait XMLBodyReadables {
    * }}}
    */
   implicit val readableAsXml: BodyReadable[Elem] = BodyReadable { response =>
-    xml.XML.load(new InputSource(new ByteArrayInputStream(response.bodyAsBytes.toArray)))
+    XML.parser.load(new InputSource(new ByteArrayInputStream(response.bodyAsBytes.toArray)))
   }
 
 }
