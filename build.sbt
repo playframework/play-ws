@@ -100,8 +100,6 @@ lazy val commonSettings = Def.settings(
   ),
   Compile / javacOptions ++= javacSettings,
   Test / javacOptions ++= javacSettings,
-  // Akka brings in 0.9.0, but we want 1.0.0:
-  libraryDependencySchemes += "org.scala-lang.modules" %% "scala-java8-compat" % "always",
   headerLicense := {
     Some(
       HeaderLicense.Custom(
