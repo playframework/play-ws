@@ -1,60 +1,29 @@
 version: ~> 1.0
+import: scala/scala-dev:travis/default.yml
+
 language: scala
 
 git:
   depth: false # Avoid sbt-dynver not seeing the tag
 
-env:
-  jobs:
-    - TRAVIS_JDK=11
-
 scala:
+  - 2.12.14
   - 2.13.6
 
-before_install:
-  - |
-    curl -Ls https://git.io/sbt -o sbt || travis_terminate 1
-    chmod 0755 sbt || travis_terminate 1
-    sudo mv sbt /usr/local/bin/sbt || travis_terminate 1
-  - curl --version # for debug purpose
-  - if [ ! -f ~/.jabba/jabba.sh ]; then curl -L -v --retry 5 -o jabba-install.sh https://git.io/jabba && bash jabba-install.sh; fi
-  - . ~/.jabba/jabba.sh
-install: jabba install $(jabba ls-remote "adopt@~1.$TRAVIS_JDK.0-0" --latest=patch) && jabba use "$_" && java -Xmx32m -version
+env:
+  - ADOPTOPENJDK=8
+  - ADOPTOPENJDK=11
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION 'testOnly -- xonly timefactor 5'
-  # Check that we can actually build and package the library
-  - sbt ++$TRAVIS_SCALA_VERSION publishLocal
+  - sbt ++$TRAVIS_SCALA_VERSION 'testOnly -- xonly timefactor 5' publishLocal
 
 jobs:
   include:
     - stage: test
       name: "Validations"
       script: sbt mimaReportBinaryIssues validateCode doc
-      env:
-        - TRAVIS_SCALA_VERSION=2.13.6
-        - TRAVIS_JDK=11
-
-    - name: "Run tests with Scala 2.12 and AdoptOpenJDK 11"
-      env:
-        - TRAVIS_SCALA_VERSION=2.12.14
-        - TRAVIS_JDK=11
-
-    - name: "Run tests with Scala 2.13 and AdoptOpenJDK 11"
-      env:
-        - TRAVIS_SCALA_VERSION=2.13.6
-        - TRAVIS_JDK=11
-
-    - name: "Run tests with Scala 2.12 and AdoptOpenJDK 8"
-      env:
-        - TRAVIS_SCALA_VERSION=2.12.14
-        - TRAVIS_JDK=8
-
-    - name: "Run tests with Scala 2.13 and AdoptOpenJDK 8"
-      env:
-        - TRAVIS_SCALA_VERSION=2.13.6
-        - TRAVIS_JDK=8
-
+      scala: 2.13.6
+      jdk: openjdk11
     - stage: publish
       name: "Publish artifacts to Sonatype"
       script: sbt +publish
@@ -63,17 +32,6 @@ stages:
   - name: test
   - name: publish
     if: (tag IS present) AND NOT fork
-
-cache:
-  directories:
-    - "$HOME/.cache/coursier"
-    - "$HOME/.ivy2/cache"
-    - "$HOME/.jabba"
-    - "$HOME/.sbt"
-
-before_cache:
-  - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
-  - find $HOME/.sbt  -name "*.lock"               -delete
 
 branches:
   only:
