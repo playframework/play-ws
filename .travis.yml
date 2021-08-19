@@ -7,7 +7,6 @@ git:
   depth: false # Avoid sbt-dynver not seeing the tag
 
 scala:
-  - 2.12.14
   - 2.13.6
 
 env:

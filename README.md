@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/playframework/play-ws.svg?branch=main)](https://travis-ci.com/github/playframework/play-ws) [![Maven](https://img.shields.io/maven-central/v/com.typesafe.play/play-ws-standalone_2.12.svg)](http://mvnrepository.com/artifact/com.typesafe.play/play-ws-standalone_2.12) [![Javadocs](https://javadoc.io/badge/com.typesafe.play/play-ws-standalone_2.12.svg)](https://javadoc.io/doc/com.typesafe.play/play-ws-standalone_2.12)
+[![Build Status](https://travis-ci.com/playframework/play-ws.svg?branch=main)](https://travis-ci.com/github/playframework/play-ws) [![Maven](https://img.shields.io/maven-central/v/com.typesafe.play/play-ws-standalone_2.13.svg)](http://mvnrepository.com/artifact/com.typesafe.play/play-ws-standalone_2.13) [![Javadocs](https://javadoc.io/badge/com.typesafe.play/play-ws-standalone_2.13.svg)](https://javadoc.io/doc/com.typesafe.play/play-ws-standalone_2.13)
 
 # Play WS Standalone
 
@@ -14,7 +14,7 @@ To get started, you can add `play-ahc-ws-standalone` as a dependency in SBT:
 libraryDependencies += "com.typesafe.play" %% "play-ahc-ws-standalone" % "LATEST_VERSION"
 ```
 
-Where you replace `LATEST_VERSION` with the version shown in this image: [![Latest released version](https://img.shields.io/maven-central/v/com.typesafe.play/play-ws-standalone_2.12.svg)](http://mvnrepository.com/artifact/com.typesafe.play/play-ws-standalone_2.12).
+Where you replace `LATEST_VERSION` with the version shown in this image: [![Latest released version](https://img.shields.io/maven-central/v/com.typesafe.play/play-ws-standalone_2.13.svg)](http://mvnrepository.com/artifact/com.typesafe.play/play-ws-standalone_2.13).
 
 This adds the standalone version of Play WS, backed by [AsyncHttpClient](https://github.com/AsyncHttpClient/async-http-client).  This library contains both the Scala and Java APIs, under `play.api.libs.ws` and `play.libs.ws`.
 
