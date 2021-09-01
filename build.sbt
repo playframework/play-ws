@@ -91,17 +91,15 @@ lazy val commonSettings = Def.settings(
   ),
   licenses := Seq("Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0")),
   scalaVersion := scala213,
-  crossScalaVersions := Seq(scala213, scala212),
+  crossScalaVersions := Seq(scala213),
   scalacOptions ++= scalacOpts,
   Compile / doc / scalacOptions ++= Seq(
     "-Xfatal-warnings",
-    // Work around 2.12 bug which prevents javadoc in nested java classes from compiling.
+    // Work around 2.12+ bug which prevents javadoc in nested java classes from compiling.
     "-no-java-comments",
   ),
   Compile / javacOptions ++= javacSettings,
   Test / javacOptions ++= javacSettings,
-  // Akka brings in 0.9.0, but we want 1.0.0:
-  libraryDependencySchemes += "org.scala-lang.modules" %% "scala-java8-compat" % "always",
   headerLicense := {
     Some(
       HeaderLicense.Custom(
