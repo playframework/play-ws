@@ -23,7 +23,7 @@ object Dependencies {
 
   val slf4jtest = Seq("uk.org.lidalia" % "slf4j-test" % "1.2.0")
 
-  val junitInterface = Seq("com.novocode" % "junit-interface" % "0.11")
+  val junitInterface = Seq("com.github.sbt" % "junit-interface" % "0.13.2")
 
   val scalaJava8Compat = Seq("org.scala-lang.modules" %% "scala-java8-compat" % "1.0.0")
 
