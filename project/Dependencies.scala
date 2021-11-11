@@ -10,7 +10,7 @@ object Dependencies {
 
   val logback = Seq("ch.qos.logback" % "logback-core" % "1.2.6")
 
-  val assertj = Seq("org.assertj" % "assertj-core" % "3.20.2")
+  val assertj = Seq("org.assertj" % "assertj-core" % "3.21.0")
 
   val awaitility = Seq("org.awaitility" % "awaitility" % "4.1.0")
 
