@@ -29,14 +29,17 @@ jobs:
         - TRAVIS_SCALA_VERSION=2.13.5
         - TRAVIS_JDK=11
 
-    - stage: publish
-      name: "Publish artifacts to Sonatype"
-      script: sbt +publish
+    # TODO: this is not yet working, we need new credentials in CI and test it out
+    # for now, releases from this branch must be done from maintainers machine
+    # - stage: publish
+    #   name: "Publish artifacts to Sonatype"
+    #   script: sbt +publish
 
 stages:
   - name: test
-  - name: publish
-    if: (tag IS present) AND NOT fork
+  # TODO: enable publish after fixing CI credentials
+  # - name: publish
+  #   if: (tag IS present) AND NOT fork
 
 cache:
   directories:
