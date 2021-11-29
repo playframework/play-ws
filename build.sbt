@@ -424,10 +424,7 @@ lazy val bench = project
 lazy val root = project
   .in(file("."))
   .settings(
-    name := "play-ws-standalone-root",
-    // otherwise same as orgname, and "sonatypeList"
-    // says "No staging profile is found for com.typesafe.play"
-    sonatypeProfileName := "com.typesafe"
+    name := "play-ws-standalone-root"
   )
   .settings(commonSettings)
   .settings(formattingSettings)
