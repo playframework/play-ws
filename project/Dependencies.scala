@@ -8,7 +8,7 @@ object Dependencies {
   // must align with versions in .travis.yml
   val scala213 = "2.13.7"
 
-  val logback = Seq("ch.qos.logback" % "logback-core" % "1.2.6")
+  val logback = Seq("ch.qos.logback" % "logback-core" % "1.2.10")
 
   val assertj = Seq("org.assertj" % "assertj-core" % "3.21.0")
 
