@@ -7,7 +7,7 @@ git:
   depth: false # Avoid sbt-dynver not seeing the tag
 
 scala:
-  - 2.13.6
+  - 2.13.7
 
 env:
   - ADOPTOPENJDK=8
@@ -21,7 +21,7 @@ jobs:
     - stage: test
       name: "Validations"
       script: sbt mimaReportBinaryIssues validateCode doc
-      scala: 2.13.6
+      scala: 2.13.7
       jdk: openjdk11
     - stage: publish
       name: "Publish artifacts to Sonatype"

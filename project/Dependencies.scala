@@ -6,15 +6,15 @@ import sbt._
 object Dependencies {
 
   // must align with versions in .travis.yml
-  val scala213 = "2.13.6"
+  val scala213 = "2.13.7"
 
-  val logback = Seq("ch.qos.logback" % "logback-core" % "1.2.6")
+  val logback = Seq("ch.qos.logback" % "logback-core" % "1.2.10")
 
   val assertj = Seq("org.assertj" % "assertj-core" % "3.21.0")
 
   val awaitility = Seq("org.awaitility" % "awaitility" % "4.1.1")
 
-  val specsVersion = "4.12.4-js-ec"
+  val specsVersion = "4.13.1"
   val specsBuild = Seq(
     "specs2-core",
     "specs2-junit",
@@ -23,7 +23,7 @@ object Dependencies {
 
   val slf4jtest = Seq("uk.org.lidalia" % "slf4j-test" % "1.2.0")
 
-  val junitInterface = Seq("com.github.sbt" % "junit-interface" % "0.13.2")
+  val junitInterface = Seq("com.github.sbt" % "junit-interface" % "0.13.3")
 
   val scalaJava8Compat = Seq("org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2")
 
@@ -43,8 +43,8 @@ object Dependencies {
 
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "2.12.3")
 
-  val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % "2.6.17")
-  val akkaHttp    = Seq("com.typesafe.akka" %% "akka-http" % "10.2.6")
+  val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % "2.6.18")
+  val akkaHttp    = Seq("com.typesafe.akka" %% "akka-http" % "10.2.7")
 
   val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.3")
 
