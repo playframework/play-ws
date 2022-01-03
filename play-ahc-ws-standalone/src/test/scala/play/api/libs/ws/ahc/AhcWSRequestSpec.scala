@@ -50,8 +50,8 @@ class AhcWSRequestSpec
 
   "Given the full URL" in {
 
-    implicit val materializer = mock[akka.stream.Materializer]
-    val client                = mock[StandaloneAhcWSClient]
+    implicit val materializer: Materializer = mock[akka.stream.Materializer]
+    val client                              = mock[StandaloneAhcWSClient]
 
     "request withQueryStringParameters" in {
       val request = StandaloneAhcWSRequest(client, "http://example.com")
