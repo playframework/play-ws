@@ -56,7 +56,9 @@ lazy val mimaSettings = Seq(
   ),
   // these exclusions are only for main branch and are targeting 2.2.x
   mimaBinaryIssueFilters ++= Seq(
-    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcConfigBuilder.validateDefaultTrustManager"),
+    ProblemFilters.exclude[DirectMissingMethodProblem](
+      "play.api.libs.ws.ahc.AhcConfigBuilder.validateDefaultTrustManager"
+    ),
     ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.ahc.AhcWSClientConfig$"),
     ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.<init>$default$6"),
     ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.<init>$default$8"),
@@ -439,5 +441,5 @@ lazy val root = project
 
 addCommandAlias(
   "validateCode",
-  ";scalafmtCheck;headerCheck;test:headerCheck"
+  "scalafmtSbtCheck;scalafmtCheckAll;headerCheck;test:headerCheck"
 )
