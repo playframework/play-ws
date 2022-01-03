@@ -18,11 +18,7 @@ ThisBuild / dynverVTagPrefix := false
 // Sanity-check: assert that version comes from a tag (e.g. not a too-shallow clone)
 // https://github.com/dwijnand/sbt-dynver/#sanity-checking-the-version
 Global / onLoad := (Global / onLoad).value.andThen { s =>
-  val v = version.value
-  if (dynverGitDescribeOutput.value.hasNoTags)
-    throw new MessageOnlyException(
-      s"Failed to derive version from git tags. Maybe run `git fetch --unshallow`? Version: $v"
-    )
+  dynverAssertTagVersion.value
   s
 }
 
@@ -79,7 +75,6 @@ lazy val mimaSettings = Seq(
 )
 
 lazy val commonSettings = Def.settings(
-  // sonatypeProfileName := "com.typesafe",  // TODO uncomment when we add sbt-ci-release
   organization := "com.typesafe.play",
   organizationName := "Lightbend Inc.",
   organizationHomepage := Some(url("https://www.lightbend.com/")),
@@ -364,7 +359,7 @@ lazy val `play-ws-standalone-xml` = project
   .settings(
     Test / fork := true,
     Test / testOptions := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
-    libraryDependencies ++= standaloneAhcWSXMLDependencies
+    libraryDependencies ++= standaloneAhcWSXMLDependencies(scalaVersion.value)
   )
   .settings(AutomaticModuleName.settings("play.ws.standalone.xml"))
   .dependsOn(
@@ -422,9 +417,6 @@ lazy val root = project
   .disablePlugins(MimaPlugin, sbtassembly.AssemblyPlugin)
   .settings(
     name := "play-ws-standalone-root",
-    // otherwise same as orgname, and "sonatypeList"
-    // says "No staging profile is found for com.typesafe.play"
-//    sonatypeProfileName := "com.typesafe"
   )
   .settings(commonSettings)
   .settings(publish / skip := true)

@@ -3,6 +3,9 @@ import: scala/scala-dev:travis/default.yml
 
 language: scala
 
+before_install:
+  - git fetch --tags
+
 git:
   depth: false # Avoid sbt-dynver not seeing the tag
 
@@ -25,12 +28,12 @@ jobs:
       jdk: openjdk11
     - stage: publish
       name: "Publish artifacts to Sonatype"
-      script: sbt +publish
+      script: sbt ci-release
 
 stages:
   - name: test
   - name: publish
-    if: (tag IS present) AND NOT fork
+    if: ((branch = main AND type = push) OR (tag IS present)) AND NOT fork
 
 branches:
   only:
