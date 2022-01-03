@@ -22,8 +22,8 @@ class AhcWSCacheSpec extends Specification {
     "calculate LM freshness" in {
       import scala.concurrent.ExecutionContext.Implicits.global
 
-      implicit val cache = new AhcHttpCache(new StubHttpCache(), true)
-      val url            = "http://localhost:9000"
+      implicit val cache: AhcHttpCache = new AhcHttpCache(new StubHttpCache(), true)
+      val url                          = "http://localhost:9000"
 
       val uri                      = new URI(url)
       val lastModifiedDate: String = format(now.minusHours(1))
@@ -41,8 +41,8 @@ class AhcWSCacheSpec extends Specification {
     "be disabled when set to false" in {
       import scala.concurrent.ExecutionContext.Implicits.global
 
-      implicit val cache = new AhcHttpCache(new StubHttpCache(), false)
-      val url            = "http://localhost:9000"
+      implicit val cache: AhcHttpCache = new AhcHttpCache(new StubHttpCache(), false)
+      val url                          = "http://localhost:9000"
 
       val uri                      = new URI(url)
       val lastModifiedDate: String = "Wed, 09 Apr 2008 23:55:38 GMT"
@@ -62,8 +62,8 @@ class AhcWSCacheSpec extends Specification {
     "calculate keys correctly" in {
       import scala.concurrent.ExecutionContext.Implicits.global
 
-      implicit val cache = new AhcHttpCache(new StubHttpCache(), false)
-      val achConfig      = new DefaultAsyncHttpClientConfig.Builder().build()
+      implicit val cache: AhcHttpCache = new AhcHttpCache(new StubHttpCache(), false)
+      val achConfig                    = new DefaultAsyncHttpClientConfig.Builder().build()
 
       val url = "http://localhost:9000"
 
