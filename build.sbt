@@ -79,7 +79,7 @@ lazy val mimaSettings = Seq(
 )
 
 lazy val commonSettings = Def.settings(
-  // sonatypeProfileName := "com.typesafe",  // TODO uncomment when we add sbt-ci-release
+  // sonatypeProfileName := "com.typesafe.play",  // TODO uncomment when we add sbt-ci-release
   organization := "com.typesafe.play",
   organizationName := "Lightbend Inc.",
   organizationHomepage := Some(url("https://www.lightbend.com/")),
@@ -422,9 +422,6 @@ lazy val root = project
   .disablePlugins(MimaPlugin, sbtassembly.AssemblyPlugin)
   .settings(
     name := "play-ws-standalone-root",
-    // otherwise same as orgname, and "sonatypeList"
-    // says "No staging profile is found for com.typesafe.play"
-//    sonatypeProfileName := "com.typesafe"
   )
   .settings(commonSettings)
   .settings(publish / skip := true)
