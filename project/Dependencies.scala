@@ -35,7 +35,12 @@ object Dependencies {
 
   val sslConfigCore = Seq("com.typesafe" %% "ssl-config-core" % "0.6.0")
 
-  val scalaXml = Seq("org.scala-lang.modules" %% "scala-xml" % "2.0.1")
+  def scalaXml(scalaVersion: String) = Seq("org.scala-lang.modules" %% "scala-xml" % {
+    CrossVersion.partialVersion(scalaVersion) match {
+      case Some((2, _)) => "1.3.0"
+      case _            => "2.0.1"
+    }
+  })
 
   val oauth = Seq("oauth.signpost" % "signpost-core" % "2.1.1")
 
@@ -56,6 +61,6 @@ object Dependencies {
 
   val standaloneAhcWSJsonDependencies = playJson ++ testDependencies
 
-  val standaloneAhcWSXMLDependencies = scalaXml ++ testDependencies
+  def standaloneAhcWSXMLDependencies(scalaVersion: String) = scalaXml(scalaVersion) ++ testDependencies
 
 }

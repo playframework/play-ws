@@ -364,7 +364,7 @@ lazy val `play-ws-standalone-xml` = project
   .settings(
     Test / fork := true,
     Test / testOptions := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
-    libraryDependencies ++= standaloneAhcWSXMLDependencies
+    libraryDependencies ++= standaloneAhcWSXMLDependencies(scalaVersion.value)
   )
   .settings(AutomaticModuleName.settings("play.ws.standalone.xml"))
   .dependsOn(
