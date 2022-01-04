@@ -23,6 +23,9 @@ resolvers in ThisBuild += Resolver.bintrayRepo("akka", "snapshots")
 // Customise sbt-dynver's behaviour to make it work with tags which aren't v-prefixed
 dynverVTagPrefix in ThisBuild := false
 
+// We are publishing snapshots to Sonatype
+ThisBuild / dynverSonatypeSnapshots := true
+
 // Sanity-check: assert that version comes from a tag (e.g. not a too-shallow clone)
 // https://github.com/dwijnand/sbt-dynver/#sanity-checking-the-version
 Global / onLoad := (Global / onLoad).value.andThen { s =>
@@ -317,7 +320,7 @@ lazy val `play-ahc-ws-standalone` = project
     fork in Test := true,
     testOptions in Test := Seq(
       Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
-    libraryDependencies ++= standaloneAhcWSDependencies,
+    libraryDependencies ++= standaloneAhcWSDependencies(scalaVersion.value),
     // This will not work if you do a publishLocal, because that uses ivy...
     pomPostProcess := {
       (node: xml.Node) => addShadedDeps(List(

@@ -21,7 +21,10 @@ object Dependencies {
 
   val junitInterface = Seq("com.novocode" % "junit-interface" % "0.11")
 
-  val scalaJava8Compat = Seq("org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2")
+  def scalaJava8Compat(scalaVersion: String) = Seq("org.scala-lang.modules" %% "scala-java8-compat" % (CrossVersion.partialVersion(scalaVersion) match {
+     case Some((2, major)) if major >= 13 => "1.0.2"
+     case _                               => "0.9.1"
+   }))
 
   val playJsonVersion = "2.8.2"
   val playJson = Seq("com.typesafe.play" %% "play-json" % playJsonVersion)
@@ -55,7 +58,7 @@ object Dependencies {
 
   val standaloneApiWSDependencies = javaxInject ++ sslConfigCore ++ akkaStreams ++ testDependencies
 
-  val standaloneAhcWSDependencies = scalaJava8Compat ++ cachecontrol ++ slf4jApi ++ reactiveStreams ++ testDependencies
+  def standaloneAhcWSDependencies(scalaVersion: String) = scalaJava8Compat(scalaVersion) ++ cachecontrol ++ slf4jApi ++ reactiveStreams ++ testDependencies
 
   val standaloneAhcWSJsonDependencies = playJson ++ testDependencies
 
