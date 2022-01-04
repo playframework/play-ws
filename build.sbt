@@ -317,7 +317,7 @@ lazy val `play-ahc-ws-standalone` = project
     fork in Test := true,
     testOptions in Test := Seq(
       Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
-    libraryDependencies ++= standaloneAhcWSDependencies,
+    libraryDependencies ++= standaloneAhcWSDependencies(scalaVersion.value),
     // This will not work if you do a publishLocal, because that uses ivy...
     pomPostProcess := {
       (node: xml.Node) => addShadedDeps(List(
