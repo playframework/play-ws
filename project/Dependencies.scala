@@ -33,7 +33,7 @@ object Dependencies {
 
   val javaxInject = Seq("javax.inject" % "javax.inject" % "1")
 
-  val sslConfigVersion = "0.4.1"
+  val sslConfigVersion = "0.6.0"
   val sslConfigCore = Seq("com.typesafe" %% "ssl-config-core" % sslConfigVersion)
 
   val scalaXmlVersion = "1.2.0"
@@ -48,9 +48,9 @@ object Dependencies {
   val asyncHttpClientVersion = "2.10.5"
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % asyncHttpClientVersion)
 
-  val akkaVersion = "2.6.1"
+  val akkaVersion = "2.6.18+31-9d0684d8-SNAPSHOT"
   val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion)
-  val akkaHttp = Seq("com.typesafe.akka" %% "akka-http" % "10.1.11")
+  val akkaHttp = Seq("com.typesafe.akka" %% "akka-http" % "10.1.15")
 
   val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.3")
 
