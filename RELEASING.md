@@ -7,9 +7,9 @@ This is released from the `main` branch from `2.2.0` forward. Unless an older ve
 ### Requires contributor access
 
 - Check the [draft release notes](https://github.com/playframework/play-ws/releases) to see if everything is there
-- Wait until [main branch build finishes](https://travis-ci.com/github/playframework/play-ws/builds) after merging the last PR
+- Wait until [main branch build finishes](https://github.com/playframework/play-ws/actions/workflows/publish.yml) after merging the last PR
 - Update the [draft release](https://github.com/playframework/play-ws/releases) with the next tag version (eg. `2.2.0`), title and release description
-- Check that Travis CI release build has executed successfully (Travis will start a [CI build](https://travis-ci.com/github/playframework/play-ws/builds) for the new tag and publish artifacts to Sonatype)
+- Check that GitHub Actions release build has executed successfully (GA start a [CI build](https://github.com/playframework/play-ws/actions/workflows/publish.yml) for the new tag and publish artifacts to Sonatype)
 
 ### Check Maven Central
 

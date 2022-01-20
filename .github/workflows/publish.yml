@@ -4,9 +4,7 @@ on:
   push:
     branches: # Snapshots
       - main
-#      - 2.1.x # TODO: 2.1.x don't support sbt-ci-release yet
     tags: ["*"] # Releases
-    tags-ignore: [ "2.1.*" ] # TODO: 2.1.x don't support sbt-ci-release yet
 
 jobs:
   publish-artifacts:
