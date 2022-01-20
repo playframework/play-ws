@@ -5,8 +5,8 @@ import sbt._
 
 object Dependencies {
 
-  // must align with versions in .travis.yml
-  val scala213 = "2.13.7"
+  // Should be sync with GA (.github/workflows/build-test.yml)
+  val scala213 = "2.13.8"
 
   val logback = Seq("ch.qos.logback" % "logback-core" % "1.2.10")
 

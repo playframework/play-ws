@@ -1,4 +1,6 @@
-[![Build Status](https://travis-ci.com/playframework/play-ws.svg?branch=main)](https://travis-ci.com/github/playframework/play-ws) [![Maven](https://img.shields.io/maven-central/v/com.typesafe.play/play-ws-standalone_2.13.svg)](http://mvnrepository.com/artifact/com.typesafe.play/play-ws-standalone_2.13) [![Javadocs](https://javadoc.io/badge/com.typesafe.play/play-ws-standalone_2.13.svg)](https://javadoc.io/doc/com.typesafe.play/play-ws-standalone_2.13)
+[![Build Status](https://github.com/playframework/play-ws/actions/workflows/publish.yml/badge.svg?branch=main)](https://github.com/playframework/play-ws/actions/workflows/publish.yml)
+[![Maven](https://img.shields.io/maven-central/v/com.typesafe.play/play-ws-standalone_2.13.svg)](http://mvnrepository.com/artifact/com.typesafe.play/play-ws-standalone_2.13) 
+[![Javadocs](https://javadoc.io/badge/com.typesafe.play/play-ws-standalone_2.13.svg)](https://javadoc.io/doc/com.typesafe.play/play-ws-standalone_2.13)
 
 # Play WS Standalone
 
