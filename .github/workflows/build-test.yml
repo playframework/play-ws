@@ -2,6 +2,9 @@ name: Pull Requests
 
 on:
   pull_request:
+    branches:
+      - main
+      - 2.1.x
 
 concurrency:
   # Only run once for latest commit per ref and cancel other (previous) runs.
