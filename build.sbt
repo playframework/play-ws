@@ -13,8 +13,9 @@ import scalariform.formatter.preferences._
 // Shading and Project Settings
 //---------------------------------------------------------------
 
-val scala212 = "2.12.13"
-val scala213 = "2.13.5"
+// Should be sync with GA (.github/workflows/build-test.yml)
+val scala212 = "2.12.15"
+val scala213 = "2.13.8"
 
 resolvers ++= DefaultOptions.resolvers(snapshot = true)
 resolvers in ThisBuild += Resolver.sonatypeRepo("public")
