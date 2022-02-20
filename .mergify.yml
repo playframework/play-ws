@@ -8,6 +8,7 @@ queue_rules:
       - check-success~=^Check / Tests \(Scala 2\.13\.(\d+) & JDK 11\)$
       - check-success~=^Check / Tests \(Scala 2\.13\.(\d+) & JDK 8\)$
 
+pull_request_rules:
   - name: Merge PRs that are ready
     conditions:
       - check-success=Check / Code Style
