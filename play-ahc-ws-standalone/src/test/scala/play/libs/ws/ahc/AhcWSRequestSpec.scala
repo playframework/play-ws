@@ -295,13 +295,11 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
           .addHeader("header1", "value1")
           .addHeader("header1", "value2")
 
-        request.getHeaders.get("header1").asScala must contain("value1")
-        request.getHeaders.get("header1").asScala must contain("value2")
+        request.getHeaders.get("header1").asScala.toSet must_== Set("value1", "value2")
 
         val ahcRequest = request.buildRequest()
 
-        ahcRequest.getHeaders.getAll("header1").asScala must contain("value1")
-        ahcRequest.getHeaders.getAll("header1").asScala must contain("value2")
+        ahcRequest.getHeaders.getAll("header1").asScala.toSet must_== Set("value1", "value2")
       }
 
       "set all headers" in {
@@ -341,8 +339,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
           .addHeader("HEADER1", "value2")
           .buildRequest()
 
-        request.getHeaders.getAll("header1").asScala must contain("value1")
-        request.getHeaders.getAll("header1").asScala must contain("value2")
+        request.getHeaders.getAll("header1").asScala.toSet must_== Set("value1", "value2")
       }
 
       "get a single header" in {

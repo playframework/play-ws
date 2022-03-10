@@ -31,19 +31,23 @@ val javacSettings = Seq(
   "-Xlint:unchecked"
 )
 
-def scalacOpts: Seq[String] =
-  Seq(
-    "-target:jvm-1.8",
+val scalacOpts = Def.setting[Seq[String]] {
+  val sv = scalaBinaryVersion.value
+
+  val common = Seq(
     "-deprecation",
     "-encoding",
     "UTF-8",
     "-feature",
-    "-unchecked",
-    "-Ywarn-unused:imports",
-    "-Xlint:nullary-unit",
-    "-Xlint",
-    "-Ywarn-dead-code",
+    "-unchecked"
   )
+
+  if (sv == "3") {
+    common
+  } else {
+    common ++ Seq("-target:jvm-1.8", "-Ywarn-unused:imports", "-Xlint:nullary-unit", "-Xlint", "-Ywarn-dead-code")
+  }
+}
 
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts := Set(
@@ -88,8 +92,15 @@ lazy val commonSettings = Def.settings(
   ),
   licenses := Seq("Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0")),
   scalaVersion := scala213,
-  crossScalaVersions := Seq(scala213),
-  scalacOptions ++= scalacOpts,
+  crossScalaVersions := Seq(scala213, scala3),
+  conflictWarning := {
+    if (scalaBinaryVersion.value == "3") {
+      ConflictWarning("warn", sbt.Level.Warn, false)
+    } else {
+      conflictWarning.value
+    }
+  },
+  scalacOptions ++= scalacOpts.value,
   Compile / doc / scalacOptions ++= Seq(
     "-Xfatal-warnings",
     // Work around 2.12+ bug which prevents javadoc in nested java classes from compiling.
@@ -107,10 +118,11 @@ lazy val commonSettings = Def.settings(
 )
 
 lazy val shadedCommonSettings = Seq(
-  scalaVersion := scala213,
-  crossScalaVersions := Seq(scala213),
+  //scalaVersion := scala213,
+  //crossScalaVersions := Seq(scala213),
   // No need to cross publish the shaded libraries
   crossPaths := false,
+  autoScalaLibrary := false,
 )
 
 lazy val shadeAssemblySettings = commonSettings ++ shadedCommonSettings ++ Seq(
@@ -187,8 +199,10 @@ lazy val `shaded-asynchttpclient` = project
       ({
         case NettyPropertiesPath =>
           MergeStrategy.first
+
         case ahcProperties if ahcProperties.endsWith("ahc-default.properties") =>
           ahcMerge
+
         case x =>
           val oldStrategy = (assembly / assemblyMergeStrategy).value
           oldStrategy(x)
@@ -260,6 +274,7 @@ lazy val shaded = Project(id = "shaded", base = file("shaded"))
   .disablePlugins(sbtassembly.AssemblyPlugin, HeaderPlugin, MimaPlugin)
   .settings(
     publish / skip := true,
+    commonSettings,
     shadedCommonSettings,
   )
 

@@ -94,7 +94,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
       ahcResponse.getHeaders.returns(ahcHeaders)
       ahcResponse.getResponseBody(StandardCharsets.UTF_8).returns(json)
       val response = StandaloneAhcWSResponse(ahcResponse)
-      response.body must_== json
+      response.body[String] must_== json
     }
 
     "get text body as a string from the AHC response" in {
@@ -103,7 +103,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
       ahcResponse.getContentType.returns("text/plain")
       ahcResponse.getResponseBody(StandardCharsets.ISO_8859_1).returns(text)
       val response = StandaloneAhcWSResponse(ahcResponse)
-      response.body must_== text
+      response.body[String] must_== text
     }
 
     "get headers from an AHC response in a case insensitive map" in {

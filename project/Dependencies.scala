@@ -7,6 +7,7 @@ object Dependencies {
 
   // Should be sync with GA (.github/workflows/build-test.yml)
   val scala213 = "2.13.8"
+  val scala3   = "3.1.1"
 
   val logback = Seq("ch.qos.logback" % "logback-core" % "1.2.10")
 
@@ -19,7 +20,7 @@ object Dependencies {
     "specs2-core",
     "specs2-junit",
     "specs2-mock"
-  ).map("org.specs2" %% _ % specsVersion)
+  ).map("org.specs2" %% _ % specsVersion cross CrossVersion.for3Use2_13)
 
   val slf4jtest = Seq("uk.org.lidalia" % "slf4j-test" % "1.2.0")
 
@@ -44,20 +45,29 @@ object Dependencies {
 
   val oauth = Seq("oauth.signpost" % "signpost-core" % "2.1.1")
 
-  val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % "2.2.0")
+  val cachecontrol = Seq(
+    "com.typesafe.play"      %% "cachecontrol"             % "2.2.0",
+    "org.scala-lang.modules" %% "scala-parser-combinators" % "2.1.0"
+  )
 
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "2.12.3")
 
-  val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % "2.6.18")
-  val akkaHttp    = Seq("com.typesafe.akka" %% "akka-http" % "10.2.7")
+  val akkaStreams = Seq(("com.typesafe.akka" %% "akka-stream" % "2.6.18").cross(CrossVersion.for3Use2_13))
+  val akkaHttp    = Seq(("com.typesafe.akka" %% "akka-http"   % "10.2.7").cross(CrossVersion.for3Use2_13))
 
   val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.3")
 
-  val testDependencies = (specsBuild ++ junitInterface ++ assertj ++ awaitility ++ slf4jtest ++ logback).map(_ % Test)
+  val testDependencies = (specsBuild.map(
+    _.exclude("org.scala-lang.modules", "*")
+  ) ++ junitInterface ++ assertj ++ awaitility ++ slf4jtest ++ logback).map(_ % Test)
 
-  val standaloneApiWSDependencies = javaxInject ++ sslConfigCore ++ akkaStreams ++ testDependencies
+  val standaloneApiWSDependencies = javaxInject ++ scalaJava8Compat ++ sslConfigCore ++ akkaStreams.map(
+    _.exclude("com.typesafe", "*").exclude("org.scala-lang.modules", "*")
+  ) ++ testDependencies
 
-  val standaloneAhcWSDependencies = scalaJava8Compat ++ cachecontrol ++ slf4jApi ++ reactiveStreams ++ testDependencies
+  val standaloneAhcWSDependencies = scalaJava8Compat ++ cachecontrol.map(
+    _.exclude("org.scala-lang", "*").exclude("org.scala-lang.modules", "*")
+  ) ++ slf4jApi ++ reactiveStreams ++ testDependencies
 
   val standaloneAhcWSJsonDependencies = playJson ++ testDependencies
 
