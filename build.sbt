@@ -41,7 +41,7 @@ val scalacOpts = Def.setting[Seq[String]] {
   )
 
   if (sv == "3") {
-    common
+    common ++ Seq("-Xtarget:8")
   } else {
     common ++ Seq("-release", "11", "-Ywarn-unused:imports", "-Xlint:nullary-unit", "-Xlint", "-Ywarn-dead-code")
   }
