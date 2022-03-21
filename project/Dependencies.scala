@@ -28,13 +28,13 @@ object Dependencies {
 
   val scalaJava8Compat = Seq("org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2")
 
-  val playJson = Seq("com.typesafe.play" %% "play-json" % "2.10.0-RC5")
+  val playJson = Seq("com.typesafe.play" %% "play-json" % "2.10.0-RC6")
 
   val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "1.7.36")
 
   val javaxInject = Seq("javax.inject" % "javax.inject" % "1")
 
-  val sslConfigCore = Seq("com.typesafe" %% "ssl-config-core" % "0.6.0")
+  val sslConfigCore = Seq("com.typesafe" %% "ssl-config-core" % "0.6.1")
 
   def scalaXml(scalaVersion: String) = Seq("org.scala-lang.modules" %% "scala-xml" % {
     CrossVersion.partialVersion(scalaVersion) match {
@@ -52,8 +52,8 @@ object Dependencies {
 
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "2.12.3")
 
-  val akkaStreams = Seq(("com.typesafe.akka" %% "akka-stream" % "2.6.18").cross(CrossVersion.for3Use2_13))
-  val akkaHttp    = Seq(("com.typesafe.akka" %% "akka-http"   % "10.2.7").cross(CrossVersion.for3Use2_13))
+  val akkaStreams = Seq(("com.typesafe.akka" %% "akka-stream" % "2.6.19").cross(CrossVersion.for3Use2_13))
+  val akkaHttp    = Seq(("com.typesafe.akka" %% "akka-http"   % "10.2.9").cross(CrossVersion.for3Use2_13))
 
   val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.3")
 
