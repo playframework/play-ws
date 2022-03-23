@@ -45,10 +45,7 @@ object Dependencies {
 
   val oauth = Seq("oauth.signpost" % "signpost-core" % "2.1.1")
 
-  val cachecontrol = Seq(
-    "com.typesafe.play"      %% "cachecontrol"             % "2.2.0",
-    "org.scala-lang.modules" %% "scala-parser-combinators" % "2.1.0"
-  )
+  val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % "2.2.0")
 
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "2.12.3")
 
@@ -65,9 +62,7 @@ object Dependencies {
     _.exclude("com.typesafe", "*").exclude("org.scala-lang.modules", "*")
   ) ++ testDependencies
 
-  val standaloneAhcWSDependencies = scalaJava8Compat ++ cachecontrol.map(
-    _.exclude("org.scala-lang", "*").exclude("org.scala-lang.modules", "*")
-  ) ++ slf4jApi ++ reactiveStreams ++ testDependencies
+  val standaloneAhcWSDependencies = scalaJava8Compat ++ cachecontrol ++ slf4jApi ++ reactiveStreams ++ testDependencies
 
   val standaloneAhcWSJsonDependencies = playJson ++ testDependencies
 
