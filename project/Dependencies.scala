@@ -20,7 +20,7 @@ object Dependencies {
     "specs2-core",
     "specs2-junit",
     "specs2-mock"
-  ).map("org.specs2" %% _ % specsVersion cross CrossVersion.for3Use2_13)
+  ).map("org.specs2" %% _ % specsVersion)
 
   val slf4jtest = Seq("uk.org.lidalia" % "slf4j-test" % "1.2.0")
 
