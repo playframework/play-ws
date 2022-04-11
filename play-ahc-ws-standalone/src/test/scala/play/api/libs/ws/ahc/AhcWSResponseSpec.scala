@@ -80,7 +80,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
 
     "get the body as bytes from the AHC response" in {
       val ahcResponse: AHCResponse = mock[AHCResponse]
-      val bytes                    = ByteString(-87, -72, 96, -63, -32, 46, -117, -40, -128, -7, 61, 109, 80, 45, 44, 30)
+      val bytes = ByteString(-87, -72, 96, -63, -32, 46, -117, -40, -128, -7, 61, 109, 80, 45, 44, 30)
       ahcResponse.getResponseBodyAsBytes.returns(bytes.toArray)
       val response = StandaloneAhcWSResponse(ahcResponse)
       response.body[ByteString] must_== bytes

@@ -83,10 +83,10 @@ lazy val mimaSettings = Seq(
 )
 
 lazy val commonSettings = Def.settings(
-  organization := "com.typesafe.play",
-  organizationName := "Lightbend Inc.",
+  organization         := "com.typesafe.play",
+  organizationName     := "Lightbend Inc.",
   organizationHomepage := Some(url("https://www.lightbend.com/")),
-  homepage := Some(url("https://www.playframework.com/documentation/latest/")),
+  homepage             := Some(url("https://www.playframework.com/documentation/latest/")),
   scmInfo := Some(ScmInfo(url("https://github.com/playframework/play-ws"), "git@github.com:playframework/play-ws.git")),
   developers += Developer(
     "contributors",
@@ -94,8 +94,8 @@ lazy val commonSettings = Def.settings(
     "https://gitter.im/playframework/",
     url("https://gitter.im/playframework/contributors")
   ),
-  licenses := Seq("Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0")),
-  scalaVersion := scala213,
+  licenses           := Seq("Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0")),
+  scalaVersion       := scala213,
   crossScalaVersions := Seq(scala213, scala3),
   conflictWarning := {
     if (scalaBinaryVersion.value == "3") {
@@ -122,10 +122,10 @@ lazy val commonSettings = Def.settings(
 )
 
 lazy val shadedCommonSettings = Seq(
-  //scalaVersion := scala213,
-  //crossScalaVersions := Seq(scala213),
+  // scalaVersion := scala213,
+  // crossScalaVersions := Seq(scala213),
   // No need to cross publish the shaded libraries
-  crossPaths := false,
+  crossPaths       := false,
   autoScalaLibrary := false,
 )
 
@@ -196,7 +196,7 @@ lazy val `shaded-asynchttpclient` = project
   .settings(shadeAssemblySettings)
   .settings(
     libraryDependencies ++= asyncHttpClient,
-    name := "shaded-asynchttpclient",
+    name                := "shaded-asynchttpclient",
     assembly / logLevel := Level.Error,
     assembly / assemblyMergeStrategy := {
       val NettyPropertiesPath = "META-INF" + File.separator + "io.netty.versions.properties"
@@ -212,7 +212,7 @@ lazy val `shaded-asynchttpclient` = project
           oldStrategy(x)
       }: String => MergeStrategy)
     },
-    //logLevel in assembly := Level.Debug,
+    // logLevel in assembly := Level.Debug,
     assembly / assemblyShadeRules := Seq(
       ShadeRule.rename("org.asynchttpclient.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.rename("io.netty.**" -> "play.shaded.ahc.@0").inAll,
@@ -226,11 +226,11 @@ lazy val `shaded-asynchttpclient` = project
     // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom
     // Remove dependencies from the POM because we have a FAT jar here.
     makePomConfiguration := makePomConfiguration.value.withProcess(process = dependenciesFilter),
-    //ivyXML := <dependencies></dependencies>,
-    //ivyLoggingLevel := UpdateLogging.Full,
-    //logLevel := Level.Debug,
+    // ivyXML := <dependencies></dependencies>,
+    // ivyLoggingLevel := UpdateLogging.Full,
+    // logLevel := Level.Debug,
     assembly / assemblyOption := (assembly / assemblyOption).value.withIncludeBin(false).withIncludeScala(false),
-    Compile / packageBin := assembly.value
+    Compile / packageBin      := assembly.value
   )
 
 //---------------------------------------------------------------
@@ -245,16 +245,16 @@ lazy val `shaded-oauth` = project
   .settings(
     libraryDependencies ++= oauth,
     name := "shaded-oauth",
-    //logLevel in assembly := Level.Debug,
+    // logLevel in assembly := Level.Debug,
     assembly / assemblyShadeRules := Seq(
       ShadeRule.rename("oauth.**" -> "play.shaded.oauth.@0").inAll,
       ShadeRule.rename("org.apache.commons.**" -> "play.shaded.oauth.@0").inAll
     ),
     // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom
     // Remove dependencies from the POM because we have a FAT jar here.
-    makePomConfiguration := makePomConfiguration.value.withProcess(process = dependenciesFilter),
+    makePomConfiguration      := makePomConfiguration.value.withProcess(process = dependenciesFilter),
     assembly / assemblyOption := (assembly / assemblyOption).value.withIncludeBin(false).withIncludeScala(false),
-    Compile / packageBin := assembly.value
+    Compile / packageBin      := assembly.value
   )
 
 // Make the shaded version of AHC available downstream
@@ -318,7 +318,7 @@ lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
   .settings(
     commonSettings ++ shadedAhcSettings ++ shadedOAuthSettings ++ Seq(
-      Test / fork := true,
+      Test / fork        := true,
       Test / testOptions := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
       libraryDependencies ++= standaloneAhcWSDependencies,
       // This will not work if you do a publishLocal, because that uses ivy...
@@ -357,7 +357,7 @@ lazy val `play-ws-standalone-json` = project
   .settings(commonSettings)
   .settings(mimaSettings)
   .settings(
-    Test / fork := true,
+    Test / fork        := true,
     Test / testOptions := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
     libraryDependencies ++= standaloneAhcWSJsonDependencies
   )
@@ -376,7 +376,7 @@ lazy val `play-ws-standalone-xml` = project
   .settings(commonSettings)
   .settings(mimaSettings)
   .settings(
-    Test / fork := true,
+    Test / fork        := true,
     Test / testOptions := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
     libraryDependencies ++= standaloneAhcWSXMLDependencies(scalaVersion.value)
   )
