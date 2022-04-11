@@ -50,10 +50,14 @@ val scalacOpts = Def.setting[Seq[String]] {
 }
 
 lazy val mimaSettings = Seq(
-  mimaPreviousArtifacts := Set(
-    organization.value %% name.value % previousStableVersion.value
-      .getOrElse(throw new Error("Unable to determine previous version"))
-  ),
+  mimaPreviousArtifacts := {
+    if (scalaBinaryVersion.value == "3") Set.empty[ModuleID]
+    else
+      Set(
+        organization.value %% name.value % previousStableVersion.value
+          .getOrElse(throw new Error("Unable to determine previous version"))
+      )
+  },
   // these exclusions are only for main branch and are targeting 2.2.x
   mimaBinaryIssueFilters ++= Seq(
     ProblemFilters.exclude[DirectMissingMethodProblem](
