@@ -450,7 +450,4 @@ lazy val root = project
     bench
   )
 
-addCommandAlias(
-  "validateCode",
-  "scalafmtSbtCheck;scalafmtCheckAll;headerCheck;test:headerCheck"
-)
+addCommandAlias("validateCode", "headerCheckAll; scalafmtSbtCheck; scalafmtCheckAll")
