@@ -12,8 +12,8 @@ class CacheAsyncHandlerSpec extends Specification {
 
     "validate" in {
       pending
-      //val cache = generateCache
-      //val handler = new CacheAsyncHandler(cache)
+      // val cache = generateCache
+      // val handler = new CacheAsyncHandler(cache)
     }
 
   }

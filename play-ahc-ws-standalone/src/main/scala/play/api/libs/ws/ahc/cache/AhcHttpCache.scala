@@ -188,24 +188,24 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
     if (isUnsafeMethod(request) && isNonErrorResponse(response)) {
       val requestHost = request.getUri.getHost
 
-      //A cache MUST invalidate the effective request URI (Section 5.5 of
-      //[RFC7230]) when it receives a non-error response to a request with a
-      //method whose safety is unknown.
+      // A cache MUST invalidate the effective request URI (Section 5.5 of
+      // [RFC7230]) when it receives a non-error response to a request with a
+      // method whose safety is unknown.
       val responseKey = EffectiveURIKey(request.getMethod, response.getUri.toJavaNetURI)
       invalidateKey(responseKey)
 
-      //A cache MUST invalidate the effective Request URI (Section 5.5 of
-      //[RFC7230]) as well as the URI(s) in the Location and Content-Location
-      //response header fields (if present) when a non-error status code is
-      //received in response to an unsafe request method.
+      // A cache MUST invalidate the effective Request URI (Section 5.5 of
+      // [RFC7230]) as well as the URI(s) in the Location and Content-Location
+      // response header fields (if present) when a non-error status code is
+      // received in response to an unsafe request method.
 
       // https://tools.ietf.org/html/rfc7231#section-3.1.4.2
       // https://tools.ietf.org/html/rfc7230#section-5.5
       getURI(response, "Content-Location").foreach { contentLocation =>
-        //However, a cache MUST NOT invalidate a URI from a Location or
-        //Content-Location response header field if the host part of that URI
-        //differs from the host part in the effective request URI (Section 5.5
-        //of [RFC7230]).  This helps prevent denial-of-service attacks.
+        // However, a cache MUST NOT invalidate a URI from a Location or
+        // Content-Location response header field if the host part of that URI
+        // differs from the host part in the effective request URI (Section 5.5
+        // of [RFC7230]).  This helps prevent denial-of-service attacks.
         if (requestHost.equalsIgnoreCase(contentLocation.getHost)) {
           val key = EffectiveURIKey(request.getMethod, contentLocation)
           invalidateKey(key)
@@ -234,8 +234,8 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
   }
 
   protected def isNonErrorResponse(response: CacheableResponse): Boolean = {
-    //Here, a "non-error response" is one with a 2xx (Successful) or 3xx
-    //(Redirection) status code.
+    // Here, a "non-error response" is one with a 2xx (Successful) or 3xx
+    // (Redirection) status code.
     response.getStatusCode match {
       case success if success >= 200 && success < 300 =>
         true
@@ -324,12 +324,12 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
 
     // Need to freshen this stale response
     // https://tools.ietf.org/html/rfc7234#section-4.3.4
-    //If a stored response is selected for update, the cache MUST:
-    //o  delete any Warning header fields in the stored response with
-    //warn-code 1xx (see Section 5.5);
+    // If a stored response is selected for update, the cache MUST:
+    // o  delete any Warning header fields in the stored response with
+    // warn-code 1xx (see Section 5.5);
     //
-    //o  retain any Warning header fields in the stored response with
-    //warn-code 2xx; and,
+    // o  retain any Warning header fields in the stored response with
+    // warn-code 2xx; and,
     val headers                 = response.headers
     val headersMap: HttpHeaders = new DefaultHttpHeaders().add(headers)
     val filteredWarnings = headersMap
@@ -342,9 +342,9 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
       .asJava
     headersMap.set("Warning", filteredWarnings)
 
-    //o  use other header fields provided in the 304 (Not Modified)
-    //response to replace all instances of the corresponding header
-    //fields in the stored response.
+    // o  use other header fields provided in the 304 (Not Modified)
+    // response to replace all instances of the corresponding header
+    // fields in the stored response.
     headersMap.set(newHeaders)
 
     response.copy(headers = headersMap)

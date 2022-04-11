@@ -170,16 +170,18 @@ class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv)
         .toScala
         .awaitFor(defaultTimeout)
 
-      testLogger.getLoggingEvents.get(0).getMessage must beEqualTo(s"""
-                                                                      |curl \\
-                                                                      |  --verbose \\
-                                                                      |  --request GET \\
-                                                                      |  --header 'Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=' \\
-                                                                      |  --header 'content-type: text/plain' \\
-                                                                      |  --header 'My-Header: My-Header-Value' \\
-                                                                      |  --data 'the-body' \\
-                                                                      |  'http://localhost:$testServerPort/'
-        """.stripMargin.trim)
+      testLogger.getLoggingEvents.get(0).getMessage must beEqualTo(
+        s"""
+           |curl \\
+           |  --verbose \\
+           |  --request GET \\
+           |  --header 'Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=' \\
+           |  --header 'content-type: text/plain' \\
+           |  --header 'My-Header: My-Header-Value' \\
+           |  --data 'the-body' \\
+           |  'http://localhost:$testServerPort/'
+        """.stripMargin.trim
+      )
     }
   }
 }

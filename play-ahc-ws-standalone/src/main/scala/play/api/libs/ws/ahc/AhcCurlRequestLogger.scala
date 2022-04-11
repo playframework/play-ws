@@ -53,7 +53,7 @@ trait CurlFormat {
     b.append(s"  --request ${request.method}")
     b.append(" \\\n")
 
-    //authentication
+    // authentication
     request.auth match {
       case Some((userName, password, WSAuthScheme.BASIC)) =>
         val encodedPassword =
