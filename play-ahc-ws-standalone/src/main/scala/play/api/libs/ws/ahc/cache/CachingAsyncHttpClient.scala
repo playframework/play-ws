@@ -183,25 +183,25 @@ class CachingAsyncHttpClient(underlying: AsyncHttpClient, ahcHttpCache: AhcHttpC
     // https://tools.ietf.org/html/rfc7234#section-4.3.1
     // https://tools.ietf.org/html/rfc7232#section-2.4
 
-    //A client:
+    // A client:
     //
-    //o  MUST send that entity-tag in any cache validation request (using
+    // o  MUST send that entity-tag in any cache validation request (using
     //  If-Match or If-None-Match) if an entity-tag has been provided by
-    //the origin server.
+    // the origin server.
     //
-    //o  SHOULD send the Last-Modified value in non-subrange cache
-    //validation requests (using If-Modified-Since) if only a
-    //Last-Modified value has been provided by the origin server.
+    // o  SHOULD send the Last-Modified value in non-subrange cache
+    // validation requests (using If-Modified-Since) if only a
+    // Last-Modified value has been provided by the origin server.
     //
-    //o  MAY send the Last-Modified value in subrange cache validation
-    //requests (using If-Unmodified-Since) if only a Last-Modified value
-    //has been provided by an HTTP/1.0 origin server.  The user agent
-    //SHOULD provide a way to disable this, in case of difficulty.
+    // o  MAY send the Last-Modified value in subrange cache validation
+    // requests (using If-Unmodified-Since) if only a Last-Modified value
+    // has been provided by an HTTP/1.0 origin server.  The user agent
+    // SHOULD provide a way to disable this, in case of difficulty.
     //
-    //o  SHOULD send both validators in cache validation requests if both
-    //an entity-tag and a Last-Modified value have been provided by the
-    //origin server.  This allows both HTTP/1.0 and HTTP/1.1 caches to
-    //respond appropriately.
+    // o  SHOULD send both validators in cache validation requests if both
+    // an entity-tag and a Last-Modified value have been provided by the
+    // origin server.  This allows both HTTP/1.0 and HTTP/1.1 caches to
+    // respond appropriately.
 
     composeRequest(request) { rb =>
       val headers = response.getHeaders

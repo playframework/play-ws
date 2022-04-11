@@ -129,11 +129,11 @@ class AsyncCachingHandler[T](
     if (cache.isNotModified(response)) {
       processNotModifiedResponse(response)
     } else if (cache.isError(response)) {
-      //o  However, if a cache receives a 5xx (Server Error) response while
-      //attempting to validate a response, it can either forward this
-      //response to the requesting client, or act as if the server failed
-      //to respond.  In the latter case, the cache MAY send a previously
-      //stored response (see Section 4.2.4).
+      // o  However, if a cache receives a 5xx (Server Error) response while
+      // attempting to validate a response, it can either forward this
+      // response to the requesting client, or act as if the server failed
+      // to respond.  In the latter case, the cache MAY send a previously
+      // stored response (see Section 4.2.4).
 
       maybeAction match {
         case Some(Validate(reason, staleIfError)) if staleIfError =>
