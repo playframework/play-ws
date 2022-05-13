@@ -74,7 +74,7 @@ class XMLRequestSpec extends Specification with Mockito with AfterAll with MustM
         |<body>Don't forget me this weekend!</body>
         |</note>
       """.stripMargin
-    val readables = new XMLBodyReadables() {}
+    val readables = new XMLBodyReadables {}
     /* UTF-8 */
     val value: Elem = readables.readableAsXml.transform(new StubResponse(test.getBytes(StandardCharsets.UTF_8)))
     (value \\ "note" \ "to").text must be_==("Tove")
@@ -92,7 +92,7 @@ class XMLRequestSpec extends Specification with Mockito with AfterAll with MustM
         |<body>Don't forget me this weekend!</body>
         |</note>
       """.stripMargin
-    val readables = new XMLBodyReadables() {}
+    val readables = new XMLBodyReadables {}
     /* UTF-16 */
     val value: Elem = readables.readableAsXml.transform(new StubResponse(test.getBytes(StandardCharsets.UTF_16)))
     (value \\ "note" \ "to").text must be_==("Tove")

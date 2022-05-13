@@ -19,7 +19,7 @@ import scala.concurrent.Future
  * }
  * }}}
  */
-trait WSRequestFilter extends (WSRequestExecutor => WSRequestExecutor)
+trait WSRequestFilter extends WSRequestExecutor => WSRequestExecutor
 
 object WSRequestFilter {
 
@@ -38,13 +38,13 @@ object WSRequestFilter {
    * @return a filter that calls the passed in function.
    */
   def apply(f: WSRequestExecutor => WSRequestExecutor): WSRequestFilter = {
-    new WSRequestFilter() {
+    new WSRequestFilter {
       override def apply(v1: WSRequestExecutor): WSRequestExecutor = f(v1)
     }
   }
 }
 
-trait WSRequestExecutor extends (StandaloneWSRequest => Future[StandaloneWSResponse])
+trait WSRequestExecutor extends StandaloneWSRequest => Future[StandaloneWSResponse]
 
 object WSRequestExecutor {
   def apply(f: StandaloneWSRequest => Future[StandaloneWSResponse]): WSRequestExecutor = {

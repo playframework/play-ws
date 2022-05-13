@@ -494,24 +494,24 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
       "set a query string appropriately" in {
         val queryParams = requestWithQueryString("q=playframework&src=typd")
         queryParams.size must beEqualTo(2)
-        queryParams.exists(p => (p.getName == "q") && (p.getValue == "playframework")) must beTrue
-        queryParams.exists(p => (p.getName == "src") && (p.getValue == "typd")) must beTrue
+        queryParams.exists(p => p.getName == "q" && p.getValue == "playframework") must beTrue
+        queryParams.exists(p => p.getName == "src" && p.getValue == "typd") must beTrue
       }
 
       "support several query string values for a parameter" in {
         val queryParams = requestWithQueryString("q=scala&q=playframework&q=fp")
         queryParams.size must beEqualTo(3)
-        queryParams.exists(p => (p.getName == "q") && (p.getValue == "scala")) must beTrue
-        queryParams.exists(p => (p.getName == "q") && (p.getValue == "playframework")) must beTrue
-        queryParams.exists(p => (p.getName == "q") && (p.getValue == "fp")) must beTrue
+        queryParams.exists(p => p.getName == "q" && p.getValue == "scala") must beTrue
+        queryParams.exists(p => p.getName == "q" && p.getValue == "playframework") must beTrue
+        queryParams.exists(p => p.getName == "q" && p.getValue == "fp") must beTrue
         queryParams.count(p => p.getName == "q") must beEqualTo(3)
       }
 
       "support a query string parameter without value" in {
         val queryParams = requestWithQueryString("q=playframework&src=")
         queryParams.size must beEqualTo(2)
-        queryParams.exists(p => (p.getName == "q") && (p.getValue == "playframework")) must beTrue
-        queryParams.exists(p => (p.getName.equals("src")) && (p.getValue == null)) must beTrue
+        queryParams.exists(p => p.getName == "q" && p.getValue == "playframework") must beTrue
+        queryParams.exists(p => p.getName.equals("src") && p.getValue == null) must beTrue
       }
 
       "not support a query string with more than 2 = per part" in {
@@ -575,7 +575,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
     "For Cookies" in {
 
       def cookie(name: String, value: String): WSCookie = {
-        new WSCookieBuilder().setName(name).setValue(value).build()
+        new WSCookieBuilder.setName(name).setValue(value).build()
       }
 
       "get existing cookies" in {

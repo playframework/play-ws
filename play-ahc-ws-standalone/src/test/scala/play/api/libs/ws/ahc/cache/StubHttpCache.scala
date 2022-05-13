@@ -9,7 +9,7 @@ import scala.concurrent.Future
 
 class StubHttpCache extends Cache {
 
-  private val underlying = new mutable.HashMap[EffectiveURIKey, ResponseEntry]()
+  private val underlying = new mutable.HashMap[EffectiveURIKey, ResponseEntry]
 
   override def remove(key: EffectiveURIKey): Future[Unit] = Future.successful(underlying.remove(key))
 

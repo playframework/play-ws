@@ -29,7 +29,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
 
     "get headers map which retrieves headers case insensitively" in {
       val srcResponse = mock[Response]
-      val srcHeaders = new DefaultHttpHeaders()
+      val srcHeaders = new DefaultHttpHeaders
         .add("Foo", "a")
         .add("foo", "b")
         .add("FOO", "b")
@@ -43,7 +43,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
 
     "get a single header" in {
       val srcResponse = mock[Response]
-      val srcHeaders = new DefaultHttpHeaders()
+      val srcHeaders = new DefaultHttpHeaders
         .add("Foo", "a")
         .add("foo", "b")
         .add("FOO", "b")
@@ -57,7 +57,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
 
     "get an empty optional when header is not present" in {
       val srcResponse = mock[Response]
-      val srcHeaders = new DefaultHttpHeaders()
+      val srcHeaders = new DefaultHttpHeaders
         .add("Foo", "a")
         .add("foo", "b")
         .add("FOO", "b")
@@ -70,7 +70,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
 
     "get all values for a header" in {
       val srcResponse = mock[Response]
-      val srcHeaders = new DefaultHttpHeaders()
+      val srcHeaders = new DefaultHttpHeaders
         .add("Foo", "a")
         .add("foo", "b")
         .add("FOO", "b")

@@ -118,8 +118,8 @@ class AhcWSRequestSpec
           .buildRequest()
 
         val paramsList: Seq[Param] = req.getQueryParams.asScala.toSeq
-        paramsList.exists(p => (p.getName == "foo") && (p.getValue == "foo1")) must beTrue
-        paramsList.exists(p => (p.getName == "foo") && (p.getValue == "foo2")) must beTrue
+        paramsList.exists(p => p.getName == "foo" && p.getValue == "foo1") must beTrue
+        paramsList.exists(p => p.getName == "foo" && p.getValue == "foo2") must beTrue
         paramsList.count(p => p.getName == "foo") must beEqualTo(2)
       }
 
@@ -352,7 +352,7 @@ class AhcWSRequestSpec
           .withBody(Map("param1" -> Seq("value1")))
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
-        (new String(req.getByteData, "UTF-8")) must_== "param1=value1"
+        new String(req.getByteData, "UTF-8") must_== "param1=value1"
       }
     }
 
@@ -404,7 +404,7 @@ class AhcWSRequestSpec
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
 
-        (new String(req.getByteData, "UTF-8")) must be_==("HELLO WORLD")
+        new String(req.getByteData, "UTF-8") must be_==("HELLO WORLD")
         val headers = req.getHeaders
         headers.get("Content-Length") must beNull
       }
@@ -421,7 +421,7 @@ class AhcWSRequestSpec
           .withBody("HELLO WORLD") // and body is set to string (see #5221)
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
-        (new String(req.getByteData, "UTF-8")) must be_==("HELLO WORLD") // should result in byte data.
+        new String(req.getByteData, "UTF-8") must be_==("HELLO WORLD") // should result in byte data.
       }
     }
 
@@ -646,7 +646,7 @@ class AhcWSRequestSpec
       .asInstanceOf[StandaloneAhcWSRequest]
       .buildRequest()
 
-    (new String(req.getByteData, "UTF-8")) must be_==("param1=value1") // should result in byte data.
+    new String(req.getByteData, "UTF-8") must be_==("param1=value1") // should result in byte data.
 
     val headers = req.getHeaders
     headers.get("Content-Length") must_== "9001"

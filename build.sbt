@@ -134,7 +134,7 @@ lazy val shadeAssemblySettings = commonSettings ++ shadedCommonSettings ++ Seq(
   assembly / test := {},
   assembly / assemblyJarName := {
     CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((epoch, major)) =>
+      case Some(epoch, major) =>
         s"${name.value}.jar" // we are only shading java
       case _ =>
         sys.error("Cannot find valid scala version!")
@@ -142,7 +142,7 @@ lazy val shadeAssemblySettings = commonSettings ++ shadedCommonSettings ++ Seq(
   },
   assembly / target := {
     CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((epoch, major)) =>
+      case Some(epoch, major) =>
         baseDirectory.value.getParentFile / "target" / s"$epoch.$major"
       case _ =>
         sys.error("Cannot find valid scala version!")

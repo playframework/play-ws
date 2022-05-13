@@ -40,7 +40,7 @@ import scala.util.Success
  *                        also close asyncHttpClient.
  * @param materializer A materializer, meant to execute the stream
  */
-class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(implicit
+class StandaloneAhcWSClient @Inject(asyncHttpClient: AsyncHttpClient)(implicit
     materializer: Materializer
 ) extends StandaloneWSClient {
 
@@ -75,7 +75,7 @@ class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(implici
       request: Request
   ): Future[StandaloneAhcWSResponse] = {
     val result = Promise[StandaloneAhcWSResponse]()
-    val handler = new AsyncCompletionHandler[AHCResponse]() {
+    val handler = new AsyncCompletionHandler[AHCResponse] {
       override def onCompleted(response: AHCResponse): AHCResponse = {
         result.success(StandaloneAhcWSResponse(response))
         response
@@ -111,7 +111,7 @@ class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(implici
     val function: JFunction[StreamedState, StreamedResponse] = { (state: StreamedState) =>
       val publisher = state.publisher
 
-      val wrap = new Publisher[HttpResponseBodyPart]() {
+      val wrap = new Publisher[HttpResponseBodyPart] {
         override def subscribe(
             s: Subscriber[_ >: HttpResponseBodyPart]
         ): Unit = {

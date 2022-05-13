@@ -42,9 +42,9 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
 
   private val stripHeaderCalculator = new StripHeaderCalculator(this)
 
-  private val secondaryKeyCalculator = new SecondaryKeyCalculator()
+  private val secondaryKeyCalculator = new SecondaryKeyCalculator
 
-  private val currentAgeCalculator = new CurrentAgeCalculator()
+  private val currentAgeCalculator = new CurrentAgeCalculator
 
   private val freshnessCalculator = new FreshnessCalculator(this)
 
@@ -331,7 +331,7 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
     // o  retain any Warning header fields in the stored response with
     // warn-code 2xx; and,
     val headers                 = response.headers
-    val headersMap: HttpHeaders = new DefaultHttpHeaders().add(headers)
+    val headersMap: HttpHeaders = new DefaultHttpHeaders.add(headers)
     val filteredWarnings = headersMap
       .getAll("Warning")
       .asScala
@@ -393,7 +393,7 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
   }
 
   def replaceHeaders(response: CacheableResponse)(block: HttpHeaders => HttpHeaders): CacheableResponse = {
-    val newHeadersMap = block(new DefaultHttpHeaders().add(response.getHeaders))
+    val newHeadersMap = block(new DefaultHttpHeaders.add(response.getHeaders))
     response.copy(headers = newHeadersMap)
   }
 

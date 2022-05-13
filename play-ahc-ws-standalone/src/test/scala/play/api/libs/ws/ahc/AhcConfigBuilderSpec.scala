@@ -30,7 +30,7 @@ class AhcConfigBuilderSpec extends Specification with Mockito {
 
   "AhcConfigBuilder" should {
     "support overriding secure default values" in {
-      val ahcConfig = new AhcConfigBuilder()
+      val ahcConfig = new AhcConfigBuilder
         .modifyUnderlying { builder =>
           builder.setCompressionEnforced(false)
           builder.setFollowRedirect(false)

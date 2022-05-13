@@ -85,7 +85,7 @@ case class CacheableResponse(
   def ahcbodyParts: util.List[HttpResponseBodyPart] = bodyParts.asInstanceOf[util.List[HttpResponseBodyPart]]
 
   def withHeaders(tuple: (String, String)*): CacheableResponse = {
-    val headerMap = new DefaultHttpHeaders().add(this.headers)
+    val headerMap = new DefaultHttpHeaders.add(this.headers)
     tuple.foreach { case (k, v) =>
       headerMap.add(k, v)
     }
@@ -238,7 +238,7 @@ object CacheableResponse {
   def apply(code: Int, urlString: String, ahcConfig: AsyncHttpClientConfig): CacheableResponse = {
     val uri: Uri        = Uri.create(urlString)
     val status          = new CacheableHttpResponseStatus(uri, code, "", "")
-    val responseHeaders = new DefaultHttpHeaders()
+    val responseHeaders = new DefaultHttpHeaders
     val bodyParts       = util.Collections.emptyList[CacheableHttpResponseBodyPart]
 
     CacheableResponse(status = status, headers = responseHeaders, bodyParts = bodyParts, ahcConfig)
@@ -247,7 +247,7 @@ object CacheableResponse {
   def apply(code: Int, urlString: String, body: String, ahcConfig: AsyncHttpClientConfig): CacheableResponse = {
     val uri: Uri        = Uri.create(urlString)
     val status          = new CacheableHttpResponseStatus(uri, code, "", "")
-    val responseHeaders = new DefaultHttpHeaders()
+    val responseHeaders = new DefaultHttpHeaders
     val bodyParts       = util.Collections.singletonList(new CacheableHttpResponseBodyPart(body.getBytes, true))
 
     CacheableResponse(status = status, headers = responseHeaders, bodyParts = bodyParts, ahcConfig)

@@ -9,7 +9,7 @@ import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders.Names._
 import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClientConfig
 
 class CacheableResponseSpec extends Specification {
-  val achConfig = new DefaultAsyncHttpClientConfig.Builder().build()
+  val achConfig = new DefaultAsyncHttpClientConfig.Builder.build()
 
   "CacheableResponse" should {
 

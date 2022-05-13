@@ -41,7 +41,7 @@ class JsonBodyReadablesSpec extends Specification with MustMatchers {
   "decode encodings correctly" should {
 
     "read an encoding of UTF-32BE" in {
-      val readables   = new JsonBodyReadables() {}
+      val readables   = new JsonBodyReadables {}
       val json        = """{"menu": {"id": "file", "value": "File"} }"""
       val charsetName = "UTF-32BE"
       val value: JsValue =
@@ -50,7 +50,7 @@ class JsonBodyReadablesSpec extends Specification with MustMatchers {
     }
 
     "read an encoding of UTF-32LE" in {
-      val readables   = new JsonBodyReadables() {}
+      val readables   = new JsonBodyReadables {}
       val json        = """{"menu": {"id": "file", "value": "File"} }"""
       val charsetName = "UTF-32LE"
       val value: JsValue =
@@ -59,7 +59,7 @@ class JsonBodyReadablesSpec extends Specification with MustMatchers {
     }
 
     "read an encoding of UTF-16BE" in {
-      val readables      = new JsonBodyReadables() {}
+      val readables      = new JsonBodyReadables {}
       val json           = """{"menu": {"id": "file", "value": "File"} }"""
       val charset        = UTF_16BE
       val value: JsValue = readables.readableAsJson.transform(new StubResponse(json.getBytes(charset), charset))
@@ -67,7 +67,7 @@ class JsonBodyReadablesSpec extends Specification with MustMatchers {
     }
 
     "read an encoding of UTF-16LE" in {
-      val readables      = new JsonBodyReadables() {}
+      val readables      = new JsonBodyReadables {}
       val json           = """{"menu": {"id": "file", "value": "File"} }"""
       val charset        = UTF_16LE
       val value: JsValue = readables.readableAsJson.transform(new StubResponse(json.getBytes(charset), charset))
@@ -75,21 +75,21 @@ class JsonBodyReadablesSpec extends Specification with MustMatchers {
     }
 
     "read an encoding of UTF-8" in {
-      val readables      = new JsonBodyReadables() {}
+      val readables      = new JsonBodyReadables {}
       val json           = """{"menu": {"id": "file", "value": "File"} }"""
       val value: JsValue = readables.readableAsJson.transform(new StubResponse(json.getBytes(UTF_8)))
       (value \ "menu" \ "id").validate[String] must beEqualTo(JsSuccess("file"))
     }
 
     "read an encoding of UTF-8 with empty object" in {
-      val readables      = new JsonBodyReadables() {}
+      val readables      = new JsonBodyReadables {}
       val json           = "{}"
       val value: JsValue = readables.readableAsJson.transform(new StubResponse(json.getBytes(UTF_8)))
       value.toString() must beEqualTo("{}")
     }
 
     "read an encoding of UTF-8 with empty array" in {
-      val readables      = new JsonBodyReadables() {}
+      val readables      = new JsonBodyReadables {}
       val json           = "[]"
       val value: JsValue = readables.readableAsJson.transform(new StubResponse(json.getBytes(UTF_8)))
       value.toString() must beEqualTo("[]")

@@ -38,8 +38,8 @@ object Dependencies {
 
   def scalaXml(scalaVersion: String) = Seq("org.scala-lang.modules" %% "scala-xml" % {
     CrossVersion.partialVersion(scalaVersion) match {
-      case Some((2, _)) => "1.3.0"
-      case _            => "2.0.1"
+      case Some(2, _) => "1.3.0"
+      case _          => "2.0.1"
     }
   })
 

@@ -22,7 +22,7 @@ class AhcWSCacheSpec extends Specification {
     "calculate LM freshness" in {
       import scala.concurrent.ExecutionContext.Implicits.global
 
-      implicit val cache: AhcHttpCache = new AhcHttpCache(new StubHttpCache(), true)
+      implicit val cache: AhcHttpCache = new AhcHttpCache(new StubHttpCache, true)
       val url                          = "http://localhost:9000"
 
       val uri                      = new URI(url)
@@ -41,7 +41,7 @@ class AhcWSCacheSpec extends Specification {
     "be disabled when set to false" in {
       import scala.concurrent.ExecutionContext.Implicits.global
 
-      implicit val cache: AhcHttpCache = new AhcHttpCache(new StubHttpCache(), false)
+      implicit val cache: AhcHttpCache = new AhcHttpCache(new StubHttpCache, false)
       val url                          = "http://localhost:9000"
 
       val uri                      = new URI(url)
@@ -62,8 +62,8 @@ class AhcWSCacheSpec extends Specification {
     "calculate keys correctly" in {
       import scala.concurrent.ExecutionContext.Implicits.global
 
-      implicit val cache: AhcHttpCache = new AhcHttpCache(new StubHttpCache(), false)
-      val achConfig                    = new DefaultAsyncHttpClientConfig.Builder().build()
+      implicit val cache: AhcHttpCache = new AhcHttpCache(new StubHttpCache, false)
+      val achConfig                    = new DefaultAsyncHttpClientConfig.Builder.build()
 
       val url = "http://localhost:9000"
 
@@ -82,8 +82,8 @@ class AhcWSCacheSpec extends Specification {
   }
 
   def generateRequest(url: String)(block: HttpHeaders => HttpHeaders): Request = {
-    val requestBuilder = new RequestBuilder()
-    val requestHeaders = block(new DefaultHttpHeaders())
+    val requestBuilder = new RequestBuilder
+    val requestHeaders = block(new DefaultHttpHeaders)
 
     requestBuilder
       .setUrl(url)

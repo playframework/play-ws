@@ -21,7 +21,7 @@ trait TimeoutResponse {
   def generateTimeoutResponse(request: Request, ahcConfig: AsyncHttpClientConfig): CacheableResponse = {
     val uri       = request.getUri
     val status    = new CacheableHttpResponseStatus(uri, 504, "Gateway Timeout", "")
-    val headers   = new DefaultHttpHeaders()
+    val headers   = new DefaultHttpHeaders
     val bodyParts = java.util.Collections.emptyList[CacheableHttpResponseBodyPart]()
     CacheableResponse(status, headers, bodyParts, ahcConfig)
   }

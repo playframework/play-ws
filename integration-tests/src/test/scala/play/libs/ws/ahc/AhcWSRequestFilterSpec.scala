@@ -39,7 +39,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
 
     "work with one request filter" in withClient() { client =>
       import scala.collection.JavaConverters._
-      val callList = new java.util.ArrayList[Integer]()
+      val callList = new java.util.ArrayList[Integer]
       val responseFuture = FutureConverters.toScala(
         client
           .url(s"http://localhost:$testServerPort")
@@ -55,7 +55,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
 
     "stream with one request filter" in withClient() { client =>
       import scala.collection.JavaConverters._
-      val callList = new java.util.ArrayList[Integer]()
+      val callList = new java.util.ArrayList[Integer]
       val responseFuture = FutureConverters.toScala(
         client
           .url(s"http://localhost:$testServerPort")
@@ -71,7 +71,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
 
     "work with three request filter" in withClient() { client =>
       import scala.collection.JavaConverters._
-      val callList = new java.util.ArrayList[Integer]()
+      val callList = new java.util.ArrayList[Integer]
       val responseFuture = FutureConverters.toScala(
         client
           .url(s"http://localhost:$testServerPort")
@@ -89,7 +89,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
 
     "stream with three request filters" in withClient() { client =>
       import scala.collection.JavaConverters._
-      val callList = new java.util.ArrayList[Integer]()
+      val callList = new java.util.ArrayList[Integer]
       val responseFuture = FutureConverters.toScala(
         client
           .url(s"http://localhost:$testServerPort")

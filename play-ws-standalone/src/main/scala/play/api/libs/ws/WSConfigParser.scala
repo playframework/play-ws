@@ -29,7 +29,7 @@ import scala.concurrent.duration.Duration
  * }}}
  */
 @Singleton
-class WSConfigParser @Inject() (config: Config, classLoader: ClassLoader) extends Provider[WSClientConfig] {
+class WSConfigParser @Inject(config: Config, classLoader: ClassLoader) extends Provider[WSClientConfig] {
 
   def parse(): WSClientConfig = {
     val wsConfig = config.getConfig("play.ws")

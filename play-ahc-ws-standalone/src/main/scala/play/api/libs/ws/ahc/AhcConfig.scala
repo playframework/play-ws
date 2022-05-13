@@ -83,7 +83,7 @@ object AhcWSClientConfigFactory {
  * This class creates a AhcWSClientConfig object from configuration.
  */
 @Singleton
-class AhcWSClientConfigParser @Inject() (
+class AhcWSClientConfigParser @Inject(
     wsClientConfig: WSClientConfig,
     configuration: Config,
     classLoader: ClassLoader
@@ -144,7 +144,7 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
   /**
    * The underlying `DefaultAsyncHttpClientConfig.Builder` used by this instance.
    */
-  val builder: DefaultAsyncHttpClientConfig.Builder = new DefaultAsyncHttpClientConfig.Builder()
+  val builder: DefaultAsyncHttpClientConfig.Builder = new DefaultAsyncHttpClientConfig.Builder
 
   private[ahc] val logger        = LoggerFactory.getLogger(this.getClass.getName)
   private[ahc] val loggerFactory = new AhcLoggerFactory(LoggerFactory.getILoggerFactory)
