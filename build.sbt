@@ -24,9 +24,6 @@ resolvers in ThisBuild += Resolver.bintrayRepo("akka", "snapshots")
 // Customise sbt-dynver's behaviour to make it work with tags which aren't v-prefixed
 dynverVTagPrefix in ThisBuild := false
 
-// We are publishing snapshots to Sonatype
-ThisBuild / dynverSonatypeSnapshots := true
-
 // Sanity-check: assert that version comes from a tag (e.g. not a too-shallow clone)
 // https://github.com/dwijnand/sbt-dynver/#sanity-checking-the-version
 Global / onLoad := (Global / onLoad).value.andThen { s =>
@@ -445,24 +442,6 @@ lazy val root = project
     bench
   )
   .disablePlugins(sbtassembly.AssemblyPlugin)
-
-//---------------------------------------------------------------
-// Release
-//---------------------------------------------------------------
-import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
-
-// This automatically selects the snapshots or staging repository
-// according to the version value.
-publishTo in ThisBuild := sonatypePublishToBundle.value
-
-releaseProcess := Seq[ReleaseStep](
-  checkSnapshotDependencies,
-  runClean,
-  runTest,
-  releaseStepCommandAndRemaining("+publishSigned"),
-  releaseStepCommand("sonatypeBundleRelease"),
-  pushChanges
-)
 
 lazy val checkCodeFormat = taskKey[Unit]("Check that code format is following Scalariform rules")
 
