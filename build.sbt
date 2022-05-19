@@ -76,26 +76,15 @@ lazy val commonSettings = Def.settings(
     // Work around 2.12 bug which prevents javadoc in nested java classes from compiling.
     "-no-java-comments",
   ),
-  pomExtra := (
-    <url>https://github.com/playframework/play-ws</url>
-      <licenses>
-        <license>
-          <name>Apache License, Version 2.0</name>
-          <url>http://www.apache.org/licenses/LICENSE-2.0</url>
-          <distribution>repo</distribution>
-        </license>
-      </licenses>
-      <scm>
-        <url>https://github.com/playframework/play-ws</url>
-        <connection>scm:git:git@github.com/playframework/play-ws.git</connection>
-      </scm>
-      <developers>
-        <developer>
-          <id>playframework</id>
-          <name>Play Team</name>
-          <url>http://playframework.com/</url>
-        </developer>
-      </developers>),
+  licenses := Seq(
+    "Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")
+  ),
+  developers += Developer(
+    "playframework",
+    "Play Team",
+    "contact@playframework.com",
+    url("https://playframework.com")
+  ),
   javacOptions in Compile ++= javacSettings,
   javacOptions in Test ++= javacSettings,
   headerLicense := {
