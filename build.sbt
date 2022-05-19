@@ -67,6 +67,7 @@ lazy val mimaSettings = mimaDefaultSettings ++ Seq(
 
 lazy val commonSettings = Def.settings(
   organization := "com.typesafe.play",
+  homepage := Some(url(s"https://github.com/playframework/play-ws")),
   scalaVersion := scala213,
   crossScalaVersions := Seq(scala213, scala212),
   scalacOptions ++= scalacOpts,
