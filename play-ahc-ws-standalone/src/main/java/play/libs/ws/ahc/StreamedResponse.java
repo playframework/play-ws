@@ -23,7 +23,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 import static java.util.stream.Collectors.toMap;
-import static scala.collection.JavaConverters.seqAsJavaListConverter;
+import scala.jdk.javaapi.CollectionConverters;
 
 public class StreamedResponse implements StandaloneWSResponse, CookieBuilder {
 
@@ -121,7 +121,7 @@ public class StreamedResponse implements StandaloneWSResponse, CookieBuilder {
     }
 
     private static java.util.Map<String, List<String>> asJava(scala.collection.Map<String, Seq<String>> scalaMap) {
-        return ScalaStreamSupport.stream(scalaMap).collect(toMap(f -> f._1(), f -> seqAsJavaListConverter(f._2()).asJava()));
+        return ScalaStreamSupport.stream(scalaMap).collect(toMap(f -> f._1(), f -> CollectionConverters.asJava(f._2())));
     }
 
 }

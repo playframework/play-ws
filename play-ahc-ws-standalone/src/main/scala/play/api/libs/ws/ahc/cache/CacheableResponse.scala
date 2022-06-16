@@ -59,7 +59,7 @@ class CacheableResponseBuilder(ahcConfig: AsyncHttpClientConfig) {
   }
 
   def build: CacheableResponse = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     new CacheableResponse(status.get, headers.get, bodyParts.asJava, ahcConfig)
   }
 }
@@ -107,7 +107,7 @@ case class CacheableResponse(
 
   @throws(classOf[IOException])
   override def getResponseBodyAsByteBuffer: ByteBuffer = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     val length = bodyParts.asScala.map(_.length()).sum
     val target = ByteBuffer.wrap(new Array[Byte](length))
     bodyParts.asScala.foreach(part => target.put(part.getBodyPartBytes))
@@ -211,7 +211,7 @@ case class CacheableResponse(
     if (!isNonEmpty(setCookieHeaders)) setCookieHeaders = headers.getAll(SET_COOKIE)
     if (isNonEmpty(setCookieHeaders)) {
       val cookies = new util.ArrayList[Cookie](1)
-      import scala.collection.JavaConverters._
+      import scala.jdk.CollectionConverters._
       for (value <- setCookieHeaders.iterator.asScala) {
         val c =
           if (ahcConfig.isUseLaxCookieEncoder) ClientCookieDecoder.LAX.decode(value)

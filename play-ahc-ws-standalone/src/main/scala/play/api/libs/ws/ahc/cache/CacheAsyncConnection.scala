@@ -45,7 +45,7 @@ class AsyncCacheableConnection[T](
       }
 
       if (state eq AsyncHandler.State.CONTINUE) {
-        import collection.JavaConverters._
+        import scala.jdk.CollectionConverters._
         response.bodyParts.asScala.foreach { bodyPart =>
           asyncHandler.onBodyPartReceived(bodyPart)
         }

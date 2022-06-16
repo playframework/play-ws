@@ -320,7 +320,7 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
       logger.trace(s"freshenResponse: newHeaders = $newHeaders, storedResponse = $response")
     }
 
-    import collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
 
     // Need to freshen this stale response
     // https://tools.ietf.org/html/rfc7234#section-4.3.4
@@ -443,7 +443,7 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
     val stripSet       = stripHeaderCalculator.stripHeaders(originResponse)
 
     val r = if (stripSet.nonEmpty) {
-      import scala.collection.JavaConverters._
+      import scala.jdk.CollectionConverters._
       val stripHeaderNames = stripSet.map(_.toString()).asJavaCollection
       logger.debug(s"massageCachedResponse: stripHeaderNames = $stripHeaderNames")
       stripHeaderNames.asScala.foreach(httpResponse.getHeaders.remove)

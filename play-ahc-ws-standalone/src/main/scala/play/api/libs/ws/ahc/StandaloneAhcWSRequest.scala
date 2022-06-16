@@ -20,7 +20,7 @@ import play.shaded.ahc.org.asynchttpclient._
 import play.shaded.ahc.org.asynchttpclient.proxy.{ ProxyServer => AHCProxyServer }
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.immutable.TreeMap
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
@@ -449,7 +449,7 @@ case class StandaloneAhcWSRequest(
     }
 
     wsProxyServer.nonProxyHosts.foreach { nonProxyHosts =>
-      import scala.collection.JavaConverters._
+      import scala.jdk.CollectionConverters._
       proxyBuilder.setNonProxyHosts(nonProxyHosts.asJava)
     }
     proxyBuilder.build()

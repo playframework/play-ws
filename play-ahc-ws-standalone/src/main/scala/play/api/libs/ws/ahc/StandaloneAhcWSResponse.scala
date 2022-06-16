@@ -11,7 +11,7 @@ import play.api.libs.ws.StandaloneWSResponse
 import play.api.libs.ws.WSCookie
 import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse }
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
  * A WS HTTP response backed by org.asynchttpclient.Response.

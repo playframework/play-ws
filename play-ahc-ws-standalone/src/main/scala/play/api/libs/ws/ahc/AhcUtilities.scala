@@ -14,7 +14,7 @@ import scala.collection.immutable.TreeMap
 trait AhcUtilities {
 
   def headersToMap(headers: HttpHeaders): TreeMap[String, Seq[String]] = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     val mutableMap = scala.collection.mutable.HashMap[String, Seq[String]]()
     headers.names().asScala.foreach { name =>
       mutableMap.put(name, headers.getAll(name).asScala.toSeq)

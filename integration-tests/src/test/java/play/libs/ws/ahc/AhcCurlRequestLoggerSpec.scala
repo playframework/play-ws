@@ -17,7 +17,7 @@ import uk.org.lidalia.slf4jext.Level
 import uk.org.lidalia.slf4jtest.TestLogger
 import uk.org.lidalia.slf4jtest.TestLoggerFactory
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.compat.java8.FutureConverters._
 
 class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv)
