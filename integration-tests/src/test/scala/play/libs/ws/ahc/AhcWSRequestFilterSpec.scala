@@ -14,7 +14,7 @@ import org.specs2.mutable.Specification
 import play.AkkaServerProvider
 
 import scala.concurrent.duration._
-import scala.compat.java8.FutureConverters
+import scala.jdk.FutureConverters._
 
 class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
     extends Specification
@@ -40,12 +40,12 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
     "work with one request filter" in withClient() { client =>
       import scala.jdk.CollectionConverters._
       val callList = new java.util.ArrayList[Integer]()
-      val responseFuture = FutureConverters.toScala(
+      val responseFuture =
         client
           .url(s"http://localhost:$testServerPort")
           .setRequestFilter(new CallbackRequestFilter(callList, 1))
           .get()
-      )
+          .asScala
       responseFuture
         .map { _ =>
           callList.asScala must contain(1)
@@ -56,12 +56,12 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
     "stream with one request filter" in withClient() { client =>
       import scala.jdk.CollectionConverters._
       val callList = new java.util.ArrayList[Integer]()
-      val responseFuture = FutureConverters.toScala(
+      val responseFuture =
         client
           .url(s"http://localhost:$testServerPort")
           .setRequestFilter(new CallbackRequestFilter(callList, 1))
           .stream()
-      )
+          .asScala
       responseFuture
         .map { _ =>
           callList.asScala must contain(1)
@@ -72,14 +72,14 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
     "work with three request filter" in withClient() { client =>
       import scala.jdk.CollectionConverters._
       val callList = new java.util.ArrayList[Integer]()
-      val responseFuture = FutureConverters.toScala(
+      val responseFuture =
         client
           .url(s"http://localhost:$testServerPort")
           .setRequestFilter(new CallbackRequestFilter(callList, 1))
           .setRequestFilter(new CallbackRequestFilter(callList, 2))
           .setRequestFilter(new CallbackRequestFilter(callList, 3))
           .get()
-      )
+          .asScala
       responseFuture
         .map { _ =>
           callList.asScala must containTheSameElementsAs(Seq(1, 2, 3))
@@ -90,14 +90,14 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
     "stream with three request filters" in withClient() { client =>
       import scala.jdk.CollectionConverters._
       val callList = new java.util.ArrayList[Integer]()
-      val responseFuture = FutureConverters.toScala(
+      val responseFuture =
         client
           .url(s"http://localhost:$testServerPort")
           .setRequestFilter(new CallbackRequestFilter(callList, 1))
           .setRequestFilter(new CallbackRequestFilter(callList, 2))
           .setRequestFilter(new CallbackRequestFilter(callList, 3))
           .stream()
-      )
+          .asScala
       responseFuture
         .map { _ =>
           callList.asScala must containTheSameElementsAs(Seq(1, 2, 3))
@@ -108,12 +108,12 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
     "should allow filters to modify the request" in withClient() { client =>
       val appendedHeader      = "X-Request-Id"
       val appendedHeaderValue = "someid"
-      val responseFuture = FutureConverters.toScala(
+      val responseFuture =
         client
           .url(s"http://localhost:$testServerPort")
           .setRequestFilter(new HeaderAppendingFilter(appendedHeader, appendedHeaderValue))
           .get()
-      )
+          .asScala
 
       responseFuture
         .map { response =>
@@ -125,12 +125,12 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
     "allow filters to modify the streaming request" in withClient() { client =>
       val appendedHeader      = "X-Request-Id"
       val appendedHeaderValue = "someid"
-      val responseFuture = FutureConverters.toScala(
+      val responseFuture =
         client
           .url(s"http://localhost:$testServerPort")
           .setRequestFilter(new HeaderAppendingFilter(appendedHeader, appendedHeaderValue))
           .stream()
-      )
+          .asScala
 
       responseFuture
         .map { response =>

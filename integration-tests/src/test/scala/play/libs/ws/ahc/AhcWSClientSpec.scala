@@ -13,7 +13,7 @@ import org.specs2.mutable.Specification
 import play.AkkaServerProvider
 import play.libs.ws._
 
-import scala.compat.java8.FutureConverters._
+import scala.jdk.FutureConverters._
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
@@ -43,15 +43,18 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
       def someOtherMethod(string: String) = {
         new InMemoryBodyWritable(akka.util.ByteString.fromString(string), "text/plain")
       }
-      toScala(client.url(s"http://localhost:$testServerPort").post(someOtherMethod("hello world")))
+      client
+        .url(s"http://localhost:$testServerPort")
+        .post(someOtherMethod("hello world"))
+        .asScala
         .map(response => response.getBody() must be_==("hello world"))
         .await(retries = 0, timeout = 5.seconds)
     }
 
     "source successfully" in withClient() { client =>
-      val future = toScala(client.url(s"http://localhost:$testServerPort").stream())
+      val future = client.url(s"http://localhost:$testServerPort").stream().asScala
       val result: Future[ByteString] = future.flatMap { (response: StandaloneWSResponse) =>
-        toScala(response.getBodyAsSource.runWith(Sink.head[ByteString](), materializer))
+        response.getBodyAsSource.runWith(Sink.head[ByteString](), materializer).asScala
       }
       val expected: ByteString = ByteString.fromString("<h1>Say hello to akka-http</h1>")
       result must be_==(expected).await(retries = 0, timeout = 5.seconds)
@@ -65,24 +68,27 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
                                       |</note>""".stripMargin)
       document.normalizeDocument()
 
-      toScala {
-        client.url(s"http://localhost:$testServerPort").post(body(document))
-      }.map { response =>
-        import javax.xml.parsers.DocumentBuilderFactory
-        val dbf = DocumentBuilderFactory.newInstance
-        dbf.setNamespaceAware(true)
-        dbf.setCoalescing(true)
-        dbf.setIgnoringElementContentWhitespace(true)
-        dbf.setIgnoringComments(true)
-        dbf.newDocumentBuilder
+      client
+        .url(s"http://localhost:$testServerPort")
+        .post(body(document))
+        .asScala
+        .map { response =>
+          import javax.xml.parsers.DocumentBuilderFactory
+          val dbf = DocumentBuilderFactory.newInstance
+          dbf.setNamespaceAware(true)
+          dbf.setCoalescing(true)
+          dbf.setIgnoringElementContentWhitespace(true)
+          dbf.setIgnoringComments(true)
+          dbf.newDocumentBuilder
 
-        val responseXml = response.getBody(xml())
-        responseXml.normalizeDocument()
+          val responseXml = response.getBody(xml())
+          responseXml.normalizeDocument()
 
-        (responseXml.isEqualNode(document) must beTrue).and {
-          response.getUri must beEqualTo(new java.net.URI(s"http://localhost:$testServerPort"))
+          (responseXml.isEqualNode(document) must beTrue).and {
+            response.getUri must beEqualTo(new java.net.URI(s"http://localhost:$testServerPort"))
+          }
         }
-      }.await(retries = 0, timeout = 5.seconds)
+        .await(retries = 0, timeout = 5.seconds)
     }
   }
 }

@@ -20,7 +20,7 @@ import play.shaded.ahc.org.asynchttpclient.SignatureCalculator
 
 import scala.jdk.CollectionConverters._
 import scala.collection.mutable
-import scala.compat.java8.OptionConverters._
+import scala.jdk.OptionConverters._
 
 class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadables with DefaultBodyWritables {
 

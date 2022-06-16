@@ -26,8 +26,6 @@ object Dependencies {
 
   val junitInterface = Seq("com.github.sbt" % "junit-interface" % "0.13.3")
 
-  val scalaJava8Compat = Seq("org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2")
-
   val playJson = Seq("com.typesafe.play" %% "play-json" % "2.10.0-RC6")
 
   val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "1.7.36")
@@ -54,15 +52,13 @@ object Dependencies {
 
   val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.3")
 
-  val testDependencies = (specsBuild.map(
-    _.exclude("org.scala-lang.modules", "*")
-  ) ++ junitInterface ++ assertj ++ awaitility ++ slf4jtest ++ logback).map(_ % Test)
+  val testDependencies = (specsBuild ++ junitInterface ++ assertj ++ awaitility ++ slf4jtest ++ logback).map(_ % Test)
 
-  val standaloneApiWSDependencies = javaxInject ++ scalaJava8Compat ++ sslConfigCore ++ akkaStreams.map(
-    _.exclude("com.typesafe", "*").exclude("org.scala-lang.modules", "*")
+  val standaloneApiWSDependencies = javaxInject ++ sslConfigCore ++ akkaStreams.map(
+    _.exclude("com.typesafe", "*")
   ) ++ testDependencies
 
-  val standaloneAhcWSDependencies = scalaJava8Compat ++ cachecontrol ++ slf4jApi ++ reactiveStreams ++ testDependencies
+  val standaloneAhcWSDependencies = cachecontrol ++ slf4jApi ++ reactiveStreams ++ testDependencies
 
   val standaloneAhcWSJsonDependencies = playJson ++ testDependencies
 

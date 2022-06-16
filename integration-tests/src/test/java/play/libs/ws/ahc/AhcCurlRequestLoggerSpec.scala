@@ -18,7 +18,7 @@ import uk.org.lidalia.slf4jtest.TestLogger
 import uk.org.lidalia.slf4jtest.TestLoggerFactory
 
 import scala.jdk.CollectionConverters._
-import scala.compat.java8.FutureConverters._
+import scala.jdk.FutureConverters._
 
 class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv)
     extends Specification
@@ -52,7 +52,7 @@ class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv)
         .url(s"http://localhost:$testServerPort/")
         .setRequestFilter(curlRequestLogger)
         .get()
-        .toScala
+        .asScala
         .awaitFor(defaultTimeout)
 
       testLogger.getLoggingEvents.asScala.map(_.getMessage) must containMatch("--verbose")
@@ -67,7 +67,7 @@ class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv)
         .addHeader("My-Header", "My-Header-Value")
         .setRequestFilter(curlRequestLogger)
         .get()
-        .toScala
+        .asScala
         .awaitFor(defaultTimeout)
 
       val messages = testLogger.getLoggingEvents.asScala.map(_.getMessage)
@@ -84,7 +84,7 @@ class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv)
         .addCookie(new DefaultWSCookie("cookie1", "value1", "localhost", "path", 10L, true, true))
         .setRequestFilter(curlRequestLogger)
         .get()
-        .toScala
+        .asScala
         .awaitFor(defaultTimeout)
 
       val messages = testLogger.getLoggingEvents.asScala.map(_.getMessage)
@@ -100,7 +100,7 @@ class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv)
         .url(s"http://localhost:$testServerPort/")
         .setRequestFilter(curlRequestLogger)
         .get()
-        .toScala
+        .asScala
         .awaitFor(defaultTimeout)
 
       testLogger.getLoggingEvents.asScala.map(_.getMessage) must containMatch("--request GET")
@@ -115,7 +115,7 @@ class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv)
         .setAuth(new WSAuthInfo("username", "password", WSAuthScheme.BASIC))
         .setRequestFilter(curlRequestLogger)
         .get()
-        .toScala
+        .asScala
         .awaitFor(defaultTimeout)
 
       testLogger.getLoggingEvents.asScala.map(_.getMessage) must containMatch(
@@ -134,7 +134,7 @@ class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv)
           .setBody(body("the-body"))
           .setRequestFilter(curlRequestLogger)
           .get()
-          .toScala
+          .asScala
           .awaitFor(defaultTimeout)
 
         testLogger.getLoggingEvents.asScala.map(_.getMessage) must containMatch("the-body")
@@ -149,7 +149,7 @@ class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv)
           .url(s"http://localhost:$testServerPort/")
           .setRequestFilter(curlRequestLogger)
           .get()
-          .toScala
+          .asScala
           .awaitFor(defaultTimeout)
 
         testLogger.getLoggingEvents.asScala.map(_.getMessage) must not containMatch "--data"
@@ -167,7 +167,7 @@ class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv)
         .setAuth(new WSAuthInfo("username", "password", WSAuthScheme.BASIC))
         .setRequestFilter(curlRequestLogger)
         .get()
-        .toScala
+        .asScala
         .awaitFor(defaultTimeout)
 
       testLogger.getLoggingEvents.get(0).getMessage must beEqualTo(
