@@ -4,7 +4,7 @@
 
 package play.api.libs.ws.ahc
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 
 import akka.actor.ActorSystem
@@ -266,7 +266,7 @@ class AhcWSRequestSpec
 
     "not make Content-Type header if there is Content-Type in headers already" in {
       withClient { client =>
-        import scala.collection.JavaConverters._
+        import scala.jdk.CollectionConverters._
 
         val req: AHCRequest = client
           .url("http://playframework.com/")
@@ -358,7 +358,7 @@ class AhcWSRequestSpec
 
     "Have form params for content type application/x-www-form-urlencoded when signed" in {
       withClient { client =>
-        import scala.collection.JavaConverters._
+        import scala.jdk.CollectionConverters._
         val consumerKey  = ConsumerKey("key", "secret")
         val requestToken = RequestToken("token", "secret")
         val calc         = OAuthCalculator(consumerKey, requestToken)
@@ -653,7 +653,7 @@ class AhcWSRequestSpec
   }
 
   "Remove a user defined content length header if we are parsing body explicitly when signed" in withClient { client =>
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     val consumerKey  = ConsumerKey("key", "secret")
     val requestToken = RequestToken("token", "secret")
     val calc         = OAuthCalculator(consumerKey, requestToken)
@@ -674,7 +674,7 @@ class AhcWSRequestSpec
   }
 
   "Verify Content-Type header is passed through correctly" in withClient { client =>
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     val req: AHCRequest = client
       .url("http://playframework.com/")
       .withHttpHeaders(HttpHeaderNames.CONTENT_TYPE.toString() -> "text/plain; charset=US-ASCII")

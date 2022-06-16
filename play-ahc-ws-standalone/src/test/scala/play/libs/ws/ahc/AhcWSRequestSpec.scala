@@ -18,7 +18,7 @@ import play.shaded.ahc.org.asynchttpclient.Request
 import play.shaded.ahc.org.asynchttpclient.RequestBuilderBase
 import play.shaded.ahc.org.asynchttpclient.SignatureCalculator
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.mutable
 import scala.compat.java8.OptionConverters._
 
@@ -113,7 +113,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
       }
 
       "have form params when passing in map" in {
-        import scala.collection.JavaConverters._
+        import scala.jdk.CollectionConverters._
         val client = StandaloneAhcWSClient.create(
           AhcWSClientConfigFactory.forConfig(ConfigFactory.load(), this.getClass.getClassLoader), /*materializer*/ null
         )
@@ -132,7 +132,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
       }
 
       "have form params when content-type application/x-www-form-urlencoded and signed" in {
-        import scala.collection.JavaConverters._
+        import scala.jdk.CollectionConverters._
         val client = StandaloneAhcWSClient.create(
           AhcWSClientConfigFactory.forConfig(ConfigFactory.load(), this.getClass.getClassLoader), /*materializer*/ null
         )
@@ -152,7 +152,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
       }
 
       "remove a user defined content length header if we are parsing body explicitly when signed" in {
-        import scala.collection.JavaConverters._
+        import scala.jdk.CollectionConverters._
         val client = StandaloneAhcWSClient.create(
           AhcWSClientConfigFactory.forConfig(ConfigFactory.load(), this.getClass.getClassLoader), /*materializer*/ null
         )
@@ -519,7 +519,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
       }
 
       "support a query string parameter with an encoded equals sign" in {
-        import scala.collection.JavaConverters._
+        import scala.jdk.CollectionConverters._
         val client = StandaloneAhcWSClient.create(
           AhcWSClientConfigFactory.forConfig(ConfigFactory.load(), this.getClass.getClassLoader), /*materializer*/ null
         )
@@ -669,7 +669,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
   }
 
   def requestWithQueryString(query: String) = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     val client = StandaloneAhcWSClient.create(
       AhcWSClientConfigFactory.forConfig(ConfigFactory.load(), this.getClass.getClassLoader), /*materializer*/ null
     )

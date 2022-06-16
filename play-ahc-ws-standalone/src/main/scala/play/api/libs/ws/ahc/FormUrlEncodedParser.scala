@@ -45,7 +45,7 @@ private[ahc] object FormUrlEncodedParser {
    * @return A Map of keys to the sequence of values for that key
    */
   def parseAsJava(data: String, encoding: String): java.util.Map[String, java.util.List[String]] = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     parse(data, encoding).map { case (key, values) =>
       key -> values.asJava
     }.asJava
@@ -58,7 +58,7 @@ private[ahc] object FormUrlEncodedParser {
    * @return A Map of keys to the sequence of array values for that key
    */
   def parseAsJavaArrayValues(data: String, encoding: String): java.util.Map[String, Array[String]] = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     parse(data, encoding).map { case (key, values) =>
       key -> values.toArray
     }.asJava

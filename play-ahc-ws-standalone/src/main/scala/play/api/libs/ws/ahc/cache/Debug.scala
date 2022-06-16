@@ -56,7 +56,7 @@ private[ahc] trait Debug extends AhcUtilities {
   }
 
   def debug(bodyParts: java.util.List[HttpResponseBodyPart]): String = {
-    import collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     bodyParts.asScala.map(debug).toString()
   }
 

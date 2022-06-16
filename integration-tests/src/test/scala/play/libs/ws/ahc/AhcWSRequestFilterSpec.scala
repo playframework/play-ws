@@ -38,7 +38,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
   "setRequestFilter" should {
 
     "work with one request filter" in withClient() { client =>
-      import scala.collection.JavaConverters._
+      import scala.jdk.CollectionConverters._
       val callList = new java.util.ArrayList[Integer]()
       val responseFuture = FutureConverters.toScala(
         client
@@ -54,7 +54,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
     }
 
     "stream with one request filter" in withClient() { client =>
-      import scala.collection.JavaConverters._
+      import scala.jdk.CollectionConverters._
       val callList = new java.util.ArrayList[Integer]()
       val responseFuture = FutureConverters.toScala(
         client
@@ -70,7 +70,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
     }
 
     "work with three request filter" in withClient() { client =>
-      import scala.collection.JavaConverters._
+      import scala.jdk.CollectionConverters._
       val callList = new java.util.ArrayList[Integer]()
       val responseFuture = FutureConverters.toScala(
         client
@@ -88,7 +88,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
     }
 
     "stream with three request filters" in withClient() { client =>
-      import scala.collection.JavaConverters._
+      import scala.jdk.CollectionConverters._
       val callList = new java.util.ArrayList[Integer]()
       val responseFuture = FutureConverters.toScala(
         client
