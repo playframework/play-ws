@@ -23,7 +23,7 @@ import play.shaded.ahc.org.asynchttpclient._
 import java.util.function.{ Function => JFunction }
 
 import scala.collection.immutable.TreeMap
-import scala.compat.java8.FunctionConverters._
+import scala.jdk.FunctionConverters._
 import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.concurrent.Promise

@@ -11,7 +11,7 @@ import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
 import play.shaded.ahc.org.asynchttpclient.Response
 
 import scala.jdk.CollectionConverters._
-import scala.compat.java8.OptionConverters._
+import scala.jdk.OptionConverters._
 
 class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReadables with DefaultBodyWritables {
 

@@ -26,8 +26,7 @@ import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClientConfig;
 import play.shaded.ahc.org.asynchttpclient.Request;
 import play.shaded.ahc.org.asynchttpclient.Response;
 import play.shaded.ahc.org.asynchttpclient.*;
-import scala.compat.java8.FutureConverters;
-import scala.compat.java8.FutureConverters$;
+import scala.jdk.javaapi.FutureConverters;
 import scala.concurrent.ExecutionContext;
 import scala.concurrent.Future;
 import scala.concurrent.Promise;
@@ -84,7 +83,7 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
             scalaPromise.failure(exception);
         }
         Future<StandaloneWSResponse> future = scalaPromise.future();
-        return FutureConverters.toJava(future);
+        return FutureConverters.asJava(future);
     }
 
     CompletionStage<StandaloneWSResponse> executeStream(Request request, ExecutionContext ec) {
@@ -115,7 +114,7 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
 
                             @Override
                             public void onComplete() {
-                                FutureConverters$.MODULE$.toJava(streamCompletion.future())
+                                FutureConverters.asJava(streamCompletion.future())
                                     .handle((d, t) -> {
                                         if (d != null) s.onComplete();
                                         else s.onError(t);
@@ -140,7 +139,7 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
             streamStarted,
             streamCompletion
         ));
-        return FutureConverters.toJava(streamStarted.future());
+        return FutureConverters.asJava(streamStarted.future());
     }
 
     /**

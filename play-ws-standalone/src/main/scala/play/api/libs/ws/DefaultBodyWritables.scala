@@ -13,7 +13,7 @@ import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 
-import scala.compat.java8.FunctionConverters.asScalaFromSupplier
+import scala.jdk.FunctionConverters._
 
 /**
  * Default BodyWritable for a request body, for use with
@@ -46,7 +46,7 @@ trait DefaultBodyWritables {
    * Creates an SourceBody with "application/octet-stream" content type from an inputstream.
    */
   implicit val writableOf_InputStream: BodyWritable[Supplier[java.io.InputStream]] = {
-    BodyWritable(supplier => SourceBody(fromInputStream(asScalaFromSupplier(supplier))), "application/octet-stream")
+    BodyWritable(supplier => SourceBody(fromInputStream(supplier.asScala)), "application/octet-stream")
   }
 
   /**
