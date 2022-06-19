@@ -25,7 +25,7 @@ class XMLRequestSpec extends Specification with Mockito with AfterAll with MustM
   implicit val system: ActorSystem        = ActorSystem()
   implicit val materializer: Materializer = Materializer.matFromSystem
 
-  override def afterAll: Unit = {
+  override def afterAll(): Unit = {
     system.terminate()
   }
   class StubResponse(byteArray: Array[Byte]) extends StandaloneWSResponse {

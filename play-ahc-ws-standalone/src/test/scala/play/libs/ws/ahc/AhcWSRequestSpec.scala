@@ -350,7 +350,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
           .addHeader("header1", "value1")
           .addHeader("header1", "value2")
 
-        request.getHeader("header1").asScala must beSome("value1")
+        request.getHeader("header1").toScala must beSome("value1")
       }
 
       "get an empty optional when header is not present" in {
@@ -361,7 +361,7 @@ class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadab
           .addHeader("header1", "value1")
           .addHeader("header1", "value2")
 
-        request.getHeader("non").asScala must beNone
+        request.getHeader("non").toScala must beNone
       }
 
       "get all values for a header" in {

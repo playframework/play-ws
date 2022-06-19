@@ -51,8 +51,8 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
       srcResponse.getHeaders.returns(srcHeaders)
       val response = new StandaloneAhcWSResponse(srcResponse)
 
-      response.getSingleHeader("Foo").asScala must beSome("a")
-      response.getSingleHeader("Bar").asScala must beSome("baz")
+      response.getSingleHeader("Foo").toScala must beSome("a")
+      response.getSingleHeader("Bar").toScala must beSome("baz")
     }
 
     "get an empty optional when header is not present" in {
@@ -65,7 +65,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
       srcResponse.getHeaders.returns(srcHeaders)
       val response = new StandaloneAhcWSResponse(srcResponse)
 
-      response.getSingleHeader("Non").asScala must beNone
+      response.getSingleHeader("Non").toScala must beNone
     }
 
     "get all values for a header" in {

@@ -39,7 +39,7 @@ class AhcWSRequestSpec
   implicit val materializer: Materializer = Materializer.matFromSystem
   val wsClient                            = StandaloneAhcWSClient()
 
-  override def afterAll: Unit = {
+  override def afterAll(): Unit = {
     wsClient.close()
     system.terminate()
   }
