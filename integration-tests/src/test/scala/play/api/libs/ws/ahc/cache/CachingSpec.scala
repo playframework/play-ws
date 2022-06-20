@@ -42,7 +42,7 @@ class CachingSpec(implicit val executionEnv: ExecutionEnv)
     }
   }
 
-  override def afterAll = {
+  override def afterAll(): Unit = {
     super.afterAll()
     asyncHttpClient.close()
   }
