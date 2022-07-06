@@ -200,7 +200,7 @@ lazy val `shaded-asynchttpclient` = project
     assembly / logLevel := Level.Error,
     assembly / assemblyMergeStrategy := {
       val NettyPropertiesPath = "META-INF" + File.separator + "io.netty.versions.properties"
-      ({
+      val mergeStrategy: String => MergeStrategy = {
         case NettyPropertiesPath =>
           MergeStrategy.first
 
@@ -210,7 +210,8 @@ lazy val `shaded-asynchttpclient` = project
         case x =>
           val oldStrategy = (assembly / assemblyMergeStrategy).value
           oldStrategy(x)
-      }: String => MergeStrategy)
+      }
+      mergeStrategy
     },
     // logLevel in assembly := Level.Debug,
     assembly / assemblyShadeRules := Seq(
