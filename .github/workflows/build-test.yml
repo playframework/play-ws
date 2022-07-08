@@ -38,7 +38,7 @@ jobs:
     uses: playframework/.github/.github/workflows/cmd.yml@v2
     with:
       java: 11, 8
-      scala: 2.13.8, 3.1.2-RC3
+      scala: 2.13.8, 3.1.3
       cmd: sbt ++$MATRIX_SCALA 'testOnly -- xonly timefactor 5'
 
   finish:
