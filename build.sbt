@@ -23,10 +23,8 @@ Global / onLoad := (Global / onLoad).value.andThen { s =>
 }
 
 val javacSettings = Seq(
-  "-source",
-  "1.8",
-  "-target",
-  "1.8",
+  "--release",
+  "11",
   "-Xlint:deprecation",
   "-Xlint:unchecked"
 )
@@ -45,7 +43,7 @@ val scalacOpts = Def.setting[Seq[String]] {
   if (sv == "3") {
     common
   } else {
-    common ++ Seq("-target:jvm-1.8", "-Ywarn-unused:imports", "-Xlint:nullary-unit", "-Xlint", "-Ywarn-dead-code")
+    common ++ Seq("-release", "11", "-Ywarn-unused:imports", "-Xlint:nullary-unit", "-Xlint", "-Ywarn-dead-code")
   }
 }
 
