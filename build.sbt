@@ -138,34 +138,30 @@ lazy val shadeAssemblySettings = commonSettings ++ shadedCommonSettings ++ Seq(
         sys.error("Cannot find valid scala version!")
     }
   },
-  assembly / target := {
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((epoch, major)) =>
-        baseDirectory.value.getParentFile / "target" / s"$epoch.$major"
-      case _ =>
-        sys.error("Cannot find valid scala version!")
-    }
-  },
 )
 
-val ahcMerge: MergeStrategy = new MergeStrategy {
-  def apply(tempDir: File, path: String, files: Seq[File]): Either[String, Seq[(File, String)]] = {
-    import scala.collection.JavaConverters._
-    val file  = MergeStrategy.createMergeTarget(tempDir, path)
-    val lines = java.nio.file.Files.readAllLines(files.head.toPath).asScala
-    lines.foreach { line =>
-      // In AsyncHttpClientConfigDefaults.java, the shading renames the resource keys
-      // so we have to manually tweak the resource file to match.
-      val shadedline = line.replace("org.asynchttpclient", "play.shaded.ahc.org.asynchttpclient")
-      IO.append(file, line)
-      IO.append(file, IO.Newline.getBytes(IO.defaultCharset))
-      IO.append(file, shadedline)
-      IO.append(file, IO.Newline.getBytes(IO.defaultCharset))
+val ahcMerge: MergeStrategy = CustomMergeStrategy("ahcMerge") { dependencies =>
+  Right(dependencies.map { f =>
+    val stream = () => {
+      val out    = new java.io.ByteArrayOutputStream
+      val reader = new java.io.BufferedReader(new java.io.InputStreamReader(f.stream.apply()))
+      try {
+        reader.lines().forEach { line =>
+          // In AsyncHttpClientConfigDefaults.java, the shading renames the resource keys
+          // so we have to manually tweak the resource file to match.
+          val shadedline = line.replace("org.asynchttpclient", "play.shaded.ahc.org.asynchttpclient")
+          out.write(line.getBytes(IO.defaultCharset))
+          out.write(IO.Newline.getBytes(IO.defaultCharset))
+          out.write(shadedline.getBytes(IO.defaultCharset))
+          out.write(IO.Newline.getBytes(IO.defaultCharset))
+        }
+      } finally {
+        reader.close()
+      }
+      new java.io.ByteArrayInputStream(out.toByteArray)
     }
-    Right(Seq(file -> path))
-  }
-
-  override val name: String = "ahcMerge"
+    JarEntry(target = f.target, stream = stream)
+  }.toVector)
 }
 
 import scala.xml.transform.RewriteRule
