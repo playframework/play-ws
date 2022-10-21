@@ -441,6 +441,10 @@ There are a number of guides that help with putting together Cache-Control heade
 * [HTTP Caching](https://developers.google.com/web/fundamentals/performance/optimizing-content-efficiency/http-caching)
 * [REST Easy: HTTP Cache](http://odino.org/rest-better-http-cache/)
 
+## Releasing a new version
+
+See https://github.com/playframework/.github/blob/main/RELEASING.md
+
 ## License
 
 Play WS is licensed under the Apache license, version 2. See the LICENSE file for more information.
