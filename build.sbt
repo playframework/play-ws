@@ -33,6 +33,8 @@ val scalacOpts = Def.setting[Seq[String]] {
   val sv = scalaBinaryVersion.value
 
   val common = Seq(
+    "-release",
+    "11",
     "-deprecation",
     "-encoding",
     "UTF-8",
@@ -41,9 +43,9 @@ val scalacOpts = Def.setting[Seq[String]] {
   )
 
   if (sv == "3") {
-    common ++ Seq("-Xtarget:8")
+    common
   } else {
-    common ++ Seq("-release", "11", "-Ywarn-unused:imports", "-Xlint:nullary-unit", "-Xlint", "-Ywarn-dead-code")
+    common ++ Seq("-Ywarn-unused:imports", "-Xlint:nullary-unit", "-Xlint", "-Ywarn-dead-code")
   }
 }
 
