@@ -82,13 +82,13 @@ lazy val mimaSettings = Seq(
 
 lazy val commonSettings = Def.settings(
   organization         := "com.typesafe.play",
-  organizationName     := "Lightbend Inc.",
-  organizationHomepage := Some(url("https://www.lightbend.com/")),
-  homepage             := Some(url("https://www.playframework.com/documentation/latest/")),
+  organizationName     := "The Play Framework Project",
+  organizationHomepage := Some(url("https://playframework.com")),
+  homepage             := Some(url("https://github.com/playframework/play-ws/")),
   scmInfo := Some(ScmInfo(url("https://github.com/playframework/play-ws"), "git@github.com:playframework/play-ws.git")),
   developers += Developer(
     "playframework",
-    "Play Framework Team",
+    "The Play Framework Contributors",
     "contact@playframework.com",
     url("https://github.com/playframework")
   ),
