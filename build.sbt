@@ -87,10 +87,10 @@ lazy val commonSettings = Def.settings(
   homepage             := Some(url("https://www.playframework.com/documentation/latest/")),
   scmInfo := Some(ScmInfo(url("https://github.com/playframework/play-ws"), "git@github.com:playframework/play-ws.git")),
   developers += Developer(
-    "contributors",
-    "Contributors",
-    "https://gitter.im/playframework/",
-    url("https://gitter.im/playframework/contributors")
+    "playframework",
+    "Play Framework Team",
+    "contact@playframework.com",
+    url("https://github.com/playframework")
   ),
   licenses           := Seq("Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0")),
   scalaVersion       := scala213,
