@@ -396,7 +396,10 @@ lazy val `integration-tests` = project
     Test / fork := true,
     concurrentRestrictions += Tags.limitAll(1), // only one integration test at a time
     Test / testOptions := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
-    libraryDependencies ++= akkaHttp.map(_ % Test) ++ testDependencies
+    libraryDependencies ++= akkaHttp.map(_ % Test) ++ testDependencies,
+    libraryDependencies ++= akkaStreams.map(
+      _.cross(CrossVersion.for3Use2_13) // temporary, to make it tests work with Scala 3
+    ),
   )
   .settings(shadedAhcSettings)
   .settings(shadedOAuthSettings)
