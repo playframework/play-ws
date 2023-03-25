@@ -7,7 +7,7 @@ object Dependencies {
 
   // Should be sync with GA (.github/workflows/build-test.yml)
   val scala213 = "2.13.10"
-  val scala3   = "3.2.2"
+  val scala3   = "3.3.0-RC3"
 
   val logback = Seq("ch.qos.logback" % "logback-core" % "1.4.6")
 
@@ -42,8 +42,8 @@ object Dependencies {
 
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "2.12.3")
 
-  val akkaStreams = Seq(("com.typesafe.akka" %% "akka-stream" % "2.6.20").cross(CrossVersion.for3Use2_13))
-  val akkaHttp    = Seq(("com.typesafe.akka" %% "akka-http"   % "10.2.9").cross(CrossVersion.for3Use2_13))
+  val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % "2.6.20")
+  val akkaHttp    = Seq(("com.typesafe.akka" %% "akka-http" % "10.2.10").cross(CrossVersion.for3Use2_13))
 
   val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.4")
 
