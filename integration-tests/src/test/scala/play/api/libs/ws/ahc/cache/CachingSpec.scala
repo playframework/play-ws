@@ -7,6 +7,7 @@ package play.api.libs.ws.ahc.cache
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.server.Route
+import org.mockito.Mockito.when
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.matcher.FutureMatchers
 import org.specs2.mock.Mockito
@@ -51,7 +52,7 @@ class CachingSpec(implicit val executionEnv: ExecutionEnv)
 
     "work once" in {
       val cache = mock[Cache]
-      cache.get(any[EffectiveURIKey]()).returns(Future.successful(None))
+      when(cache.get(any[EffectiveURIKey]())).thenReturn(Future.successful(None))
 
       val cachingAsyncHttpClient = new CachingAsyncHttpClient(asyncHttpClient, new AhcHttpCache(cache))
       val ws                     = new StandaloneAhcWSClient(cachingAsyncHttpClient)
