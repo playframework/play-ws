@@ -4,6 +4,7 @@
 
 package play.libs.ws.ahc
 
+import org.mockito.Mockito.when
 import org.specs2.mock.Mockito
 import org.specs2.mutable._
 import play.libs.ws._
@@ -34,7 +35,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
         .add("foo", "b")
         .add("FOO", "b")
         .add("Bar", "baz")
-      srcResponse.getHeaders.returns(srcHeaders)
+      when(srcResponse.getHeaders).thenReturn(srcHeaders)
       val response = new StandaloneAhcWSResponse(srcResponse)
       val headers  = response.getHeaders
       headers.get("foo").asScala must_== Seq("a", "b", "b")
@@ -48,7 +49,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
         .add("foo", "b")
         .add("FOO", "b")
         .add("Bar", "baz")
-      srcResponse.getHeaders.returns(srcHeaders)
+      when(srcResponse.getHeaders).thenReturn(srcHeaders)
       val response = new StandaloneAhcWSResponse(srcResponse)
 
       response.getSingleHeader("Foo").toScala must beSome("a")
@@ -62,7 +63,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
         .add("foo", "b")
         .add("FOO", "b")
         .add("Bar", "baz")
-      srcResponse.getHeaders.returns(srcHeaders)
+      when(srcResponse.getHeaders).thenReturn(srcHeaders)
       val response = new StandaloneAhcWSResponse(srcResponse)
 
       response.getSingleHeader("Non").toScala must beNone
@@ -75,7 +76,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
         .add("foo", "b")
         .add("FOO", "b")
         .add("Bar", "baz")
-      srcResponse.getHeaders.returns(srcHeaders)
+      when(srcResponse.getHeaders).thenReturn(srcHeaders)
       val response = new StandaloneAhcWSResponse(srcResponse)
 
       response.getHeaderValues("Foo").asScala must containTheSameElementsAs(Seq("a", "b", "b"))

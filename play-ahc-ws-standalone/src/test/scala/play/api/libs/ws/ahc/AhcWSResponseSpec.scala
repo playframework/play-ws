@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets
 import java.util
 
 import akka.util.ByteString
+import org.mockito.Mockito.when
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import play.api.libs.ws._
@@ -26,7 +27,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
         ("someName", "someValue", true, "example.com", "/", 1000L, false, false)
 
       val ahcCookie: AHCCookie = asCookie(name, value, wrap, domain, path, maxAge, secure, httpOnly)
-      ahcResponse.getCookies.returns(util.Arrays.asList(ahcCookie))
+      when(ahcResponse.getCookies).thenReturn(util.Arrays.asList(ahcCookie))
 
       val response = StandaloneAhcWSResponse(ahcResponse)
 
@@ -48,7 +49,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
         ("someName", "someValue", true, "example.com", "/", 1000L, false, false)
 
       val ahcCookie: AHCCookie = asCookie(name, value, wrap, domain, path, maxAge, secure, httpOnly)
-      ahcResponse.getCookies.returns(util.Arrays.asList(ahcCookie))
+      when(ahcResponse.getCookies).thenReturn(util.Arrays.asList(ahcCookie))
 
       val response = StandaloneAhcWSResponse(ahcResponse)
 
@@ -68,7 +69,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
       val ahcResponse: AHCResponse = mock[AHCResponse]
 
       val ahcCookie: AHCCookie = asCookie("someName", "value", true, "domain", "path", -1L, false, false)
-      ahcResponse.getCookies.returns(util.Arrays.asList(ahcCookie))
+      when(ahcResponse.getCookies).thenReturn(util.Arrays.asList(ahcCookie))
 
       val response = StandaloneAhcWSResponse(ahcResponse)
 
@@ -81,7 +82,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
     "get the body as bytes from the AHC response" in {
       val ahcResponse: AHCResponse = mock[AHCResponse]
       val bytes = ByteString(-87, -72, 96, -63, -32, 46, -117, -40, -128, -7, 61, 109, 80, 45, 44, 30)
-      ahcResponse.getResponseBodyAsBytes.returns(bytes.toArray)
+      when(ahcResponse.getResponseBodyAsBytes).thenReturn(bytes.toArray)
       val response = StandaloneAhcWSResponse(ahcResponse)
       response.body[ByteString] must_== bytes
     }
@@ -90,9 +91,9 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
       val ahcResponse: AHCResponse = mock[AHCResponse]
       val json                     = """{ "foo": "☺" }"""
       val ahcHeaders               = new DefaultHttpHeaders(true)
-      ahcResponse.getContentType.returns("application/json")
-      ahcResponse.getHeaders.returns(ahcHeaders)
-      ahcResponse.getResponseBody(StandardCharsets.UTF_8).returns(json)
+      when(ahcResponse.getContentType).thenReturn("application/json")
+      when(ahcResponse.getHeaders).thenReturn(ahcHeaders)
+      when(ahcResponse.getResponseBody(StandardCharsets.UTF_8)).thenReturn(json)
       val response = StandaloneAhcWSResponse(ahcResponse)
       response.body[String] must_== json
     }
@@ -100,8 +101,8 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
     "get text body as a string from the AHC response" in {
       val ahcResponse: AHCResponse = mock[AHCResponse]
       val text                     = "Hello ☺"
-      ahcResponse.getContentType.returns("text/plain")
-      ahcResponse.getResponseBody(StandardCharsets.ISO_8859_1).returns(text)
+      when(ahcResponse.getContentType).thenReturn("text/plain")
+      when(ahcResponse.getResponseBody(StandardCharsets.ISO_8859_1)).thenReturn(text)
       val response = StandaloneAhcWSResponse(ahcResponse)
       response.body[String] must_== text
     }
@@ -112,7 +113,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
       ahcHeaders.add("Foo", "bar")
       ahcHeaders.add("Foo", "baz")
       ahcHeaders.add("Bar", "baz")
-      ahcResponse.getHeaders.returns(ahcHeaders)
+      when(ahcResponse.getHeaders).thenReturn(ahcHeaders)
       val response = StandaloneAhcWSResponse(ahcResponse)
       val headers  = response.headers
       headers must beEqualTo(Map("Foo" -> Seq("bar", "baz"), "Bar" -> Seq("baz")))
@@ -128,7 +129,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
       ahcHeaders.add("Foo", "bar")
       ahcHeaders.add("Foo", "baz")
       ahcHeaders.add("Bar", "baz")
-      ahcResponse.getHeaders.returns(ahcHeaders)
+      when(ahcResponse.getHeaders).thenReturn(ahcHeaders)
       val response = StandaloneAhcWSResponse(ahcResponse)
 
       response.header("Foo") must beSome("bar")
@@ -141,7 +142,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
       ahcHeaders.add("Foo", "bar")
       ahcHeaders.add("Foo", "baz")
       ahcHeaders.add("Bar", "baz")
-      ahcResponse.getHeaders.returns(ahcHeaders)
+      when(ahcResponse.getHeaders).thenReturn(ahcHeaders)
       val response = StandaloneAhcWSResponse(ahcResponse)
 
       response.header("Non") must beNone
@@ -153,7 +154,7 @@ class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReada
       ahcHeaders.add("Foo", "bar")
       ahcHeaders.add("Foo", "baz")
       ahcHeaders.add("Bar", "baz")
-      ahcResponse.getHeaders.returns(ahcHeaders)
+      when(ahcResponse.getHeaders).thenReturn(ahcHeaders)
       val response = StandaloneAhcWSResponse(ahcResponse)
 
       response.headerValues("Foo") must beEqualTo(Seq("bar", "baz"))
