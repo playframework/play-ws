@@ -10,7 +10,6 @@ import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.util.ByteString
 import org.specs2.matcher.MustMatchers
-import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
 import play.api.libs.ws._
@@ -19,7 +18,7 @@ import scala.xml.Elem
 
 /**
  */
-class XMLRequestSpec extends Specification with Mockito with AfterAll with MustMatchers {
+class XMLRequestSpec extends Specification with AfterAll with MustMatchers {
   sequential
 
   implicit val system: ActorSystem        = ActorSystem()

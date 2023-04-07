@@ -5,13 +5,12 @@
 package play.api.libs.ws.ahc
 
 import com.typesafe.config.ConfigFactory
-import org.specs2.mock._
 import org.specs2.mutable._
 import play.api.libs.ws.WSClientConfig
 
 import scala.concurrent.duration._
 
-class AhcWSClientConfigParserSpec extends Specification with Mockito {
+class AhcWSClientConfigParserSpec extends Specification {
 
   val defaultWsConfig = WSClientConfig()
   val defaultConfig   = AhcWSClientConfig(defaultWsConfig)

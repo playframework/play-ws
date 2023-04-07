@@ -9,7 +9,6 @@ import com.typesafe.config.ConfigFactory
 import java.time.Duration
 import java.util.Collections
 
-import org.specs2.mock.Mockito
 import org.specs2.mutable._
 import play.libs.oauth.OAuth
 import play.libs.ws._
@@ -22,7 +21,7 @@ import scala.jdk.CollectionConverters._
 import scala.collection.mutable
 import scala.jdk.OptionConverters._
 
-class AhcWSRequestSpec extends Specification with Mockito with DefaultBodyReadables with DefaultBodyWritables {
+class AhcWSRequestSpec extends Specification with DefaultBodyReadables with DefaultBodyWritables {
 
   "AhcWSRequest" should {
 

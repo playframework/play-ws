@@ -5,7 +5,7 @@
 package play.libs.ws.ahc
 
 import org.mockito.Mockito.when
-import org.specs2.mock.Mockito
+import org.mockito.Mockito
 import org.specs2.mutable._
 import play.libs.ws._
 import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
@@ -13,8 +13,12 @@ import play.shaded.ahc.org.asynchttpclient.Response
 
 import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters._
+import scala.reflect.ClassTag
 
-class AhcWSResponseSpec extends Specification with Mockito with DefaultBodyReadables with DefaultBodyWritables {
+class AhcWSResponseSpec extends Specification with DefaultBodyReadables with DefaultBodyWritables {
+
+  private def mock[A](implicit a: ClassTag[A]): A =
+    Mockito.mock(a.runtimeClass).asInstanceOf[A]
 
   "getUnderlying" should {
 
