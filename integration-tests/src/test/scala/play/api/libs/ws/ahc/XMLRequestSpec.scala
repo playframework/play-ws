@@ -9,17 +9,15 @@ import java.nio.charset.StandardCharsets
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.util.ByteString
-import org.specs2.matcher.MustMatchers
-import org.specs2.mutable.Specification
-import org.specs2.specification.AfterAll
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.ws._
 
 import scala.xml.Elem
 
 /**
  */
-class XMLRequestSpec extends Specification with AfterAll with MustMatchers {
-  sequential
+class XMLRequestSpec extends AnyWordSpec with BeforeAndAfterAll {
 
   implicit val system: ActorSystem        = ActorSystem()
   implicit val materializer: Materializer = Materializer.matFromSystem
@@ -59,8 +57,8 @@ class XMLRequestSpec extends Specification with AfterAll with MustMatchers {
       .asInstanceOf[StandaloneAhcWSRequest]
       .buildRequest()
 
-    req.getHeaders.get("Content-Type") must be_==("text/xml; charset=UTF-8")
-    ByteString.fromArray(req.getByteData).utf8String must be_==("<hello><test/></hello>")
+    assert(req.getHeaders.get("Content-Type") == "text/xml; charset=UTF-8")
+    assert(ByteString.fromArray(req.getByteData).utf8String == "<hello><test/></hello>")
   }
 
   "read an XML node in Utf-8" in {
@@ -76,9 +74,9 @@ class XMLRequestSpec extends Specification with AfterAll with MustMatchers {
     val readables = new XMLBodyReadables() {}
     /* UTF-8 */
     val value: Elem = readables.readableAsXml.transform(new StubResponse(test.getBytes(StandardCharsets.UTF_8)))
-    (value \\ "note" \ "to").text must be_==("Tove")
-    (value \\ "note" \ "from").text must be_==("Jani")
-    (value \\ "note" \ "heading").text must be_==("Reminder")
+    assert((value \\ "note" \ "to").text == "Tove")
+    assert((value \\ "note" \ "from").text == "Jani")
+    assert((value \\ "note" \ "heading").text == "Reminder")
   }
 
   "read an XML node in Utf-16" in {
@@ -94,8 +92,8 @@ class XMLRequestSpec extends Specification with AfterAll with MustMatchers {
     val readables = new XMLBodyReadables() {}
     /* UTF-16 */
     val value: Elem = readables.readableAsXml.transform(new StubResponse(test.getBytes(StandardCharsets.UTF_16)))
-    (value \\ "note" \ "to").text must be_==("Tove")
-    (value \\ "note" \ "from").text must be_==("Jani")
-    (value \\ "note" \ "heading").text must be_==("Reminder")
+    assert((value \\ "note" \ "to").text == "Tove")
+    assert((value \\ "note" \ "from").text == "Jani")
+    assert((value \\ "note" \ "heading").text == "Reminder")
   }
 }

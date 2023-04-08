@@ -4,21 +4,19 @@
 
 package play.libs.ws.ahc
 
-import org.specs2.concurrent.ExecutionEnv
-import org.specs2.matcher.FutureMatchers
-import org.specs2.mutable.Specification
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.wordspec.AnyWordSpec
 import play.NettyServerProvider
 import play.api.BuiltInComponents
 import play.api.mvc.Results
 
-import scala.concurrent.duration._
 import scala.jdk.FutureConverters._
 
-class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
-    extends Specification
+class AhcWSRequestFilterSpec
+    extends AnyWordSpec
     with NettyServerProvider
     with StandaloneWSClientSupport
-    with FutureMatchers {
+    with ScalaFutures {
 
   override def routes(components: BuiltInComponents) = { case _ =>
     components.defaultActionBuilder { req =>
@@ -43,11 +41,9 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
           .setRequestFilter(new CallbackRequestFilter(callList, 1))
           .get()
           .asScala
-      responseFuture
-        .map { _ =>
-          callList.asScala must contain(1)
-        }
-        .await(retries = 0, timeout = 5.seconds)
+      responseFuture.map { _ =>
+        assert(callList.asScala.map(_.intValue()).contains(1))
+      }.futureValue
     }
 
     "stream with one request filter" in withClient() { client =>
@@ -59,11 +55,9 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
           .setRequestFilter(new CallbackRequestFilter(callList, 1))
           .stream()
           .asScala
-      responseFuture
-        .map { _ =>
-          callList.asScala must contain(1)
-        }
-        .await(retries = 0, timeout = 5.seconds)
+      responseFuture.map { _ =>
+        assert(callList.asScala.map(_.intValue()).contains(1))
+      }.futureValue
     }
 
     "work with three request filter" in withClient() { client =>
@@ -77,11 +71,9 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
           .setRequestFilter(new CallbackRequestFilter(callList, 3))
           .get()
           .asScala
-      responseFuture
-        .map { _ =>
-          callList.asScala must containTheSameElementsAs(Seq(1, 2, 3))
-        }
-        .await(retries = 0, timeout = 5.seconds)
+      responseFuture.map { _ =>
+        assert(callList.asScala.toSet == Set(1, 2, 3))
+      }.futureValue
     }
 
     "stream with three request filters" in withClient() { client =>
@@ -95,11 +87,9 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
           .setRequestFilter(new CallbackRequestFilter(callList, 3))
           .stream()
           .asScala
-      responseFuture
-        .map { _ =>
-          callList.asScala must containTheSameElementsAs(Seq(1, 2, 3))
-        }
-        .await(retries = 0, timeout = 5.seconds)
+      responseFuture.map { _ =>
+        assert(callList.asScala.toSet == Set(1, 2, 3))
+      }.futureValue
     }
 
     "should allow filters to modify the request" in withClient() { client =>
@@ -112,11 +102,9 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
           .get()
           .asScala
 
-      responseFuture
-        .map { response =>
-          response.getHeaders.get("X-Request-Id").get(0) must be_==("someid")
-        }
-        .await(retries = 0, timeout = 5.seconds)
+      responseFuture.map { response =>
+        assert(response.getHeaders.get("X-Request-Id").get(0) == "someid")
+      }.futureValue
     }
 
     "allow filters to modify the streaming request" in withClient() { client =>
@@ -129,11 +117,9 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
           .stream()
           .asScala
 
-      responseFuture
-        .map { response =>
-          response.getHeaders.get("X-Request-Id").get(0) must be_==("someid")
-        }
-        .await(retries = 0, timeout = 5.seconds)
+      responseFuture.map { response =>
+        assert(response.getHeaders.get("X-Request-Id").get(0) == "someid")
+      }.futureValue
     }
   }
 }

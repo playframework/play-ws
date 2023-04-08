@@ -15,10 +15,7 @@ object Dependencies {
 
   val awaitility = Seq("org.awaitility" % "awaitility" % "4.2.1")
 
-  val specsVersion = "4.20.7"
-  val specsBuild = Seq(
-    "specs2-core",
-  ).map("org.specs2" %% _ % specsVersion)
+  val scalatest = Seq("org.scalatest" %% "scalatest-wordspec" % "3.2.19")
 
   val mockito = Seq("org.mockito" % "mockito-core" % "5.12.0")
 
@@ -65,7 +62,7 @@ object Dependencies {
   val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.4")
 
   val testDependencies =
-    (mockito ++ specsBuild ++ junitInterface ++ assertj ++ awaitility ++ slf4jtest ++ logback).map(_ % Test)
+    (mockito ++ scalatest ++ junitInterface ++ assertj ++ awaitility ++ slf4jtest ++ logback).map(_ % Test)
 
   val standaloneApiWSDependencies = javaxInject ++ sslConfigCore ++ pekkoStreams ++ testDependencies
 

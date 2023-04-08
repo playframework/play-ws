@@ -14,8 +14,8 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
 import org.mockito.Mockito
 
-import org.specs2.mutable.Specification
-import org.specs2.specification.AfterAll
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.JsString
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
@@ -29,8 +29,7 @@ import scala.reflect.ClassTag
 
 /**
  */
-class JsonRequestSpec extends Specification with AfterAll with JsonBodyWritables {
-  sequential
+class JsonRequestSpec extends AnyWordSpec with BeforeAndAfterAll with JsonBodyWritables {
 
   private def mock[A](implicit a: ClassTag[A]): A =
     Mockito.mock(a.runtimeClass).asInstanceOf[A]
@@ -50,8 +49,8 @@ class JsonRequestSpec extends Specification with AfterAll with JsonBodyWritables
       .asInstanceOf[StandaloneAhcWSRequest]
       .buildRequest()
 
-    req.getHeaders.get("Content-Type") must be_==("application/json")
-    ByteString.fromArray(req.getByteData).utf8String must be_==("""{"k1":"v1"}""")
+    assert(req.getHeaders.get("Content-Type") == "application/json")
+    assert(ByteString.fromArray(req.getByteData).utf8String == """{"k1":"v1"}""")
   }
 
   "set a json node using the default object mapper" in {
@@ -65,8 +64,8 @@ class JsonRequestSpec extends Specification with AfterAll with JsonBodyWritables
       .asInstanceOf[StandaloneAhcWSRequest]
       .buildRequest()
 
-    req.getHeaders.get("Content-Type") must be_==("application/json")
-    ByteString.fromArray(req.getByteData).utf8String must be_==("""{"k1":"v1"}""")
+    assert(req.getHeaders.get("Content-Type") == "application/json")
+    assert(ByteString.fromArray(req.getByteData).utf8String == """{"k1":"v1"}""")
   }
 
   "read an encoding of UTF-8" in {
@@ -81,7 +80,7 @@ class JsonRequestSpec extends Specification with AfterAll with JsonBodyWritables
     val value: JsValue = JsonBodyReadables.readableAsJson.transform(response)
     verify(ahcResponse, times(1)).getResponseBody(StandardCharsets.UTF_8)
     verify(ahcResponse, times(1)).getContentType
-    value.toString must beEqualTo(json)
+    assert(value.toString == json)
   }
 
   "read an encoding of ISO-8859-1" in {
@@ -96,6 +95,6 @@ class JsonRequestSpec extends Specification with AfterAll with JsonBodyWritables
     val value: JsValue = JsonBodyReadables.readableAsJson.transform(response)
     verify(ahcResponse, times(1)).getResponseBody(StandardCharsets.ISO_8859_1)
     verify(ahcResponse, times(1)).getContentType
-    value.toString must beEqualTo(json)
+    assert(value.toString == json)
   }
 }

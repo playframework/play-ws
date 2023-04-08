@@ -5,15 +5,14 @@
 package play.api.libs.ws.ahc
 
 import org.apache.pekko.stream.Materializer
-import org.specs2.execute.Result
 
 trait StandaloneWSClientSupport {
 
   def materializer: Materializer
 
-  def withClient(
+  def withClient[A](
       config: AhcWSClientConfig = AhcWSClientConfigFactory.forConfig()
-  )(block: StandaloneAhcWSClient => Result): Result = {
+  )(block: StandaloneAhcWSClient => A): A = {
     val client = StandaloneAhcWSClient(config)(materializer)
     try {
       block(client)
