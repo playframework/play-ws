@@ -70,7 +70,7 @@ class JsonRequestSpec extends Specification with AfterAll with JsonBodyWritables
   }
 
   "read an encoding of UTF-8" in {
-    val json = io.Source.fromResource("test.json")(Codec.ISO8859).getLines().mkString
+    val json = scala.io.Source.fromResource("test.json")(Codec.ISO8859).getLines().mkString
 
     val ahcResponse = mock[Response]
     val response    = new StandaloneAhcWSResponse(ahcResponse)
@@ -85,7 +85,7 @@ class JsonRequestSpec extends Specification with AfterAll with JsonBodyWritables
   }
 
   "read an encoding of ISO-8859-1" in {
-    val json = io.Source.fromResource("test.json")(Codec.ISO8859).getLines().mkString
+    val json = scala.io.Source.fromResource("test.json")(Codec.ISO8859).getLines().mkString
 
     val ahcResponse = mock[Response]
     val response    = new StandaloneAhcWSResponse(ahcResponse)

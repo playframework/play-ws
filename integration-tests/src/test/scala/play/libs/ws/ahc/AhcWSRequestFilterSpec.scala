@@ -4,34 +4,31 @@
 
 package play.libs.ws.ahc
 
-import akka.http.scaladsl.model.ContentTypes
-import akka.http.scaladsl.model.HttpEntity
-import akka.http.scaladsl.model.headers.RawHeader
-import akka.http.scaladsl.server.Route
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.matcher.FutureMatchers
 import org.specs2.mutable.Specification
-import play.AkkaServerProvider
+import play.NettyServerProvider
+import play.api.BuiltInComponents
+import play.api.mvc.Results
 
 import scala.concurrent.duration._
 import scala.jdk.FutureConverters._
 
 class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
     extends Specification
-    with AkkaServerProvider
+    with NettyServerProvider
     with StandaloneWSClientSupport
     with FutureMatchers {
 
-  override val routes: Route = {
-    import akka.http.scaladsl.server.Directives._
-    headerValueByName("X-Request-Id") { value =>
-      respondWithHeader(RawHeader("X-Request-Id", value)) {
-        val httpEntity = HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to akka-http</h1>")
-        complete(httpEntity)
+  override def routes(components: BuiltInComponents) = { case _ =>
+    components.defaultActionBuilder { req =>
+      val res = Results
+        .Ok(
+          <h1>Say hello to play</h1>
+        )
+      req.headers.get("X-Request-Id").fold(res) { value =>
+        res.withHeaders(("X-Request-Id", value))
       }
-    } ~ {
-      val httpEntity = HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to akka-http</h1>")
-      complete(httpEntity)
     }
   }
 

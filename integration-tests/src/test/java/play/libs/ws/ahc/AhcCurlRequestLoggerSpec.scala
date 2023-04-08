@@ -4,11 +4,12 @@
 
 package play.libs.ws.ahc
 
-import akka.http.scaladsl.server.Route
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.concurrent.FutureAwait
 import org.specs2.mutable.Specification
-import play.AkkaServerProvider
+import play.NettyServerProvider
+import play.api.BuiltInComponents
+import play.api.mvc.Results
 import play.libs.ws.DefaultBodyWritables
 import play.libs.ws.DefaultWSCookie
 import play.libs.ws.WSAuthInfo
@@ -19,23 +20,25 @@ import uk.org.lidalia.slf4jtest.TestLoggerFactory
 
 import scala.jdk.CollectionConverters._
 import scala.jdk.FutureConverters._
+import play.api.routing.sird._
 
 class AhcCurlRequestLoggerSpec(implicit val executionEnv: ExecutionEnv)
     extends Specification
-    with AkkaServerProvider
+    with NettyServerProvider
     with StandaloneWSClientSupport
     with FutureAwait
     with DefaultBodyWritables {
 
-  override def routes: Route = {
-    import akka.http.scaladsl.server.Directives._
-    get {
-      complete("<h1>Say hello to akka-http</h1>")
-    } ~
-      post {
-        entity(as[String]) { echo =>
-          complete(echo)
-        }
+  override def routes(components: BuiltInComponents) = {
+    case GET(_) =>
+      components.defaultActionBuilder(
+        Results.Ok("<h1>Say hello to play</h1>")
+      )
+    case POST(_) =>
+      components.defaultActionBuilder { req =>
+        Results.Ok(
+          req.body.asText.getOrElse("")
+        )
       }
   }
 

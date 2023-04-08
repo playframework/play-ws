@@ -4,38 +4,42 @@
 
 package play.api.libs.ws.ahc
 
-import akka.http.scaladsl.model.headers.RawHeader
-import akka.http.scaladsl.model.ContentTypes
-import akka.http.scaladsl.model.HttpEntity
-import akka.http.scaladsl.server.Route
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.matcher.FutureMatchers
 import org.specs2.mutable.Specification
-import play.AkkaServerProvider
+import play.NettyServerProvider
+import play.api.BuiltInComponents
 import play.api.libs.ws._
+import play.api.mvc.Results
 
 import scala.collection.mutable
 
 class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
     extends Specification
-    with AkkaServerProvider
+    with NettyServerProvider
     with StandaloneWSClientSupport
     with FutureMatchers
     with DefaultBodyReadables {
 
-  override val routes: Route = {
-    import akka.http.scaladsl.server.Directives._
-    headerValueByName("X-Request-Id") { value =>
-      respondWithHeader(RawHeader("X-Request-Id", value)) {
-        val httpEntity = HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to akka-http</h1>")
-        complete(httpEntity)
-      }
-    } ~ {
-      get {
-        parameters("key".as[String]) { key =>
-          val httpEntity = HttpEntity(ContentTypes.`text/html(UTF-8)`, s"<h1>Say hello to akka-http, key = $key</h1>")
-          complete(httpEntity)
-        }
+  override def routes(components: BuiltInComponents) = { case _ =>
+    components.defaultActionBuilder { req =>
+      req.headers.get("X-Request-Id") match {
+        case Some(value) =>
+          Results
+            .Ok(
+              <h1>Say hello to play</h1>
+            )
+            .withHeaders(("X-Request-Id", value))
+        case None =>
+          req.getQueryString("key") match {
+            case Some(key) =>
+              Results
+                .Ok(
+                  <h1>Say hello to play, key = ${key}</h1>
+                )
+            case None =>
+              Results.NotFound
+          }
       }
     }
   }
