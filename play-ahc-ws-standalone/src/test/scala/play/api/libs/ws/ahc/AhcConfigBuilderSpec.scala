@@ -139,7 +139,7 @@ class AhcConfigBuilderSpec extends Specification {
         actual.getMaxConnections must_== 6
       }
 
-      "allow setting ahc maximumConnectionsTotal" in {
+      "allow setting ahc maxNumberOfRedirects" in {
         val config  = defaultConfig.copy(maxNumberOfRedirects = 0)
         val builder = new AhcConfigBuilder(config)
         val actual  = builder.build()
