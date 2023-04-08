@@ -12,9 +12,9 @@ import org.apache.pekko.stream.Materializer
 import org.apache.pekko.util.ByteString
 
 import org.mockito.Mockito
-import org.specs2.execute.Result
-import org.specs2.mutable.Specification
-import org.specs2.specification.AfterAll
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.OptionValues
+import org.scalatest.wordspec.AnyWordSpec
 
 import play.api.libs.oauth.ConsumerKey
 import play.api.libs.oauth.RequestToken
@@ -28,9 +28,12 @@ import play.shaded.ahc.org.asynchttpclient.{ Request => AHCRequest }
 
 import scala.reflect.ClassTag
 
-class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReadables with DefaultBodyWritables {
-
-  sequential
+class AhcWSRequestSpec
+    extends AnyWordSpec
+    with BeforeAndAfterAll
+    with DefaultBodyReadables
+    with DefaultBodyWritables
+    with OptionValues {
 
   private def mock[A](implicit a: ClassTag[A]): A =
     Mockito.mock(a.runtimeClass).asInstanceOf[A]
@@ -44,11 +47,11 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
     system.terminate()
   }
 
-  def withClient(block: StandaloneWSClient => Result): Result = {
+  def withClient[A](block: StandaloneWSClient => A): A = {
     block(wsClient)
   }
 
-  "Given the full URL" in {
+  "Given the full URL" should {
 
     implicit val materializer: Materializer = mock[org.apache.pekko.stream.Materializer]
     val client                              = mock[StandaloneAhcWSClient]
@@ -56,46 +59,56 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
     "request withQueryStringParameters" in {
       val request = StandaloneAhcWSRequest(client, "http://example.com")
 
-      request.uri.toString must equalTo("http://example.com")
-      request.withQueryStringParameters("bar" -> "baz").uri.toString must equalTo("http://example.com?bar=baz")
-      request.withQueryStringParameters("bar" -> "baz", "bar" -> "bah").uri.toString must equalTo(
-        "http://example.com?bar=bah&bar=baz"
+      assert(request.uri.toString == "http://example.com")
+      assert(request.withQueryStringParameters("bar" -> "baz").uri.toString == "http://example.com?bar=baz")
+      assert(
+        request
+          .withQueryStringParameters("bar" -> "baz", "bar" -> "bah")
+          .uri
+          .toString == "http://example.com?bar=bah&bar=baz"
       )
     }
 
     "correctly URL-encode the query string part" in {
       val request = StandaloneAhcWSRequest(client, "http://example.com")
 
-      request.withQueryStringParameters("&" -> "=").uri.toString must equalTo("http://example.com?%26=%3D")
+      assert(request.withQueryStringParameters("&" -> "=").uri.toString == "http://example.com?%26=%3D")
     }
 
     "set all query string parameters" in {
       val request = StandaloneAhcWSRequest(client, "http://example.com")
 
-      request.withQueryStringParameters("bar" -> "baz").uri.toString must equalTo("http://example.com?bar=baz")
-      request.withQueryStringParameters("bar" -> "baz", "bar" -> "bah").uri.toString must equalTo(
-        "http://example.com?bar=bah&bar=baz"
+      assert(request.withQueryStringParameters("bar" -> "baz").uri.toString == "http://example.com?bar=baz")
+      assert(
+        request
+          .withQueryStringParameters("bar" -> "baz", "bar" -> "bah")
+          .uri
+          .toString == "http://example.com?bar=bah&bar=baz"
       )
     }
 
     "discard old query parameters when setting new ones" in {
       val request = StandaloneAhcWSRequest(client, "http://example.com")
 
-      request
-        .withQueryStringParameters("bar" -> "baz")
-        .withQueryStringParameters("bar" -> "bah")
-        .uri
-        .toString must equalTo("http://example.com?bar=bah")
+      assert(
+        request
+          .withQueryStringParameters("bar" -> "baz")
+          .withQueryStringParameters("bar" -> "bah")
+          .uri
+          .toString == "http://example.com?bar=bah"
+      )
     }
 
     "add query string param" in {
       val request = StandaloneAhcWSRequest(client, "http://example.com")
 
-      request
-        .withQueryStringParameters("bar" -> "baz")
-        .addQueryStringParameters("bar" -> "bah")
-        .uri
-        .toString must equalTo("http://example.com?bar=bah&bar=baz")
+      assert(
+        request
+          .withQueryStringParameters("bar" -> "baz")
+          .addQueryStringParameters("bar" -> "bah")
+          .uri
+          .toString == "http://example.com?bar=bah&bar=baz"
+      )
     }
 
     "support adding several query string values for a parameter" in {
@@ -104,9 +117,10 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
         .withQueryStringParameters("play" -> "foo1")
         .addQueryStringParameters("play" -> "foo2")
 
-      newRequest.queryString.get("play") must beSome[Seq[String]].which(_.contains("foo1"))
-      newRequest.queryString.get("play") must beSome[Seq[String]].which(_.contains("foo2"))
-      newRequest.queryString.get("play") must beSome[Seq[String]].which(_.size == 2)
+      val actual = newRequest.queryString.get("play").value
+      assert(actual.contains("foo1"))
+      assert(actual.contains("foo2"))
+      assert(actual.size == 2)
     }
 
     "support several query string values for  a parameter" in {
@@ -118,16 +132,16 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
           .buildRequest()
 
         val paramsList: Seq[Param] = req.getQueryParams.asScala.toSeq
-        paramsList.exists(p => (p.getName == "foo") && (p.getValue == "foo1")) must beTrue
-        paramsList.exists(p => (p.getName == "foo") && (p.getValue == "foo2")) must beTrue
-        paramsList.count(p => p.getName == "foo") must beEqualTo(2)
+        assert(paramsList.exists(p => (p.getName == "foo") && (p.getValue == "foo1")))
+        assert(paramsList.exists(p => (p.getName == "foo") && (p.getValue == "foo2")))
+        assert(paramsList.count(p => p.getName == "foo") == 2)
       }
 
     }
 
   }
 
-  "For Cookies" in {
+  "For Cookies" should {
 
     def cookie(name: String, value: String): WSCookie = DefaultWSCookie(name, value)
 
@@ -139,9 +153,9 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
 
-        req.getCookies.asScala must size(1)
-        req.getCookies.asScala.head.name must beEqualTo("cookie1")
-        req.getCookies.asScala.head.value must beEqualTo("value1")
+        assert(req.getCookies.asScala.size == 1)
+        assert(req.getCookies.asScala.head.name == "cookie1")
+        assert(req.getCookies.asScala.head.value == "value1")
       }
     }
 
@@ -153,12 +167,12 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
 
-        req.getCookies.asScala must size(2)
-        req.getCookies.asScala.head.name must beEqualTo("cookie1")
-        req.getCookies.asScala.head.value must beEqualTo("value1")
+        assert(req.getCookies.asScala.size == 2)
+        assert(req.getCookies.asScala.head.name == "cookie1")
+        assert(req.getCookies.asScala.head.value == "value1")
 
-        req.getCookies.asScala(1).name must beEqualTo("cookie2")
-        req.getCookies.asScala(1).value must beEqualTo("value2")
+        assert(req.getCookies.asScala(1).name == "cookie2")
+        assert(req.getCookies.asScala(1).value == "value2")
       }
     }
 
@@ -171,12 +185,12 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
 
-        req.getCookies.asScala must size(2)
-        req.getCookies.asScala.head.name must beEqualTo("cookie1")
-        req.getCookies.asScala.head.value must beEqualTo("value1")
+        assert(req.getCookies.asScala.size == 2)
+        assert(req.getCookies.asScala.head.name == "cookie1")
+        assert(req.getCookies.asScala.head.value == "value1")
 
-        req.getCookies.asScala(1).name must beEqualTo("cookie2")
-        req.getCookies.asScala(1).value must beEqualTo("value2")
+        assert(req.getCookies.asScala(1).name == "cookie2")
+        assert(req.getCookies.asScala(1).value == "value2")
       }
     }
 
@@ -189,12 +203,12 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
 
-        req.getCookies.asScala must size(2)
-        req.getCookies.asScala.head.name must beEqualTo("cookie3")
-        req.getCookies.asScala.head.value must beEqualTo("value3")
+        assert(req.getCookies.asScala.size == 2)
+        assert(req.getCookies.asScala.head.name == "cookie3")
+        assert(req.getCookies.asScala.head.value == "value3")
 
-        req.getCookies.asScala(1).name must beEqualTo("cookie4")
-        req.getCookies.asScala(1).value must beEqualTo("value4")
+        assert(req.getCookies.asScala(1).name == "cookie4")
+        assert(req.getCookies.asScala(1).value == "value4")
       }
     }
 
@@ -207,13 +221,13 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
 
-        req.getHeaders.entries.asScala must size(1)
-        req.getHeaders.get("Cookie") must beEqualTo("cookie1=value1, cookie2=value2")
+        assert(req.getHeaders.entries.asScala.size == 1)
+        assert(req.getHeaders.get("Cookie") == "cookie1=value1, cookie2=value2")
       }
     }
   }
 
-  "For HTTP Headers" in {
+  "For HTTP Headers" should {
 
     "support setting headers" in {
       withClient { client =>
@@ -222,7 +236,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
           .withHttpHeaders("key" -> "value1", "key" -> "value2")
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
-        req.getHeaders.getAll("key").asScala must containTheSameElementsAs(Seq("value1", "value2"))
+        assert(req.getHeaders.getAll("key").asScala.toSet == Set("value1", "value2"))
       }
     }
 
@@ -234,8 +248,8 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
           .withHttpHeaders("key2" -> "value2")
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
-        req.getHeaders.get("key1") must beNull
-        req.getHeaders.get("key2") must beEqualTo("value2")
+        assert(req.getHeaders.get("key1") == null)
+        assert(req.getHeaders.get("key2") == "value2")
       }
     }
 
@@ -247,7 +261,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
           .addHttpHeaders("key" -> "value2")
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
-        req.getHeaders.getAll("key").asScala must containTheSameElementsAs(Seq("value1", "value2"))
+        assert(req.getHeaders.getAll("key").asScala.toSet == Set("value1", "value2"))
       }
     }
 
@@ -259,8 +273,8 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
           .addHttpHeaders("key2" -> "value2")
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
-        req.getHeaders.get("key1") must beEqualTo("value1")
-        req.getHeaders.get("key2") must beEqualTo("value2")
+        assert(req.getHeaders.get("key1") == "value1")
+        assert(req.getHeaders.get("key2") == "value2")
       }
     }
 
@@ -274,8 +288,10 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
           .withBody("I am a text/plain body")
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
-        req.getHeaders.getAll(HttpHeaderNames.CONTENT_TYPE.toString()).asScala must_== Seq(
-          "fake/contenttype; charset=utf-8"
+        assert(
+          req.getHeaders.getAll(HttpHeaderNames.CONTENT_TYPE.toString()).asScala == Seq(
+            "fake/contenttype; charset=utf-8"
+          )
         )
       }
     }
@@ -287,7 +303,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
           .withHttpHeaders("key" -> "value1", "KEY" -> "value2")
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
-        req.getHeaders.getAll("key").asScala must containTheSameElementsAs(Seq("value1", "value2"))
+        assert(req.getHeaders.getAll("key").asScala.toSet == Set("value1", "value2"))
       }
     }
 
@@ -297,7 +313,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
           .url("http://playframework.com/")
           .withHttpHeaders("Key1" -> "value1", "Key2" -> "value2")
 
-        req.header("Key1") must beSome("value1")
+        assert(req.header("Key1") == Some("value1"))
       }
     }
 
@@ -307,7 +323,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
           .url("http://playframework.com/")
           .withHttpHeaders("Key1" -> "value1", "Key1" -> "value2", "Key2" -> "some")
 
-        req.headerValues("Key1") must containTheSameElementsAs(Seq("value1", "value2"))
+        assert(req.headerValues("Key1").toSet == Set("value1", "value2"))
       }
     }
 
@@ -317,7 +333,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
           .url("http://playframework.com/")
           .withHttpHeaders("Key1" -> "value1", "Key1" -> "value2", "Key2" -> "some")
 
-        req.header("Non") must beNone
+        assert(req.header("Non").isEmpty)
       }
     }
 
@@ -327,7 +343,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
           .url("http://playframework.com/")
           .withHttpHeaders("Key1" -> "value1", "Key1" -> "value2", "Key2" -> "some")
 
-        req.headerValues("Non") must beEmpty
+        assert(req.headerValues("Non").isEmpty)
       }
     }
 
@@ -337,13 +353,13 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
           .url("http://playframework.com/")
           .withHttpHeaders("Key1" -> "value1", "Key1" -> "value2", "Key2" -> "value")
 
-        req.headers("Key1") must containTheSameElementsAs(Seq("value1", "value2"))
-        req.headers("Key2") must containTheSameElementsAs(Seq("value"))
+        assert(req.headers("Key1").toSet == Set("value1", "value2"))
+        assert(req.headers("Key2").toSet == Set("value"))
       }
     }
   }
 
-  "For requests with body" in {
+  "For requests with body" should {
 
     "Have form params for content type application/x-www-form-urlencoded" in {
       withClient { client =>
@@ -352,7 +368,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
           .withBody(Map("param1" -> Seq("value1")))
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
-        (new String(req.getByteData, "UTF-8")) must_== "param1=value1"
+        assert((new String(req.getByteData, "UTF-8")) == "param1=value1")
       }
     }
 
@@ -369,13 +385,15 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
         // Note we use getFormParams instead of getByteData here.
-        req.getFormParams.asScala must containTheSameElementsAs(
-          List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1"))
+        assert(
+          req.getFormParams.asScala.toSet == List(
+            new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1")
+          ).toSet
         )
-        req.getByteData must beNull // should NOT result in byte data.
+        assert(req.getByteData == null) // should NOT result in byte data.
 
         val headers = req.getHeaders
-        headers.get("Content-Length") must beNull
+        assert(headers.get("Content-Length") == null)
       }
     }
 
@@ -391,7 +409,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
 
-        reqEmptyParams.getFormParams.asScala must beEmpty
+        assert(reqEmptyParams.getFormParams.asScala.isEmpty)
       }
     }
 
@@ -404,9 +422,9 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
 
-        (new String(req.getByteData, "UTF-8")) must be_==("HELLO WORLD")
+        assert((new String(req.getByteData, "UTF-8")) == "HELLO WORLD")
         val headers = req.getHeaders
-        headers.get("Content-Length") must beNull
+        assert(headers.get("Content-Length") == null)
       }
     }
 
@@ -421,7 +439,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
           .withBody("HELLO WORLD") // and body is set to string (see #5221)
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
-        (new String(req.getByteData, "UTF-8")) must be_==("HELLO WORLD") // should result in byte data.
+        assert((new String(req.getByteData, "UTF-8")) == "HELLO WORLD") // should result in byte data.
       }
     }
 
@@ -434,7 +452,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
         .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
 
-      ByteString(req.getByteData) must_== binData
+      assert(ByteString(req.getByteData) == binData)
     }
 
     "Preserve existing headers when setting the body" in {
@@ -445,12 +463,12 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
           .withBody("HELLO WORLD") // will set content-type header
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
-        req.getHeaders.get("Some-Header") must beEqualTo("Some-Value")
+        assert(req.getHeaders.get("Some-Header") == "Some-Value")
       }
     }
   }
 
-  "When using a Proxy Server" in {
+  "When using a Proxy Server" should {
 
     "support a proxy server with basic" in withClient { client =>
       val proxy = DefaultWSProxyServer(
@@ -467,11 +485,11 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
         .buildRequest()
       val actual = req.getProxyServer
 
-      (actual.getHost must be).equalTo("localhost")
-      (actual.getPort must be).equalTo(8080)
-      (actual.getRealm.getPrincipal must be).equalTo("principal")
-      (actual.getRealm.getPassword must be).equalTo("password")
-      (actual.getRealm.getScheme must be).equalTo(AuthScheme.BASIC)
+      assert(actual.getHost == "localhost")
+      assert(actual.getPort == 8080)
+      assert(actual.getRealm.getPrincipal == "principal")
+      assert(actual.getRealm.getPassword == "password")
+      assert(actual.getRealm.getScheme == AuthScheme.BASIC)
     }
 
     "support a proxy server with NTLM" in withClient { client =>
@@ -490,12 +508,12 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
         .buildRequest()
       val actual = req.getProxyServer
 
-      (actual.getHost must be).equalTo("localhost")
-      (actual.getPort must be).equalTo(8080)
-      (actual.getRealm.getPrincipal must be).equalTo("principal")
-      (actual.getRealm.getPassword must be).equalTo("password")
-      (actual.getRealm.getNtlmDomain must be).equalTo("somentlmdomain")
-      (actual.getRealm.getScheme must be).equalTo(AuthScheme.NTLM)
+      assert(actual.getHost == "localhost")
+      assert(actual.getPort == 8080)
+      assert(actual.getRealm.getPrincipal == "principal")
+      assert(actual.getRealm.getPassword == "password")
+      assert(actual.getRealm.getNtlmDomain == "somentlmdomain")
+      assert(actual.getRealm.getScheme == AuthScheme.NTLM)
     }
 
     "support a proxy server" in withClient { client =>
@@ -507,19 +525,19 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
         .buildRequest()
       val actual = req.getProxyServer
 
-      (actual.getHost must be).equalTo("localhost")
-      (actual.getPort must be).equalTo(8080)
-      actual.getRealm must beNull
+      assert(actual.getHost == "localhost")
+      assert(actual.getPort == 8080)
+      assert(actual.getRealm == null)
     }
   }
 
-  "StandaloneAhcWSRequest supports" in {
+  "StandaloneAhcWSRequest supports" should {
 
     "replace url" in withClient { client =>
       val req = client
         .url("http://playframework.com/")
         .withUrl("http://www.example.com/")
-      req.url must_=== "http://www.example.com/"
+      assert(req.url == "http://www.example.com/")
     }
 
     "a custom signature calculator" in {
@@ -538,7 +556,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
           .sign(calc)
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
-        called must beTrue
+        assert(called)
       }
     }
 
@@ -548,7 +566,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
         .withVirtualHost("192.168.1.1")
         .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
-      (req.getVirtualHost must be).equalTo("192.168.1.1")
+      assert(req.getVirtualHost == "192.168.1.1")
     }
 
     "follow redirects" in withClient { client =>
@@ -557,7 +575,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
         .withFollowRedirects(follow = true)
         .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
-      req.getFollowRedirect must beEqualTo(true)
+      assert(req.getFollowRedirect == true)
     }
 
     "enable url encoding by default" in withClient { client =>
@@ -566,7 +584,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
         .addQueryStringParameters("abc+def" -> "uvw+xyz")
         .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
-      req.getUrl must beEqualTo("http://playframework.com/?abc%2Bdef=uvw%2Bxyz")
+      assert(req.getUrl == "http://playframework.com/?abc%2Bdef=uvw%2Bxyz")
     }
 
     "disable url encoding globally via client config" in {
@@ -576,7 +594,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
         .addQueryStringParameters("abc+def" -> "uvw+xyz")
         .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
-      req.getUrl must beEqualTo("http://playframework.com/?abc+def=uvw+xyz")
+      assert(req.getUrl == "http://playframework.com/?abc+def=uvw+xyz")
     }
 
     "disable url encoding for specific request only" in withClient { client =>
@@ -586,7 +604,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
         .withDisableUrlEncoding(disableUrlEncoding = true)
         .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
-      req.getUrl must beEqualTo("http://playframework.com/?abc+def=uvw+xyz")
+      assert(req.getUrl == "http://playframework.com/?abc+def=uvw+xyz")
     }
 
     "finite timeout" in withClient { client =>
@@ -595,7 +613,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
         .withRequestTimeout(1000.millis)
         .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
-      (req.getRequestTimeout must be).equalTo(1000)
+      assert(req.getRequestTimeout == 1000)
     }
 
     "infinite timeout" in withClient { client =>
@@ -604,28 +622,30 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
         .withRequestTimeout(Duration.Inf)
         .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
-      (req.getRequestTimeout must be).equalTo(-1)
+      assert(req.getRequestTimeout == -1)
     }
 
     "no negative timeout" in withClient { client =>
-      client.url("http://playframework.com/").withRequestTimeout(-1.millis) should throwAn[IllegalArgumentException]
+      assertThrows[IllegalArgumentException] { client.url("http://playframework.com/").withRequestTimeout(-1.millis) }
     }
 
     "no timeout greater than Int.MaxValue" in withClient { client =>
-      client
-        .url("http://playframework.com/")
-        .withRequestTimeout((Int.MaxValue.toLong + 1).millis) should throwAn[IllegalArgumentException]
+      assertThrows[IllegalArgumentException] {
+        client
+          .url("http://playframework.com/")
+          .withRequestTimeout((Int.MaxValue.toLong + 1).millis)
+      }
     }
   }
 
-  "Set Realm.UsePreemptiveAuth" in {
+  "Set Realm.UsePreemptiveAuth" should {
     "to false when WSAuthScheme.DIGEST being used" in withClient { client =>
       val req = client
         .url("http://playframework.com/")
         .withAuth("usr", "pwd", WSAuthScheme.DIGEST)
         .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
-      req.getRealm.isUsePreemptiveAuth must beFalse
+      assert(req.getRealm.isUsePreemptiveAuth == false)
     }
 
     "to true when WSAuthScheme.DIGEST not being used" in withClient { client =>
@@ -634,7 +654,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
         .withAuth("usr", "pwd", WSAuthScheme.BASIC)
         .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
-      req.getRealm.isUsePreemptiveAuth must beTrue
+      assert(req.getRealm.isUsePreemptiveAuth)
     }
   }
 
@@ -646,10 +666,10 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
       .asInstanceOf[StandaloneAhcWSRequest]
       .buildRequest()
 
-    (new String(req.getByteData, "UTF-8")) must be_==("param1=value1") // should result in byte data.
+    assert((new String(req.getByteData, "UTF-8")) == "param1=value1") // should result in byte data.
 
     val headers = req.getHeaders
-    headers.get("Content-Length") must_== "9001"
+    assert(headers.get("Content-Length") == "9001")
   }
 
   "Remove a user defined content length header if we are parsing body explicitly when signed" in withClient { client =>
@@ -666,11 +686,11 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
       .buildRequest()
 
     val headers = req.getHeaders
-    req.getByteData must beNull // should NOT result in byte data.
-    req.getFormParams.asScala must containTheSameElementsAs(
-      List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1"))
+    assert(req.getByteData == null) // should NOT result in byte data.
+    assert(
+      req.getFormParams.asScala.toSet == List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1")).toSet
     )
-    headers.get("Content-Length") must beNull // no content length!
+    assert(headers.get("Content-Length") == null) // no content length!
   }
 
   "Verify Content-Type header is passed through correctly" in withClient { client =>
@@ -681,7 +701,9 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
       .withBody("HELLO WORLD")
       .asInstanceOf[StandaloneAhcWSRequest]
       .buildRequest()
-    req.getHeaders.getAll(HttpHeaderNames.CONTENT_TYPE.toString()).asScala must_== Seq("text/plain; charset=US-ASCII")
+    assert(
+      req.getHeaders.getAll(HttpHeaderNames.CONTENT_TYPE.toString()).asScala == Seq("text/plain; charset=US-ASCII")
+    )
   }
 
 }

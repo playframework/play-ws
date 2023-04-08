@@ -5,7 +5,6 @@
 package play.libs.ws.ahc
 
 import org.apache.pekko.stream.Materializer
-import org.specs2.execute.Result
 import play.api.libs.ws.ahc.AhcConfigBuilder
 import play.api.libs.ws.ahc.AhcWSClientConfig
 import play.api.libs.ws.ahc.{ AhcWSClientConfigFactory => ScalaAhcWSClientConfigFactory }
@@ -15,9 +14,9 @@ trait StandaloneWSClientSupport {
 
   def materializer: Materializer
 
-  def withClient(
+  def withClient[A](
       config: AhcWSClientConfig = ScalaAhcWSClientConfigFactory.forConfig()
-  )(block: StandaloneAhcWSClient => Result): Result = {
+  )(block: StandaloneAhcWSClient => A): A = {
     val asyncHttpClient = new DefaultAsyncHttpClient(new AhcConfigBuilder(config).build())
     val client          = new StandaloneAhcWSClient(asyncHttpClient, materializer)
     try {

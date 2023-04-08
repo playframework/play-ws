@@ -5,12 +5,12 @@
 package play.api.libs.ws.ahc
 
 import com.typesafe.config.ConfigFactory
-import org.specs2.mutable._
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.ws.WSClientConfig
 
 import scala.concurrent.duration._
 
-class AhcWSClientConfigParserSpec extends Specification {
+class AhcWSClientConfigParserSpec extends AnyWordSpec {
 
   val defaultWsConfig = WSClientConfig()
   val defaultConfig   = AhcWSClientConfig(defaultWsConfig)
@@ -30,15 +30,15 @@ class AhcWSClientConfigParserSpec extends Specification {
 
       // since we use typesafe ssl-config we can't match the objects directly since they aren't case classes,
       // and also AhcWSClientConfig has a duration which will be parsed into nanocseconds while the case class uses minutes
-      s1.wsClientConfig.toString must_== s2.wsClientConfig.toString
-      s1.maxConnectionsPerHost must_== s2.maxConnectionsPerHost
-      s1.maxConnectionsTotal must_== s2.maxConnectionsTotal
-      s1.maxConnectionLifetime must_== s2.maxConnectionLifetime
-      s1.idleConnectionInPoolTimeout must_== s2.idleConnectionInPoolTimeout
-      s1.maxNumberOfRedirects must_== s2.maxNumberOfRedirects
-      s1.maxRequestRetry must_== s2.maxRequestRetry
-      s1.disableUrlEncoding must_== s2.disableUrlEncoding
-      s1.keepAlive must_== s2.keepAlive
+      assert(s1.wsClientConfig.toString == s2.wsClientConfig.toString)
+      assert(s1.maxConnectionsPerHost == s2.maxConnectionsPerHost)
+      assert(s1.maxConnectionsTotal == s2.maxConnectionsTotal)
+      assert(s1.maxConnectionLifetime == s2.maxConnectionLifetime)
+      assert(s1.idleConnectionInPoolTimeout == s2.idleConnectionInPoolTimeout)
+      assert(s1.maxNumberOfRedirects == s2.maxNumberOfRedirects)
+      assert(s1.maxRequestRetry == s2.maxRequestRetry)
+      assert(s1.disableUrlEncoding == s2.disableUrlEncoding)
+      assert(s1.keepAlive == s2.keepAlive)
     }
 
     "parse ws ahc section" in {
@@ -54,22 +54,22 @@ class AhcWSClientConfigParserSpec extends Specification {
                                |play.ws.ahc.keepAlive = false
         """.stripMargin)
 
-      actual.maxConnectionsPerHost must_== 3
-      actual.maxConnectionsTotal must_== 6
-      actual.maxConnectionLifetime must_== 1.minute
-      actual.idleConnectionInPoolTimeout must_== 30.seconds
-      actual.connectionPoolCleanerPeriod must_== 10.seconds
-      actual.maxNumberOfRedirects must_== 0
-      actual.maxRequestRetry must_== 99
-      actual.disableUrlEncoding must beTrue
-      actual.keepAlive must beFalse
+      assert(actual.maxConnectionsPerHost == 3)
+      assert(actual.maxConnectionsTotal == 6)
+      assert(actual.maxConnectionLifetime == 1.minute)
+      assert(actual.idleConnectionInPoolTimeout == 30.seconds)
+      assert(actual.connectionPoolCleanerPeriod == 10.seconds)
+      assert(actual.maxNumberOfRedirects == 0)
+      assert(actual.maxRequestRetry == 99)
+      assert(actual.disableUrlEncoding)
+      assert(actual.keepAlive == false)
     }
 
     "with keepAlive" should {
       "parse keepAlive default as true" in {
         val actual = parseThis("""""".stripMargin)
 
-        actual.keepAlive must beTrue
+        assert(actual.keepAlive)
       }
     }
 
