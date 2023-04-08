@@ -115,7 +115,7 @@ lazy val commonSettings = Def.settings(
   headerLicense := {
     Some(
       HeaderLicense.Custom(
-        s"Copyright (C) Lightbend Inc. <https://www.lightbend.com>"
+        """Copyright (C) from 2022 The Play Framework Contributors <https://github.com/playframework>, 2011-2021 Lightbend Inc. <https://www.lightbend.com>"""
       )
     )
   }
