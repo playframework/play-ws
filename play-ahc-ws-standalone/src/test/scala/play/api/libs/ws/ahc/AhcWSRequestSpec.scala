@@ -11,8 +11,8 @@ import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.util.ByteString
 
+import org.mockito.Mockito
 import org.specs2.execute.Result
-import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
 
@@ -26,14 +26,14 @@ import play.shaded.ahc.org.asynchttpclient.SignatureCalculator
 import play.shaded.ahc.org.asynchttpclient.Param
 import play.shaded.ahc.org.asynchttpclient.{ Request => AHCRequest }
 
-class AhcWSRequestSpec
-    extends Specification
-    with Mockito
-    with AfterAll
-    with DefaultBodyReadables
-    with DefaultBodyWritables {
+import scala.reflect.ClassTag
+
+class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReadables with DefaultBodyWritables {
 
   sequential
+
+  private def mock[A](implicit a: ClassTag[A]): A =
+    Mockito.mock(a.runtimeClass).asInstanceOf[A]
 
   implicit val system: ActorSystem        = ActorSystem()
   implicit val materializer: Materializer = Materializer.matFromSystem

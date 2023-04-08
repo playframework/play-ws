@@ -12,7 +12,7 @@ import akka.util.ByteString
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
-import org.specs2.mock.Mockito
+import org.mockito.Mockito
 
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
@@ -25,11 +25,15 @@ import play.libs.ws.DefaultObjectMapper
 import play.shaded.ahc.org.asynchttpclient.Response
 
 import scala.io.Codec
+import scala.reflect.ClassTag
 
 /**
  */
-class JsonRequestSpec extends Specification with Mockito with AfterAll with JsonBodyWritables {
+class JsonRequestSpec extends Specification with AfterAll with JsonBodyWritables {
   sequential
+
+  private def mock[A](implicit a: ClassTag[A]): A =
+    Mockito.mock(a.runtimeClass).asInstanceOf[A]
 
   implicit val system: ActorSystem        = ActorSystem()
   implicit val materializer: Materializer = Materializer.matFromSystem

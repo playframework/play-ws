@@ -18,9 +18,9 @@ object Dependencies {
   val specsVersion = "4.19.2"
   val specsBuild = Seq(
     "specs2-core",
-    "specs2-junit",
-    "specs2-mock"
   ).map("org.specs2" %% _ % specsVersion cross CrossVersion.for3Use2_13)
+
+  val mockito = Seq("org.mockito" % "mockito-core" % "5.2.0")
 
   val slf4jtest = Seq("uk.org.lidalia" % "slf4j-test" % "1.2.0")
 
@@ -47,7 +47,8 @@ object Dependencies {
 
   val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.4")
 
-  val testDependencies = (specsBuild ++ junitInterface ++ assertj ++ awaitility ++ slf4jtest ++ logback).map(_ % Test)
+  val testDependencies =
+    (mockito ++ specsBuild ++ junitInterface ++ assertj ++ awaitility ++ slf4jtest ++ logback).map(_ % Test)
 
   val standaloneApiWSDependencies = javaxInject ++ sslConfigCore ++ akkaStreams.map(
     _.exclude("com.typesafe", "*")

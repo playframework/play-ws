@@ -9,7 +9,6 @@ import com.typesafe.config.ConfigFactory
 import com.typesafe.sslconfig.ssl.Protocols
 import com.typesafe.sslconfig.ssl.SSLConfigFactory
 import com.typesafe.sslconfig.ssl.SSLConfigSettings
-import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import play.api.libs.ws.WSClientConfig
 import play.shaded.ahc.org.asynchttpclient.proxy.ProxyServerSelector
@@ -19,7 +18,7 @@ import scala.concurrent.duration._
 
 /**
  */
-class AhcConfigBuilderSpec extends Specification with Mockito {
+class AhcConfigBuilderSpec extends Specification {
 
   val defaultWsConfig = WSClientConfig()
   val defaultConfig   = AhcWSClientConfig(defaultWsConfig)
