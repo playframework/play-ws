@@ -33,7 +33,7 @@ class AhcWSCacheSpec extends Specification {
 
       val actual = cache.calculateFreshnessFromHeuristic(request, response)
 
-      actual must beSome.which { case value =>
+      actual must beSome[Seconds].which { case value =>
         value must be_==(Seconds.seconds(360)) // 0.1 hours
       }
     }
@@ -72,7 +72,7 @@ class AhcWSCacheSpec extends Specification {
 
       val actual = cache.calculateSecondaryKeys(request, response)
 
-      actual must beSome.which { d =>
+      actual must beSome[Map[HeaderName, Seq[String]]].which { d =>
         d must haveKey(HeaderName("Accept-Encoding"))
         d(HeaderName("Accept-Encoding")) must be_==(Seq("gzip"))
       }

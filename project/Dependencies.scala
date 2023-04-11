@@ -18,7 +18,7 @@ object Dependencies {
   val specsVersion = "4.19.2"
   val specsBuild = Seq(
     "specs2-core",
-  ).map("org.specs2" %% _ % specsVersion cross CrossVersion.for3Use2_13)
+  ).map("org.specs2" %% _ % specsVersion)
 
   val mockito = Seq("org.mockito" % "mockito-core" % "5.2.0")
 

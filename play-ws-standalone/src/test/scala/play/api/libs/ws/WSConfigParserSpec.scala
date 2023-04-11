@@ -39,7 +39,7 @@ class WSConfigParserSpec extends Specification {
       // default: true
       actual.useProxyProperties must beFalse
 
-      actual.userAgent must beSome.which(_ must_== "FakeUserAgent")
+      actual.userAgent must beSome[String].which(_ must_== "FakeUserAgent")
     }
   }
 }

@@ -104,9 +104,9 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
         .withQueryStringParameters("play" -> "foo1")
         .addQueryStringParameters("play" -> "foo2")
 
-      newRequest.queryString.get("play") must beSome.which(_.contains("foo1"))
-      newRequest.queryString.get("play") must beSome.which(_.contains("foo2"))
-      newRequest.queryString.get("play") must beSome.which(_.size == 2)
+      newRequest.queryString.get("play") must beSome[Seq[String]].which(_.contains("foo1"))
+      newRequest.queryString.get("play") must beSome[Seq[String]].which(_.contains("foo2"))
+      newRequest.queryString.get("play") must beSome[Seq[String]].which(_.size == 2)
     }
 
     "support several query string values for  a parameter" in {
