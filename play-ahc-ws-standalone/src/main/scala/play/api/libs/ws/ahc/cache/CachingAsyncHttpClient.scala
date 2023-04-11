@@ -220,7 +220,7 @@ class CachingAsyncHttpClient(underlying: AsyncHttpClient, ahcHttpCache: AhcHttpC
   }
 
   protected def composeRequest(request: Request)(block: RequestBuilder => RequestBuilder): Request = {
-    val rb      = new RequestBuilder(request)
+    val rb      = request.toBuilder
     val builder = block(rb)
     builder.build()
   }
