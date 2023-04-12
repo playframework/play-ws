@@ -4,14 +4,6 @@
 
 package play.api.libs.ws.ahc
 
-import akka.http.scaladsl.model.StatusCodes.Redirection
-import akka.http.scaladsl.model.headers.HttpCookie
-import akka.http.scaladsl.model.headers.RawHeader
-import akka.http.scaladsl.model.StatusCode
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.MissingCookieRejection
-import akka.http.scaladsl.server.Route
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import org.specs2.concurrent.ExecutionEnv
@@ -19,15 +11,22 @@ import org.specs2.concurrent.FutureAwait
 import org.specs2.execute.Result
 import org.specs2.matcher.FutureMatchers
 import org.specs2.mutable.Specification
-import play.AkkaServerProvider
+import play.NettyServerProvider
+import play.api.BuiltInComponents
+import play.api.http.Status.MOVED_PERMANENTLY
 import play.api.libs.ws._
+import play.api.mvc.Cookie
+import play.api.mvc.Handler
+import play.api.mvc.RequestHeader
+import play.api.mvc.Results
+import play.api.routing.sird._
 import play.shaded.ahc.org.asynchttpclient.handler.MaxRedirectException
 
 import scala.concurrent._
 
 class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
     extends Specification
-    with AkkaServerProvider
+    with NettyServerProvider
     with StandaloneWSClientSupport
     with FutureMatchers
     with FutureAwait
@@ -44,61 +43,65 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
     )(block)
   }
 
-  val indexRoutes: Route = {
-    path("index") {
-      extractRequest { request =>
-        respondWithHeaders(request.headers.map(h => RawHeader(s"Req-${h.name}", h.value))) {
-          get {
-            complete("Say hello to akka-http")
-          } ~
-            post {
-              complete(s"POST: ${request.entity}")
-            }
-        }
-      }
-    }
-  }
-
-  val cookieRoutes: Route = {
-    path("cookie") {
-      get {
-        setCookie(HttpCookie("flash", "redirect-cookie")) {
-          redirect("/cookie-destination", StatusCodes.MovedPermanently)
-        }
-      }
-    } ~
-      path("cookie-destination") {
-        get {
-          optionalCookie("flash") {
-            case Some(c) => complete(s"Cookie value => ${c.value}")
-            case None    => reject(MissingCookieRejection("flash"))
+  def routes(components: BuiltInComponents): PartialFunction[RequestHeader, Handler] = {
+    case p"/index" =>
+      components.defaultActionBuilder { request =>
+        (
+          request match {
+            case GET(_) =>
+              Results.Ok("Say hello to play")
+            case POST(_) =>
+              Results.Ok(s"POST: ${request.body.asText.getOrElse("")}")
+            case _ =>
+              Results.NotFound
           }
+        ).withHeaders(request.headers.headers.map(h => (s"Req-${h._1}", h._2)): _*)
+      }
+    case p"/cookie" =>
+      components.defaultActionBuilder {
+        case GET(_) =>
+          Results
+            .Redirect(
+              url = "/cookie-destination",
+              status = MOVED_PERMANENTLY
+            )
+            .withCookies(
+              Cookie(
+                name = "flash",
+                value = "redirect-cookie"
+              )
+            )
+        case _ =>
+          Results.NotFound
+      }
+    case p"/cookie-destination" =>
+      components.defaultActionBuilder {
+        case GET(req) =>
+          req.cookies.get("flash") match {
+            case Some(c) =>
+              Results.Ok(s"Cookie value => ${c.value}")
+            case None =>
+              Results.BadRequest("Request is missing required cookie 'flash'")
+          }
+        case _ =>
+          Results.NotFound
+      }
+    case p"/redirect/${status}" =>
+      components.defaultActionBuilder {
+        Results.Redirect("/index", status.toInt)
+      }
+    case GET(p"/redirects/${status}/${count}") =>
+      components.defaultActionBuilder {
+        if (status == "1") {
+          Results.Redirect("/index", status.toInt)
+        } else {
+          Results.Redirect(
+            s"/redirects/$status/${count.toInt - 1}",
+            status.toInt
+          )
         }
       }
   }
-
-  val redirectRoutes: Route = {
-    // Single redirect
-    path("redirect" / IntNumber) { status =>
-      get {
-        val redirectCode = StatusCode.int2StatusCode(status).asInstanceOf[Redirection]
-        redirect("/index", redirectCode)
-      } ~
-        post {
-          val redirectCode = StatusCode.int2StatusCode(status).asInstanceOf[Redirection]
-          redirect("/index", redirectCode)
-        }
-    } ~
-      path("redirects" / IntNumber / IntNumber) { (status, count) =>
-        get {
-          val redirectCode = StatusCode.int2StatusCode(status).asInstanceOf[Redirection]
-          if (status == 1) redirect("/index", redirectCode)
-          else redirect(s"/redirects/$status/${count - 1}", redirectCode)
-        }
-      }
-  }
-
-  override val routes: Route = indexRoutes ~ cookieRoutes ~ redirectRoutes
 
   "url" should {
     "throw an exception on invalid url" in {
@@ -122,7 +125,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
           client.url(s"http://localhost:$testServerPort/index").get().map(res => res.body[String]),
           defaultTimeout
         )
-        result must beEqualTo("Say hello to akka-http")
+        result must beEqualTo("Say hello to play")
       }
     }
 
@@ -140,7 +143,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
           client.url(s"http://localhost:$testServerPort/index").get().map(res => res.body[Foo]),
           defaultTimeout
         )
-        result must beEqualTo(Foo("Say hello to akka-http"))
+        result must beEqualTo(Foo("Say hello to play"))
       }
     }
 
@@ -151,7 +154,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
           defaultTimeout
         )
         val bytes: ByteString = Await.result(resultSource.runWith(Sink.head), defaultTimeout)
-        bytes.utf8String must beEqualTo("Say hello to akka-http")
+        bytes.utf8String must beEqualTo("Say hello to play")
       }
     }
 
@@ -176,7 +179,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
             client.url(s"http://localhost:$testServerPort/redirect/302").get().map(res => res.body[String]),
             defaultTimeout
           )
-          result must beEqualTo("Say hello to akka-http")
+          result must beEqualTo("Say hello to play")
         }
       }
 
@@ -208,7 +211,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
             client.url(s"http://localhost:$testServerPort/redirect/301").get().map(res => res.body[String]),
             defaultTimeout
           )
-          result must beEqualTo("Say hello to akka-http")
+          result must beEqualTo("Say hello to play")
         }
       }
 
@@ -218,7 +221,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
             client.url(s"http://localhost:$testServerPort/redirect/302").get().map(res => res.body[String]),
             defaultTimeout
           )
-          result must beEqualTo("Say hello to akka-http")
+          result must beEqualTo("Say hello to play")
         }
       }
 
@@ -228,7 +231,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
             client.url(s"http://localhost:$testServerPort/redirect/303").get().map(res => res.body[String]),
             defaultTimeout
           )
-          result must beEqualTo("Say hello to akka-http")
+          result must beEqualTo("Say hello to play")
         }
       }
 
@@ -238,7 +241,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
             client.url(s"http://localhost:$testServerPort/redirect/307").get().map(res => res.body[String]),
             defaultTimeout
           )
-          result must beEqualTo("Say hello to akka-http")
+          result must beEqualTo("Say hello to play")
         }
       }
 
@@ -248,7 +251,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
             client.url(s"http://localhost:$testServerPort/redirect/308").get().map(res => res.body[String]),
             defaultTimeout
           )
-          result must beEqualTo("Say hello to akka-http")
+          result must beEqualTo("Say hello to play")
         }
       }
 
@@ -325,7 +328,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
 
             // 2. So when following the redirect, the GET path should be found
             // and we get its body
-            result must beEqualTo("Say hello to akka-http")
+            result must beEqualTo("Say hello to play")
           }
         }
 
@@ -335,7 +338,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
               .url(s"http://localhost:$testServerPort/redirect/303")
               .post("request body")
             val result = Await.result(request.map(res => res.body[String]), defaultTimeout)
-            result must beEqualTo("Say hello to akka-http")
+            result must beEqualTo("Say hello to play")
           }
         }
 
@@ -351,7 +354,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
 
             // 2. So when following the redirect, the GET path should be found
             // and we get its body
-            result must beEqualTo("Say hello to akka-http")
+            result must beEqualTo("Say hello to play")
           }
         }
       }

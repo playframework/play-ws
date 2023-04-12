@@ -4,9 +4,6 @@
 
 package play.api.libs.ws.ahc.cache
 
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers._
-import akka.http.scaladsl.server.Route
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import org.mockito.Mockito.when
@@ -14,9 +11,14 @@ import org.specs2.concurrent.ExecutionEnv
 import org.specs2.matcher.FutureMatchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
-import play.AkkaServerProvider
+import play.NettyServerProvider
+import play.api.BuiltInComponents
 import play.api.libs.ws.ahc._
 import play.api.libs.ws.DefaultBodyReadables._
+import play.api.mvc.Handler
+import play.api.mvc.RequestHeader
+import play.api.mvc.Results
+import play.api.routing.sird._
 import play.shaded.ahc.org.asynchttpclient._
 
 import scala.concurrent.Future
@@ -24,7 +26,7 @@ import scala.reflect.ClassTag
 
 class CachingSpec(implicit val executionEnv: ExecutionEnv)
     extends Specification
-    with AkkaServerProvider
+    with NettyServerProvider
     with AfterAll
     with FutureMatchers {
 
@@ -37,14 +39,12 @@ class CachingSpec(implicit val executionEnv: ExecutionEnv)
     new DefaultAsyncHttpClient(ahcConfig)
   }
 
-  override val routes: Route = {
-    import akka.http.scaladsl.server.Directives._
-    path("hello") {
-      respondWithHeader(RawHeader("Cache-Control", "public")) {
-        val httpEntity = HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to akka-http</h1>")
-        complete(httpEntity)
-      }
-    }
+  def routes(components: BuiltInComponents): PartialFunction[RequestHeader, Handler] = { case GET(p"/hello") =>
+    components.defaultActionBuilder(
+      Results
+        .Ok(<h1>Say hello to play</h1>)
+        .withHeaders(("Cache-Control", "public"))
+    )
   }
 
   override def afterAll(): Unit = {
@@ -64,7 +64,7 @@ class CachingSpec(implicit val executionEnv: ExecutionEnv)
       ws.url(s"http://localhost:$testServerPort/hello")
         .get()
         .map { response =>
-          response.body[String] must be_==("<h1>Say hello to akka-http</h1>")
+          response.body[String] must be_==("<h1>Say hello to play</h1>")
         }
         .await
 
