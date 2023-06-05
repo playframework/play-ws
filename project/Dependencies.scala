@@ -44,7 +44,7 @@ object Dependencies {
 
   val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % "2.6.20")
 
-  val playNettyServer = Seq("com.typesafe.play" %% "play-netty-server" % "2.9.0-M4")
+  val playNettyServer = Seq("com.typesafe.play" %% "play-netty-server" % "2.9.0-M6")
 
   val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.4")
 
