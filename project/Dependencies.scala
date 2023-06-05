@@ -6,8 +6,8 @@ import sbt._
 object Dependencies {
 
   // Should be sync with GA (.github/workflows/build-test.yml)
-  val scala213 = "2.13.10"
-  val scala3   = "3.3.0-RC6"
+  val scala213 = "2.13.11"
+  val scala3   = "3.3.0"
 
   val logback = Seq("ch.qos.logback" % "logback-core" % "1.4.7")
 
@@ -26,7 +26,7 @@ object Dependencies {
 
   val junitInterface = Seq("com.github.sbt" % "junit-interface" % "0.13.3")
 
-  val playJson = Seq("com.typesafe.play" %% "play-json" % "2.10.0-RC8")
+  val playJson = Seq("com.typesafe.play" %% "play-json" % "2.10.0-RC9")
 
   val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "2.0.7")
 
@@ -38,7 +38,7 @@ object Dependencies {
 
   val oauth = Seq("oauth.signpost" % "signpost-core" % "2.1.1")
 
-  val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % "2.2.0")
+  val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % "2.3.0-RC1")
 
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "2.12.3")
 
