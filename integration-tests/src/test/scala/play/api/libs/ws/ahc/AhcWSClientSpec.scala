@@ -4,8 +4,8 @@
 
 package play.api.libs.ws.ahc
 
-import akka.stream.scaladsl.Sink
-import akka.util.ByteString
+import org.apache.pekko.stream.scaladsl.Sink
+import org.apache.pekko.util.ByteString
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.concurrent.FutureAwait
 import org.specs2.execute.Result

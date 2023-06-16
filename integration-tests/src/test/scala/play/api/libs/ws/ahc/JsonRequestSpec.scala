@@ -6,9 +6,9 @@ package play.api.libs.ws.ahc
 
 import java.nio.charset.StandardCharsets
 
-import akka.actor.ActorSystem
-import akka.stream.Materializer
-import akka.util.ByteString
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.util.ByteString
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.when

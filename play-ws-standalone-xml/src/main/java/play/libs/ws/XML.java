@@ -4,9 +4,9 @@
 
 package play.libs.ws;
 
-import akka.util.ByteString;
-import akka.util.ByteString$;
-import akka.util.ByteStringBuilder;
+import org.apache.pekko.util.ByteString;
+import org.apache.pekko.util.ByteString$;
+import org.apache.pekko.util.ByteStringBuilder;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;

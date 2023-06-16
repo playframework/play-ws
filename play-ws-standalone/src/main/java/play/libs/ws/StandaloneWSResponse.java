@@ -4,8 +4,8 @@
 
 package play.libs.ws;
 
-import akka.stream.javadsl.Source;
-import akka.util.ByteString;
+import org.apache.pekko.stream.javadsl.Source;
+import org.apache.pekko.util.ByteString;
 
 import java.util.Collections;
 import java.util.List;

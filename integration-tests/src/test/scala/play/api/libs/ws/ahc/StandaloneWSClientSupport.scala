@@ -4,7 +4,7 @@
 
 package play.api.libs.ws.ahc
 
-import akka.stream.Materializer
+import org.apache.pekko.stream.Materializer
 import org.specs2.execute.Result
 
 trait StandaloneWSClientSupport {

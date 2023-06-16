@@ -7,8 +7,8 @@ package play.api.libs.ws
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets._
 
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import org.specs2.matcher.MustMatchers
 import org.specs2.mutable.Specification
 import play.api.libs.json.JsSuccess

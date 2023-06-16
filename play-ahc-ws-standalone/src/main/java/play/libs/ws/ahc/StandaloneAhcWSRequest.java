@@ -4,11 +4,11 @@
 
 package play.libs.ws.ahc;
 
-import akka.stream.Materializer;
-import akka.stream.javadsl.AsPublisher;
-import akka.stream.javadsl.Sink;
-import akka.stream.javadsl.Source;
-import akka.util.ByteString;
+import org.apache.pekko.stream.Materializer;
+import org.apache.pekko.stream.javadsl.AsPublisher;
+import org.apache.pekko.stream.javadsl.Sink;
+import org.apache.pekko.stream.javadsl.Source;
+import org.apache.pekko.util.ByteString;
 import org.reactivestreams.Publisher;
 import play.api.libs.ws.ahc.FormUrlEncodedParser;
 import play.libs.oauth.OAuth;

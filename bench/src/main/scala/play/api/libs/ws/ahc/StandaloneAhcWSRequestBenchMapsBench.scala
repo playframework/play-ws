@@ -6,7 +6,7 @@ package play.api.libs.ws.ahc
 
 import java.util.concurrent.TimeUnit
 
-import akka.stream.Materializer
+import org.apache.pekko.stream.Materializer
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
 import play.api.libs.ws.StandaloneWSRequest

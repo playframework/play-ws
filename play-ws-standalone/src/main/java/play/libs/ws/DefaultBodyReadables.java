@@ -4,8 +4,8 @@
 
 package play.libs.ws;
 
-import akka.stream.javadsl.Source;
-import akka.util.ByteString;
+import org.apache.pekko.stream.javadsl.Source;
+import org.apache.pekko.util.ByteString;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -18,7 +18,7 @@ import java.nio.ByteBuffer;
 public interface DefaultBodyReadables {
 
     /**
-     * Converts a response body into an akka.util.ByteString:
+     * Converts a response body into an org.apache.pekko.util.ByteString:
      *
      * {{{
      * ByteString byteString = response.body(byteString())
