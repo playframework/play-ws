@@ -42,7 +42,7 @@ object Dependencies {
 
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "2.12.3")
 
-  val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % "2.6.20")
+  val pekkoStreams = Seq("org.apache.pekko" %% "pekko-stream" % "1.0.1")
 
   val playNettyServer = Seq("com.typesafe.play" %% "play-netty-server" % "2.9.0-RC2")
 
@@ -51,7 +51,7 @@ object Dependencies {
   val testDependencies =
     (mockito ++ specsBuild ++ junitInterface ++ assertj ++ awaitility ++ slf4jtest ++ logback).map(_ % Test)
 
-  val standaloneApiWSDependencies = javaxInject ++ sslConfigCore ++ akkaStreams.map(
+  val standaloneApiWSDependencies = javaxInject ++ sslConfigCore ++ pekkoStreams.map(
     _.exclude("com.typesafe", "*")
   ) ++ testDependencies
 
