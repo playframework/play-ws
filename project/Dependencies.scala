@@ -20,7 +20,7 @@ object Dependencies {
     "specs2-core",
   ).map("org.specs2" %% _ % specsVersion)
 
-  val mockito = Seq("org.mockito" % "mockito-core" % "5.4.0")
+  val mockito = Seq("org.mockito" % "mockito-core" % "5.5.0")
 
   val slf4jtest = Seq("uk.org.lidalia" % "slf4j-test" % "1.2.0")
 
