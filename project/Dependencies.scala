@@ -6,8 +6,8 @@ import sbt._
 object Dependencies {
 
   // Should be sync with GA (.github/workflows/build-test.yml)
-  val scala213 = "2.13.11"
-  val scala3   = "3.3.0"
+  val scala213 = "2.13.12"
+  val scala3   = "3.3.1"
 
   val logback = Seq("ch.qos.logback" % "logback-core" % "1.4.11")
 
