@@ -26,7 +26,7 @@ object Dependencies {
 
   val junitInterface = Seq("com.github.sbt" % "junit-interface" % "0.13.3")
 
-  val playJson = Seq("com.typesafe.play" %% "play-json" % "2.10.0-RC9")
+  val playJson = Seq("com.typesafe.play" %% "play-json" % "2.10.0")
 
   val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "2.0.7")
 
@@ -38,7 +38,7 @@ object Dependencies {
 
   val oauth = Seq("oauth.signpost" % "signpost-core" % "2.1.1")
 
-  val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % "2.3.0-RC1")
+  val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % "2.3.0")
 
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "2.12.3")
 
