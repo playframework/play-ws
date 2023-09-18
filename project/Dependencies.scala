@@ -38,7 +38,7 @@ object Dependencies {
 
   val oauth = Seq("oauth.signpost" % "signpost-core" % "2.1.1")
 
-  val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % "2.3.0")
+  val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % "2.3.1")
 
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "2.12.3")
 
