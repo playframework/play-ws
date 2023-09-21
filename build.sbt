@@ -51,7 +51,7 @@ val scalacOpts = Def.setting[Seq[String]] {
 
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts := Set(
-    organization.value %% name.value % previousStableVersion.value
+    "com.typesafe.play" %% name.value % previousStableVersion.value
       .getOrElse(throw new Error("Unable to determine previous version"))
   ),
   mimaBinaryIssueFilters ++= Seq(
@@ -98,7 +98,7 @@ lazy val mimaSettings = Seq(
 )
 
 lazy val commonSettings = Def.settings(
-  organization         := "com.typesafe.play",
+  organization         := "org.playframework",
   organizationName     := "The Play Framework Project",
   organizationHomepage := Some(url("https://playframework.com")),
   homepage             := Some(url("https://github.com/playframework/play-ws/")),
@@ -340,12 +340,12 @@ lazy val `play-ahc-ws-standalone` = project
         addShadedDeps(
           List(
             <dependency>
-          <groupId>com.typesafe.play</groupId>
+          <groupId>org.playframework</groupId>
           <artifactId>shaded-asynchttpclient</artifactId>
           <version>{version.value}</version>
         </dependency>,
             <dependency>
-          <groupId>com.typesafe.play</groupId>
+          <groupId>org.playframework</groupId>
           <artifactId>shaded-oauth</artifactId>
           <version>{version.value}</version>
         </dependency>
