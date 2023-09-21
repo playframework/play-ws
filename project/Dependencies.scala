@@ -51,9 +51,7 @@ object Dependencies {
   val testDependencies =
     (mockito ++ specsBuild ++ junitInterface ++ assertj ++ awaitility ++ slf4jtest ++ logback).map(_ % Test)
 
-  val standaloneApiWSDependencies = javaxInject ++ sslConfigCore ++ pekkoStreams.map(
-    _.exclude("com.typesafe", "*")
-  ) ++ testDependencies
+  val standaloneApiWSDependencies = javaxInject ++ sslConfigCore ++ pekkoStreams ++ testDependencies
 
   val standaloneAhcWSDependencies = cachecontrol ++ slf4jApi ++ reactiveStreams ++ testDependencies
 
