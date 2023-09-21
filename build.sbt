@@ -51,7 +51,7 @@ val scalacOpts = Def.setting[Seq[String]] {
 
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts := Set(
-    organization.value %% name.value % previousStableVersion.value
+    "com.typesafe.play" %% name.value % previousStableVersion.value
       .getOrElse(throw new Error("Unable to determine previous version"))
   ),
   mimaBinaryIssueFilters ++= Seq(
