@@ -4,11 +4,11 @@
 
 package play.libs.ws.ahc;
 
-import akka.Done;
-import akka.stream.Materializer;
-import akka.stream.javadsl.Source;
-import akka.util.ByteString;
-import akka.util.ByteStringBuilder;
+import org.apache.pekko.Done;
+import org.apache.pekko.stream.Materializer;
+import org.apache.pekko.stream.javadsl.Source;
+import org.apache.pekko.util.ByteString;
+import org.apache.pekko.util.ByteStringBuilder;
 import com.typesafe.sslconfig.ssl.SystemConfiguration;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -146,7 +146,7 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
      * A convenience method for creating a StandaloneAhcWSClient from configuration.
      *
      * @param ahcWSClientConfig the configuration object
-     * @param materializer      an akka materializer
+     * @param materializer      an pekko materializer
      * @return a fully configured StandaloneAhcWSClient instance.
      * @see #create(AhcWSClientConfig, AhcHttpCache, Materializer)
      */
@@ -163,7 +163,7 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
      *
      * @param ahcWSClientConfig the configuration object
      * @param cache             if not null, will be used for HTTP response caching.
-     * @param materializer      an akka materializer
+     * @param materializer      an pekko materializer
      * @return a fully configured StandaloneAhcWSClient instance.
      */
     public static StandaloneAhcWSClient create(AhcWSClientConfig ahcWSClientConfig, AhcHttpCache cache, Materializer materializer) {

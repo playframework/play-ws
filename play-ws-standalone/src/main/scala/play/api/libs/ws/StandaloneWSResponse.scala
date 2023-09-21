@@ -4,8 +4,8 @@
 
 package play.api.libs.ws
 
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 
 /**
  * A WS HTTP response.
@@ -100,7 +100,7 @@ trait StandaloneWSResponse {
    * or as binary:
    *
    * {{{
-   * import akka.util.ByteString
+   * import org.apache.pekko.util.ByteString
    * import play.api.libs.ws.StandaloneWSResponse
    * import play.api.libs.ws.DefaultBodyReadables._
    *

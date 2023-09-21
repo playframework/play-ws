@@ -10,7 +10,7 @@ import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
 import org.reactivestreams.Publisher
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
-import akka.Done
+import org.apache.pekko.Done
 import play.shaded.ahc.org.asynchttpclient.AsyncHandler.State
 import play.shaded.ahc.org.asynchttpclient._
 import play.shaded.ahc.org.asynchttpclient.handler.StreamedAsyncHandler

@@ -6,8 +6,8 @@ package play.api.libs.ws
 
 import java.nio.ByteBuffer
 
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 
 /**
  * Defines common BodyReadable for a response backed by `org.asynchttpclient.Response`.
@@ -15,10 +15,10 @@ import akka.util.ByteString
 trait DefaultBodyReadables {
 
   /**
-   * Converts a response body into an `akka.util.ByteString`:
+   * Converts a response body into an `org.apache.pekko.util.ByteString`:
    *
    * {{{
-   * import akka.util.ByteString
+   * import org.apache.pekko.util.ByteString
    * import play.api.libs.ws.DefaultBodyReadables._
    *
    * def example(response: play.api.libs.ws.StandaloneWSResponse): ByteString =

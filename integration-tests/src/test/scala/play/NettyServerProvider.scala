@@ -4,13 +4,13 @@
 
 package play
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.specification.BeforeAfterAll
 
 import scala.concurrent.duration._
 import scala.concurrent.Await
-import akka.stream.Materializer
+import org.apache.pekko.stream.Materializer
 
 import play.api.mvc.Handler
 import play.api.mvc.RequestHeader
@@ -34,7 +34,7 @@ trait NettyServerProvider extends BeforeAfterAll {
   lazy val testServerPort: Int       = server.httpPort.getOrElse(sys.error("undefined port number"))
   val defaultTimeout: FiniteDuration = 5.seconds
 
-  // Create Akka system for thread and streaming management
+  // Create Pekko system for thread and streaming management
   implicit val system: ActorSystem        = ActorSystem()
   implicit val materializer: Materializer = Materializer.matFromSystem
 

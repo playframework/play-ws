@@ -4,7 +4,7 @@
 
 package play.api.libs.ws
 
-import akka.util.ByteString
+import org.apache.pekko.util.ByteString
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import play.api.libs.json.JsValue

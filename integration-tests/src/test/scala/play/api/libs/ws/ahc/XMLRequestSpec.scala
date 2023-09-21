@@ -6,9 +6,9 @@ package play.api.libs.ws.ahc
 
 import java.nio.charset.StandardCharsets
 
-import akka.actor.ActorSystem
-import akka.stream.Materializer
-import akka.util.ByteString
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.util.ByteString
 import org.specs2.matcher.MustMatchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
@@ -46,7 +46,7 @@ class XMLRequestSpec extends Specification with AfterAll with MustMatchers {
 
     override def bodyAsBytes: ByteString = ByteString.fromArray(byteArray)
 
-    override def bodyAsSource: akka.stream.scaladsl.Source[ByteString, _] = ???
+    override def bodyAsSource: org.apache.pekko.stream.scaladsl.Source[ByteString, _] = ???
   }
 
   "write an XML node" in {

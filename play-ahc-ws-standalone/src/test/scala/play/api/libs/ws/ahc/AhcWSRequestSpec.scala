@@ -7,9 +7,9 @@ package play.api.libs.ws.ahc
 import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 
-import akka.actor.ActorSystem
-import akka.stream.Materializer
-import akka.util.ByteString
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.util.ByteString
 
 import org.mockito.Mockito
 import org.specs2.execute.Result
@@ -50,7 +50,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
 
   "Given the full URL" in {
 
-    implicit val materializer: Materializer = mock[akka.stream.Materializer]
+    implicit val materializer: Materializer = mock[org.apache.pekko.stream.Materializer]
     val client                              = mock[StandaloneAhcWSClient]
 
     "request withQueryStringParameters" in {

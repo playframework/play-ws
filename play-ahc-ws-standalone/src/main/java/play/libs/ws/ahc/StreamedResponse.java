@@ -4,8 +4,8 @@
 
 package play.libs.ws.ahc;
 
-import akka.stream.javadsl.Source;
-import akka.util.ByteString;
+import org.apache.pekko.stream.javadsl.Source;
+import org.apache.pekko.util.ByteString;
 import org.reactivestreams.Publisher;
 import play.api.libs.ws.ahc.AhcWSUtils;
 import play.libs.ws.BodyReadable;

@@ -4,8 +4,8 @@
 
 package play.api.libs.ws.ahc
 
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import play.api.libs.ws.DefaultBodyReadables
 import play.api.libs.ws.StandaloneWSResponse
 import play.api.libs.ws.WSCookie

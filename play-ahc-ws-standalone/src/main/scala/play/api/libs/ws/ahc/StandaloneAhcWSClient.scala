@@ -4,11 +4,11 @@
 
 package play.api.libs.ws.ahc
 
-import akka.Done
+import org.apache.pekko.Done
 import javax.inject.Inject
-import akka.stream.Materializer
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import com.typesafe.sslconfig.ssl.SystemConfiguration
 import org.reactivestreams.Publisher
 import org.reactivestreams.Subscriber
@@ -194,7 +194,7 @@ object StandaloneAhcWSClient {
    * {{{
    * import play.api.libs.ws.ahc.StandaloneAhcWSClient
    *
-   * def example(someUrl: String)(implicit m: akka.stream.Materializer) = {
+   * def example(someUrl: String)(implicit m: org.apache.pekko.stream.Materializer) = {
    *   implicit def ec = m.executionContext
    *
    *   val client = StandaloneAhcWSClient()
@@ -209,7 +209,7 @@ object StandaloneAhcWSClient {
    *
    * @param config configuration settings
    * @param httpCache if not null, will be used for HTTP response caching.
-   * @param materializer the akka materializer.
+   * @param materializer the pekko materializer.
    */
   def apply(
       config: AhcWSClientConfig = AhcWSClientConfigFactory.forConfig(),

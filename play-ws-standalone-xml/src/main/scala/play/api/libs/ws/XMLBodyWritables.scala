@@ -4,7 +4,7 @@
 
 package play.api.libs.ws
 
-import akka.util.ByteString
+import org.apache.pekko.util.ByteString
 import org.w3c.dom.Document
 
 /**

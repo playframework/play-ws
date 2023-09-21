@@ -117,8 +117,8 @@ Note that there is a special case: when you are streaming the response, then you
 
 ```scala
 import scala.concurrent.ExecutionContext
-import akka.util.ByteString
-import akka.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
+import org.apache.pekko.stream.scaladsl.Source
 import play.api.libs.ws.StandaloneWSClient
 
 def useWSStream(ws: StandaloneWSClient)(implicit ec: ExecutionContext) =
@@ -159,7 +159,7 @@ implicit val fooBodyReadable = BodyReadable[Foo] { response =>
 or custom BodyWritable:
 
 ```scala
-import akka.util.ByteString
+import org.apache.pekko.util.ByteString
 import play.api.libs.ws.{ BodyWritable, InMemoryBody }
 
 implicit val writeableOf_Foo: BodyWritable[Foo] = {
@@ -234,7 +234,7 @@ You can also define your own custom `BodyWritable`:
 ```java
 public class MyClient {
     private BodyWritable<String> someOtherMethod(String string) {
-      akka.util.ByteString byteString = akka.util.ByteString.fromString(string);
+        org.apache.pekko.util.ByteString byteString = org.apache.pekko.util.ByteString.fromString(string);
       return new DefaultBodyWritables.InMemoryBodyWritable(byteString, "text/plain");
     }
 }
@@ -242,7 +242,7 @@ public class MyClient {
 
 ## Instantiating a standalone client
 
-The standalone client needs [Akka](http://akka.io/) to handle streaming data internally:
+The standalone client needs [Pekko](https://pekko.apache.org/) to handle streaming data internally:
 
 ### Scala
 
@@ -251,8 +251,8 @@ In Scala, the way to call out to a web service and close down the client:
 ```scala
 package playwsclient
 
-import akka.actor.ActorSystem
-import akka.stream._
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.stream._
 import play.api.libs.ws._
 import play.api.libs.ws.ahc._
 
@@ -263,7 +263,7 @@ object ScalaClient {
   import scala.concurrent.ExecutionContext.Implicits._
 
   def main(args: Array[String]): Unit = {
-    // Create Akka system for thread and streaming management
+    // Create Pekko system for thread and streaming management
     implicit val system = ActorSystem()
     system.registerOnTermination {
       System.exit(0)
@@ -318,8 +318,8 @@ In Java the API is much the same:
 ```java
 package playwsclient;
 
-import akka.actor.ActorSystem;
-import akka.stream.*;
+import org.apache.pekko.actor.ActorSystem;
+import org.apache.pekko.stream.*;
 import com.typesafe.config.ConfigFactory;
 
 import play.libs.ws.*;
@@ -330,7 +330,7 @@ public class JavaClient implements DefaultBodyReadables {
     private final ActorSystem system;
 
     public static void main(String[] args) {
-        // Set up Akka materializer to handle streaming
+        // Set up Pekko materializer to handle streaming
         final String name = "wsclient";
         ActorSystem system = ActorSystem.create(name);
         system.registerOnTermination(() -> System.exit(0));
@@ -426,7 +426,7 @@ class CaffeineHttpCache extends Cache {
   def close(): Unit = underlying.cleanUp()
 }
 
-def withCache(implicit m: akka.stream.Materializer): StandaloneAhcWSClient = {
+def withCache(implicit m: org.apache.pekko.stream.Materializer): StandaloneAhcWSClient = {
   implicit def ec = m.executionContext
 
   val cache = new CaffeineHttpCache()

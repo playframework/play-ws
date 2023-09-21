@@ -8,10 +8,10 @@ import java.io.File
 import java.nio.ByteBuffer
 import java.util.function.Supplier
 
-import akka.stream.scaladsl.StreamConverters.fromInputStream
-import akka.stream.scaladsl.FileIO
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import org.apache.pekko.stream.scaladsl.StreamConverters.fromInputStream
+import org.apache.pekko.stream.scaladsl.FileIO
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 
 import scala.jdk.FunctionConverters._
 

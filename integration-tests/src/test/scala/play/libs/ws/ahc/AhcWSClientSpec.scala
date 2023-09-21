@@ -4,8 +4,8 @@
 
 package play.libs.ws.ahc
 
-import akka.stream.javadsl.Sink
-import akka.util.ByteString
+import org.apache.pekko.stream.javadsl.Sink
+import org.apache.pekko.util.ByteString
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.matcher.FutureMatchers
 import org.specs2.mutable.Specification
@@ -53,7 +53,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
 
     "get successfully" in withClient() { client =>
       def someOtherMethod(string: String) = {
-        new InMemoryBodyWritable(akka.util.ByteString.fromString(string), "text/plain")
+        new InMemoryBodyWritable(org.apache.pekko.util.ByteString.fromString(string), "text/plain")
       }
       client
         .url(s"http://localhost:$testServerPort")
