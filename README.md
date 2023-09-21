@@ -9,8 +9,8 @@
 [![OpenCollective](https://img.shields.io/opencollective/all/playframework?label=financial%20contributors&logo=open-collective)](https://opencollective.com/playframework)
 
 [![Build Status](https://github.com/playframework/play-ws/actions/workflows/build-test.yml/badge.svg)](https://github.com/playframework/play-ws/actions/workflows/build-test.yml)
-[![Maven](https://img.shields.io/maven-central/v/com.typesafe.play/play-ws-standalone_2.13.svg?logo=apache-maven)](https://mvnrepository.com/artifact/com.typesafe.play/play-ws-standalone_2.13)
-[![Javadocs](https://javadoc.io/badge/com.typesafe.play/play-ws-standalone_2.13.svg)](https://javadoc.io/doc/com.typesafe.play/play-ws-standalone_2.13)
+[![Maven](https://img.shields.io/maven-central/v/org.playframework/play-ws-standalone_2.13.svg?logo=apache-maven)](https://mvnrepository.com/artifact/org.playframework/play-ws-standalone_2.13)
+[![Javadocs](https://javadoc.io/badge/org.playframework/play-ws-standalone_2.13.svg)](https://javadoc.io/doc/org.playframework/play-ws-standalone_2.13)
 [![Repository size](https://img.shields.io/github/repo-size/playframework/play-ws.svg?logo=git)](https://github.com/playframework/play-ws)
 [![Scala Steward badge](https://img.shields.io/badge/Scala_Steward-helping-blue.svg?style=flat&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAMAAAARSr4IAAAAVFBMVEUAAACHjojlOy5NWlrKzcYRKjGFjIbp293YycuLa3pYY2LSqql4f3pCUFTgSjNodYRmcXUsPD/NTTbjRS+2jomhgnzNc223cGvZS0HaSD0XLjbaSjElhIr+AAAAAXRSTlMAQObYZgAAAHlJREFUCNdNyosOwyAIhWHAQS1Vt7a77/3fcxxdmv0xwmckutAR1nkm4ggbyEcg/wWmlGLDAA3oL50xi6fk5ffZ3E2E3QfZDCcCN2YtbEWZt+Drc6u6rlqv7Uk0LdKqqr5rk2UCRXOk0vmQKGfc94nOJyQjouF9H/wCc9gECEYfONoAAAAASUVORK5CYII=)](https://scala-steward.org)
 [![Mergify Status](https://img.shields.io/endpoint.svg?url=https://api.mergify.com/v1/badges/playframework/play-ws&style=flat)](https://mergify.com)
@@ -24,18 +24,18 @@ We've provided some documentation here on how to use Play WS in your app (withou
 To get started, you can add `play-ahc-ws-standalone` as a dependency in SBT:
 
 ```scala
-libraryDependencies += "com.typesafe.play" %% "play-ahc-ws-standalone" % "LATEST_VERSION"
+libraryDependencies += "org.playframework" %% "play-ahc-ws-standalone" % "LATEST_VERSION"
 ```
 
-Where you replace `LATEST_VERSION` with the version shown in this image: [![Latest released version](https://img.shields.io/maven-central/v/com.typesafe.play/play-ws-standalone_2.13.svg)](http://mvnrepository.com/artifact/com.typesafe.play/play-ws-standalone_2.13).
+Where you replace `LATEST_VERSION` with the version shown in this image: [![Latest released version](https://img.shields.io/maven-central/v/org.playframework/play-ws-standalone_2.13.svg)](http://mvnrepository.com/artifact/org.playframework/play-ws-standalone_2.13).
 
 This adds the standalone version of Play WS, backed by [AsyncHttpClient](https://github.com/AsyncHttpClient/async-http-client).  This library contains both the Scala and Java APIs, under `play.api.libs.ws` and `play.libs.ws`.
 
 To add XML and JSON support using Play-JSON or Scala XML, add the following:
 
 ```scala
-libraryDependencies += "com.typesafe.play" %% "play-ws-standalone-xml" % playWsStandaloneVersion
-libraryDependencies += "com.typesafe.play" %% "play-ws-standalone-json" % playWsStandaloneVersion
+libraryDependencies += "org.playframework" %% "play-ws-standalone-xml" % playWsStandaloneVersion
+libraryDependencies += "org.playframework" %% "play-ws-standalone-json" % playWsStandaloneVersion
 ```
 
 ## Shading
