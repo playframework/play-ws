@@ -49,7 +49,7 @@ case class StandaloneAhcWSRequest(
     with AhcUtilities
     with WSCookieConverter {
   override type Self     = StandaloneAhcWSRequest
-  override type Response = StandaloneAhcWSResponse
+  override type Response = StandaloneWSResponse
 
   require(client != null, "A StandaloneAhcWSClient is required, but it is null")
   require(url != null, "A url is required, but it is null")
@@ -223,8 +223,6 @@ case class StandaloneAhcWSRequest(
   override def withMethod(method: String): Self = copy(method = method)
 
   private val executor: StandaloneAhcWSRequest => Future[Response] = {
-    import scala.concurrent.ExecutionContext.Implicits.global
-
     lazy val executor = filterWSRequestExecutor(WSRequestExecutor {
       case ahcReq: StandaloneAhcWSRequest =>
         client.execute(ahcReq.buildRequest())
@@ -234,9 +232,7 @@ case class StandaloneAhcWSRequest(
     })
 
     { (req: StandaloneAhcWSRequest) =>
-      executor(req).collect { case resp: StandaloneAhcWSResponse =>
-        resp
-      }
+      executor(req)
     }
   }
 
@@ -246,7 +242,13 @@ case class StandaloneAhcWSRequest(
     filters.foldRight(next)((filter, executor) => filter.apply(executor))
   }
 
-  override def stream(): Future[Response] = executor(this)
+  override def stream(): Future[Response] = {
+    val executor = filterWSRequestExecutor(WSRequestExecutor { request =>
+      client.executeStream(request.asInstanceOf[StandaloneAhcWSRequest].buildRequest())
+    })
+
+    executor(this)
+  }
 
   /**
    * Returns the HTTP header given by name, using the request builder.  This may be signed,
