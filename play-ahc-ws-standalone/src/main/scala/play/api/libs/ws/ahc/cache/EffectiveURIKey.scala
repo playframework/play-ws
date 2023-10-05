@@ -8,7 +8,7 @@ import java.net.URI
 import java.time.Instant
 import java.time.ZonedDateTime
 
-import com.typesafe.play.cachecontrol.HeaderName
+import org.playframework.cachecontrol.HeaderName
 import play.shaded.ahc.org.asynchttpclient._
 
 case class EffectiveURIKey(method: String, uri: URI) {

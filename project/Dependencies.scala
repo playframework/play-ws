@@ -26,7 +26,7 @@ object Dependencies {
 
   val junitInterface = Seq("com.github.sbt" % "junit-interface" % "0.13.3")
 
-  val playJson = Seq("com.typesafe.play" %% "play-json" % "2.10.1")
+  val playJson = Seq("org.playframework" %% "play-json" % "3.0.0-M1")
 
   val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "2.0.9")
 
@@ -38,13 +38,13 @@ object Dependencies {
 
   val oauth = Seq("oauth.signpost" % "signpost-core" % "2.1.1")
 
-  val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % "2.3.1")
+  val cachecontrol = Seq("org.playframework" %% "cachecontrol" % "3.0.0")
 
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "2.12.3")
 
   val pekkoStreams = Seq("org.apache.pekko" %% "pekko-stream" % "1.0.1")
 
-  val playNettyServer = Seq("com.typesafe.play" %% "play-netty-server" % "2.9.0-RC2")
+  val playNettyServer = Seq("org.playframework" %% "play-netty-server" % "3.0.0-M1")
 
   val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.4")
 
