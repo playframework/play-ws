@@ -35,9 +35,9 @@ class CachingAsyncHttpClient(underlying: AsyncHttpClient, ahcHttpCache: AhcHttpC
     with TimeoutResponse
     with Debug {
 
-  import com.typesafe.play.cachecontrol.ResponseSelectionActions._
-  import com.typesafe.play.cachecontrol.ResponseServeActions._
-  import com.typesafe.play.cachecontrol._
+  import org.playframework.cachecontrol.ResponseSelectionActions._
+  import org.playframework.cachecontrol.ResponseServeActions._
+  import org.playframework.cachecontrol._
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 

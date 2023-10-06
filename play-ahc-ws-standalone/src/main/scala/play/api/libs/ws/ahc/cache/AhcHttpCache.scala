@@ -7,7 +7,7 @@ package play.api.libs.ws.ahc.cache
 import java.net.URI
 import java.time.ZonedDateTime
 
-import com.typesafe.play.cachecontrol._
+import org.playframework.cachecontrol._
 import play.api.libs.ws.{ ahc => standaloneAhc }
 import org.slf4j.LoggerFactory
 import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders

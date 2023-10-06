@@ -5,8 +5,8 @@
 package play.api.libs.ws.ahc.cache
 
 import play.shaded.ahc.org.asynchttpclient._
-import com.typesafe.play.cachecontrol.ResponseCachingActions.DoCacheResponse
-import com.typesafe.play.cachecontrol.ResponseCachingActions.DoNotCacheResponse
+import org.playframework.cachecontrol.ResponseCachingActions.DoCacheResponse
+import org.playframework.cachecontrol.ResponseCachingActions.DoNotCacheResponse
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders

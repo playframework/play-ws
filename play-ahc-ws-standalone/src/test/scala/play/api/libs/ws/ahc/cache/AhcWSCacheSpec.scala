@@ -6,8 +6,8 @@ package play.api.libs.ws.ahc.cache
 
 import java.net.URI
 
-import com.typesafe.play.cachecontrol.HttpDate._
-import com.typesafe.play.cachecontrol._
+import org.playframework.cachecontrol.HttpDate._
+import org.playframework.cachecontrol._
 import org.specs2.mutable.Specification
 import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders

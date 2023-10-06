@@ -7,7 +7,7 @@ package play.api.libs.ws.ahc.cache
 import java.time.ZonedDateTime
 
 import play.shaded.ahc.org.asynchttpclient._
-import com.typesafe.play.cachecontrol.ResponseServeAction
+import org.playframework.cachecontrol.ResponseServeAction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
@@ -30,7 +30,7 @@ class AsyncCachingHandler[T](
 
   private val DATE = "Date"
 
-  import com.typesafe.play.cachecontrol.HttpDate
+  import org.playframework.cachecontrol.HttpDate
   import AsyncCachingHandler._
 
   protected val builder = new CacheableResponseBuilder(ahcConfig)
@@ -47,7 +47,7 @@ class AsyncCachingHandler[T](
    * Invoked if something wrong happened inside the previous methods or when an I/O exception occurs.
    */
   override def onThrowable(t: Throwable): Unit = {
-    import com.typesafe.play.cachecontrol.ResponseServeActions._
+    import org.playframework.cachecontrol.ResponseServeActions._
 
     maybeAction match {
       case Some(ValidateOrTimeout(reason)) =>
@@ -109,7 +109,7 @@ class AsyncCachingHandler[T](
    * onCompleted: Invoked when the full response has been read, or if the processing get aborted (more on this below).
    */
   override def onCompleted(): T = {
-    import com.typesafe.play.cachecontrol.ResponseServeActions._
+    import org.playframework.cachecontrol.ResponseServeActions._
 
     if (logger.isTraceEnabled) {
       logger.trace(s"onCompleted: this = $this")
@@ -194,7 +194,7 @@ class AsyncCachingHandler[T](
 
   protected def processFullResponse(fullResponse: CacheableResponse): T = {
     logger.debug(s"processFullResponse: fullResponse = ${debug(fullResponse)}")
-    import com.typesafe.play.cachecontrol.ResponseCachingActions._
+    import org.playframework.cachecontrol.ResponseCachingActions._
 
     cache.cachingAction(request, fullResponse) match {
       case DoNotCacheResponse(reason) =>
