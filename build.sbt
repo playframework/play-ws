@@ -55,6 +55,33 @@ lazy val mimaSettings = Seq(
       .getOrElse(throw new Error("Unable to determine previous version"))
   ),
   mimaBinaryIssueFilters ++= Seq(
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.AhcHttpCache.calculateCurrentAge"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem](
+      "play.api.libs.ws.ahc.cache.AhcHttpCache.calculateFreshnessFromHeuristic"
+    ),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem](
+      "play.api.libs.ws.ahc.cache.AhcHttpCache.generateCachedResponse"
+    ),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.AhcHttpCache.isCacheableExtension"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.AhcHttpCache.serveAction"),
+    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.cache.AhcHttpCache.cachingAction"),
+    ProblemFilters.exclude[IncompatibleResultTypeProblem](
+      "play.api.libs.ws.ahc.cache.AhcHttpCache.calculateCurrentAge"
+    ),
+    ProblemFilters.exclude[IncompatibleResultTypeProblem](
+      "play.api.libs.ws.ahc.cache.AhcHttpCache.calculateFreshnessLifetime"
+    ),
+    ProblemFilters.exclude[IncompatibleResultTypeProblem](
+      "play.api.libs.ws.ahc.cache.AhcHttpCache.generateCacheRequest"
+    ),
+    ProblemFilters.exclude[IncompatibleResultTypeProblem](
+      "play.api.libs.ws.ahc.cache.AhcHttpCache.generateOriginResponse"
+    ),
+    ProblemFilters.exclude[IncompatibleResultTypeProblem](
+      "play.api.libs.ws.ahc.cache.AhcHttpCache.generateStoredResponse"
+    ),
+    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.cache.AhcHttpCache.selectionAction"),
+    ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.ahc.cache.AhcHttpCache"),
   )
 )
 
