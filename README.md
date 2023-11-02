@@ -25,6 +25,9 @@ To get started, you can add `play-ahc-ws-standalone` as a dependency in SBT:
 
 ```scala
 libraryDependencies += "org.playframework" %% "play-ahc-ws-standalone" % "LATEST_VERSION"
+
+// Before version 3.0.0:
+libraryDependencies += "com.typesafe.play" %% "play-ahc-ws-standalone" % "LATEST_VERSION"
 ```
 
 Where you replace `LATEST_VERSION` with the version shown in this image: [![Latest released version](https://img.shields.io/maven-central/v/org.playframework/play-ws-standalone_2.13.svg)](http://mvnrepository.com/artifact/org.playframework/play-ws-standalone_2.13).
@@ -36,6 +39,10 @@ To add XML and JSON support using Play-JSON or Scala XML, add the following:
 ```scala
 libraryDependencies += "org.playframework" %% "play-ws-standalone-xml" % playWsStandaloneVersion
 libraryDependencies += "org.playframework" %% "play-ws-standalone-json" % playWsStandaloneVersion
+
+// Before version 3.0.0:
+libraryDependencies += "com.typesafe.play" %% "play-ws-standalone-xml" % playWsStandaloneVersion
+libraryDependencies += "com.typesafe.play" %% "play-ws-standalone-json" % playWsStandaloneVersion
 ```
 
 ## Shading
