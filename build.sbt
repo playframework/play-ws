@@ -49,39 +49,11 @@ val scalacOpts = Def.setting[Seq[String]] {
   }
 }
 
+val previousVersion: Option[String] = Some("3.0.0")
+
 lazy val mimaSettings = Seq(
-  mimaPreviousArtifacts := Set(
-    organization.value %% name.value % previousStableVersion.value
-      .getOrElse(throw new Error("Unable to determine previous version"))
-  ),
+  mimaPreviousArtifacts := previousVersion.map(organization.value %% moduleName.value % _).toSet,
   mimaBinaryIssueFilters ++= Seq(
-    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.AhcHttpCache.calculateCurrentAge"),
-    ProblemFilters.exclude[IncompatibleMethTypeProblem](
-      "play.api.libs.ws.ahc.cache.AhcHttpCache.calculateFreshnessFromHeuristic"
-    ),
-    ProblemFilters.exclude[IncompatibleMethTypeProblem](
-      "play.api.libs.ws.ahc.cache.AhcHttpCache.generateCachedResponse"
-    ),
-    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.AhcHttpCache.isCacheableExtension"),
-    ProblemFilters.exclude[IncompatibleMethTypeProblem]("play.api.libs.ws.ahc.cache.AhcHttpCache.serveAction"),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.cache.AhcHttpCache.cachingAction"),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem](
-      "play.api.libs.ws.ahc.cache.AhcHttpCache.calculateCurrentAge"
-    ),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem](
-      "play.api.libs.ws.ahc.cache.AhcHttpCache.calculateFreshnessLifetime"
-    ),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem](
-      "play.api.libs.ws.ahc.cache.AhcHttpCache.generateCacheRequest"
-    ),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem](
-      "play.api.libs.ws.ahc.cache.AhcHttpCache.generateOriginResponse"
-    ),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem](
-      "play.api.libs.ws.ahc.cache.AhcHttpCache.generateStoredResponse"
-    ),
-    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.api.libs.ws.ahc.cache.AhcHttpCache.selectionAction"),
-    ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.ahc.cache.AhcHttpCache"),
   )
 )
 
