@@ -26,7 +26,11 @@ object Dependencies {
 
   val junitInterface = Seq("com.github.sbt" % "junit-interface" % "0.13.3")
 
+<<<<<<< HEAD
   val playJson = Seq("com.typesafe.play" %% "play-json" % "2.10.2")
+=======
+  val playJson = Seq("org.playframework" %% "play-json" % "3.0.1")
+>>>>>>> 4dd0084 (play-json 3.0.1 (was 3.0.0))
 
   val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "2.0.9")
 
