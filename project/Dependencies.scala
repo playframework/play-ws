@@ -15,7 +15,7 @@ object Dependencies {
 
   val awaitility = Seq("org.awaitility" % "awaitility" % "4.2.0")
 
-  val specsVersion = "4.20.2"
+  val specsVersion = "4.20.3"
   val specsBuild = Seq(
     "specs2-core",
   ).map("org.specs2" %% _ % specsVersion)
@@ -26,7 +26,7 @@ object Dependencies {
 
   val junitInterface = Seq("com.github.sbt" % "junit-interface" % "0.13.3")
 
-  val playJson = Seq("org.playframework" %% "play-json" % "3.0.0")
+  val playJson = Seq("org.playframework" %% "play-json" % "3.0.1")
 
   val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "2.0.9")
 
