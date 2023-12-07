@@ -42,7 +42,7 @@ object Dependencies {
 
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "2.12.3")
 
-  val pekkoStreams = Seq("org.apache.pekko" %% "pekko-stream" % "1.0.1")
+  val pekkoStreams = Seq("org.apache.pekko" %% "pekko-stream" % "1.0.2")
 
   val playNettyServer = Seq("org.playframework" %% "play-netty-server" % "3.0.0")
 
