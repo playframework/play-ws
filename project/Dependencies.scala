@@ -42,9 +42,21 @@ object Dependencies {
 
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "2.12.3")
 
-  val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % "2.6.20")
+  val akkaVersion = "2.6.20"
 
-  val playNettyServer = Seq("com.typesafe.play" %% "play-netty-server" % "2.9.0")
+  val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion)
+
+  val backendServerTestDependencies = Seq(
+    "com.typesafe.play" %% "play-netty-server" % "2.9.0",
+    // Following dependencies are pulled in by play-netty-server, we just make sure
+    // now that we use the same akka version here like akka-stream above.
+    // This is because when upgrading the akka version in Play and play-ws here we usually release
+    // a new Play version before we can bump it here, so the versions will always differ for a short time.
+    // Since these deps are only used in tests it does not matter anyway.
+    "com.typesafe.akka" %% "akka-actor-typed"           % akkaVersion,
+    "com.typesafe.akka" %% "akka-serialization-jackson" % akkaVersion,
+    "com.typesafe.akka" %% "akka-slf4j"                 % akkaVersion
+  ).map(_ % Test)
 
   val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.4")
 
