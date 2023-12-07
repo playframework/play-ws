@@ -42,9 +42,21 @@ object Dependencies {
 
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "2.12.3")
 
-  val pekkoStreams = Seq("org.apache.pekko" %% "pekko-stream" % "1.0.2")
+  val pekkoVersion = "1.0.2"
 
-  val playNettyServer = Seq("org.playframework" %% "play-netty-server" % "3.0.0")
+  val pekkoStreams = Seq("org.apache.pekko" %% "pekko-stream" % pekkoVersion)
+
+  val backendServerTestDependencies = Seq(
+    "org.playframework" %% "play-netty-server" % "3.0.0",
+    // Following dependencies are pulled in by play-netty-server, we just make sure
+    // now that we use the same pekko version here like pekko-stream above.
+    // This is because when upgrading the pekko version in Play and play-ws here we usually release
+    // a new Play version before we can bump it here, so the versions will always differ for a short time.
+    // Since these deps are only used in tests it does not matter anyway.
+    "org.apache.pekko" %% "pekko-actor-typed"           % pekkoVersion,
+    "org.apache.pekko" %% "pekko-serialization-jackson" % pekkoVersion,
+    "org.apache.pekko" %% "pekko-slf4j"                 % pekkoVersion
+  ).map(_ % Test)
 
   val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.4")
 

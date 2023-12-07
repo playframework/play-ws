@@ -373,7 +373,7 @@ lazy val `integration-tests` = project
     Test / fork := true,
     concurrentRestrictions += Tags.limitAll(1), // only one integration test at a time
     Test / testOptions := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
-    libraryDependencies ++= playNettyServer.map(_ % Test) ++ testDependencies,
+    libraryDependencies ++= backendServerTestDependencies ++ testDependencies,
   )
   .settings(shadedAhcSettings)
   .settings(shadedOAuthSettings)
