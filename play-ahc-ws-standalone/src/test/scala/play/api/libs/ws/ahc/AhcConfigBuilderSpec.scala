@@ -9,7 +9,7 @@ import com.typesafe.config.ConfigFactory
 import com.typesafe.sslconfig.ssl.Protocols
 import com.typesafe.sslconfig.ssl.SSLConfigFactory
 import com.typesafe.sslconfig.ssl.SSLConfigSettings
-import org.specs2.mutable.Specification
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.ws.WSClientConfig
 import play.shaded.ahc.org.asynchttpclient.proxy.ProxyServerSelector
 import play.shaded.ahc.org.asynchttpclient.util.ProxyUtils
@@ -18,7 +18,7 @@ import scala.concurrent.duration._
 
 /**
  */
-class AhcConfigBuilderSpec extends Specification {
+class AhcConfigBuilderSpec extends AnyWordSpec {
 
   val defaultWsConfig = WSClientConfig()
   val defaultConfig   = AhcWSClientConfig(defaultWsConfig)
@@ -35,11 +35,11 @@ class AhcConfigBuilderSpec extends Specification {
           builder.setFollowRedirect(false)
         }
         .build()
-      ahcConfig.isCompressionEnforced must beFalse
-      ahcConfig.isFollowRedirect must beFalse
-      ahcConfig.getConnectTimeout must_== 120000
-      ahcConfig.getRequestTimeout must_== 120000
-      ahcConfig.getReadTimeout must_== 120000
+      assert(ahcConfig.isCompressionEnforced == false)
+      assert(ahcConfig.isFollowRedirect == false)
+      assert(ahcConfig.getConnectTimeout == 120000)
+      assert(ahcConfig.getRequestTimeout == 120000)
+      assert(ahcConfig.getReadTimeout == 120000)
     }
 
     "with basic options" should {
@@ -49,13 +49,13 @@ class AhcConfigBuilderSpec extends Specification {
         val builder = new AhcConfigBuilder(config)
         val actual  = builder.build()
 
-        actual.getReadTimeout must_== defaultWsConfig.idleTimeout.toMillis
-        actual.getRequestTimeout must_== defaultWsConfig.requestTimeout.toMillis
-        actual.getConnectTimeout must_== defaultWsConfig.connectionTimeout.toMillis
-        actual.isFollowRedirect must_== defaultWsConfig.followRedirects
-        actual.getCookieStore must_== null
+        assert(actual.getReadTimeout == defaultWsConfig.idleTimeout.toMillis)
+        assert(actual.getRequestTimeout == defaultWsConfig.requestTimeout.toMillis)
+        assert(actual.getConnectTimeout == defaultWsConfig.connectionTimeout.toMillis)
+        assert(actual.isFollowRedirect == defaultWsConfig.followRedirects)
+        assert(actual.getCookieStore == null)
 
-        actual.getEnabledProtocols.toSeq must not contain Protocols.deprecatedProtocols
+        assert(actual.getEnabledProtocols.toSeq.forall(x => !Protocols.deprecatedProtocols.contains(x)))
       }
 
       "use an explicit idle timeout" in {
@@ -64,7 +64,7 @@ class AhcConfigBuilderSpec extends Specification {
         val builder  = new AhcConfigBuilder(config)
 
         val actual = builder.build()
-        actual.getReadTimeout must_== 42L
+        assert(actual.getReadTimeout == 42L)
       }
 
       "use an explicit request timeout" in {
@@ -73,7 +73,7 @@ class AhcConfigBuilderSpec extends Specification {
         val builder  = new AhcConfigBuilder(config)
 
         val actual = builder.build()
-        actual.getRequestTimeout must_== 47L
+        assert(actual.getRequestTimeout == 47L)
       }
 
       "use an explicit connection timeout" in {
@@ -82,7 +82,7 @@ class AhcConfigBuilderSpec extends Specification {
         val builder  = new AhcConfigBuilder(config)
 
         val actual = builder.build()
-        actual.getConnectTimeout must_== 99L
+        assert(actual.getConnectTimeout == 99L)
       }
 
       "use an explicit followRedirects option" in {
@@ -91,7 +91,7 @@ class AhcConfigBuilderSpec extends Specification {
         val builder  = new AhcConfigBuilder(config)
 
         val actual = builder.build()
-        actual.isFollowRedirect must_== true
+        assert(actual.isFollowRedirect == true)
       }
 
       "use an explicit proxy if useProxyProperties is true and there are system defined proxy settings" in {
@@ -106,9 +106,9 @@ class AhcConfigBuilderSpec extends Specification {
 
           val proxyServerSelector = actual.getProxyServerSelector
 
-          proxyServerSelector must not(beNull)
+          assert(proxyServerSelector != null)
 
-          (proxyServerSelector must not).be_==(ProxyServerSelector.NO_PROXY_SELECTOR)
+          assert(proxyServerSelector != ProxyServerSelector.NO_PROXY_SELECTOR)
         } finally {
           // Unset http.proxyHost
           System.clearProperty(ProxyUtils.PROXY_HOST)
@@ -122,42 +122,42 @@ class AhcConfigBuilderSpec extends Specification {
         val config  = defaultConfig.copy(keepAlive = false)
         val builder = new AhcConfigBuilder(config)
         val actual  = builder.build()
-        actual.isKeepAlive must_== false
+        assert(actual.isKeepAlive == false)
       }
 
       "allow setting ahc maximumConnectionsPerHost" in {
         val config  = defaultConfig.copy(maxConnectionsPerHost = 3)
         val builder = new AhcConfigBuilder(config)
         val actual  = builder.build()
-        actual.getMaxConnectionsPerHost must_== 3
+        assert(actual.getMaxConnectionsPerHost == 3)
       }
 
       "allow setting ahc maximumConnectionsTotal" in {
         val config  = defaultConfig.copy(maxConnectionsTotal = 6)
         val builder = new AhcConfigBuilder(config)
         val actual  = builder.build()
-        actual.getMaxConnections must_== 6
+        assert(actual.getMaxConnections == 6)
       }
 
       "allow setting ahc maxNumberOfRedirects" in {
         val config  = defaultConfig.copy(maxNumberOfRedirects = 0)
         val builder = new AhcConfigBuilder(config)
         val actual  = builder.build()
-        actual.getMaxRedirects must_== 0
+        assert(actual.getMaxRedirects == 0)
       }
 
       "allow setting ahc maxRequestRetry" in {
         val config  = defaultConfig.copy(maxRequestRetry = 99)
         val builder = new AhcConfigBuilder(config)
         val actual  = builder.build()
-        actual.getMaxRequestRetry must_== 99
+        assert(actual.getMaxRequestRetry == 99)
       }
 
       "allow setting ahc disableUrlEncoding" in {
         val config  = defaultConfig.copy(disableUrlEncoding = true)
         val builder = new AhcConfigBuilder(config)
         val actual  = builder.build()
-        actual.isDisableUrlEncodingForBoundRequests must_== true
+        assert(actual.isDisableUrlEncodingForBoundRequests == true)
       }
     }
 
@@ -177,12 +177,12 @@ class AhcConfigBuilderSpec extends Specification {
           val config    = defaultConfig.copy(wsClientConfig = wsConfig)
           val builder   = new AhcConfigBuilder(config)
 
-          sslConfig.protocol must_== "TLSv1.2"
+          assert(sslConfig.protocol == "TLSv1.2")
 
           val asyncClientConfig = builder.build()
 
           // ...and return a result so specs2 is happy.
-          asyncClientConfig.getSslEngineFactory must not(beNull)
+          assert(asyncClientConfig.getSslEngineFactory != null)
         }
 
         "should validate certificates" in {
@@ -192,7 +192,7 @@ class AhcConfigBuilderSpec extends Specification {
           val builder   = new AhcConfigBuilder(config)
 
           val asyncConfig = builder.build()
-          asyncConfig.isUseInsecureTrustManager must beFalse
+          assert(asyncConfig.isUseInsecureTrustManager == false)
         }
 
         "should disable the hostname verifier if loose.acceptAnyCertificate is enabled" in {
@@ -203,7 +203,7 @@ class AhcConfigBuilderSpec extends Specification {
           val builder          = new AhcConfigBuilder(config)
 
           val asyncConfig = builder.build()
-          asyncConfig.isUseInsecureTrustManager must beTrue
+          assert(asyncConfig.isUseInsecureTrustManager)
         }
       }
 
@@ -218,7 +218,7 @@ class AhcConfigBuilderSpec extends Specification {
 
           val actual = builder.configureProtocols(existingProtocols, sslConfig)
 
-          actual.toSeq must containTheSameElementsAs(Protocols.recommendedProtocols.toIndexedSeq)
+          assert(actual.toSet == Protocols.recommendedProtocols.toSet)
         }
 
         "provide explicit protocols if specified" in {
@@ -231,7 +231,7 @@ class AhcConfigBuilderSpec extends Specification {
 
           val actual = builder.configureProtocols(existingProtocols, sslConfig)
 
-          actual.toSeq must containTheSameElementsAs(Seq("derp", "baz", "quux"))
+          assert(actual.toSet == Set("derp", "baz", "quux"))
         }
       }
 
@@ -247,7 +247,7 @@ class AhcConfigBuilderSpec extends Specification {
 
           val actual = builder.configureCipherSuites(existingCiphers, sslConfig)
 
-          actual.toSeq must containTheSameElementsAs(Seq("goodone", "goodtwo"))
+          assert(actual.toSet == Set("goodone", "goodtwo"))
         }
       }
     }

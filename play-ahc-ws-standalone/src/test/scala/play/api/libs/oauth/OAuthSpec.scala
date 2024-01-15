@@ -4,12 +4,12 @@
 
 package play.api.libs.oauth
 
-import org.specs2.mutable.Specification
+import org.scalatest.wordspec.AnyWordSpec
 
-class OAuthSpec extends Specification {
+class OAuthSpec extends AnyWordSpec {
   "OAuth" should {
     "be able to use signpost OAuth" in {
-      Class.forName("play.shaded.oauth.oauth.signpost.OAuth") must not(throwA[ClassNotFoundException])
+      Class.forName("play.shaded.oauth.oauth.signpost.OAuth")
     }
   }
 }

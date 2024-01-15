@@ -6,7 +6,7 @@ package play.libs.ws.ahc
 
 import org.mockito.Mockito.when
 import org.mockito.Mockito
-import org.specs2.mutable._
+import org.scalatest.wordspec.AnyWordSpec
 import play.libs.ws._
 import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
 import play.shaded.ahc.org.asynchttpclient.Response
@@ -15,7 +15,7 @@ import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters._
 import scala.reflect.ClassTag
 
-class AhcWSResponseSpec extends Specification with DefaultBodyReadables with DefaultBodyWritables {
+class AhcWSResponseSpec extends AnyWordSpec with DefaultBodyReadables with DefaultBodyWritables {
 
   private def mock[A](implicit a: ClassTag[A]): A =
     Mockito.mock(a.runtimeClass).asInstanceOf[A]
@@ -25,7 +25,7 @@ class AhcWSResponseSpec extends Specification with DefaultBodyReadables with Def
     "return the underlying response" in {
       val srcResponse = mock[Response]
       val response    = new StandaloneAhcWSResponse(srcResponse)
-      response.getUnderlying must_== srcResponse
+      assert(response.getUnderlying == srcResponse)
     }
 
   }
@@ -42,8 +42,8 @@ class AhcWSResponseSpec extends Specification with DefaultBodyReadables with Def
       when(srcResponse.getHeaders).thenReturn(srcHeaders)
       val response = new StandaloneAhcWSResponse(srcResponse)
       val headers  = response.getHeaders
-      headers.get("foo").asScala must_== Seq("a", "b", "b")
-      headers.get("BAR").asScala must_== Seq("baz")
+      assert(headers.get("foo").asScala == Seq("a", "b", "b"))
+      assert(headers.get("BAR").asScala == Seq("baz"))
     }
 
     "get a single header" in {
@@ -56,8 +56,8 @@ class AhcWSResponseSpec extends Specification with DefaultBodyReadables with Def
       when(srcResponse.getHeaders).thenReturn(srcHeaders)
       val response = new StandaloneAhcWSResponse(srcResponse)
 
-      response.getSingleHeader("Foo").toScala must beSome("a")
-      response.getSingleHeader("Bar").toScala must beSome("baz")
+      assert(response.getSingleHeader("Foo").toScala == Some("a"))
+      assert(response.getSingleHeader("Bar").toScala == Some("baz"))
     }
 
     "get an empty optional when header is not present" in {
@@ -70,7 +70,7 @@ class AhcWSResponseSpec extends Specification with DefaultBodyReadables with Def
       when(srcResponse.getHeaders).thenReturn(srcHeaders)
       val response = new StandaloneAhcWSResponse(srcResponse)
 
-      response.getSingleHeader("Non").toScala must beNone
+      assert(response.getSingleHeader("Non").toScala.isEmpty)
     }
 
     "get all values for a header" in {
@@ -83,7 +83,7 @@ class AhcWSResponseSpec extends Specification with DefaultBodyReadables with Def
       when(srcResponse.getHeaders).thenReturn(srcHeaders)
       val response = new StandaloneAhcWSResponse(srcResponse)
 
-      response.getHeaderValues("Foo").asScala must containTheSameElementsAs(Seq("a", "b", "b"))
+      assert(response.getHeaderValues("Foo").asScala.toSet == Set("a", "b", "b"))
     }
   }
 

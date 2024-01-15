@@ -4,9 +4,9 @@
 
 package play.api.libs.ws.ahc.cache
 
-import org.specs2.mutable.Specification
+import org.scalatest.wordspec.AnyWordSpec
 
-class CacheAsyncHandlerSpec extends Specification {
+class CacheAsyncHandlerSpec extends AnyWordSpec {
 
   "CacheAsyncHandlerSpec" should {
 

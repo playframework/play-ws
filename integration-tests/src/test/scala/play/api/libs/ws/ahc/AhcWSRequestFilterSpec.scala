@@ -4,9 +4,8 @@
 
 package play.api.libs.ws.ahc
 
-import org.specs2.concurrent.ExecutionEnv
-import org.specs2.matcher.FutureMatchers
-import org.specs2.mutable.Specification
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.wordspec.AnyWordSpec
 import play.NettyServerProvider
 import play.api.BuiltInComponents
 import play.api.libs.ws._
@@ -14,11 +13,11 @@ import play.api.mvc.Results
 
 import scala.collection.mutable
 
-class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
-    extends Specification
+class AhcWSRequestFilterSpec
+    extends AnyWordSpec
     with NettyServerProvider
     with StandaloneWSClientSupport
-    with FutureMatchers
+    with ScalaFutures
     with DefaultBodyReadables {
 
   override def routes(components: BuiltInComponents) = { case _ =>
@@ -67,9 +66,9 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
         })
         .get()
         .map { response =>
-          response.body[String] must contain("some string")
+          assert(response.body[String].contains("some string"))
         }
-        .await(retries = 0, timeout = defaultTimeout)
+        .futureValue
     }
 
     "stream with adhoc request filter" in withClient() { client =>
@@ -81,9 +80,9 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
         .withMethod("GET")
         .stream()
         .map { response =>
-          response.body[String] must contain("some string")
+          assert(response.body[String].contains("some string"))
         }
-        .await(retries = 0, timeout = defaultTimeout)
+        .futureValue
     }
 
     "work with one request filter" in withClient() { client =>
@@ -93,9 +92,9 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
         .withRequestFilter(new CallbackRequestFilter(callList, 1))
         .get()
         .map { _ =>
-          callList must contain(1)
+          assert(callList.contains(1))
         }
-        .await(retries = 0, timeout = defaultTimeout)
+        .futureValue
     }
 
     "stream with one request filter" in withClient() { client =>
@@ -106,9 +105,9 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
         .withMethod("GET")
         .stream()
         .map { _ =>
-          callList must contain(1)
+          assert(callList.contains(1))
         }
-        .await(retries = 0, timeout = defaultTimeout)
+        .futureValue
     }
 
     "work with three request filter" in withClient() { client =>
@@ -120,9 +119,9 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
         .withRequestFilter(new CallbackRequestFilter(callList, 3))
         .get()
         .map { _ =>
-          callList must containTheSameElementsAs(Seq(1, 2, 3))
+          assert(callList.toSet == Set(1, 2, 3))
         }
-        .await(retries = 0, timeout = defaultTimeout)
+        .futureValue
     }
 
     "stream with three request filters" in withClient() { client =>
@@ -135,9 +134,9 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
         .withMethod("GET")
         .stream()
         .map { _ =>
-          callList must containTheSameElementsAs(Seq(1, 2, 3))
+          assert(callList.toSet == Set(1, 2, 3))
         }
-        .await(retries = 0, timeout = defaultTimeout)
+        .futureValue
     }
 
     "should allow filters to modify the request" in withClient() { client =>
@@ -148,9 +147,9 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
         .withRequestFilter(new HeaderAppendingFilter(appendedHeader, appendedHeaderValue))
         .get()
         .map { response =>
-          response.headers("X-Request-Id").head must be_==("someid")
+          assert(response.headers("X-Request-Id").head == "someid")
         }
-        .await(retries = 0, timeout = defaultTimeout)
+        .futureValue
     }
 
     "allow filters to modify the streaming request" in withClient() { client =>
@@ -162,9 +161,9 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
         .withMethod("GET")
         .stream()
         .map { response =>
-          response.headers("X-Request-Id").head must be_==("someid")
+          assert(response.headers("X-Request-Id").head == "someid")
         }
-        .await(retries = 0, timeout = defaultTimeout)
+        .futureValue
     }
   }
 }

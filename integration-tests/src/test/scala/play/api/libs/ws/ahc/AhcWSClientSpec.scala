@@ -6,11 +6,8 @@ package play.api.libs.ws.ahc
 
 import org.apache.pekko.stream.scaladsl.Sink
 import org.apache.pekko.util.ByteString
-import org.specs2.concurrent.ExecutionEnv
-import org.specs2.concurrent.FutureAwait
-import org.specs2.execute.Result
-import org.specs2.matcher.FutureMatchers
-import org.specs2.mutable.Specification
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.wordspec.AnyWordSpec
 import play.NettyServerProvider
 import play.api.BuiltInComponents
 import play.api.http.Status.MOVED_PERMANENTLY
@@ -24,18 +21,17 @@ import play.shaded.ahc.org.asynchttpclient.handler.MaxRedirectException
 
 import scala.concurrent._
 
-class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
-    extends Specification
+class AhcWSClientSpec
+    extends AnyWordSpec
     with NettyServerProvider
     with StandaloneWSClientSupport
-    with FutureMatchers
-    with FutureAwait
+    with ScalaFutures
     with DefaultBodyReadables
     with DefaultBodyWritables {
 
-  def withClientFollowingRedirect(
+  def withClientFollowingRedirect[A](
       config: AhcWSClientConfig = AhcWSClientConfigFactory.forConfig()
-  )(block: StandaloneAhcWSClient => Result): Result = {
+  )(block: StandaloneAhcWSClient => A): A = {
     withClient(
       config.copy(
         wsClientConfig = config.wsClientConfig.copy(followRedirects = true)
@@ -106,13 +102,15 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
   "url" should {
     "throw an exception on invalid url" in {
       withClient() { client =>
-        { client.url("localhost") } must throwAn[IllegalArgumentException]
+        assertThrows[IllegalArgumentException] {
+          client.url("localhost")
+        }
       }
     }
 
     "not throw exception on valid url" in {
       withClient() { client =>
-        { client.url(s"http://localhost:$testServerPort") } must not(throwAn[IllegalArgumentException])
+        client.url(s"http://localhost:$testServerPort")
       }
     }
   }
@@ -125,7 +123,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
           client.url(s"http://localhost:$testServerPort/index").get().map(res => res.body[String]),
           defaultTimeout
         )
-        result must beEqualTo("Say hello to play")
+        assert(result == "Say hello to play")
       }
     }
 
@@ -143,7 +141,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
           client.url(s"http://localhost:$testServerPort/index").get().map(res => res.body[Foo]),
           defaultTimeout
         )
-        result must beEqualTo(Foo("Say hello to play"))
+        assert(result == Foo("Say hello to play"))
       }
     }
 
@@ -154,22 +152,22 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
           defaultTimeout
         )
         val bytes: ByteString = Await.result(resultSource.runWith(Sink.head), defaultTimeout)
-        bytes.utf8String must beEqualTo("Say hello to play")
+        assert(bytes.utf8String == "Say hello to play")
       }
     }
 
-    "when following redirect" in {
+    "when following redirect" should {
 
       "honor the number of redirects allowed" in {
         // 1. Default number of max redirects is 5
         withClientFollowingRedirect() { client =>
-          {
+          assertThrows[MaxRedirectException] {
             val request = client
               // 2. Ask to redirect 10 times
               .url(s"http://localhost:$testServerPort/redirects/302/10")
               .get()
             Await.result(request, defaultTimeout)
-          } must throwA[MaxRedirectException]
+          }
         }
       }
 
@@ -179,7 +177,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
             client.url(s"http://localhost:$testServerPort/redirect/302").get().map(res => res.body[String]),
             defaultTimeout
           )
-          result must beEqualTo("Say hello to play")
+          assert(result == "Say hello to play")
         }
       }
 
@@ -188,7 +186,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
         val ahcWsConfig = AhcWSClientConfigFactory.forConfig().copy(wsClientConfig = wsConfig)
         withClient(config = ahcWsConfig) { client =>
           val result = Await.result(client.url(s"http://localhost:$testServerPort/redirect/302").get(), defaultTimeout)
-          result.status must beEqualTo(302)
+          assert(result.status == 302)
         }
       }
 
@@ -201,7 +199,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
             .withFollowRedirects(false)
             .get()
           val result = Await.result(request, defaultTimeout)
-          result.status must beEqualTo(302)
+          assert(result.status == 302)
         }
       }
 
@@ -211,7 +209,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
             client.url(s"http://localhost:$testServerPort/redirect/301").get().map(res => res.body[String]),
             defaultTimeout
           )
-          result must beEqualTo("Say hello to play")
+          assert(result == "Say hello to play")
         }
       }
 
@@ -221,7 +219,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
             client.url(s"http://localhost:$testServerPort/redirect/302").get().map(res => res.body[String]),
             defaultTimeout
           )
-          result must beEqualTo("Say hello to play")
+          assert(result == "Say hello to play")
         }
       }
 
@@ -231,7 +229,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
             client.url(s"http://localhost:$testServerPort/redirect/303").get().map(res => res.body[String]),
             defaultTimeout
           )
-          result must beEqualTo("Say hello to play")
+          assert(result == "Say hello to play")
         }
       }
 
@@ -241,7 +239,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
             client.url(s"http://localhost:$testServerPort/redirect/307").get().map(res => res.body[String]),
             defaultTimeout
           )
-          result must beEqualTo("Say hello to play")
+          assert(result == "Say hello to play")
         }
       }
 
@@ -251,7 +249,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
             client.url(s"http://localhost:$testServerPort/redirect/308").get().map(res => res.body[String]),
             defaultTimeout
           )
-          result must beEqualTo("Say hello to play")
+          assert(result == "Say hello to play")
         }
       }
 
@@ -262,7 +260,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
             .withVirtualHost("localhost1")
             .get()
           val result = Await.result(request, defaultTimeout)
-          result.header("Req-Host") must beSome("localhost1")
+          assert(result.header("Req-Host") == Some("localhost1"))
         }
       }
 
@@ -273,7 +271,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
             .addHttpHeaders("X-Test" -> "Test")
             .get()
           val result = Await.result(request, defaultTimeout)
-          result.header("Req-X-Test") must beSome("Test")
+          assert(result.header("Req-X-Test") == Some("Test"))
         }
       }
 
@@ -284,7 +282,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
             .withAuth("test", "test", WSAuthScheme.BASIC)
             .get()
           val result = Await.result(request, defaultTimeout)
-          result.header("Req-Authorization") must beSome
+          assert(result.header("Req-Authorization").isDefined)
         }
       }
 
@@ -294,7 +292,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
             client.url(s"http://localhost:$testServerPort/cookie").get().map(res => res.body[String]),
             defaultTimeout
           )
-          result must beEqualTo(s"Cookie value => redirect-cookie")
+          assert(result == s"Cookie value => redirect-cookie")
         }
       }
 
@@ -311,11 +309,11 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
             client.url(s"http://localhost:$testServerPort/cookie-destination").get().map(res => res.body[String]),
             defaultTimeout
           )
-          res2 must beEqualTo(s"Request is missing required cookie 'flash'")
+          assert(res2 == s"Request is missing required cookie 'flash'")
         }
       }
 
-      "switch to get " in {
+      "switch to get " should {
         "for HTTP 301 Moved Permanently" in {
           withClientFollowingRedirect() { client =>
             val request = client
@@ -328,7 +326,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
 
             // 2. So when following the redirect, the GET path should be found
             // and we get its body
-            result must beEqualTo("Say hello to play")
+            assert(result == "Say hello to play")
           }
         }
 
@@ -338,7 +336,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
               .url(s"http://localhost:$testServerPort/redirect/303")
               .post("request body")
             val result = Await.result(request.map(res => res.body[String]), defaultTimeout)
-            result must beEqualTo("Say hello to play")
+            assert(result == "Say hello to play")
           }
         }
 
@@ -354,7 +352,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
 
             // 2. So when following the redirect, the GET path should be found
             // and we get its body
-            result must beEqualTo("Say hello to play")
+            assert(result == "Say hello to play")
           }
         }
       }

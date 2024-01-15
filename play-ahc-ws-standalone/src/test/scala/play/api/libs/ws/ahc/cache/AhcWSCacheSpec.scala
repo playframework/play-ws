@@ -8,14 +8,15 @@ import java.net.URI
 
 import org.playframework.cachecontrol.HttpDate._
 import org.playframework.cachecontrol._
-import org.specs2.mutable.Specification
+import org.scalatest.OptionValues
+import org.scalatest.wordspec.AnyWordSpec
 import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClientConfig
 import play.shaded.ahc.org.asynchttpclient.Request
 import play.shaded.ahc.org.asynchttpclient.RequestBuilder
 
-class AhcWSCacheSpec extends Specification {
+class AhcWSCacheSpec extends AnyWordSpec with OptionValues {
 
   "freshness heuristics flag" should {
 
@@ -31,11 +32,9 @@ class AhcWSCacheSpec extends Specification {
       val response: CacheResponse =
         StoredResponse(uri, 200, Map(HeaderName("Last-Modified") -> Seq(lastModifiedDate)), "GET", Map())
 
-      val actual = cache.calculateFreshnessFromHeuristic(request, response)
+      val actual = cache.calculateFreshnessFromHeuristic(request, response).value
 
-      actual must beSome[Seconds].which { case value =>
-        value must be_==(Seconds.seconds(360)) // 0.1 hours
-      }
+      assert(actual == Seconds.seconds(360)) // 0.1 hours
     }
 
     "be disabled when set to false" in {
@@ -52,7 +51,7 @@ class AhcWSCacheSpec extends Specification {
 
       val actual = cache.calculateFreshnessFromHeuristic(request, response)
 
-      actual must beNone
+      assert(actual.isEmpty)
     }
 
   }
@@ -70,13 +69,10 @@ class AhcWSCacheSpec extends Specification {
       val request  = generateRequest(url)(headers => headers.add("Accept-Encoding", "gzip"))
       val response = CacheableResponse(200, url, achConfig).withHeaders("Vary" -> "Accept-Encoding")
 
-      val actual = cache.calculateSecondaryKeys(request, response)
+      val d = cache.calculateSecondaryKeys(request, response).value
 
-      actual must beSome[Map[HeaderName, Seq[String]]].which { d =>
-        d must haveKey(HeaderName("Accept-Encoding"))
-        d(HeaderName("Accept-Encoding")) must be_==(Seq("gzip"))
-      }
-
+      assert(d.isDefinedAt(HeaderName("Accept-Encoding")))
+      assert(d(HeaderName("Accept-Encoding")) == Seq("gzip"))
     }
 
   }

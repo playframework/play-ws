@@ -4,12 +4,12 @@
 
 package play.api.libs.ws
 
-import org.specs2.mutable._
 import com.typesafe.config.ConfigFactory
+import org.scalatest.wordspec.AnyWordSpec
 
 import scala.concurrent.duration._
 
-class WSConfigParserSpec extends Specification {
+class WSConfigParserSpec extends AnyWordSpec {
 
   "WSConfigParser" should {
 
@@ -29,17 +29,17 @@ class WSConfigParserSpec extends Specification {
                                |play.ws.useragent = "FakeUserAgent"
                              """.stripMargin)
 
-      actual.connectionTimeout must_== 9999.millis
-      actual.idleTimeout must_== 666.millis
-      actual.requestTimeout must_== 1234.millis
+      assert(actual.connectionTimeout == 9999.millis)
+      assert(actual.idleTimeout == 666.millis)
+      assert(actual.requestTimeout == 1234.millis)
 
       // default: true
-      actual.followRedirects must beFalse
+      assert(actual.followRedirects == false)
 
       // default: true
-      actual.useProxyProperties must beFalse
+      assert(actual.useProxyProperties == false)
 
-      actual.userAgent must beSome[String].which(_ must_== "FakeUserAgent")
+      assert(actual.userAgent == Some("FakeUserAgent"))
     }
   }
 }
