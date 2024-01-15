@@ -28,7 +28,7 @@ object Dependencies {
 
   val playJson = Seq("org.playframework" %% "play-json" % "3.0.1")
 
-  val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "2.0.9")
+  val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "2.0.11")
 
   val javaxInject = Seq("javax.inject" % "javax.inject" % "1")
 
@@ -47,7 +47,7 @@ object Dependencies {
   val pekkoStreams = Seq("org.apache.pekko" %% "pekko-stream" % pekkoVersion)
 
   val backendServerTestDependencies = Seq(
-    "org.playframework" %% "play-netty-server" % "3.0.0",
+    "org.playframework" %% "play-netty-server" % "3.0.1",
     // Following dependencies are pulled in by play-netty-server, we just make sure
     // now that we use the same pekko version here like pekko-stream above.
     // This is because when upgrading the pekko version in Play and play-ws here we usually release
