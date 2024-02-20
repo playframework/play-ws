@@ -9,7 +9,7 @@ object Dependencies {
   val scala213 = "2.13.12"
   val scala3   = "3.3.1"
 
-  val logback = Seq("ch.qos.logback" % "logback-core" % "1.4.14")
+  val logback = Seq("ch.qos.logback" % "logback-core" % "1.5.0")
 
   val assertj = Seq("org.assertj" % "assertj-core" % "3.25.1")
 
