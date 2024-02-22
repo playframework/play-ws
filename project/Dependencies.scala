@@ -11,11 +11,11 @@ object Dependencies {
 
   val logback = Seq("ch.qos.logback" % "logback-core" % "1.4.14")
 
-  val assertj = Seq("org.assertj" % "assertj-core" % "3.25.1")
+  val assertj = Seq("org.assertj" % "assertj-core" % "3.25.3")
 
   val awaitility = Seq("org.awaitility" % "awaitility" % "4.2.0")
 
-  val specsVersion = "4.20.3"
+  val specsVersion = "4.20.5"
   val specsBuild = Seq(
     "specs2-core",
   ).map("org.specs2" %% _ % specsVersion)
@@ -26,9 +26,9 @@ object Dependencies {
 
   val junitInterface = Seq("com.github.sbt" % "junit-interface" % "0.13.3")
 
-  val playJson = Seq("com.typesafe.play" %% "play-json" % "2.10.3")
+  val playJson = Seq("com.typesafe.play" %% "play-json" % "2.10.4")
 
-  val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "2.0.11")
+  val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "2.0.12")
 
   val javaxInject = Seq("javax.inject" % "javax.inject" % "1")
 
