@@ -6,10 +6,10 @@ import sbt._
 object Dependencies {
 
   // Should be sync with GA (.github/workflows/build-test.yml)
-  val scala213 = "2.13.12"
-  val scala3   = "3.3.1"
+  val scala213 = "2.13.13"
+  val scala3   = "3.3.3"
 
-  val logback = Seq("ch.qos.logback" % "logback-core" % "1.5.0")
+  val logback = Seq("ch.qos.logback" % "logback-core" % "1.5.3")
 
   val assertj = Seq("org.assertj" % "assertj-core" % "3.25.3")
 
@@ -42,12 +42,12 @@ object Dependencies {
 
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "2.12.3")
 
-  val akkaVersion = "2.6.20"
+  val akkaVersion = "2.6.21"
 
   val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion)
 
   val backendServerTestDependencies = Seq(
-    "com.typesafe.play" %% "play-netty-server" % "2.9.1",
+    "com.typesafe.play" %% "play-netty-server" % "2.9.2",
     // Following dependencies are pulled in by play-netty-server, we just make sure
     // now that we use the same akka version here like akka-stream above.
     // This is because when upgrading the akka version in Play and play-ws here we usually release
