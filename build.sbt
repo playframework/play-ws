@@ -191,7 +191,9 @@ lazy val `shaded-asynchttpclient` = project
       ShadeRule.rename("org.asynchttpclient.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.rename("io.netty.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.rename("javassist.**" -> "play.shaded.ahc.@0").inAll,
-      ShadeRule.rename("org.playframework.netty.**" -> "play.shaded.ahc.@0").inAll,
+      ShadeRule // asynchttpclient 2.x depends on netty-reactive-streams 2.x (v3 drops it, see async-http-client#1843 + #1819)
+        .rename("com.typesafe.netty.**" -> "play.shaded.ahc.@0")
+        .inAll,
       ShadeRule.rename("javax.activation.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.rename("com.sun.activation.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.zap("org.reactivestreams.**").inAll,
