@@ -401,6 +401,7 @@ case class StandaloneAhcWSRequest(
         case _ => scala.sys.error("Unrecognized protocol!")
       }
       realmBuilder.setScheme(scheme)
+      realmBuilder.setUsePreemptiveAuth(true)
       wsProxyServer.encoding.foreach(enc => realmBuilder.setCharset(Charset.forName(enc)))
       wsProxyServer.ntlmDomain.foreach(realmBuilder.setNtlmDomain)
       proxyBuilder.setRealm(realmBuilder)
