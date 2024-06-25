@@ -26,7 +26,7 @@ object Dependencies {
 
   val junitInterface = Seq("com.github.sbt" % "junit-interface" % "0.13.3")
 
-  val playJson = Seq("com.typesafe.play" %% "play-json" % "2.10.5")
+  val playJson = Seq("com.typesafe.play" %% "play-json" % "2.10.6")
 
   val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "2.0.13")
 
@@ -47,7 +47,7 @@ object Dependencies {
   val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion)
 
   val backendServerTestDependencies = Seq(
-    "com.typesafe.play" %% "play-netty-server" % "2.9.3",
+    "com.typesafe.play" %% "play-netty-server" % "2.9.4",
     // Following dependencies are pulled in by play-netty-server, we just make sure
     // now that we use the same akka version here like akka-stream above.
     // This is because when upgrading the akka version in Play and play-ws here we usually release
