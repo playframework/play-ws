@@ -24,7 +24,7 @@ Global / onLoad := (Global / onLoad).value.andThen { s =>
 
 val javacSettings = Seq(
   "--release",
-  "11",
+  "17",
   "-Xlint:deprecation",
   "-Xlint:unchecked"
 )
@@ -34,7 +34,7 @@ val scalacOpts = Def.setting[Seq[String]] {
 
   val common = Seq(
     "-release",
-    "11",
+    "17",
     "-deprecation",
     "-encoding",
     "UTF-8",
