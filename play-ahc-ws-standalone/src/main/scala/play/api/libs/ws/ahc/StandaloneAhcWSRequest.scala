@@ -17,6 +17,7 @@ import play.shaded.ahc.io.netty.buffer.Unpooled
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
 import play.shaded.ahc.org.asynchttpclient._
+import play.shaded.ahc.org.asynchttpclient.proxy.ProxyType
 import play.shaded.ahc.org.asynchttpclient.proxy.{ ProxyServer => AHCProxyServer }
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils
 
@@ -449,6 +450,16 @@ case class StandaloneAhcWSRequest(
       wsProxyServer.ntlmDomain.foreach(realmBuilder.setNtlmDomain)
       proxyBuilder.setRealm(realmBuilder)
     }
+
+    val proxyType = wsProxyServer.proxyType.getOrElse("http").toLowerCase(java.util.Locale.ENGLISH) match {
+      case "http" =>
+        ProxyType.HTTP
+      case "socksv4" =>
+        ProxyType.SOCKS_V4
+      case "socksv5" =>
+        ProxyType.SOCKS_V5
+    }
+    proxyBuilder.setProxyType(proxyType);
 
     wsProxyServer.nonProxyHosts.foreach { nonProxyHosts =>
       import scala.jdk.CollectionConverters._
