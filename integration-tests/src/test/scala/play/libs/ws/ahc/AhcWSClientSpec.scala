@@ -6,9 +6,8 @@ package play.libs.ws.ahc
 
 import org.apache.pekko.stream.javadsl.Sink
 import org.apache.pekko.util.ByteString
-import org.specs2.concurrent.ExecutionEnv
-import org.specs2.matcher.FutureMatchers
-import org.specs2.mutable.Specification
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.wordspec.AnyWordSpec
 import play.NettyServerProvider
 import play.api.BuiltInComponents
 import play.api.mvc.AnyContentAsText
@@ -19,13 +18,12 @@ import play.libs.ws._
 
 import scala.jdk.FutureConverters._
 import scala.concurrent.Future
-import scala.concurrent.duration._
 
-class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
-    extends Specification
+class AhcWSClientSpec
+    extends AnyWordSpec
     with NettyServerProvider
     with StandaloneWSClientSupport
-    with FutureMatchers
+    with ScalaFutures
     with XMLBodyWritables
     with XMLBodyReadables {
 
@@ -59,8 +57,8 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
         .url(s"http://localhost:$testServerPort")
         .post(someOtherMethod("hello world"))
         .asScala
-        .map(response => response.getBody() must be_==("hello world"))
-        .await(retries = 0, timeout = 5.seconds)
+        .map(response => assert(response.getBody() == "hello world"))
+        .futureValue
     }
 
     "source successfully" in withClient() { client =>
@@ -69,7 +67,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
         response.getBodyAsSource.runWith(Sink.head[ByteString](), materializer).asScala
       }
       val expected: ByteString = ByteString.fromString("<h1>Say hello to play</h1>")
-      result must be_==(expected).await(retries = 0, timeout = 5.seconds)
+      assert(result.futureValue == expected)
     }
 
     "round trip XML successfully" in withClient() { client =>
@@ -96,11 +94,10 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
           val responseXml = response.getBody(xml())
           responseXml.normalizeDocument()
 
-          (responseXml.isEqualNode(document) must beTrue).and {
-            response.getUri must beEqualTo(new java.net.URI(s"http://localhost:$testServerPort"))
-          }
+          assert(responseXml.isEqualNode(document))
+          assert(response.getUri == new java.net.URI(s"http://localhost:$testServerPort"))
         }
-        .await(retries = 0, timeout = 5.seconds)
+        .futureValue
     }
   }
 }
