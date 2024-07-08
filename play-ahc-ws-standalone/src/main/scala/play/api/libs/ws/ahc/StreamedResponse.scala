@@ -11,6 +11,9 @@ import play.api.libs.ws.StandaloneWSResponse
 import play.api.libs.ws.WSCookie
 import play.shaded.ahc.org.asynchttpclient.HttpResponseBodyPart
 
+import scala.collection.immutable.TreeMap
+import scala.collection.mutable
+
 /**
  * A streamed response containing a response header and a streamable body.
  *
@@ -39,7 +42,7 @@ class StreamedResponse(
     val status: Int,
     val statusText: String,
     val uri: java.net.URI,
-    val headers: Map[String, scala.collection.Seq[String]],
+    headers: Map[String, scala.collection.Seq[String]],
     publisher: Publisher[HttpResponseBodyPart],
     val useLaxCookieEncoder: Boolean
 ) extends StandaloneWSResponse
@@ -49,6 +52,17 @@ class StreamedResponse(
    * Get the underlying response object.
    */
   override def underlying[T]: T = publisher.asInstanceOf[T]
+
+  override def headers(): Map[String, scala.collection.Seq[String]] = {
+    val mutableMap = mutable.TreeMap[String, scala.collection.Seq[String]]()(CaseInsensitiveOrdered)
+    headers.keys.foreach { name =>
+      mutableMap.updateWith(name) {
+        case Some(value) => Some(value ++ headers.getOrElse(name, Seq.empty))
+        case None        => Some(headers.getOrElse(name, Seq.empty))
+      }
+    }
+    TreeMap[String, scala.collection.Seq[String]]()(CaseInsensitiveOrdered) ++ mutableMap
+  }
 
   /**
    * Get all the cookies.
