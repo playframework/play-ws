@@ -15,7 +15,7 @@ object Dependencies {
 
   val awaitility = Seq("org.awaitility" % "awaitility" % "4.2.1")
 
-  val specsVersion = "4.20.7"
+  val specsVersion = "4.20.8"
   val specsBuild = Seq(
     "specs2-core",
   ).map("org.specs2" %% _ % specsVersion)
@@ -38,7 +38,7 @@ object Dependencies {
 
   val oauth = Seq("oauth.signpost" % "signpost-core" % "2.1.1")
 
-  val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % "2.3.1")
+  val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % "2.3.2")
 
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "2.12.3")
 
