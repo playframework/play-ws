@@ -42,23 +42,44 @@ class StreamedResponse(
     val status: Int,
     val statusText: String,
     val uri: java.net.URI,
-    headers: Map[String, scala.collection.Seq[String]],
     publisher: Publisher[HttpResponseBodyPart],
     val useLaxCookieEncoder: Boolean
 ) extends StandaloneWSResponse
     with CookieBuilder {
+
+  def this(
+      client: StandaloneAhcWSClient,
+      status: Int,
+      statusText: String,
+      uri: java.net.URI,
+      headers: Map[String, scala.collection.Seq[String]],
+      publisher: Publisher[HttpResponseBodyPart],
+      useLaxCookieEncoder: Boolean
+  ) = {
+    this(
+      client,
+      status,
+      statusText,
+      uri,
+      publisher,
+      useLaxCookieEncoder
+    )
+    origHeaders = headers
+  }
+
+  private var origHeaders: Map[String, scala.collection.Seq[String]] = Map.empty
 
   /**
    * Get the underlying response object.
    */
   override def underlying[T]: T = publisher.asInstanceOf[T]
 
-  override def headers(): Map[String, scala.collection.Seq[String]] = {
+  override lazy val headers: Map[String, scala.collection.Seq[String]] = {
     val mutableMap = mutable.TreeMap[String, scala.collection.Seq[String]]()(CaseInsensitiveOrdered)
-    headers.keys.foreach { name =>
+    origHeaders.keys.foreach { name =>
       mutableMap.updateWith(name) {
-        case Some(value) => Some(value ++ headers.getOrElse(name, Seq.empty))
-        case None        => Some(headers.getOrElse(name, Seq.empty))
+        case Some(value) => Some(value ++ origHeaders.getOrElse(name, Seq.empty))
+        case None        => Some(origHeaders.getOrElse(name, Seq.empty))
       }
     }
     TreeMap[String, scala.collection.Seq[String]]()(CaseInsensitiveOrdered) ++ mutableMap
