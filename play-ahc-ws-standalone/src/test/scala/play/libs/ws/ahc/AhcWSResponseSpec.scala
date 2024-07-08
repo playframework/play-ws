@@ -46,6 +46,14 @@ class AhcWSResponseSpec extends Specification with DefaultBodyReadables with Def
       headers.get("BAR").asScala must_== Seq("baz")
     }
 
+    "get headers map which retrieves headers case insensitively (for streamed responses)" in {
+      val srcHeaders = Map("Foo" -> Seq("a"), "foo" -> Seq("b"), "FOO" -> Seq("b"), "Bar" -> Seq("baz"))
+      val response   = new StreamedResponse(null, 200, "", null, srcHeaders, null, true)
+      val headers    = response.getHeaders
+      headers.get("foo").asScala must_== Seq("a", "b", "b")
+      headers.get("BAR").asScala must_== Seq("baz")
+    }
+
     "get a single header" in {
       val srcResponse = mock[Response]
       val srcHeaders = new DefaultHttpHeaders()
