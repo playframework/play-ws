@@ -17,9 +17,11 @@ import scala.collection.Seq;
 import scala.jdk.javaapi.StreamConverters;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.function.Predicate;
 
 import static java.util.stream.Collectors.toMap;
@@ -121,7 +123,16 @@ public class StreamedResponse implements StandaloneWSResponse, CookieBuilder {
     }
 
     private static java.util.Map<String, List<String>> asJava(scala.collection.Map<String, Seq<String>> scalaMap) {
-        return StreamConverters.asJavaSeqStream(scalaMap).collect(toMap(f -> f._1(), f -> CollectionConverters.asJava(f._2())));
+        return StreamConverters.asJavaSeqStream(scalaMap).collect(toMap(f -> f._1(), f -> CollectionConverters.asJava(f._2()),
+                (l, r) -> {
+                    final List<String> merged = new ArrayList<>(l.size() + r.size());
+                    merged.addAll(l);
+                    merged.addAll(r);
+                    return merged;
+                },
+                () -> new TreeMap<>(String.CASE_INSENSITIVE_ORDER)
+            )
+        );
     }
 
 }
