@@ -40,7 +40,7 @@ object Dependencies {
 
   val cachecontrol = Seq("org.playframework" %% "cachecontrol" % "3.0.1")
 
-  val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "2.12.3")
+  val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "3.0.0")
 
   val pekkoVersion = "1.0.3"
 
