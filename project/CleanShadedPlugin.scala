@@ -4,7 +4,6 @@
  */
 
 // https://github.com/sbt/sbt-dirty-money/blob/master/src/main/scala/sbtdirtymoney/DirtyMoneyPlugin.scala
-
 import sbt._
 import Keys._
 
