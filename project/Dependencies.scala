@@ -11,7 +11,7 @@ object Dependencies {
 
   val logback = Seq("ch.qos.logback" % "logback-core" % "1.5.6")
 
-  val assertj = Seq("org.assertj" % "assertj-core" % "3.26.0")
+  val assertj = Seq("org.assertj" % "assertj-core" % "3.26.3")
 
   val awaitility = Seq("org.awaitility" % "awaitility" % "4.2.1")
 
@@ -47,7 +47,7 @@ object Dependencies {
   val akkaStreams = Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion)
 
   val backendServerTestDependencies = Seq(
-    "com.typesafe.play" %% "play-netty-server" % "2.9.4",
+    "com.typesafe.play" %% "play-netty-server" % "2.9.5",
     // Following dependencies are pulled in by play-netty-server, we just make sure
     // now that we use the same akka version here like akka-stream above.
     // This is because when upgrading the akka version in Play and play-ws here we usually release
