@@ -7,7 +7,7 @@ object Dependencies {
 
   // Should be sync with GA (.github/workflows/build-test.yml)
   val scala213 = "2.13.15"
-  val scala3   = "3.3.3"
+  val scala3   = "3.3.4"
 
   val logback = Seq("ch.qos.logback" % "logback-core" % "1.5.8")
 
