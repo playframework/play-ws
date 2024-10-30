@@ -46,7 +46,7 @@ object Dependencies {
     "com.typesafe.netty" % "netty-reactive-streams" % "2.0.12", // ... a newer version ourselves (ahc v3 will drop that dependency)
   )
 
-  val pekkoVersion = "1.1.1"
+  val pekkoVersion = "1.1.2"
 
   val pekkoStreams = Seq("org.apache.pekko" %% "pekko-stream" % pekkoVersion)
 
