@@ -9,18 +9,18 @@ object Dependencies {
   val scala213 = "2.13.15"
   val scala3   = "3.3.4"
 
-  val logback = Seq("ch.qos.logback" % "logback-core" % "1.5.8")
+  val logback = Seq("ch.qos.logback" % "logback-core" % "1.5.12")
 
   val assertj = Seq("org.assertj" % "assertj-core" % "3.26.3")
 
   val awaitility = Seq("org.awaitility" % "awaitility" % "4.2.2")
 
-  val specsVersion = "4.20.8"
+  val specsVersion = "4.20.9"
   val specsBuild = Seq(
     "specs2-core",
   ).map("org.specs2" %% _ % specsVersion)
 
-  val mockito = Seq("org.mockito" % "mockito-core" % "5.14.0")
+  val mockito = Seq("org.mockito" % "mockito-core" % "5.14.2")
 
   val slf4jtest = Seq("uk.org.lidalia" % "slf4j-test" % "1.2.0")
 
