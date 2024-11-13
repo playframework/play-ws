@@ -43,7 +43,7 @@ object Dependencies {
   val asyncHttpClient = Seq(
     ("org.asynchttpclient" % "async-http-client" % "2.12.3") // 2.12.x comes with outdated netty-reactive-streams, so we ...
       .exclude("com.typesafe.netty", "netty-reactive-streams"), // ... exclude it and pull in ...
-    "com.typesafe.netty" % "netty-reactive-streams" % "2.0.12", // ... a newer version ourselves (ahc v3 will drop that dependency)
+    "com.typesafe.netty" % "netty-reactive-streams" % "2.0.13", // ... a newer version ourselves (ahc v3 will drop that dependency)
   )
 
   val pekkoVersion = "1.1.2"
