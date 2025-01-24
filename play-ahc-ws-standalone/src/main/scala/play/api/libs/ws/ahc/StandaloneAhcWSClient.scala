@@ -5,7 +5,7 @@
 package play.api.libs.ws.ahc
 
 import org.apache.pekko.Done
-import javax.inject.Inject
+import jakarta.inject.Inject
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString

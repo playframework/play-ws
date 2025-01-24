@@ -31,7 +31,7 @@ import scala.concurrent.ExecutionContext;
 import scala.concurrent.Future;
 import scala.concurrent.Promise;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;

@@ -30,7 +30,7 @@ object Dependencies {
 
   val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "2.0.16")
 
-  val javaxInject = Seq("javax.inject" % "javax.inject" % "1")
+  val jakartaInject = Seq("jakarta.inject" % "jakarta.inject-api" % "2.0.1")
 
   val sslConfigCore = Seq("com.typesafe" %% "ssl-config-core" % "0.6.1")
 
@@ -67,7 +67,7 @@ object Dependencies {
   val testDependencies =
     (mockito ++ specsBuild ++ junitInterface ++ assertj ++ awaitility ++ slf4jtest ++ logback).map(_ % Test)
 
-  val standaloneApiWSDependencies = javaxInject ++ sslConfigCore ++ pekkoStreams ++ testDependencies
+  val standaloneApiWSDependencies = jakartaInject ++ sslConfigCore ++ pekkoStreams ++ testDependencies
 
   val standaloneAhcWSDependencies = cachecontrol ++ slf4jApi ++ reactiveStreams ++ testDependencies
 
