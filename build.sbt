@@ -54,6 +54,9 @@ val previousVersion: Option[String] = Some("3.0.0")
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts := previousVersion.map(organization.value %% moduleName.value % _).toSet,
   mimaBinaryIssueFilters ++= Seq(
+    // Switch to jakarta inject
+    ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.ahc.AhcWSClientConfigParser"),
+    ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.WSConfigParser"),
   )
 )
 
