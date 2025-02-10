@@ -6,12 +6,12 @@ import sbt._
 object Dependencies {
 
   // Should be sync with GA (.github/workflows/build-test.yml)
-  val scala213 = "2.13.15"
-  val scala3   = "3.3.4"
+  val scala213 = "2.13.16"
+  val scala3   = "3.3.5"
 
-  val logback = Seq("ch.qos.logback" % "logback-core" % "1.5.15")
+  val logback = Seq("ch.qos.logback" % "logback-core" % "1.5.16")
 
-  val assertj = Seq("org.assertj" % "assertj-core" % "3.27.1")
+  val assertj = Seq("org.assertj" % "assertj-core" % "3.27.3")
 
   val awaitility = Seq("org.awaitility" % "awaitility" % "4.2.2")
 
