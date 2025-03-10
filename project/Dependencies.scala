@@ -9,7 +9,7 @@ object Dependencies {
   val scala213 = "2.13.16"
   val scala3   = "3.3.5"
 
-  val logback = Seq("ch.qos.logback" % "logback-core" % "1.5.16")
+  val logback = Seq("ch.qos.logback" % "logback-core" % "1.5.17")
 
   val assertj = Seq("org.assertj" % "assertj-core" % "3.27.3")
 
@@ -28,7 +28,7 @@ object Dependencies {
 
   val playJson = Seq("com.typesafe.play" %% "play-json" % "2.10.6")
 
-  val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "2.0.16")
+  val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "2.0.17")
 
   val javaxInject = Seq("javax.inject" % "javax.inject" % "1")
 
