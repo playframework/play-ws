@@ -38,7 +38,7 @@ object Dependencies {
 
   val oauth = Seq("oauth.signpost" % "signpost-core" % "2.1.1")
 
-  val cachecontrol = Seq("org.playframework" %% "cachecontrol" % "3.1.0-M1")
+  val cachecontrol = Seq("org.playframework" %% "cachecontrol" % "3.1.0-M2")
 
   val asyncHttpClient = Seq(
     ("org.asynchttpclient" % "async-http-client" % "2.12.4") // 2.12.x comes with outdated netty-reactive-streams, so we ...
