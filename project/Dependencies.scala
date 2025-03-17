@@ -20,7 +20,7 @@ object Dependencies {
     "specs2-core",
   ).map("org.specs2" %% _ % specsVersion)
 
-  val mockito = Seq("org.mockito" % "mockito-core" % "5.16.0")
+  val mockito = Seq("org.mockito" % "mockito-core" % "5.16.1")
 
   val slf4jtest = Seq("uk.org.lidalia" % "slf4j-test" % "1.2.0")
 
@@ -51,7 +51,7 @@ object Dependencies {
   val pekkoStreams = Seq("org.apache.pekko" %% "pekko-stream" % pekkoVersion)
 
   val backendServerTestDependencies = Seq(
-    "org.playframework" %% "play-netty-server" % "3.0.6",
+    "org.playframework" %% "play-netty-server" % "3.0.7",
     // Following dependencies are pulled in by play-netty-server, we just make sure
     // now that we use the same pekko version here like pekko-stream above.
     // This is because when upgrading the pekko version in Play and play-ws here we usually release
