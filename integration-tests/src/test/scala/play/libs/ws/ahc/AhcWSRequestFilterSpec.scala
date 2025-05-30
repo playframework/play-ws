@@ -36,7 +36,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
 
     "work with one request filter" in withClient() { client =>
       import scala.jdk.CollectionConverters._
-      val callList = new java.util.ArrayList[Integer]()
+      val callList       = new java.util.ArrayList[Integer]()
       val responseFuture =
         client
           .url(s"http://localhost:$testServerPort")
@@ -52,7 +52,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
 
     "stream with one request filter" in withClient() { client =>
       import scala.jdk.CollectionConverters._
-      val callList = new java.util.ArrayList[Integer]()
+      val callList       = new java.util.ArrayList[Integer]()
       val responseFuture =
         client
           .url(s"http://localhost:$testServerPort")
@@ -68,7 +68,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
 
     "work with three request filter" in withClient() { client =>
       import scala.jdk.CollectionConverters._
-      val callList = new java.util.ArrayList[Integer]()
+      val callList       = new java.util.ArrayList[Integer]()
       val responseFuture =
         client
           .url(s"http://localhost:$testServerPort")
@@ -86,7 +86,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
 
     "stream with three request filters" in withClient() { client =>
       import scala.jdk.CollectionConverters._
-      val callList = new java.util.ArrayList[Integer]()
+      val callList       = new java.util.ArrayList[Integer]()
       val responseFuture =
         client
           .url(s"http://localhost:$testServerPort")
@@ -105,7 +105,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
     "should allow filters to modify the request" in withClient() { client =>
       val appendedHeader      = "X-Request-Id"
       val appendedHeaderValue = "someid"
-      val responseFuture =
+      val responseFuture      =
         client
           .url(s"http://localhost:$testServerPort")
           .setRequestFilter(new HeaderAppendingFilter(appendedHeader, appendedHeaderValue))
@@ -122,7 +122,7 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
     "allow filters to modify the streaming request" in withClient() { client =>
       val appendedHeader      = "X-Request-Id"
       val appendedHeaderValue = "someid"
-      val responseFuture =
+      val responseFuture      =
         client
           .url(s"http://localhost:$testServerPort")
           .setRequestFilter(new HeaderAppendingFilter(appendedHeader, appendedHeaderValue))
