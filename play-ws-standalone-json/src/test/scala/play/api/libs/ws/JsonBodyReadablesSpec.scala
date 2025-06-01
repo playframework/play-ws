@@ -41,18 +41,18 @@ class JsonBodyReadablesSpec extends Specification with MustMatchers {
   "decode encodings correctly" should {
 
     "read an encoding of UTF-32BE" in {
-      val readables   = new JsonBodyReadables() {}
-      val json        = """{"menu": {"id": "file", "value": "File"} }"""
-      val charsetName = "UTF-32BE"
+      val readables      = new JsonBodyReadables() {}
+      val json           = """{"menu": {"id": "file", "value": "File"} }"""
+      val charsetName    = "UTF-32BE"
       val value: JsValue =
         readables.readableAsJson.transform(new StubResponse(json.getBytes(charsetName), Charset.forName(charsetName)))
       (value \ "menu" \ "id").validate[String] must beEqualTo(JsSuccess("file"))
     }
 
     "read an encoding of UTF-32LE" in {
-      val readables   = new JsonBodyReadables() {}
-      val json        = """{"menu": {"id": "file", "value": "File"} }"""
-      val charsetName = "UTF-32LE"
+      val readables      = new JsonBodyReadables() {}
+      val json           = """{"menu": {"id": "file", "value": "File"} }"""
+      val charsetName    = "UTF-32LE"
       val value: JsValue =
         readables.readableAsJson.transform(new StubResponse(json.getBytes(charsetName), Charset.forName(charsetName)))
       (value \ "menu" \ "id").validate[String] must beEqualTo(JsSuccess("file"))
