@@ -54,7 +54,7 @@ class XMLRequestSpec extends Specification with AfterAll with MustMatchers {
 
     val xml    = XML.parser.loadString("<hello><test></test></hello>")
     val client = StandaloneAhcWSClient()
-    val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
+    val req    = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
       .withBody(xml)
       .asInstanceOf[StandaloneAhcWSRequest]
       .buildRequest()

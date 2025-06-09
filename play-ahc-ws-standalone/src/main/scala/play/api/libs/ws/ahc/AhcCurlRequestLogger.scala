@@ -86,7 +86,7 @@ trait CurlFormat {
         b.append(s"  --data '${quote(bodyString)}'")
         b.append(" \\\n")
       case EmptyBody => // Do nothing.
-      case other =>
+      case other     =>
         throw new UnsupportedOperationException("Unsupported body type " + other.getClass)
     }
 

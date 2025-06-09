@@ -45,7 +45,7 @@ class JsonRequestSpec extends Specification with AfterAll with JsonBodyWritables
   "set a json node" in {
     val jsValue = Json.obj("k1" -> JsString("v1"))
     val client  = StandaloneAhcWSClient()
-    val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
+    val req     = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
       .withBody(jsValue)
       .asInstanceOf[StandaloneAhcWSRequest]
       .buildRequest()
@@ -60,7 +60,7 @@ class JsonRequestSpec extends Specification with AfterAll with JsonBodyWritables
     implicit val jsonReadable = body(objectMapper)
     val jsonNode              = objectMapper.readTree("""{"k1":"v1"}""")
     val client                = StandaloneAhcWSClient()
-    val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
+    val req                   = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
       .withBody(jsonNode)
       .asInstanceOf[StandaloneAhcWSRequest]
       .buildRequest()

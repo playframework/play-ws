@@ -64,7 +64,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
     }
 
     "source successfully" in withClient() { client =>
-      val future = client.url(s"http://localhost:$testServerPort").stream().asScala
+      val future                     = client.url(s"http://localhost:$testServerPort").stream().asScala
       val result: Future[ByteString] = future.flatMap { (response: StandaloneWSResponse) =>
         response.getBodyAsSource.runWith(Sink.head[ByteString](), materializer).asScala
       }

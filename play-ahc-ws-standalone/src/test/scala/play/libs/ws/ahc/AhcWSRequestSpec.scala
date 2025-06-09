@@ -138,7 +138,7 @@ class AhcWSRequestSpec extends Specification with DefaultBodyReadables with Defa
         val consumerKey = new OAuth.ConsumerKey("key", "secret")
         val token       = new OAuth.RequestToken("token", "secret")
         val calc        = new OAuth.OAuthCalculator(consumerKey, token)
-        val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
+        val req         = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
           .setContentType("application/x-www-form-urlencoded") // set content type by hand
           .setBody(body("param1=value1"))
           .sign(calc)
@@ -158,7 +158,7 @@ class AhcWSRequestSpec extends Specification with DefaultBodyReadables with Defa
         val consumerKey = new OAuth.ConsumerKey("key", "secret")
         val token       = new OAuth.RequestToken("token", "secret")
         val calc        = new OAuth.OAuthCalculator(consumerKey, token)
-        val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
+        val req         = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
           .setContentType("application/x-www-form-urlencoded") // set content type by hand
           .setBody(body("param1=value1"))
           .addHeader("Content-Length", "9001") // add a meaningless content length here...
@@ -180,7 +180,7 @@ class AhcWSRequestSpec extends Specification with DefaultBodyReadables with Defa
         AhcWSClientConfigFactory.forConfig(ConfigFactory.load(), this.getClass.getClassLoader), /*materializer*/ null
       )
       var called = false
-      val calc = new SignatureCalculator with WSSignatureCalculator {
+      val calc   = new SignatureCalculator with WSSignatureCalculator {
         override def calculateAndAddSignature(request: Request, requestBuilder: RequestBuilderBase[_]): Unit = {
           called = true
         }

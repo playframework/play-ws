@@ -153,7 +153,7 @@ class AsyncCachingHandler[T](
   protected def processDisconnectedResponse(): T = {
     logger.debug(s"processDisconnectedResponse:")
 
-    val result = Await.result(cache.get(key), timeout)
+    val result        = Await.result(cache.get(key), timeout)
     val finalResponse = result match {
       case Some(entry) =>
         val currentAge        = cache.calculateCurrentAge(request, entry, requestTime)
@@ -176,7 +176,7 @@ class AsyncCachingHandler[T](
   protected def processStaleResponse(response: CacheableResponse): T = {
     logger.debug(s"processCachedResponse: response = ${debug(response)}")
 
-    val result = Await.result(cache.get(key), timeout)
+    val result        = Await.result(cache.get(key), timeout)
     val finalResponse = result match {
       case Some(entry) =>
         val currentAge = cache.calculateCurrentAge(request, entry, requestTime)
