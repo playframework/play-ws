@@ -99,7 +99,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
     }
 
     "support adding several query string values for a parameter" in {
-      val request = StandaloneAhcWSRequest(client, "http://example.com")
+      val request    = StandaloneAhcWSRequest(client, "http://example.com")
       val newRequest = request
         .withQueryStringParameters("play" -> "foo1")
         .addQueryStringParameters("play" -> "foo2")
@@ -200,7 +200,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
 
     "set cookies through Cookie header directly" in {
       withClient { client =>
-        val cookies = Seq("cookie1" -> "value1", "cookie2" -> "value2")
+        val cookies         = Seq("cookie1" -> "value1", "cookie2" -> "value2")
         val req: AHCRequest = client
           .url("http://example.com")
           .addHttpHeaders("Cookie" -> cookies.map(c => c._1 + "=" + c._2).mkString(", "))
@@ -359,9 +359,9 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
     "Have form params for content type application/x-www-form-urlencoded when signed" in {
       withClient { client =>
         import scala.jdk.CollectionConverters._
-        val consumerKey  = ConsumerKey("key", "secret")
-        val requestToken = RequestToken("token", "secret")
-        val calc         = OAuthCalculator(consumerKey, requestToken)
+        val consumerKey     = ConsumerKey("key", "secret")
+        val requestToken    = RequestToken("token", "secret")
+        val calc            = OAuthCalculator(consumerKey, requestToken)
         val req: AHCRequest = client
           .url("http://playframework.com/")
           .withBody(Map("param1" -> Seq("value1")))
@@ -381,9 +381,9 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
 
     "Parse no params for empty params map" in {
       withClient { client =>
-        val consumerKey  = ConsumerKey("key", "secret")
-        val requestToken = RequestToken("token", "secret")
-        val calc         = OAuthCalculator(consumerKey, requestToken)
+        val consumerKey                = ConsumerKey("key", "secret")
+        val requestToken               = RequestToken("token", "secret")
+        val calc                       = OAuthCalculator(consumerKey, requestToken)
         val reqEmptyParams: AHCRequest = client
           .url("http://playframework.com/")
           .withBody(Map.empty[String, Seq[String]])
@@ -426,7 +426,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
     }
 
     "Send binary data as is" in withClient { client =>
-      val binData = ByteString((0 to 511).map(_.toByte).toArray)
+      val binData         = ByteString((0 to 511).map(_.toByte).toArray)
       val req: AHCRequest = client
         .url("http://playframework.com/")
         .addHttpHeaders(HttpHeaderNames.CONTENT_TYPE.toString() -> "application/x-custom-bin-data")
@@ -499,7 +499,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
     }
 
     "support a proxy server" in withClient { client =>
-      val proxy = DefaultWSProxyServer(host = "localhost", port = 8080)
+      val proxy           = DefaultWSProxyServer(host = "localhost", port = 8080)
       val req: AHCRequest = client
         .url("http://playframework.com/")
         .withProxyServer(proxy)
@@ -524,7 +524,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
 
     "a custom signature calculator" in {
       var called = false
-      val calc = new SignatureCalculator with WSSignatureCalculator {
+      val calc   = new SignatureCalculator with WSSignatureCalculator {
         override def calculateAndAddSignature(
             request: play.shaded.ahc.org.asynchttpclient.Request,
             requestBuilder: play.shaded.ahc.org.asynchttpclient.RequestBuilderBase[_]
@@ -570,7 +570,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
     }
 
     "disable url encoding globally via client config" in {
-      val client = StandaloneAhcWSClient(AhcWSClientConfigFactory.forConfig().copy(disableUrlEncoding = true))
+      val client          = StandaloneAhcWSClient(AhcWSClientConfigFactory.forConfig().copy(disableUrlEncoding = true))
       val req: AHCRequest = client
         .url("http://playframework.com/")
         .addQueryStringParameters("abc+def" -> "uvw+xyz")
@@ -654,9 +654,9 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
 
   "Remove a user defined content length header if we are parsing body explicitly when signed" in withClient { client =>
     import scala.jdk.CollectionConverters._
-    val consumerKey  = ConsumerKey("key", "secret")
-    val requestToken = RequestToken("token", "secret")
-    val calc         = OAuthCalculator(consumerKey, requestToken)
+    val consumerKey     = ConsumerKey("key", "secret")
+    val requestToken    = RequestToken("token", "secret")
+    val calc            = OAuthCalculator(consumerKey, requestToken)
     val req: AHCRequest = client
       .url("http://playframework.com/")
       .withBody(Map("param1" -> Seq("value1")))
