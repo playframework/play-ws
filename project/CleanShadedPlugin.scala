@@ -36,7 +36,7 @@ object CleanShadedPlugin extends AutoPlugin {
       Space ~> token(token("%") ~> Space ~> StringBasic.examples("\"name\""))
 
     def query(base: File, param: Option[ModuleParam], org: String, name: String): Seq[File] = {
-      val base1 = PathFinder(base)
+      val base1      = PathFinder(base)
       val pathFinder = param match {
         case None                               => base1 ** stringToGlob(org) ** stringToGlob(name)
         case Some(ModuleParam(org, None))       => base1 ** stringToGlob(org)
@@ -53,7 +53,7 @@ object CleanShadedPlugin extends AutoPlugin {
       cleanCacheIvyDirectory := ivyPaths.value.ivyHome.getOrElse(Path.userHome / ".ivy2"),
       cleanCache             := IO.delete(cleanCacheFiles.evaluated),
       cleanLocal             := IO.delete(cleanLocalFiles.evaluated),
-      cleanCacheFiles := {
+      cleanCacheFiles        := {
         val base  = cleanCacheIvyDirectory.value / "cache"
         val param = CleanShaded.parseParam.parsed
         CleanShaded.query(base, param, organization.value, moduleName.value)

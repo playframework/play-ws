@@ -74,7 +74,7 @@ lazy val commonSettings = Def.settings(
   // resolvers += Resolver.ApacheMavenSnapshotsRepo,
   scalaVersion       := scala213,
   crossScalaVersions := Seq(scala213, scala3),
-  conflictWarning := {
+  conflictWarning    := {
     if (scalaBinaryVersion.value == "3") {
       ConflictWarning("warn", sbt.Level.Warn, false)
     } else {
@@ -108,7 +108,7 @@ lazy val shadedCommonSettings = Seq(
 
 lazy val shadeAssemblySettings = commonSettings ++ shadedCommonSettings ++ Seq(
   assembly / assemblyOption ~= (_.withIncludeScala(false)),
-  assembly / test := {},
+  assembly / test            := {},
   assembly / assemblyJarName := {
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((epoch, major)) =>
@@ -169,10 +169,10 @@ lazy val `shaded-asynchttpclient` = project
   .settings(shadeAssemblySettings)
   .settings(
     libraryDependencies ++= asyncHttpClient,
-    name                := "shaded-asynchttpclient",
-    assembly / logLevel := Level.Error,
+    name                             := "shaded-asynchttpclient",
+    assembly / logLevel              := Level.Error,
     assembly / assemblyMergeStrategy := {
-      val NettyPropertiesPath = "META-INF" + File.separator + "io.netty.versions.properties"
+      val NettyPropertiesPath                    = "META-INF" + File.separator + "io.netty.versions.properties"
       val mergeStrategy: String => MergeStrategy = {
         case NettyPropertiesPath =>
           MergeStrategy.first
