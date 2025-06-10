@@ -27,7 +27,7 @@ class AhcWSResponseSpec extends Specification with DefaultBodyReadables with Def
   "Ahc WS Response" should {
     "get cookies from an AHC response" in {
 
-      val ahcResponse: AHCResponse = mock[AHCResponse]
+      val ahcResponse: AHCResponse                                    = mock[AHCResponse]
       val (name, value, wrap, domain, path, maxAge, secure, httpOnly) =
         ("someName", "someValue", true, "example.com", "/", 1000L, false, false)
 
@@ -49,7 +49,7 @@ class AhcWSResponseSpec extends Specification with DefaultBodyReadables with Def
     }
 
     "get a single cookie from an AHC response" in {
-      val ahcResponse: AHCResponse = mock[AHCResponse]
+      val ahcResponse: AHCResponse                                    = mock[AHCResponse]
       val (name, value, wrap, domain, path, maxAge, secure, httpOnly) =
         ("someName", "someValue", true, "example.com", "/", 1000L, false, false)
 

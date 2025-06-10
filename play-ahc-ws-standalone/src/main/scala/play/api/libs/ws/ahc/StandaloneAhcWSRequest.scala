@@ -317,7 +317,7 @@ case class StandaloneAhcWSRequest(
     }
 
     val (builderWithBody, updatedHeaders) = body match {
-      case EmptyBody => (builder, this.headers)
+      case EmptyBody           => (builder, this.headers)
       case InMemoryBody(bytes) =>
         val ct: String = contentType.getOrElse("text/plain")
 
@@ -333,7 +333,7 @@ case class StandaloneAhcWSRequest(
 
               // extract the content type and the charset
               val charsetOption = Option(HttpUtils.extractContentTypeCharsetAttribute(ct))
-              val charset = charsetOption
+              val charset       = charsetOption
                 .getOrElse {
                   StandardCharsets.UTF_8
                 }
@@ -435,7 +435,7 @@ case class StandaloneAhcWSRequest(
   private[libs] def createProxy(wsProxyServer: WSProxyServer): AHCProxyServer = {
     val proxyBuilder = new AHCProxyServer.Builder(wsProxyServer.host, wsProxyServer.port)
     if (wsProxyServer.principal.isDefined) {
-      val realmBuilder = new Realm.Builder(wsProxyServer.principal.orNull, wsProxyServer.password.orNull)
+      val realmBuilder             = new Realm.Builder(wsProxyServer.principal.orNull, wsProxyServer.password.orNull)
       val scheme: Realm.AuthScheme =
         wsProxyServer.protocol.getOrElse("http").toLowerCase(java.util.Locale.ENGLISH) match {
           case "http" | "https" => Realm.AuthScheme.BASIC

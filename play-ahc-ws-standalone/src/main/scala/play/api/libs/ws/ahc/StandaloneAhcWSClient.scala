@@ -74,7 +74,7 @@ class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(implici
   private[ahc] def execute(
       request: Request
   ): Future[StandaloneAhcWSResponse] = {
-    val result = Promise[StandaloneAhcWSResponse]()
+    val result  = Promise[StandaloneAhcWSResponse]()
     val handler = new AsyncCompletionHandler[AHCResponse]() {
       override def onCompleted(response: AHCResponse): AHCResponse = {
         result.success(StandaloneAhcWSResponse(response))
@@ -163,7 +163,7 @@ class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(implici
     import scala.concurrent.ExecutionContext.Implicits.global
 
     val limitedSource = bodyAsSource.limit(StandaloneAhcWSClient.elementLimit)
-    val result = limitedSource
+    val result        = limitedSource
       .runFold(ByteString.createBuilder) { (acc, bs) =>
         acc.append(bs)
       }
@@ -217,7 +217,7 @@ object StandaloneAhcWSClient {
   )(implicit materializer: Materializer): StandaloneAhcWSClient = {
     val ahcConfig       = new AhcConfigBuilder(config).build()
     val asyncHttpClient = new DefaultAsyncHttpClient(ahcConfig)
-    val wsClient = new StandaloneAhcWSClient(
+    val wsClient        = new StandaloneAhcWSClient(
       httpCache
         .map { cache =>
           new CachingAsyncHttpClient(asyncHttpClient, cache)

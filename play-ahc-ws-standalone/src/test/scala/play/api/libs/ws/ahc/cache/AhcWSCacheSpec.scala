@@ -28,7 +28,7 @@ class AhcWSCacheSpec extends Specification {
       val uri                      = new URI(url)
       val lastModifiedDate: String = format(now.minusHours(1))
       val request: CacheRequest    = CacheRequest(uri, "GET", Map())
-      val response: CacheResponse =
+      val response: CacheResponse  =
         StoredResponse(uri, 200, Map(HeaderName("Last-Modified") -> Seq(lastModifiedDate)), "GET", Map())
 
       val actual = cache.calculateFreshnessFromHeuristic(request, response)
@@ -47,7 +47,7 @@ class AhcWSCacheSpec extends Specification {
       val uri                      = new URI(url)
       val lastModifiedDate: String = "Wed, 09 Apr 2008 23:55:38 GMT"
       val request: CacheRequest    = CacheRequest(uri, "GET", Map())
-      val response: CacheResponse =
+      val response: CacheResponse  =
         StoredResponse(uri, 200, Map(HeaderName("Last-Modified") -> Seq(lastModifiedDate)), "GET", Map())
 
       val actual = cache.calculateFreshnessFromHeuristic(request, response)

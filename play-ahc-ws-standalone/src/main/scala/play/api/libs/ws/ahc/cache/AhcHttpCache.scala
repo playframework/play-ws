@@ -93,7 +93,7 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
   }
 
   def selectionAction(request: Request, entries: Seq[ResponseEntry]): ResponseSelectionAction = {
-    val cacheRequest = generateCacheRequest(request)
+    val cacheRequest    = generateCacheRequest(request)
     val storedResponses = entries.map { entry =>
       generateStoredResponse(entry.response, entry.requestMethod, entry.nominatedHeaders)
     }
@@ -162,7 +162,7 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
    * Calculates the current age of the stored response.
    */
   def calculateCurrentAge(request: Request, entry: ResponseEntry, requestTime: ZonedDateTime): Seconds = {
-    val cacheRequest: CacheRequest = generateCacheRequest(request)
+    val cacheRequest: CacheRequest     = generateCacheRequest(request)
     val storedResponse: StoredResponse =
       generateStoredResponse(entry.response, entry.requestMethod, entry.nominatedHeaders)
     val currentAge = calculateCurrentAge(cacheRequest, storedResponse, requestTime, responseTime = HttpDate.now)
@@ -172,7 +172,7 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
   /**
    */
   def calculateFreshnessLifetime(request: Request, entry: ResponseEntry): Seconds = {
-    val cacheRequest: CacheRequest = generateCacheRequest(request)
+    val cacheRequest: CacheRequest     = generateCacheRequest(request)
     val storedResponse: StoredResponse =
       generateStoredResponse(entry.response, entry.requestMethod, entry.nominatedHeaders)
     val freshnessLifetime = freshnessCalculator.calculateFreshnessLifetime(cacheRequest, storedResponse)
@@ -251,7 +251,7 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
    */
   def calculateSecondaryKeys(request: Request, response: Response): Option[Map[HeaderName, Seq[String]]] = {
     val cacheRequest = generateCacheRequest(request)
-    val headers = headersToMap(response.getHeaders).map { case (name, values) =>
+    val headers      = headersToMap(response.getHeaders).map { case (name, values) =>
       (HeaderName(name), values)
     }
 
@@ -332,7 +332,7 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
     // warn-code 2xx; and,
     val headers                 = response.headers
     val headersMap: HttpHeaders = new DefaultHttpHeaders().add(headers)
-    val filteredWarnings = headersMap
+    val filteredWarnings        = headersMap
       .getAll("Warning")
       .asScala
       .filter { line =>
@@ -398,7 +398,7 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
   }
 
   protected def generateCacheRequest(request: Request): CacheRequest = {
-    val uri = request.getUri.toJavaNetURI
+    val uri     = request.getUri.toJavaNetURI
     val headers = headersToMap(request.getHeaders).map { case (name, values) =>
       (HeaderName(name), values)
     }
@@ -414,7 +414,7 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
     val uri: URI        = response.getUri.toJavaNetURI
     val status: Int     = response.getStatusCode
     val responseHeaders = response.getHeaders
-    val headers = headersToMap(responseHeaders).map { case (name, values) =>
+    val headers         = headersToMap(responseHeaders).map { case (name, values) =>
       (HeaderName(name), values)
     }
 
@@ -428,7 +428,7 @@ class AhcHttpCache(underlying: standaloneAhc.cache.Cache, heuristicsEnabled: Boo
   }
 
   protected def generateOriginResponse(request: Request, status: Int, responseHeaders: HttpHeaders): OriginResponse = {
-    val uri = request.getUri.toJavaNetURI
+    val uri     = request.getUri.toJavaNetURI
     val headers = headersToMap(responseHeaders).map { case (name, values) =>
       (HeaderName(name), values)
     }
