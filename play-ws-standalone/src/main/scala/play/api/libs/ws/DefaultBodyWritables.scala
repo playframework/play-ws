@@ -52,7 +52,7 @@ trait DefaultBodyWritables {
   /**
    * Creates an SourceBody with "application/octet-stream" content type from a file.
    */
-  implicit val writableOf_Source: BodyWritable[Source[ByteString, _]] = {
+  implicit val writableOf_Source: BodyWritable[Source[ByteString, ?]] = {
     BodyWritable(source => SourceBody(source), "application/octet-stream")
   }
 

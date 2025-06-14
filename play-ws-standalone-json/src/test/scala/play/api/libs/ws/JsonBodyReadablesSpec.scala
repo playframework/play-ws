@@ -35,7 +35,7 @@ class JsonBodyReadablesSpec extends Specification with MustMatchers {
 
     override def bodyAsBytes: ByteString = ByteString.fromArray(byteArray)
 
-    override def bodyAsSource: Source[ByteString, _] = ???
+    override def bodyAsSource: Source[ByteString, ?] = ???
   }
 
   "decode encodings correctly" should {

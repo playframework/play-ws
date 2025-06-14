@@ -70,7 +70,7 @@ trait DefaultBodyReadables {
   /**
    * Converts a response body into `Source[ByteString, _]`.
    */
-  implicit val readableAsSource: BodyReadable[Source[ByteString, _]] = BodyReadable(_.bodyAsSource)
+  implicit val readableAsSource: BodyReadable[Source[ByteString, ?]] = BodyReadable(_.bodyAsSource)
 }
 
 object DefaultBodyReadables extends DefaultBodyReadables

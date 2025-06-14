@@ -115,7 +115,7 @@ class StreamedResponse(
    */
   override lazy val bodyAsBytes: ByteString = client.blockingToByteString(bodyAsSource)
 
-  override lazy val bodyAsSource: Source[ByteString, _] = {
+  override lazy val bodyAsSource: Source[ByteString, ?] = {
     Source
       .fromPublisher(publisher)
       .map((bodyPart: HttpResponseBodyPart) => ByteString.fromArray(bodyPart.getBodyPartBytes))

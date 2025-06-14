@@ -113,7 +113,7 @@ class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(implici
 
       val wrap = new Publisher[HttpResponseBodyPart]() {
         override def subscribe(
-            s: Subscriber[_ >: HttpResponseBodyPart]
+            s: Subscriber[? >: HttpResponseBodyPart]
         ): Unit = {
           publisher.subscribe(new Subscriber[HttpResponseBodyPart] {
             override def onSubscribe(sub: Subscription): Unit =
@@ -155,7 +155,7 @@ class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(implici
     streamStarted.future
   }
 
-  private[ahc] def blockingToByteString(bodyAsSource: Source[ByteString, _]) = {
+  private[ahc] def blockingToByteString(bodyAsSource: Source[ByteString, ?]) = {
     StandaloneAhcWSClient.logger.warn(
       s"blockingToByteString is a blocking and unsafe operation!"
     )

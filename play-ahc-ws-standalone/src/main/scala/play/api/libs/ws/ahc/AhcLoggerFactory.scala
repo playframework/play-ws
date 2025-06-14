@@ -24,7 +24,7 @@ class AhcLoggerFactory(lf: ILoggerFactory = SLF4JLoggerFactory.getILoggerFactory
     }
   }
 
-  def apply(clazz: Class[_]): NoDepsLogger = createLogger(clazz.getName)
+  def apply(clazz: Class[?]): NoDepsLogger = createLogger(clazz.getName)
   def apply(name: String): NoDepsLogger    = createLogger(name)
 
 }

@@ -28,7 +28,7 @@ case class InMemoryBody(bytes: ByteString) extends WSBody
  *
  * @param source A flow of the bytes of the body
  */
-case class SourceBody(source: Source[ByteString, _]) extends WSBody
+case class SourceBody(source: Source[ByteString, ?]) extends WSBody
 
 @implicitNotFound(
   "Cannot find an instance of StandaloneWSResponse to ${R}. Define a BodyReadable[${R}] or extend play.api.libs.ws.ahc.DefaultBodyReadables"

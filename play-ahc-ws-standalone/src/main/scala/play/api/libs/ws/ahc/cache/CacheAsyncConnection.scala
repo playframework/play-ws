@@ -52,7 +52,7 @@ class AsyncCacheableConnection[T](
       }
 
       asyncHandler match {
-        case progressAsyncHandler: ProgressAsyncHandler[_] =>
+        case progressAsyncHandler: ProgressAsyncHandler[?] =>
           progressAsyncHandler.onHeadersWritten()
           progressAsyncHandler.onContentWritten()
         case _ =>
