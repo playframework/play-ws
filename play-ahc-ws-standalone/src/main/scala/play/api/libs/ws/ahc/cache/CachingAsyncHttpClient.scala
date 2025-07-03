@@ -63,7 +63,7 @@ class CachingAsyncHttpClient(underlying: AsyncHttpClient, ahcHttpCache: AhcHttpC
   }
 
   @throws(classOf[IOException])
-  protected def execute[T](request: Request, handler: AsyncCompletionHandler[T], future: ListenableFuture[_])(implicit
+  protected def execute[T](request: Request, handler: AsyncCompletionHandler[T], future: ListenableFuture[?])(implicit
       ec: ExecutionContext
   ): ListenableFuture[T] = {
     if (logger.isTraceEnabled) {

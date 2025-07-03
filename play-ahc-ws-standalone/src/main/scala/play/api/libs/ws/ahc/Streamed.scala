@@ -79,7 +79,7 @@ class DefaultStreamedAsyncHandler[T](
 }
 
 private case object EmptyPublisher extends Publisher[HttpResponseBodyPart] {
-  def subscribe(s: Subscriber[_ >: HttpResponseBodyPart]): Unit = {
+  def subscribe(s: Subscriber[? >: HttpResponseBodyPart]): Unit = {
     if (s eq null)
       throw new NullPointerException("Subscriber must not be null, rule 1.9")
     s.onSubscribe(CancelledSubscription)

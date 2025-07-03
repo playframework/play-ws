@@ -107,7 +107,7 @@ class OAuthCalculator(consumerKey: ConsumerKey, requestToken: RequestToken)
   private val ahcRequestToken = new AHCRequestToken(requestToken.token, requestToken.secret)
   private val calculator      = new OAuthSignatureCalculator(ahcConsumerKey, ahcRequestToken)
 
-  override def calculateAndAddSignature(request: Request, requestBuilder: RequestBuilderBase[_]): Unit = {
+  override def calculateAndAddSignature(request: Request, requestBuilder: RequestBuilderBase[?]): Unit = {
     calculator.calculateAndAddSignature(request, requestBuilder)
   }
 }

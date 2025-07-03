@@ -46,7 +46,7 @@ class XMLRequestSpec extends Specification with AfterAll with MustMatchers {
 
     override def bodyAsBytes: ByteString = ByteString.fromArray(byteArray)
 
-    override def bodyAsSource: org.apache.pekko.stream.scaladsl.Source[ByteString, _] = ???
+    override def bodyAsSource: org.apache.pekko.stream.scaladsl.Source[ByteString, ?] = ???
   }
 
   "write an XML node" in {

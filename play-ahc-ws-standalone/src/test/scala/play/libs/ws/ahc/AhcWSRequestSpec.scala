@@ -181,7 +181,7 @@ class AhcWSRequestSpec extends Specification with DefaultBodyReadables with Defa
       )
       var called = false
       val calc   = new SignatureCalculator with WSSignatureCalculator {
-        override def calculateAndAddSignature(request: Request, requestBuilder: RequestBuilderBase[_]): Unit = {
+        override def calculateAndAddSignature(request: Request, requestBuilder: RequestBuilderBase[?]): Unit = {
           called = true
         }
       }

@@ -527,7 +527,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
       val calc   = new SignatureCalculator with WSSignatureCalculator {
         override def calculateAndAddSignature(
             request: play.shaded.ahc.org.asynchttpclient.Request,
-            requestBuilder: play.shaded.ahc.org.asynchttpclient.RequestBuilderBase[_]
+            requestBuilder: play.shaded.ahc.org.asynchttpclient.RequestBuilderBase[?]
         ): Unit = {
           called = true
         }

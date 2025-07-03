@@ -137,5 +137,5 @@ trait StandaloneWSResponse {
   /**
    * @return the response as a source of bytes
    */
-  def bodyAsSource: Source[ByteString, _]
+  def bodyAsSource: Source[ByteString, ?]
 }

@@ -47,7 +47,7 @@ class StandaloneAhcWSResponse(ahcResponse: AHCResponse)
    */
   override lazy val bodyAsBytes: ByteString = ByteString.fromArray(underlying[AHCResponse].getResponseBodyAsBytes)
 
-  override lazy val bodyAsSource: Source[ByteString, _] = Source.single(bodyAsBytes)
+  override lazy val bodyAsSource: Source[ByteString, ?] = Source.single(bodyAsBytes)
 }
 
 object StandaloneAhcWSResponse {
