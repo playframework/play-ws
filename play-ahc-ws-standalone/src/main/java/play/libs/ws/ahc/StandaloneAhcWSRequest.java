@@ -6,12 +6,10 @@ package play.libs.ws.ahc;
 
 import org.apache.pekko.stream.Materializer;
 import org.apache.pekko.stream.javadsl.AsPublisher;
-import org.apache.pekko.stream.javadsl.Sink;
 import org.apache.pekko.stream.javadsl.Source;
 import org.apache.pekko.util.ByteString;
 import org.reactivestreams.Publisher;
 import play.api.libs.ws.ahc.FormUrlEncodedParser;
-import play.libs.oauth.OAuth;
 import play.libs.ws.*;
 import play.shaded.ahc.io.netty.buffer.ByteBuf;
 import play.shaded.ahc.io.netty.buffer.Unpooled;
@@ -20,12 +18,7 @@ import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames;
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders;
 import play.shaded.ahc.io.netty.handler.codec.http.cookie.Cookie;
 import play.shaded.ahc.io.netty.handler.codec.http.cookie.DefaultCookie;
-import play.shaded.ahc.org.asynchttpclient.AsyncHttpClient;
-import play.shaded.ahc.org.asynchttpclient.Realm;
-import play.shaded.ahc.org.asynchttpclient.Request;
-import play.shaded.ahc.org.asynchttpclient.RequestBuilder;
-import play.shaded.ahc.org.asynchttpclient.SignatureCalculator;
-
+import play.shaded.ahc.org.asynchttpclient.*;
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils;
 
 import java.net.MalformedURLException;
@@ -33,15 +26,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletionStage;
 
 import static java.util.Collections.singletonList;
@@ -399,16 +384,6 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
         return executor.apply(this);
     }
 
-    @Override
-    public CompletionStage<? extends StandaloneWSResponse> stream() {
-        WSRequestExecutor executor = foldRight(r -> {
-            StandaloneAhcWSRequest ahcWsRequest = (StandaloneAhcWSRequest) r;
-            Request ahcRequest = ahcWsRequest.buildRequest();
-            return client.executeStream(ahcRequest, materializer.executionContext());
-        }, filters.iterator());
-        return executor.apply(this);
-    }
-
     private WSRequestExecutor foldRight(WSRequestExecutor executor, Iterator<WSRequestFilter> iterator) {
         if (!iterator.hasNext()) {
             return executor;
@@ -471,19 +446,6 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
                         builder.setBody(stringBody);
                     }
                 }
-            } else if (bodyWritable instanceof SourceBodyWritable) {
-                // If the bodyWritable has a streaming interface it should be up to the user to provide a manual Content-Length
-                // else every content would be Transfer-Encoding: chunked
-                // If the Content-Length is -1 Async-Http-Client sets a Transfer-Encoding: chunked
-                // If the Content-Length is great than -1 Async-Http-Client will use the correct Content-Length
-                long contentLength = Optional.ofNullable(possiblyModifiedHeaders.get(CONTENT_LENGTH.toString()))
-                        .map(Long::valueOf).orElse(-1L);
-                possiblyModifiedHeaders.remove(CONTENT_LENGTH.toString());
-
-                @SuppressWarnings("unchecked") Source<ByteString, ?> sourceBody = ((SourceBodyWritable) bodyWritable).body().get();
-                Publisher<ByteBuf> publisher = sourceBody.map(bs -> Unpooled.wrappedBuffer(bs.toByteBuffer()))
-                        .runWith(Sink.asPublisher(AsPublisher.WITHOUT_FANOUT), materializer);
-                builder.setBody(publisher, contentLength);
             } else {
                 throw new IllegalStateException("Unknown body writable: " + bodyWritable);
             }
@@ -492,9 +454,9 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
         builder.setHeaders(possiblyModifiedHeaders);
 
         if (this.timeout.isNegative()) {
-            builder.setRequestTimeout(((int) INFINITE.toMillis()));
+            builder.setRequestTimeout(INFINITE);
         } else if (this.timeout.compareTo(Duration.ZERO) > 0) {
-            builder.setRequestTimeout(((int) this.timeout.toMillis()));
+            builder.setRequestTimeout(this.timeout);
         }
 
         getFollowRedirects().ifPresent(builder::setFollowRedirect);
@@ -504,14 +466,11 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
         this.getAuth().ifPresent(auth -> builder.setRealm(auth(auth.getUsername(), auth.getPassword(), auth.getScheme())));
 
         if (this.calculator != null) {
-            if (this.calculator instanceof OAuth.OAuthCalculator) {
-                SignatureCalculator calc = ((OAuth.OAuthCalculator) this.calculator).getCalculator();
-                builder.setSignatureCalculator(calc);
-            } else if (this.calculator instanceof SignatureCalculator) {
+            if (this.calculator instanceof SignatureCalculator) {
                 SignatureCalculator calc = ((SignatureCalculator) this.calculator);
                 builder.setSignatureCalculator(calc);
             } else {
-                throw new IllegalStateException("Use OAuth.OAuthCalculator");
+                throw new IllegalStateException("Unsupported signature calculator provided.");
             }
         }
 

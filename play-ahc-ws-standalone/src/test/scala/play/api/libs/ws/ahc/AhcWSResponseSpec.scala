@@ -4,19 +4,17 @@
 
 package play.api.libs.ws.ahc
 
-import java.nio.charset.StandardCharsets
-import java.util
-
 import org.apache.pekko.util.ByteString
-import org.mockito.Mockito.when
 import org.mockito.Mockito
+import org.mockito.Mockito.when
 import org.specs2.mutable.Specification
 import play.api.libs.ws._
 import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
-import play.shaded.ahc.io.netty.handler.codec.http.cookie.DefaultCookie
-import play.shaded.ahc.io.netty.handler.codec.http.cookie.{ Cookie => AHCCookie }
-import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse }
+import play.shaded.ahc.io.netty.handler.codec.http.cookie.{DefaultCookie, Cookie => AHCCookie}
+import play.shaded.ahc.org.asynchttpclient.{Response => AHCResponse}
 
+import java.nio.charset.StandardCharsets
+import java.util
 import scala.reflect.ClassTag
 
 class AhcWSResponseSpec extends Specification with DefaultBodyReadables with DefaultBodyWritables {
@@ -126,14 +124,6 @@ class AhcWSResponseSpec extends Specification with DefaultBodyReadables with Def
       headers.contains("Foo") must beTrue
       headers.contains("BAR") must beTrue
       headers.contains("Bar") must beTrue
-    }
-
-    "get headers map which retrieves headers case insensitively (for streamed responses)" in {
-      val srcHeaders = Map("Foo" -> Seq("a"), "foo" -> Seq("b"), "FOO" -> Seq("b"), "Bar" -> Seq("baz"))
-      val response   = new StreamedResponse(null, 200, "", null, srcHeaders, null, true)
-      val headers    = response.headers
-      headers("foo") must_== Seq("a", "b", "b")
-      headers("BAR") must_== Seq("baz")
     }
 
     "get a single header" in {

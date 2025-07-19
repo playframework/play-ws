@@ -122,15 +122,6 @@ public interface StandaloneWSRequest {
      */
     CompletionStage<? extends StandaloneWSResponse> execute();
 
-    /**
-     * Executes this request and streams the response body.
-     *
-     * Use {@code response.bodyAsSource()} with this method.
-     *
-     * @return a promise to the response
-     */
-    CompletionStage<? extends StandaloneWSResponse> stream();
-
     //-------------------------------------------------------------------------
     // Setters
     //-------------------------------------------------------------------------

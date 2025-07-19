@@ -4,28 +4,21 @@
 
 package play.api.libs.ws.ahc
 
-import scala.jdk.CollectionConverters._
-import scala.concurrent.duration._
-
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.util.ByteString
-
 import org.mockito.Mockito
 import org.specs2.execute.Result
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
-
-import play.api.libs.oauth.ConsumerKey
-import play.api.libs.oauth.RequestToken
-import play.api.libs.oauth.OAuthCalculator
 import play.api.libs.ws._
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames
 import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
-import play.shaded.ahc.org.asynchttpclient.SignatureCalculator
-import play.shaded.ahc.org.asynchttpclient.Param
-import play.shaded.ahc.org.asynchttpclient.{ Request => AHCRequest }
+import play.shaded.ahc.org.asynchttpclient.{Param, SignatureCalculator, Request => AHCRequest}
 
+import java.time.temporal.ChronoUnit
+import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
 class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReadables with DefaultBodyWritables {
@@ -356,45 +349,6 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
       }
     }
 
-    "Have form params for content type application/x-www-form-urlencoded when signed" in {
-      withClient { client =>
-        import scala.jdk.CollectionConverters._
-        val consumerKey     = ConsumerKey("key", "secret")
-        val requestToken    = RequestToken("token", "secret")
-        val calc            = OAuthCalculator(consumerKey, requestToken)
-        val req: AHCRequest = client
-          .url("http://playframework.com/")
-          .withBody(Map("param1" -> Seq("value1")))
-          .sign(calc)
-          .asInstanceOf[StandaloneAhcWSRequest]
-          .buildRequest()
-        // Note we use getFormParams instead of getByteData here.
-        req.getFormParams.asScala must containTheSameElementsAs(
-          List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1"))
-        )
-        req.getByteData must beNull // should NOT result in byte data.
-
-        val headers = req.getHeaders
-        headers.get("Content-Length") must beNull
-      }
-    }
-
-    "Parse no params for empty params map" in {
-      withClient { client =>
-        val consumerKey                = ConsumerKey("key", "secret")
-        val requestToken               = RequestToken("token", "secret")
-        val calc                       = OAuthCalculator(consumerKey, requestToken)
-        val reqEmptyParams: AHCRequest = client
-          .url("http://playframework.com/")
-          .withBody(Map.empty[String, Seq[String]])
-          .sign(calc)
-          .asInstanceOf[StandaloneAhcWSRequest]
-          .buildRequest()
-
-        reqEmptyParams.getFormParams.asScala must beEmpty
-      }
-    }
-
     "Have form body for content type text/plain" in {
       withClient { client =>
         val req: AHCRequest = client
@@ -595,7 +549,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
         .withRequestTimeout(1000.millis)
         .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
-      (req.getRequestTimeout must be).equalTo(1000)
+      (req.getRequestTimeout must be).equalTo(java.time.Duration.of(1000, ChronoUnit.MILLIS))
     }
 
     "infinite timeout" in withClient { client =>
@@ -604,7 +558,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
         .withRequestTimeout(Duration.Inf)
         .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
-      (req.getRequestTimeout must be).equalTo(-1)
+      (req.getRequestTimeout must be).equalTo(java.time.Duration.ZERO)
     }
 
     "no negative timeout" in withClient { client =>
@@ -652,27 +606,6 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
     headers.get("Content-Length") must_== "9001"
   }
 
-  "Remove a user defined content length header if we are parsing body explicitly when signed" in withClient { client =>
-    import scala.jdk.CollectionConverters._
-    val consumerKey     = ConsumerKey("key", "secret")
-    val requestToken    = RequestToken("token", "secret")
-    val calc            = OAuthCalculator(consumerKey, requestToken)
-    val req: AHCRequest = client
-      .url("http://playframework.com/")
-      .withBody(Map("param1" -> Seq("value1")))
-      .withHttpHeaders("Content-Length" -> "9001") // add a meaningless content length here...
-      .sign(calc) // this is signed, so content length is no longer valid per #5221
-      .asInstanceOf[StandaloneAhcWSRequest]
-      .buildRequest()
-
-    val headers = req.getHeaders
-    req.getByteData must beNull // should NOT result in byte data.
-    req.getFormParams.asScala must containTheSameElementsAs(
-      List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1"))
-    )
-    headers.get("Content-Length") must beNull // no content length!
-  }
-
   "Verify Content-Type header is passed through correctly" in withClient { client =>
     import scala.jdk.CollectionConverters._
     val req: AHCRequest = client
@@ -683,5 +616,4 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
       .buildRequest()
     req.getHeaders.getAll(HttpHeaderNames.CONTENT_TYPE.toString()).asScala must_== Seq("text/plain; charset=US-ASCII")
   }
-
 }

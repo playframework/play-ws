@@ -50,22 +50,6 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
         .await(retries = 0, timeout = 5.seconds)
     }
 
-    "stream with one request filter" in withClient() { client =>
-      import scala.jdk.CollectionConverters._
-      val callList       = new java.util.ArrayList[Integer]()
-      val responseFuture =
-        client
-          .url(s"http://localhost:$testServerPort")
-          .setRequestFilter(new CallbackRequestFilter(callList, 1))
-          .stream()
-          .asScala
-      responseFuture
-        .map { _ =>
-          callList.asScala must contain(1)
-        }
-        .await(retries = 0, timeout = 5.seconds)
-    }
-
     "work with three request filter" in withClient() { client =>
       import scala.jdk.CollectionConverters._
       val callList       = new java.util.ArrayList[Integer]()
@@ -84,24 +68,6 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
         .await(retries = 0, timeout = 5.seconds)
     }
 
-    "stream with three request filters" in withClient() { client =>
-      import scala.jdk.CollectionConverters._
-      val callList       = new java.util.ArrayList[Integer]()
-      val responseFuture =
-        client
-          .url(s"http://localhost:$testServerPort")
-          .setRequestFilter(new CallbackRequestFilter(callList, 1))
-          .setRequestFilter(new CallbackRequestFilter(callList, 2))
-          .setRequestFilter(new CallbackRequestFilter(callList, 3))
-          .stream()
-          .asScala
-      responseFuture
-        .map { _ =>
-          callList.asScala must containTheSameElementsAs(Seq(1, 2, 3))
-        }
-        .await(retries = 0, timeout = 5.seconds)
-    }
-
     "should allow filters to modify the request" in withClient() { client =>
       val appendedHeader      = "X-Request-Id"
       val appendedHeaderValue = "someid"
@@ -110,23 +76,6 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
           .url(s"http://localhost:$testServerPort")
           .setRequestFilter(new HeaderAppendingFilter(appendedHeader, appendedHeaderValue))
           .get()
-          .asScala
-
-      responseFuture
-        .map { response =>
-          response.getHeaders.get("X-Request-Id").get(0) must be_==("someid")
-        }
-        .await(retries = 0, timeout = 5.seconds)
-    }
-
-    "allow filters to modify the streaming request" in withClient() { client =>
-      val appendedHeader      = "X-Request-Id"
-      val appendedHeaderValue = "someid"
-      val responseFuture      =
-        client
-          .url(s"http://localhost:$testServerPort")
-          .setRequestFilter(new HeaderAppendingFilter(appendedHeader, appendedHeaderValue))
-          .stream()
           .asScala
 
       responseFuture

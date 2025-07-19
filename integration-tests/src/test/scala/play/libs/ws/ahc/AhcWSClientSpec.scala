@@ -4,22 +4,17 @@
 
 package play.libs.ws.ahc
 
-import org.apache.pekko.stream.javadsl.Sink
-import org.apache.pekko.util.ByteString
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.matcher.FutureMatchers
 import org.specs2.mutable.Specification
 import play.NettyServerProvider
 import play.api.BuiltInComponents
-import play.api.mvc.AnyContentAsText
-import play.api.mvc.AnyContentAsXml
-import play.api.mvc.Results
+import play.api.mvc.{AnyContentAsText, AnyContentAsXml, Results}
 import play.api.routing.sird._
 import play.libs.ws._
 
-import scala.jdk.FutureConverters._
-import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.jdk.FutureConverters._
 
 class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
     extends Specification
@@ -61,15 +56,6 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
         .asScala
         .map(response => response.getBody() must be_==("hello world"))
         .await(retries = 0, timeout = 5.seconds)
-    }
-
-    "source successfully" in withClient() { client =>
-      val future                     = client.url(s"http://localhost:$testServerPort").stream().asScala
-      val result: Future[ByteString] = future.flatMap { (response: StandaloneWSResponse) =>
-        response.getBodyAsSource.runWith(Sink.head[ByteString](), materializer).asScala
-      }
-      val expected: ByteString = ByteString.fromString("<h1>Say hello to play</h1>")
-      result must be_==(expected).await(retries = 0, timeout = 5.seconds)
     }
 
     "round trip XML successfully" in withClient() { client =>

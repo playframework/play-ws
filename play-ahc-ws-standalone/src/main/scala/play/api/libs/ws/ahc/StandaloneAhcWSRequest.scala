@@ -4,14 +4,8 @@
 
 package play.api.libs.ws.ahc
 
-import java.io.UnsupportedEncodingException
-import java.net.URI
-import java.nio.charset.Charset
-import java.nio.charset.StandardCharsets
-
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Sink
-import play.api.libs.ws.StandaloneWSRequest
 import play.api.libs.ws._
 import play.shaded.ahc.io.netty.buffer.Unpooled
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
@@ -20,10 +14,15 @@ import play.shaded.ahc.org.asynchttpclient._
 import play.shaded.ahc.org.asynchttpclient.proxy.{ ProxyServer => AHCProxyServer }
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils
 
-import scala.jdk.CollectionConverters._
+import java.io.UnsupportedEncodingException
+import java.net.URI
+import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 import scala.collection.immutable.TreeMap
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
+import scala.jdk.CollectionConverters._
+import scala.jdk.javaapi.DurationConverters.toJava
 
 /**
  * A Ahc WS Request.
@@ -242,14 +241,6 @@ case class StandaloneAhcWSRequest(
     filters.foldRight(next)((filter, executor) => filter.apply(executor))
   }
 
-  override def stream(): Future[Response] = {
-    val executor = filterWSRequestExecutor(WSRequestExecutor { request =>
-      client.executeStream(request.asInstanceOf[StandaloneAhcWSRequest].buildRequest())
-    })
-
-    executor(this)
-  }
-
   /**
    * Returns the HTTP header given by name, using the request builder.  This may be signed,
    * so may return extra headers that were not directly input.
@@ -311,9 +302,9 @@ case class StandaloneAhcWSRequest(
     proxyServer.foreach(p => builder.setProxyServer(createProxy(p)))
     requestTimeout.foreach {
       case d if d == Duration.Inf =>
-        builder.setRequestTimeout(-1)
+        builder.setRequestTimeout(java.time.Duration.ZERO)
       case d =>
-        builder.setRequestTimeout(d.toMillis.toInt)
+        builder.setRequestTimeout(toJava(Duration.fromNanos(d.toNanos)))
     }
 
     val (builderWithBody, updatedHeaders) = body match {
@@ -360,25 +351,6 @@ case class StandaloneAhcWSRequest(
           }
 
         (builder, h)
-      case SourceBody(source) =>
-        // If the body has a streaming interface it should be up to the user to provide a manual Content-Length
-        // else every content would be Transfer-Encoding: chunked
-        // If the Content-Length is -1 Async-Http-Client sets a Transfer-Encoding: chunked
-        // If the Content-Length is great than -1 Async-Http-Client will use the correct Content-Length
-        val filteredHeaders = this.headers.filterNot { case (k, v) =>
-          k.equalsIgnoreCase(HttpHeaders.Names.CONTENT_LENGTH)
-        }
-        val contentLength = this.headers
-          .find { case (k, _) => k.equalsIgnoreCase(HttpHeaders.Names.CONTENT_LENGTH) }
-          .map(_._2.head.toLong)
-
-        (
-          builder.setBody(
-            source.map(bs => Unpooled.wrappedBuffer(bs.toByteBuffer)).runWith(Sink.asPublisher(false)),
-            contentLength.getOrElse(-1L)
-          ),
-          filteredHeaders
-        )
     }
 
     // headers
