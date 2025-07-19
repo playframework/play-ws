@@ -4,17 +4,16 @@
 
 package play.api.libs.ws.ahc
 
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
-import com.typesafe.sslconfig.ssl.Protocols
-import com.typesafe.sslconfig.ssl.SSLConfigFactory
-import com.typesafe.sslconfig.ssl.SSLConfigSettings
+import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.sslconfig.ssl.{Protocols, SSLConfigFactory, SSLConfigSettings}
 import org.specs2.mutable.Specification
 import play.api.libs.ws.WSClientConfig
 import play.shaded.ahc.org.asynchttpclient.proxy.ProxyServerSelector
 import play.shaded.ahc.org.asynchttpclient.util.ProxyUtils
 
+import java.time.temporal.ChronoUnit
 import scala.concurrent.duration._
+import scala.jdk.javaapi.DurationConverters.toJava
 
 /**
  */
@@ -37,9 +36,9 @@ class AhcConfigBuilderSpec extends Specification {
         .build()
       ahcConfig.isCompressionEnforced must beFalse
       ahcConfig.isFollowRedirect must beFalse
-      ahcConfig.getConnectTimeout must_== 120000
-      ahcConfig.getRequestTimeout must_== 120000
-      ahcConfig.getReadTimeout must_== 120000
+      ahcConfig.getConnectTimeout must_== java.time.Duration.of(120000, ChronoUnit.MILLIS)
+      ahcConfig.getRequestTimeout must_== java.time.Duration.of(120000, ChronoUnit.MILLIS)
+      ahcConfig.getReadTimeout must_== java.time.Duration.of(120000, ChronoUnit.MILLIS)
     }
 
     "with basic options" should {
@@ -49,9 +48,9 @@ class AhcConfigBuilderSpec extends Specification {
         val builder = new AhcConfigBuilder(config)
         val actual  = builder.build()
 
-        actual.getReadTimeout must_== defaultWsConfig.idleTimeout.toMillis
-        actual.getRequestTimeout must_== defaultWsConfig.requestTimeout.toMillis
-        actual.getConnectTimeout must_== defaultWsConfig.connectionTimeout.toMillis
+        actual.getReadTimeout must_== toJava(Duration.fromNanos(defaultWsConfig.idleTimeout.toNanos))
+        actual.getRequestTimeout must_== toJava(Duration.fromNanos(defaultWsConfig.requestTimeout.toNanos))
+        actual.getConnectTimeout must_== toJava(Duration.fromNanos(defaultWsConfig.connectionTimeout.toNanos))
         actual.isFollowRedirect must_== defaultWsConfig.followRedirects
         actual.getCookieStore must_== null
 
@@ -64,7 +63,7 @@ class AhcConfigBuilderSpec extends Specification {
         val builder  = new AhcConfigBuilder(config)
 
         val actual = builder.build()
-        actual.getReadTimeout must_== 42L
+        actual.getReadTimeout must_== java.time.Duration.of(42, ChronoUnit.MILLIS)
       }
 
       "use an explicit request timeout" in {
@@ -73,7 +72,7 @@ class AhcConfigBuilderSpec extends Specification {
         val builder  = new AhcConfigBuilder(config)
 
         val actual = builder.build()
-        actual.getRequestTimeout must_== 47L
+        actual.getRequestTimeout must_== java.time.Duration.of(47, ChronoUnit.MILLIS)
       }
 
       "use an explicit connection timeout" in {
@@ -82,7 +81,7 @@ class AhcConfigBuilderSpec extends Specification {
         val builder  = new AhcConfigBuilder(config)
 
         val actual = builder.build()
-        actual.getConnectTimeout must_== 99L
+        actual.getConnectTimeout must_== java.time.Duration.of(99, ChronoUnit.MILLIS)
       }
 
       "use an explicit followRedirects option" in {

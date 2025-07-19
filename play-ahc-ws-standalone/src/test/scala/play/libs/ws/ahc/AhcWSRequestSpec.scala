@@ -5,20 +5,15 @@
 package play.libs.ws.ahc
 
 import com.typesafe.config.ConfigFactory
+import org.specs2.mutable._
+import play.libs.ws._
+import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames
+import play.shaded.ahc.org.asynchttpclient.{Request, RequestBuilderBase, SignatureCalculator}
 
 import java.time.Duration
 import java.util.Collections
-
-import org.specs2.mutable._
-import play.libs.oauth.OAuth
-import play.libs.ws._
-import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames
-import play.shaded.ahc.org.asynchttpclient.Request
-import play.shaded.ahc.org.asynchttpclient.RequestBuilderBase
-import play.shaded.ahc.org.asynchttpclient.SignatureCalculator
-
-import scala.jdk.CollectionConverters._
 import scala.collection.mutable
+import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters._
 
 class AhcWSRequestSpec extends Specification with DefaultBodyReadables with DefaultBodyWritables {
@@ -129,50 +124,6 @@ class AhcWSRequestSpec extends Specification with DefaultBodyReadables with Defa
           List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1"))
         )
       }
-
-      "have form params when content-type application/x-www-form-urlencoded and signed" in {
-        import scala.jdk.CollectionConverters._
-        val client = StandaloneAhcWSClient.create(
-          AhcWSClientConfigFactory.forConfig(ConfigFactory.load(), this.getClass.getClassLoader), /*materializer*/ null
-        )
-        val consumerKey = new OAuth.ConsumerKey("key", "secret")
-        val token       = new OAuth.RequestToken("token", "secret")
-        val calc        = new OAuth.OAuthCalculator(consumerKey, token)
-        val req         = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
-          .setContentType("application/x-www-form-urlencoded") // set content type by hand
-          .setBody(body("param1=value1"))
-          .sign(calc)
-          .asInstanceOf[StandaloneAhcWSRequest]
-          .buildRequest()
-        // Note we use getFormParams instead of getByteData here.
-        req.getFormParams.asScala must containTheSameElementsAs(
-          List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1"))
-        )
-      }
-
-      "remove a user defined content length header if we are parsing body explicitly when signed" in {
-        import scala.jdk.CollectionConverters._
-        val client = StandaloneAhcWSClient.create(
-          AhcWSClientConfigFactory.forConfig(ConfigFactory.load(), this.getClass.getClassLoader), /*materializer*/ null
-        )
-        val consumerKey = new OAuth.ConsumerKey("key", "secret")
-        val token       = new OAuth.RequestToken("token", "secret")
-        val calc        = new OAuth.OAuthCalculator(consumerKey, token)
-        val req         = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
-          .setContentType("application/x-www-form-urlencoded") // set content type by hand
-          .setBody(body("param1=value1"))
-          .addHeader("Content-Length", "9001") // add a meaningless content length here...
-          .sign(calc)
-          .asInstanceOf[StandaloneAhcWSRequest]
-          .buildRequest()
-
-        val headers = req.getHeaders
-        req.getFormParams.asScala must containTheSameElementsAs(
-          List(new play.shaded.ahc.org.asynchttpclient.Param("param1", "value1"))
-        )
-        headers.get("Content-Length") must beNull // no content length!
-      }
-
     }
 
     "Use a custom signature calculator" in {
@@ -194,22 +145,24 @@ class AhcWSRequestSpec extends Specification with DefaultBodyReadables with Defa
     "setRequestTimeout(java.time.Duration)" should {
 
       "support setting a request timeout to a duration" in {
-        requestWithTimeout(Duration.ofSeconds(1)) must beEqualTo(1000)
+        requestWithTimeout(Duration.ofSeconds(1)) must beEqualTo(Duration.ofSeconds(1))
       }
 
       "support setting a request timeout duration to infinite using -1" in {
-        requestWithTimeout(Duration.ofMillis(-1)) must beEqualTo(-1)
+        requestWithTimeout(Duration.ofMillis(-1)) must beEqualTo(Duration.ofMillis(-1))
       }
 
       "support setting a request timeout duration to infinite using any negative duration" in {
-        requestWithTimeout(Duration.ofMillis(-2)) must beEqualTo(-1)
-        requestWithTimeout(Duration.ofMillis(-15)) must beEqualTo(-1)
-        requestWithTimeout(Duration.ofSeconds(-1)) must beEqualTo(-1)
-        requestWithTimeout(Duration.ofMillis(java.lang.Integer.MIN_VALUE)) must beEqualTo(-1)
+        requestWithTimeout(Duration.ofMillis(-2)) must beEqualTo(Duration.ofMillis(-1))
+        requestWithTimeout(Duration.ofMillis(-15)) must beEqualTo(Duration.ofMillis(-1))
+        requestWithTimeout(Duration.ofSeconds(-1)) must beEqualTo(Duration.ofMillis(-1))
+        requestWithTimeout(Duration.ofMillis(java.lang.Integer.MIN_VALUE)) must beEqualTo(Duration.ofMillis(-1))
       }
 
       "support setting a request timeout duration to Long.MAX_VALUE as infinite" in {
-        requestWithTimeout(Duration.ofMillis(java.lang.Long.MAX_VALUE)) must beEqualTo(-1)
+        requestWithTimeout(Duration.ofMillis(java.lang.Long.MAX_VALUE)) must beEqualTo(
+          Duration.ofMillis(java.lang.Long.MAX_VALUE)
+        )
       }
 
       "not support setting a request timeout to null" in {

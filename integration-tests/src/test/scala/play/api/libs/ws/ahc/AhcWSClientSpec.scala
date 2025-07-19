@@ -4,10 +4,7 @@
 
 package play.api.libs.ws.ahc
 
-import org.apache.pekko.stream.scaladsl.Sink
-import org.apache.pekko.util.ByteString
-import org.specs2.concurrent.ExecutionEnv
-import org.specs2.concurrent.FutureAwait
+import org.specs2.concurrent.{ExecutionEnv, FutureAwait}
 import org.specs2.execute.Result
 import org.specs2.matcher.FutureMatchers
 import org.specs2.mutable.Specification
@@ -15,10 +12,7 @@ import play.NettyServerProvider
 import play.api.BuiltInComponents
 import play.api.http.Status.MOVED_PERMANENTLY
 import play.api.libs.ws._
-import play.api.mvc.Cookie
-import play.api.mvc.Handler
-import play.api.mvc.RequestHeader
-import play.api.mvc.Results
+import play.api.mvc.{Cookie, Handler, RequestHeader, Results}
 import play.api.routing.sird._
 import play.shaded.ahc.org.asynchttpclient.handler.MaxRedirectException
 
@@ -133,7 +127,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
       case class Foo(body: String)
 
       implicit val fooBodyReadable: BodyReadable[Foo] = BodyReadable[Foo] { response =>
-        import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse }
+        import play.shaded.ahc.org.asynchttpclient.{Response => AHCResponse}
         val ahcResponse = response.asInstanceOf[StandaloneAhcWSResponse].underlying[AHCResponse]
         Foo(ahcResponse.getResponseBody)
       }
@@ -144,17 +138,6 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
           defaultTimeout
         )
         result must beEqualTo(Foo("Say hello to play"))
-      }
-    }
-
-    "request a url as a stream" in {
-      withClient() { client =>
-        val resultSource = Await.result(
-          client.url(s"http://localhost:$testServerPort/index").stream().map(_.bodyAsSource),
-          defaultTimeout
-        )
-        val bytes: ByteString = Await.result(resultSource.runWith(Sink.head), defaultTimeout)
-        bytes.utf8String must beEqualTo("Say hello to play")
       }
     }
 

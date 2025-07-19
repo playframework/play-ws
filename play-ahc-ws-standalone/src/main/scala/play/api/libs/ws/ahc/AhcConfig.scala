@@ -4,25 +4,25 @@
 
 package play.api.libs.ws.ahc
 
-import jakarta.inject.Inject
-import jakarta.inject.Provider
-import jakarta.inject.Singleton
-import javax.net.ssl._
-
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigException
 import com.typesafe.config.ConfigFactory
 import com.typesafe.sslconfig.ssl._
+import jakarta.inject.Inject
+import jakarta.inject.Provider
+import jakarta.inject.Singleton
 import org.slf4j.LoggerFactory
 import play.api.libs.ws.WSClientConfig
 import play.api.libs.ws.WSConfigParser
 import play.shaded.ahc.io.netty.handler.ssl.SslContextBuilder
 import play.shaded.ahc.io.netty.handler.ssl.util.InsecureTrustManagerFactory
-import play.shaded.ahc.org.asynchttpclient.netty.ssl.JsseSslEngineFactory
 import play.shaded.ahc.org.asynchttpclient.AsyncHttpClientConfig
 import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClientConfig
+import play.shaded.ahc.org.asynchttpclient.netty.ssl.JsseSslEngineFactory
 
+import javax.net.ssl._
 import scala.concurrent.duration._
+import scala.jdk.javaapi.DurationConverters.toJava
 
 /**
  * Ahc client config.
@@ -194,15 +194,17 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
   def configureWS(ahcConfig: AhcWSClientConfig): Unit = {
     val config = ahcConfig.wsClientConfig
 
-    def toMillis(duration: Duration): Int = {
-      if (duration.isFinite) duration.toMillis.toInt
-      else -1
+    def toJavaDuration(duration: Duration): java.time.Duration = {
+      if (duration.isFinite)
+        toJava(Duration.fromNanos(duration.toNanos))
+      else
+        java.time.Duration.ZERO
     }
 
     builder
-      .setConnectTimeout(toMillis(config.connectionTimeout))
-      .setReadTimeout(toMillis(config.idleTimeout))
-      .setRequestTimeout(toMillis(config.requestTimeout))
+      .setConnectTimeout(toJavaDuration(config.connectionTimeout))
+      .setReadTimeout(toJavaDuration(config.idleTimeout))
+      .setRequestTimeout(toJavaDuration(config.requestTimeout))
       .setFollowRedirect(config.followRedirects)
       .setUseProxyProperties(config.useProxyProperties)
       .setCompressionEnforced(config.compressionEnabled)
@@ -211,9 +213,9 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
 
     builder.setMaxConnectionsPerHost(ahcConfig.maxConnectionsPerHost)
     builder.setMaxConnections(ahcConfig.maxConnectionsTotal)
-    builder.setConnectionTtl(toMillis(ahcConfig.maxConnectionLifetime))
-    builder.setPooledConnectionIdleTimeout(toMillis(ahcConfig.idleConnectionInPoolTimeout))
-    builder.setConnectionPoolCleanerPeriod(toMillis(ahcConfig.connectionPoolCleanerPeriod))
+    builder.setConnectionTtl(toJavaDuration(ahcConfig.maxConnectionLifetime))
+    builder.setPooledConnectionIdleTimeout(toJavaDuration(ahcConfig.idleConnectionInPoolTimeout))
+    builder.setConnectionPoolCleanerPeriod(toJavaDuration(ahcConfig.connectionPoolCleanerPeriod))
     builder.setMaxRedirects(ahcConfig.maxNumberOfRedirects)
     builder.setMaxRequestRetry(ahcConfig.maxRequestRetry)
     builder.setDisableUrlEncodingForBoundRequests(ahcConfig.disableUrlEncoding)
@@ -225,8 +227,8 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
     // The proper solution is to make these parameters configurable, so that they can be set
     // to 0 when running tests, and keep sensible defaults otherwise. AHC defaults are
     // shutdownQuiet=2000 (milliseconds) and shutdownTimeout=15000 (milliseconds).
-    builder.setShutdownQuietPeriod(0)
-    builder.setShutdownTimeout(0)
+    builder.setShutdownQuietPeriod(java.time.Duration.ZERO)
+    builder.setShutdownTimeout(java.time.Duration.ZERO)
     builder.setUseLaxCookieEncoder(ahcConfig.useLaxCookieEncoder)
 
     if (!ahcConfig.useCookieStore) {

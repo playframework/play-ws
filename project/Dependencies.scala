@@ -1,7 +1,7 @@
 /*
  * Copyright (C) from 2022 The Play Framework Contributors <https://github.com/playframework>, 2011-2021 Lightbend Inc. <https://www.lightbend.com>
  */
-import sbt._
+import sbt.*
 
 object Dependencies {
 
@@ -40,11 +40,7 @@ object Dependencies {
 
   val cachecontrol = Seq("org.playframework" %% "cachecontrol" % "3.1.0-M2")
 
-  val asyncHttpClient = Seq(
-    ("org.asynchttpclient" % "async-http-client" % "2.12.4") // 2.12.x comes with outdated netty-reactive-streams, so we ...
-      .exclude("com.typesafe.netty", "netty-reactive-streams"), // ... exclude it and pull in ...
-    "com.typesafe.netty" % "netty-reactive-streams" % "2.0.14", // ... a newer version ourselves (ahc v3 will drop that dependency)
-  )
+  val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "3.0.2")
 
   val pekkoVersion = "1.0.3"
 

@@ -4,38 +4,28 @@
 
 package play.libs.ws.ahc;
 
-import org.apache.pekko.Done;
+import com.typesafe.sslconfig.ssl.SystemConfiguration;
+import jakarta.inject.Inject;
 import org.apache.pekko.stream.Materializer;
 import org.apache.pekko.stream.javadsl.Source;
 import org.apache.pekko.util.ByteString;
 import org.apache.pekko.util.ByteStringBuilder;
-import com.typesafe.sslconfig.ssl.SystemConfiguration;
-import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
 import org.slf4j.LoggerFactory;
-import play.api.libs.ws.ahc.*;
+import play.api.libs.ws.ahc.AhcConfigBuilder;
+import play.api.libs.ws.ahc.AhcLoggerFactory;
+import play.api.libs.ws.ahc.AhcWSClientConfig;
 import play.api.libs.ws.ahc.cache.AhcHttpCache;
 import play.api.libs.ws.ahc.cache.CachingAsyncHttpClient;
 import play.libs.ws.StandaloneWSClient;
 import play.libs.ws.StandaloneWSResponse;
-import play.shaded.ahc.org.asynchttpclient.AsyncCompletionHandler;
-import play.shaded.ahc.org.asynchttpclient.AsyncHttpClient;
-import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClient;
-import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClientConfig;
-import play.shaded.ahc.org.asynchttpclient.Request;
-import play.shaded.ahc.org.asynchttpclient.Response;
 import play.shaded.ahc.org.asynchttpclient.*;
-import scala.jdk.javaapi.FutureConverters;
-import scala.concurrent.ExecutionContext;
 import scala.concurrent.Future;
 import scala.concurrent.Promise;
+import scala.jdk.javaapi.FutureConverters;
 
-import jakarta.inject.Inject;
 import java.io.IOException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
 
 /**
  * A WS asyncHttpClient backed by an AsyncHttpClient instance.
@@ -84,62 +74,6 @@ public class StandaloneAhcWSClient implements StandaloneWSClient {
         }
         Future<StandaloneWSResponse> future = scalaPromise.future();
         return FutureConverters.asJava(future);
-    }
-
-    CompletionStage<StandaloneWSResponse> executeStream(Request request, ExecutionContext ec) {
-        final Promise<StandaloneWSResponse> streamStarted = scala.concurrent.Promise$.MODULE$.apply();
-        final Promise<Done> streamCompletion = scala.concurrent.Promise$.MODULE$.apply();
-
-        Function<StreamedState, StandaloneWSResponse> f = state -> {
-            Publisher<HttpResponseBodyPart> publisher = state.publisher();
-            Publisher<HttpResponseBodyPart> wrap = new Publisher<HttpResponseBodyPart>() {
-                @Override
-                public void subscribe(Subscriber<? super HttpResponseBodyPart> s) {
-                    publisher.subscribe(
-                        new Subscriber<HttpResponseBodyPart>() {
-                            @Override
-                            public void onSubscribe(Subscription sub) {
-                                s.onSubscribe(sub);
-                            }
-
-                            @Override
-                            public void onNext(HttpResponseBodyPart httpResponseBodyPart) {
-                                s.onNext(httpResponseBodyPart);
-                            }
-
-                            @Override
-                            public void onError(Throwable t) {
-                                s.onError(t);
-                            }
-
-                            @Override
-                            public void onComplete() {
-                                FutureConverters.asJava(streamCompletion.future())
-                                    .handle((d, t) -> {
-                                        if (d != null) s.onComplete();
-                                        else s.onError(t);
-                                        return null;
-                                    });
-                            }
-                        }
-                    );
-                }
-            };
-
-            return new StreamedResponse(this,
-                state.statusCode(),
-                state.statusText(),
-                state.uriOption().get(),
-                state.responseHeaders(),
-                wrap,
-                asyncHttpClient.getConfig().isUseLaxCookieEncoder());
-        };
-
-        asyncHttpClient.executeRequest(request, new DefaultStreamedAsyncHandler<>(f,
-            streamStarted,
-            streamCompletion
-        ));
-        return FutureConverters.asJava(streamStarted.future());
     }
 
     /**

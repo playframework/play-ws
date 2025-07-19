@@ -176,7 +176,11 @@ lazy val `shaded-asynchttpclient` = project
     assembly / logLevel              := Level.Error,
     assembly / assemblyMergeStrategy := {
       val NettyPropertiesPath                    = "META-INF" + File.separator + "io.netty.versions.properties"
+      val ModuleInfoClass = "META-INF" + File.separator + "versions" + File.separator + "9" + File.separator + "module-info.class"
       val mergeStrategy: String => MergeStrategy = {
+        case ModuleInfoClass =>
+          MergeStrategy.discard
+
         case NettyPropertiesPath =>
           MergeStrategy.first
 
@@ -212,37 +216,9 @@ lazy val `shaded-asynchttpclient` = project
     Compile / packageBin      := assembly.value
   )
 
-//---------------------------------------------------------------
-// Shaded oauth
-//---------------------------------------------------------------
-
-lazy val `shaded-oauth` = project
-  .in(file("shaded/oauth"))
-  .disablePlugins(MimaPlugin)
-  .settings(commonSettings)
-  .settings(shadeAssemblySettings)
-  .settings(
-    libraryDependencies ++= oauth,
-    name := "shaded-oauth",
-    // logLevel in assembly := Level.Debug,
-    assembly / assemblyShadeRules := Seq(
-      ShadeRule.rename("oauth.**" -> "play.shaded.oauth.@0").inAll,
-      ShadeRule.rename("org.apache.commons.**" -> "play.shaded.oauth.@0").inAll
-    ),
-    // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom
-    // Remove dependencies from the POM because we have a FAT jar here.
-    makePomConfiguration      := makePomConfiguration.value.withProcess(process = dependenciesFilter),
-    assembly / assemblyOption := (assembly / assemblyOption).value.withIncludeBin(false).withIncludeScala(false),
-    Compile / packageBin      := assembly.value
-  )
-
 // Make the shaded version of AHC available downstream
 val shadedAhcSettings = Seq(
   Compile / unmanagedJars += (`shaded-asynchttpclient` / Compile / packageBin).value
-)
-
-val shadedOAuthSettings = Seq(
-  Compile / unmanagedJars += (`shaded-oauth` / Compile / packageBin).value
 )
 
 //---------------------------------------------------------------
@@ -251,8 +227,7 @@ val shadedOAuthSettings = Seq(
 
 lazy val shaded = Project(id = "shaded", base = file("shaded"))
   .aggregate(
-    `shaded-asynchttpclient`,
-    `shaded-oauth`
+    `shaded-asynchttpclient`
   )
   .disablePlugins(sbtassembly.AssemblyPlugin, HeaderPlugin, MimaPlugin)
   .settings(
@@ -296,7 +271,7 @@ def addShadedDeps(deps: Seq[xml.Node], node: xml.Node): xml.Node = {
 lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
   .settings(
-    commonSettings ++ shadedAhcSettings ++ shadedOAuthSettings ++ Seq(
+    commonSettings ++ shadedAhcSettings ++ Seq(
       Test / fork        := true,
       Test / testOptions := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
       libraryDependencies ++= standaloneAhcWSDependencies,
@@ -381,7 +356,6 @@ lazy val `integration-tests` = project
     libraryDependencies ++= backendServerTestDependencies ++ testDependencies,
   )
   .settings(shadedAhcSettings)
-  .settings(shadedOAuthSettings)
   .dependsOn(
     `play-ahc-ws-standalone`,
     `play-ws-standalone-json`,
