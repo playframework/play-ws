@@ -5,7 +5,6 @@
 package play.api.libs.ws
 
 import java.net.URI
-
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 
@@ -274,10 +273,5 @@ trait StandaloneWSRequest {
    * Execute this request
    */
   def execute(): Future[Response]
-
-  /**
-   * Execute this request and stream the response body.
-   */
-  def stream(): Future[Response]
 
 }

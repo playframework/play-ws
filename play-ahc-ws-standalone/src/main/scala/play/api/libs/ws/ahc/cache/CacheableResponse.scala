@@ -4,6 +4,17 @@
 
 package play.api.libs.ws.ahc.cache
 
+import org.slf4j.LoggerFactory
+import play.shaded.ahc.io.netty.buffer.ByteBuf
+import play.shaded.ahc.io.netty.buffer.Unpooled
+import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
+import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
+import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders.Names._
+import play.shaded.ahc.io.netty.handler.codec.http.cookie.Cookie
+import play.shaded.ahc.org.asynchttpclient._
+import play.shaded.ahc.org.asynchttpclient.uri.Uri
+import play.shaded.ahc.org.asynchttpclient.util.HttpUtils._
+
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
@@ -13,15 +24,6 @@ import java.nio.ByteBuffer
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 import java.util
-
-import org.slf4j.LoggerFactory
-import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders.Names._
-import play.shaded.ahc.io.netty.handler.codec.http.cookie.Cookie
-import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
-import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
-import play.shaded.ahc.org.asynchttpclient._
-import play.shaded.ahc.org.asynchttpclient.uri.Uri
-import play.shaded.ahc.org.asynchttpclient.util.HttpUtils._
 
 class CacheableResponseBuilder(ahcConfig: AsyncHttpClientConfig) {
 
@@ -203,8 +205,9 @@ case class CacheableResponse(
   }
 
   private def buildCookies: util.List[Cookie] = {
-    import play.shaded.ahc.org.asynchttpclient.util.MiscUtils.isNonEmpty
     import play.shaded.ahc.io.netty.handler.codec.http.cookie.ClientCookieDecoder
+    import play.shaded.ahc.org.asynchttpclient.util.MiscUtils.isNonEmpty
+
     import java.util.Collections
 
     var setCookieHeaders = headers.getAll(SET_COOKIE2)
@@ -230,6 +233,8 @@ case class CacheableResponse(
   override def getLocalAddress: SocketAddress = status.getLocalAddress
 
   override def getRemoteAddress: SocketAddress = status.getRemoteAddress
+
+  override def getResponseBodyAsByteBuf: ByteBuf = Unpooled.wrappedBuffer(getResponseBodyAsByteBuffer())
 }
 
 object CacheableResponse {
@@ -289,6 +294,8 @@ class CacheableHttpResponseBodyPart(chunk: Array[Byte], last: Boolean) extends H
   override def getBodyPartBytes: Array[Byte] = chunk
 
   override def getBodyByteBuffer: ByteBuffer = ByteBuffer.wrap(chunk)
+
+  override def getBodyByteBuf: ByteBuf = Unpooled.wrappedBuffer(getBodyByteBuffer())
 
   override def isLast: Boolean = super.isLast
 

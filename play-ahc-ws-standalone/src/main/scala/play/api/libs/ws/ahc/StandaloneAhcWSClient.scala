@@ -4,31 +4,22 @@
 
 package play.api.libs.ws.ahc
 
-import org.apache.pekko.Done
+import com.typesafe.sslconfig.ssl.SystemConfiguration
 import jakarta.inject.Inject
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
-import com.typesafe.sslconfig.ssl.SystemConfiguration
-import org.reactivestreams.Publisher
-import org.reactivestreams.Subscriber
-import org.reactivestreams.Subscription
-import play.api.libs.ws.ahc.cache._
 import play.api.libs.ws.EmptyBody
 import play.api.libs.ws.StandaloneWSClient
 import play.api.libs.ws.StandaloneWSRequest
+import play.api.libs.ws.ahc.cache._
 import play.shaded.ahc.org.asynchttpclient.uri.Uri
-import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse }
-import play.shaded.ahc.org.asynchttpclient._
-import java.util.function.{ Function => JFunction }
+import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse, _ }
 
 import scala.collection.immutable.TreeMap
-import scala.jdk.FunctionConverters._
 import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.concurrent.Promise
-import scala.util.Failure
-import scala.util.Success
 
 /**
  * A WS client backed by an AsyncHttpClient.
@@ -100,59 +91,6 @@ class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(implici
       case npe: NullPointerException =>
         throw new IllegalArgumentException(s"Invalid URL $url", npe)
     }
-  }
-
-  private[ahc] def executeStream(request: Request): Future[StreamedResponse] = {
-    val streamStarted    = Promise[StreamedResponse]()
-    val streamCompletion = Promise[Done]()
-
-    val client = this
-
-    val function: JFunction[StreamedState, StreamedResponse] = { (state: StreamedState) =>
-      val publisher = state.publisher
-
-      val wrap = new Publisher[HttpResponseBodyPart]() {
-        override def subscribe(
-            s: Subscriber[? >: HttpResponseBodyPart]
-        ): Unit = {
-          publisher.subscribe(new Subscriber[HttpResponseBodyPart] {
-            override def onSubscribe(sub: Subscription): Unit =
-              s.onSubscribe(sub)
-
-            override def onNext(t: HttpResponseBodyPart): Unit = s.onNext(t)
-
-            override def onError(t: Throwable): Unit = s.onError(t)
-
-            override def onComplete(): Unit = {
-              streamCompletion.future.onComplete {
-                case Success(_) => s.onComplete()
-                case Failure(t) => s.onError(t)
-              }(materializer.executionContext)
-            }
-          })
-        }
-
-      }
-      new StreamedResponse(
-        client,
-        state.statusCode,
-        state.statusText,
-        state.uriOption.get,
-        state.responseHeaders,
-        wrap,
-        asyncHttpClient.getConfig.isUseLaxCookieEncoder
-      )
-
-    }.asJava
-    asyncHttpClient.executeRequest(
-      request,
-      new DefaultStreamedAsyncHandler[StreamedResponse](
-        function,
-        streamStarted,
-        streamCompletion
-      )
-    )
-    streamStarted.future
   }
 
   private[ahc] def blockingToByteString(bodyAsSource: Source[ByteString, ?]) = {
