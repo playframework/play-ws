@@ -177,7 +177,7 @@ class AhcConfigBuilderSpec extends Specification {
           val config    = defaultConfig.copy(wsClientConfig = wsConfig)
           val builder   = new AhcConfigBuilder(config)
 
-          sslConfig.protocol must_== "TLSv1.2"
+          sslConfig.protocol must_== "TLSv1.3"
 
           val asyncClientConfig = builder.build()
 
@@ -214,7 +214,7 @@ class AhcConfigBuilderSpec extends Specification {
           val wsConfig          = defaultWsConfig.copy(ssl = sslConfig)
           val config            = defaultConfig.copy(wsClientConfig = wsConfig)
           val builder           = new AhcConfigBuilder(config)
-          val existingProtocols = Array("TLSv1.2", "TLSv1.1", "TLSv1")
+          val existingProtocols = Array("TLSv1.3", "TLSv1.2")
 
           val actual = builder.configureProtocols(existingProtocols, sslConfig)
 

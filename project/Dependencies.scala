@@ -32,7 +32,7 @@ object Dependencies {
 
   val jakartaInject = Seq("jakarta.inject" % "jakarta.inject-api" % "2.0.1")
 
-  val sslConfigCore = Seq("com.typesafe" %% "ssl-config-core" % "0.6.1")
+  val sslConfigCore = Seq("com.typesafe" %% "ssl-config-core" % "0.7.0")
 
   val scalaXml = Seq("org.scala-lang.modules" %% "scala-xml" % "2.4.0")
 
