@@ -40,10 +40,18 @@ object Dependencies {
 
   val cachecontrol = Seq("org.playframework" %% "cachecontrol" % "3.1.0-M2")
 
+  val nettyVersion    = "4.1.128.Final" // Keep in sync with the netty version netty-reactive-streams uses (see below)
   val asyncHttpClient = Seq(
-    ("org.asynchttpclient" % "async-http-client" % "2.12.4") // 2.12.x comes with outdated netty-reactive-streams, so we ...
-      .exclude("com.typesafe.netty", "netty-reactive-streams"), // ... exclude it and pull in ...
-    "com.typesafe.netty" % "netty-reactive-streams" % "2.0.15", // ... a newer version ourselves (ahc v3 will drop that dependency)
+    ("org.asynchttpclient" % "async-http-client" % "2.12.4") // 2.12.x comes with outdated netty-reactive-streams and netty, so we ...
+      .exclude("com.typesafe.netty", "netty-reactive-streams") // ... exclude netty-reactive-streams and ...
+      .excludeAll(ExclusionRule("io.netty")), // ... also exclude all netty dependencies and pull in ...
+    "com.typesafe.netty" % "netty-reactive-streams" % "2.0.16", // ... a new netty-reactive-streams (ahc v3 will drop it btw) ...
+    "io.netty" % "netty-codec-http" % nettyVersion, // ... and the (up-to-date) netty artifacts async-http-client needs.
+    "io.netty" % "netty-codec-socks"   % nettyVersion, // Same.
+    "io.netty" % "netty-handler-proxy" % nettyVersion, // Same.
+    "io.netty" % "netty-handler"       % nettyVersion, // Same.
+    "io.netty" % "netty-buffer"        % nettyVersion, // Almost same - needed by async-http-client-netty-utils.
+
   )
 
   val pekkoVersion = "1.2.1"
