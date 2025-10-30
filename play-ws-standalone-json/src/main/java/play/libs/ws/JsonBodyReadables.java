@@ -16,7 +16,7 @@ public interface JsonBodyReadables {
     JsonBodyReadables instance = new JsonBodyReadables() {};
 
     default BodyReadable<JsonNode> json() {
-        ObjectMapper defaultObjectMapper = DefaultObjectMapper.instance;
+        ObjectMapper defaultObjectMapper = DefaultObjectMapper.instance();
         return json(defaultObjectMapper);
     }
 

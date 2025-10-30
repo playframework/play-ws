@@ -20,7 +20,7 @@ public interface JsonBodyWritables {
      * @return a {@link InMemoryBodyWritable} instance.
      */
     default BodyWritable<ByteString> body(JsonNode node) {
-        return body(node, DefaultObjectMapper.instance);
+        return body(node, DefaultObjectMapper.instance());
     }
 
     /**

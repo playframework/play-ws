@@ -55,7 +55,7 @@ class JsonRequestSpec extends Specification with AfterAll with JsonBodyWritables
   }
 
   "set a json node using the default object mapper" in {
-    val objectMapper = DefaultObjectMapper.instance
+    val objectMapper = DefaultObjectMapper.instance()
 
     implicit val jsonReadable = body(objectMapper)
     val jsonNode              = objectMapper.readTree("""{"k1":"v1"}""")
