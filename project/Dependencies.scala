@@ -69,7 +69,7 @@ object Dependencies {
     "org.apache.pekko" %% "pekko-serialization-jackson" % pekkoVersion,
     // play-json pulls in newer jackson version than pekkoVersion ships, need to override to avoid exceptions:
     // https://github.com/apache/pekko/blob/v1.2.1/project/Dependencies.scala#L110-L111
-    ("com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.20.0")
+    ("com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.20.1")
       .excludeAll(ExclusionRule(organization = "org.scala-lang")),
     "org.apache.pekko" %% "pekko-slf4j" % pekkoVersion
   ).map(_ % Test)
