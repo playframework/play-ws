@@ -57,6 +57,11 @@ lazy val mimaSettings = Seq(
     // Switch to jakarta inject
     ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.ahc.AhcWSClientConfigParser"),
     ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.WSConfigParser"),
+    // DefaultObjectMapper is now a Scala object
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.libs.ws.DefaultObjectMapper.this"),
+    ProblemFilters.exclude[FinalClassProblem]("play.libs.ws.DefaultObjectMapper"),
+    // instance is now a method, not "just" a field anymore, so it always returns the current mapper
+    ProblemFilters.exclude[MissingFieldProblem]("play.libs.ws.DefaultObjectMapper.instance"),
   )
 )
 
