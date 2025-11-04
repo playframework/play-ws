@@ -22,7 +22,7 @@ public class JsonRequestTest implements JsonBodyWritables {
 
     @Test
     public void setJson() throws IOException {
-        JsonNode node = DefaultObjectMapper.instance.readTree("{\"k1\":\"v2\"}");
+        JsonNode node = DefaultObjectMapper.instance().readTree("{\"k1\":\"v2\"}");
 
         StandaloneAhcWSClient client = StandaloneAhcWSClient.create(
                 AhcWSClientConfigFactory.forConfig(ConfigFactory.load(), this.getClass().getClassLoader()), /*materializer*/ null);
@@ -32,7 +32,7 @@ public class JsonRequestTest implements JsonBodyWritables {
         Request req = ahcWSRequest.buildRequest();
 
         assertThat(req.getHeaders().get(HttpHeaderNames.CONTENT_TYPE)).isEqualTo("application/json");
-        assertThat(node).isEqualTo(DefaultObjectMapper.instance.readTree("{\"k1\":\"v2\"}"));
+        assertThat(node).isEqualTo(DefaultObjectMapper.instance().readTree("{\"k1\":\"v2\"}"));
     }
 
     @Test
