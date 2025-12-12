@@ -54,7 +54,7 @@ object Dependencies {
 
   )
 
-  val pekkoVersion = "1.3.0"
+  val pekkoVersion = "1.4.0"
 
   val pekkoStreams = Seq("org.apache.pekko" %% "pekko-stream" % pekkoVersion)
 
