@@ -9,9 +9,9 @@ object Dependencies {
   val scala213 = "2.13.18"
   val scala3   = "3.3.7"
 
-  val logback = Seq("ch.qos.logback" % "logback-core" % "1.5.25")
+  val logback = Seq("ch.qos.logback" % "logback-core" % "1.5.26")
 
-  val assertj = Seq("org.assertj" % "assertj-core" % "3.27.6")
+  val assertj = Seq("org.assertj" % "assertj-core" % "3.27.7")
 
   val awaitility = Seq("org.awaitility" % "awaitility" % "4.3.0")
 
@@ -69,7 +69,7 @@ object Dependencies {
     "org.apache.pekko" %% "pekko-serialization-jackson" % pekkoVersion,
     // play-json pulls in newer jackson version than pekkoVersion ships, need to override to avoid exceptions:
     // https://github.com/apache/pekko/blob/v1.2.1/project/Dependencies.scala#L110-L111
-    ("com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.20.1")
+    ("com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.20.2")
       .excludeAll(ExclusionRule(organization = "org.scala-lang")),
     "org.apache.pekko" %% "pekko-slf4j" % pekkoVersion
   ).map(_ % Test)
