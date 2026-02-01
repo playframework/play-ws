@@ -79,7 +79,7 @@ trait CurlFormat {
 
     // body (note that this has only been checked for text, not binary)
     request.body match {
-      case (InMemoryBody(byteString)) =>
+      case InMemoryBody(byteString) =>
         val charset    = findCharset(request)
         val bodyString = byteString.decodeString(charset)
         // XXX Need to escape any quotes within the body of the string.
