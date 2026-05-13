@@ -44,8 +44,22 @@ object Dependencies {
   val signpostVersion = "1.2.1.2"
   val oauth = Seq("oauth.signpost" % "signpost-core" % signpostVersion)
 
+<<<<<<< HEAD
   val cachecontrolVersion = "1.1.7"
   val cachecontrol = Seq("com.typesafe.play" %% "cachecontrol" % cachecontrolVersion)
+=======
+  val nettyVersion    = "4.1.133.Final" // Keep in sync with the netty version netty-reactive-streams uses (see below)
+  val asyncHttpClient = Seq(
+    ("org.asynchttpclient" % "async-http-client" % "2.15.0") // 2.12.x comes with outdated netty-reactive-streams and netty, so we ...
+      .exclude("com.typesafe.netty", "netty-reactive-streams") // ... exclude netty-reactive-streams and ...
+      .excludeAll(ExclusionRule("io.netty")), // ... also exclude all netty dependencies and pull in ...
+    "com.typesafe.netty" % "netty-reactive-streams" % "2.0.18", // ... a new netty-reactive-streams (ahc v3 will drop it btw) ...
+    "io.netty" % "netty-codec-http" % nettyVersion, // ... and the (up-to-date) netty artifacts async-http-client needs.
+    "io.netty" % "netty-codec-socks"   % nettyVersion, // Same.
+    "io.netty" % "netty-handler-proxy" % nettyVersion, // Same.
+    "io.netty" % "netty-handler"       % nettyVersion, // Same.
+    "io.netty" % "netty-buffer"        % nettyVersion, // Almost same - needed by async-http-client-netty-utils.
+>>>>>>> 794de39 (Async Http Client 2.15.0 + netty-reactive-streams upgrade)
 
   val asyncHttpClientVersion = "2.6.0"
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % asyncHttpClientVersion)
