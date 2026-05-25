@@ -28,7 +28,7 @@ object Dependencies {
 
   val playJson = Seq("org.playframework" %% "play-json" % "3.1.0-M10")
 
-  val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "2.0.17")
+  val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "2.0.18")
 
   val jakartaInject = Seq("jakarta.inject" % "jakarta.inject-api" % "2.0.1")
 
@@ -40,12 +40,12 @@ object Dependencies {
 
   val cachecontrol = Seq("org.playframework" %% "cachecontrol" % "3.1.0-M2")
 
-  val nettyVersion    = "4.1.132.Final" // Keep in sync with the netty version netty-reactive-streams uses (see below)
+  val nettyVersion    = "4.1.134.Final" // Keep in sync with the netty version netty-reactive-streams uses (see below)
   val asyncHttpClient = Seq(
-    ("org.asynchttpclient" % "async-http-client" % "2.14.5") // 2.12.x comes with outdated netty-reactive-streams and netty, so we ...
+    ("org.asynchttpclient" % "async-http-client" % "2.15.0") // 2.12.x comes with outdated netty-reactive-streams and netty, so we ...
       .exclude("com.typesafe.netty", "netty-reactive-streams") // ... exclude netty-reactive-streams and ...
       .excludeAll(ExclusionRule("io.netty")), // ... also exclude all netty dependencies and pull in ...
-    "com.typesafe.netty" % "netty-reactive-streams" % "2.0.17", // ... a new netty-reactive-streams (ahc v3 will drop it btw) ...
+    "com.typesafe.netty" % "netty-reactive-streams" % "2.0.18", // ... a new netty-reactive-streams (ahc v3 will drop it btw) ...
     "io.netty" % "netty-codec-http" % nettyVersion, // ... and the (up-to-date) netty artifacts async-http-client needs.
     "io.netty" % "netty-codec-socks"   % nettyVersion, // Same.
     "io.netty" % "netty-handler-proxy" % nettyVersion, // Same.
@@ -54,12 +54,12 @@ object Dependencies {
 
   )
 
-  val pekkoVersion = "2.0.0-M1"
+  val pekkoVersion = "2.0.0-M2"
 
   val pekkoStreams = Seq("org.apache.pekko" %% "pekko-stream" % pekkoVersion)
 
   val backendServerTestDependencies = Seq(
-    "org.playframework" %% "play-netty-server" % "3.0.10",
+    "org.playframework" %% "play-netty-server" % "3.0.11",
     // Following dependencies are pulled in by play-netty-server, we just make sure
     // now that we use the same pekko version here like pekko-stream above.
     // This is because when upgrading the pekko version in Play and play-ws here we usually release
