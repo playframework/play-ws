@@ -178,6 +178,12 @@ case class StandaloneAhcWSRequest(
   }
 
   /**
+   */
+  override def query[T: BodyWritable](body: T): Future[Response] = {
+    withBody(body).execute("QUERY")
+  }
+
+  /**
    * Sets the body for this request.
    */
   def withBody[T: BodyWritable](body: T): Self = {

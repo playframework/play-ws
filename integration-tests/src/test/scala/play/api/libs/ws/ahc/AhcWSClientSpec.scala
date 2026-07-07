@@ -52,6 +52,8 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
               Results.Ok("Say hello to play")
             case POST(_) =>
               Results.Ok(s"POST: ${request.body.asText.getOrElse("")}")
+            case _ if request.method == "QUERY" =>
+              Results.Ok(s"QUERY: ${request.body.asText.getOrElse("")}")
             case _ =>
               Results.NotFound
           }
@@ -126,6 +128,16 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
           defaultTimeout
         )
         result must beEqualTo("Say hello to play")
+      }
+    }
+
+    "perform a QUERY request with body" in {
+      withClient() { client =>
+        val result = Await.result(
+          client.url(s"http://localhost:$testServerPort/index").query("query body").map(res => res.body[String]),
+          defaultTimeout
+        )
+        result must beEqualTo("QUERY: query body")
       }
     }
 
