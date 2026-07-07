@@ -684,4 +684,42 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
     req.getHeaders.getAll(HttpHeaderNames.CONTENT_TYPE.toString()).asScala must_== Seq("text/plain; charset=US-ASCII")
   }
 
+  "For QUERY requests" in {
+
+    "set the method to QUERY and attach the body" in withClient { client =>
+      val req: AHCRequest = client
+        .url("http://playframework.com/")
+        .withBody("HELLO WORLD")
+        .withMethod("QUERY")
+        .asInstanceOf[StandaloneAhcWSRequest]
+        .buildRequest()
+      req.getMethod must_=== "QUERY"
+      (new String(req.getByteData, "UTF-8")) must_=== "HELLO WORLD"
+    }
+
+    "set content-type for the body" in withClient { client =>
+      val req: AHCRequest = client
+        .url("http://playframework.com/")
+        .withBody("HELLO WORLD")
+        .withMethod("QUERY")
+        .asInstanceOf[StandaloneAhcWSRequest]
+        .buildRequest()
+      req.getHeaders.get(HttpHeaderNames.CONTENT_TYPE.toString()) must_=== "text/plain; charset=UTF-8"
+    }
+
+    "send binary data as body" in withClient { client =>
+      val binData         = ByteString((0 to 127).map(_.toByte).toArray)
+      val req: AHCRequest = client
+        .url("http://playframework.com/")
+        .addHttpHeaders(HttpHeaderNames.CONTENT_TYPE.toString() -> "application/octet-stream")
+        .withBody(binData)
+        .withMethod("QUERY")
+        .asInstanceOf[StandaloneAhcWSRequest]
+        .buildRequest()
+      (req.getMethod must_=== "QUERY").and {
+        ByteString(req.getByteData) must_=== binData
+      }
+    }
+  }
+
 }
