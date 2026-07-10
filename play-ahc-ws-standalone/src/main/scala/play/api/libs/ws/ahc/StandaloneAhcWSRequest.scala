@@ -177,8 +177,7 @@ case class StandaloneAhcWSRequest(
     withBody(body).execute("PUT")
   }
 
-  /**
-   */
+  /** Performs a QUERY request. */
   override def query[T: BodyWritable](body: T): Future[Response] = {
     withBody(body).execute("QUERY")
   }

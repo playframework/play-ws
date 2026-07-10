@@ -272,8 +272,9 @@ class AhcWSRequestSpec extends Specification with DefaultBodyReadables with Defa
           .setMethod("QUERY")
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
-        req.getMethod must be_==("QUERY")
-        req.getStringData must be_==("HELLO WORLD")
+        (req.getMethod must_=== "QUERY").and {
+          req.getStringData must_=== "HELLO WORLD"
+        }
       }
 
       "set content-type for the body" in {
@@ -285,7 +286,7 @@ class AhcWSRequestSpec extends Specification with DefaultBodyReadables with Defa
           .setMethod("QUERY")
           .asInstanceOf[StandaloneAhcWSRequest]
           .buildRequest()
-        req.getHeaders.get(HttpHeaderNames.CONTENT_TYPE) must be_==("text/plain; charset=UTF-8")
+        req.getHeaders.get(HttpHeaderNames.CONTENT_TYPE) must_=== "text/plain; charset=UTF-8"
       }
     }
 

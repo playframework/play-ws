@@ -693,8 +693,8 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
         .withMethod("QUERY")
         .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
-      req.getMethod must beEqualTo("QUERY")
-      (new String(req.getByteData, "UTF-8")) must be_==("HELLO WORLD")
+      req.getMethod must_=== "QUERY"
+      (new String(req.getByteData, "UTF-8")) must_=== "HELLO WORLD"
     }
 
     "set content-type for the body" in withClient { client =>
@@ -704,7 +704,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
         .withMethod("QUERY")
         .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
-      req.getHeaders.get(HttpHeaderNames.CONTENT_TYPE.toString()) must beEqualTo("text/plain; charset=UTF-8")
+      req.getHeaders.get(HttpHeaderNames.CONTENT_TYPE.toString()) must_=== "text/plain; charset=UTF-8"
     }
 
     "send binary data as body" in withClient { client =>
@@ -716,8 +716,9 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
         .withMethod("QUERY")
         .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
-      req.getMethod must beEqualTo("QUERY")
-      ByteString(req.getByteData) must_== binData
+      (req.getMethod must_=== "QUERY").and {
+        ByteString(req.getByteData) must_=== binData
+      }
     }
   }
 
