@@ -10,8 +10,6 @@ generated.keystore
 generated.truststore
 *.log
 .bsp/
-.metals/
-.vscode/
 
 # Scala-IDE specific
 .scala_dependencies
