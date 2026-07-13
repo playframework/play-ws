@@ -137,7 +137,7 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
           client.url(s"http://localhost:$testServerPort/index").query("query body").map(res => res.body[String]),
           defaultTimeout
         )
-        result must beEqualTo("QUERY: query body")
+        result must_=== "QUERY: query body"
       }
     }
 
