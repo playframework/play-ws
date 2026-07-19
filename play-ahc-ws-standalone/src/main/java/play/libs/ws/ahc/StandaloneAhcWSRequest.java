@@ -370,6 +370,11 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     @Override
+    public CompletionStage<? extends StandaloneWSResponse> query(BodyWritable body) {
+        return setMethod("QUERY").setBody(body).execute();
+    }
+
+    @Override
     public CompletionStage<? extends StandaloneWSResponse> delete() {
         return setMethod("DELETE").execute();
     }

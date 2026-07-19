@@ -261,6 +261,35 @@ class AhcWSRequestSpec extends Specification with DefaultBodyReadables with Defa
       req.getRealm.isUsePreemptiveAuth must beFalse
     }
 
+    "For QUERY requests" in {
+
+      "set method to QUERY and attach the body" in {
+        val client = StandaloneAhcWSClient.create(
+          AhcWSClientConfigFactory.forConfig(ConfigFactory.load(), this.getClass.getClassLoader), /*materializer*/ null
+        )
+        val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
+          .setBody(body("HELLO WORLD"))
+          .setMethod("QUERY")
+          .asInstanceOf[StandaloneAhcWSRequest]
+          .buildRequest()
+        (req.getMethod must_=== "QUERY").and {
+          req.getStringData must_=== "HELLO WORLD"
+        }
+      }
+
+      "set content-type for the body" in {
+        val client = StandaloneAhcWSClient.create(
+          AhcWSClientConfigFactory.forConfig(ConfigFactory.load(), this.getClass.getClassLoader), /*materializer*/ null
+        )
+        val req = new StandaloneAhcWSRequest(client, "http://playframework.com/", null)
+          .setBody(body("HELLO WORLD"))
+          .setMethod("QUERY")
+          .asInstanceOf[StandaloneAhcWSRequest]
+          .buildRequest()
+        req.getHeaders.get(HttpHeaderNames.CONTENT_TYPE) must_=== "text/plain; charset=UTF-8"
+      }
+    }
+
     "Set Realm.UsePreemptiveAuth to true when WSAuthScheme.DIGEST not being used" in {
       val client = StandaloneAhcWSClient.create(
         AhcWSClientConfigFactory.forConfig(ConfigFactory.load(), this.getClass.getClassLoader), /*materializer*/ null

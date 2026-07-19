@@ -83,6 +83,18 @@ public interface StandaloneWSRequest {
     CompletionStage<? extends StandaloneWSResponse> put(BodyWritable body);
 
     //-------------------------------------------------------------------------
+    // "QUERY"
+    //-------------------------------------------------------------------------
+
+    /**
+     * Perform a QUERY on the request asynchronously.
+     *
+     * @param body the BodyWritable
+     * @return a promise to the response
+     */
+    CompletionStage<? extends StandaloneWSResponse> query(BodyWritable body);
+
+    //-------------------------------------------------------------------------
     // Miscellaneous execution methods
     //-------------------------------------------------------------------------
 

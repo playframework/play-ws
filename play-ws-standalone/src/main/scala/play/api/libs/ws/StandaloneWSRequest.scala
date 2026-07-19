@@ -249,6 +249,14 @@ trait StandaloneWSRequest {
   def put[T: BodyWritable](body: T): Future[Response]
 
   /**
+   * Performs a QUERY request.
+   *
+   * @param body the payload body submitted with this request
+   * @return a future with the response for the QUERY request
+   */
+  def query[T: BodyWritable](body: T): Future[Response]
+
+  /**
    * Perform a DELETE on the request asynchronously.
    */
   def delete(): Future[Response]
