@@ -9,7 +9,7 @@ object Dependencies {
   val scala213 = "2.13.18"
   val scala3   = "3.3.8"
 
-  val logback = Seq("ch.qos.logback" % "logback-core" % "1.6.1")
+  val logback = Seq("ch.qos.logback" % "logback-core" % "1.6.2")
 
   val assertj = Seq("org.assertj" % "assertj-core" % "3.27.7")
 
@@ -42,7 +42,7 @@ object Dependencies {
 
   val nettyVersion    = "4.1.137.Final" // Keep in sync with the netty version netty-reactive-streams uses (see below)
   val asyncHttpClient = Seq(
-    ("org.asynchttpclient" % "async-http-client" % "2.16.0") // 2.12.x comes with outdated netty-reactive-streams and netty, so we ...
+    ("org.asynchttpclient" % "async-http-client" % "2.16.1") // 2.12.x comes with outdated netty-reactive-streams and netty, so we ...
       .exclude("com.typesafe.netty", "netty-reactive-streams") // ... exclude netty-reactive-streams and ...
       .excludeAll(ExclusionRule("io.netty")), // ... also exclude all netty dependencies and pull in ...
     "com.typesafe.netty" % "netty-reactive-streams" % "2.0.19", // ... a new netty-reactive-streams (ahc v3 will drop it btw) ...
