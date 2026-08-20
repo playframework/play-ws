@@ -1,4 +1,4 @@
-addSbtPlugin("com.eed3si9n"       % "sbt-assembly"    % "2.4.1")
+addSbtPlugin("com.eed3si9n"       % "sbt-assembly"    % "2.4.2")
 addSbtPlugin("org.scalameta"      % "sbt-scalafmt"    % "2.6.2")
 addSbtPlugin("com.typesafe"       % "sbt-mima-plugin" % "1.1.6")
 addSbtPlugin("com.github.sbt"     % "sbt-header"      % "5.11.0")
