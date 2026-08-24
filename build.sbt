@@ -62,6 +62,9 @@ lazy val mimaSettings = Seq(
     ProblemFilters.exclude[FinalClassProblem]("play.libs.ws.DefaultObjectMapper"),
     // instance is now a method, not "just" a field anymore, so it always returns the current mapper
     ProblemFilters.exclude[MissingFieldProblem]("play.libs.ws.DefaultObjectMapper.instance"),
+    // Add HTTP QUERY method support (RFC 10008)
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.api.libs.ws.StandaloneWSRequest.query"),
+    ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.query"),
   )
 )
 

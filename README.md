@@ -148,6 +148,22 @@ def postExampleString(ws: play.api.libs.ws.StandaloneWSClient)(
 }
 ```
 
+To perform a QUERY request ([RFC 10008](https://www.rfc-editor.org/rfc/rfc10008)), which is safe and idempotent like GET but carries a request body:
+
+```scala
+import scala.concurrent.ExecutionContext
+import play.api.libs.ws.DefaultBodyWritables._ // required
+
+def queryExample(ws: play.api.libs.ws.StandaloneWSClient)(
+  implicit ec: ExecutionContext) = {
+  val queryBody = """{"search": "play framework"}"""
+  ws.url("...")
+    .addHttpHeaders("Content-Type" -> "application/json")
+    .query(queryBody)
+    .map { response => /* do something */ }
+}
+```
+
 You can also define your own custom BodyReadable: 
 
 ```scala
@@ -218,6 +234,20 @@ class MyClass {
         return ws.url(url).post(body(source)).thenApply(response ->
             response.body()
         );
+    }
+}
+```
+
+To perform a QUERY request ([RFC 10008](https://www.rfc-editor.org/rfc/rfc10008)), which is safe and idempotent like GET but carries a request body:
+
+```java
+public class MyClient implements DefaultBodyWritables, DefaultBodyReadables {
+    public CompletionStage<String> doQuery() {
+        return client.url("http://example.com")
+            .query(body("{\"search\": \"play framework\"}", "application/json"))
+            .thenApply(response ->
+                response.body(string())
+            );
     }
 }
 ```
