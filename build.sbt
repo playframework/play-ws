@@ -85,13 +85,6 @@ lazy val commonSettings = Def.settings(
   // resolvers += Resolver.ApacheMavenSnapshotsRepo,
   scalaVersion       := scala213,
   crossScalaVersions := Seq(scala213, scala3),
-  conflictWarning    := {
-    if (scalaBinaryVersion.value == "3") {
-      ConflictWarning("warn", sbt.Level.Warn, false)
-    } else {
-      conflictWarning.value
-    }
-  },
   scalacOptions ++= scalacOpts.value,
   Compile / doc / scalacOptions ++= Seq(
     "-Xfatal-warnings",
