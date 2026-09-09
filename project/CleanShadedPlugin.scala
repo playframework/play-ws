@@ -50,7 +50,7 @@ object CleanShadedPlugin extends AutoPlugin {
 
   override def projectSettings =
     Seq(
-      cleanCacheIvyDirectory := ivyPaths.value.ivyHome.getOrElse(Path.userHome / ".ivy2"),
+      cleanCacheIvyDirectory := ivyPaths.value.ivyHome.map(file).getOrElse(Path.userHome / ".ivy2"),
       cleanCache             := IO.delete(cleanCacheFiles.evaluated),
       cleanLocal             := IO.delete(cleanLocalFiles.evaluated),
       cleanCacheFiles        := {

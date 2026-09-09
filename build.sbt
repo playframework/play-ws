@@ -71,16 +71,16 @@ lazy val mimaSettings = Seq(
 lazy val commonSettings = Def.settings(
   organization         := "org.playframework",
   organizationName     := "The Play Framework Project",
-  organizationHomepage := Some(url("https://playframework.com")),
-  homepage             := Some(url("https://github.com/playframework/play-ws/")),
-  scmInfo := Some(ScmInfo(url("https://github.com/playframework/play-ws"), "git@github.com:playframework/play-ws.git")),
+  organizationHomepage := Some(uri("https://playframework.com")),
+  homepage             := Some(uri("https://github.com/playframework/play-ws/")),
+  scmInfo := Some(ScmInfo(uri("https://github.com/playframework/play-ws"), "git@github.com:playframework/play-ws.git")),
   developers += Developer(
     "playframework",
     "The Play Framework Contributors",
     "contact@playframework.com",
-    url("https://github.com/playframework")
+    uri("https://github.com/playframework")
   ),
-  licenses := Seq("Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0")),
+  licenses := Seq("Apache-2.0" -> uri("http://opensource.org/licenses/Apache-2.0")),
   // To make use of Pekko snapshots uncomment following resolver:
   // resolvers += Resolver.ApacheMavenSnapshotsRepo,
   scalaVersion       := scala213,
@@ -100,6 +100,7 @@ lazy val commonSettings = Def.settings(
   ),
   Compile / javacOptions ++= javacSettings,
   Test / javacOptions ++= javacSettings,
+  exportJars    := false,
   headerLicense := {
     Some(
       HeaderLicense.Custom(
@@ -119,7 +120,7 @@ lazy val shadedCommonSettings = Seq(
 
 lazy val shadeAssemblySettings = commonSettings ++ shadedCommonSettings ++ Seq(
   assembly / assemblyOption ~= (_.withIncludeScala(false)),
-  assembly / test            := {},
+  assembly / test            := TestResult.Empty,
   assembly / assemblyJarName := {
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((epoch, major)) =>
@@ -217,7 +218,7 @@ lazy val `shaded-asynchttpclient` = project
     // ivyLoggingLevel := UpdateLogging.Full,
     // logLevel := Level.Debug,
     assembly / assemblyOption := (assembly / assemblyOption).value.withIncludeBin(false).withIncludeScala(false),
-    Compile / packageBin      := assembly.value
+    Compile / packageBin      := Def.uncached(assembly.value)
   )
 
 //---------------------------------------------------------------
@@ -241,7 +242,7 @@ lazy val `shaded-oauth` = project
     // Remove dependencies from the POM because we have a FAT jar here.
     makePomConfiguration      := makePomConfiguration.value.withProcess(process = dependenciesFilter),
     assembly / assemblyOption := (assembly / assemblyOption).value.withIncludeBin(false).withIncludeScala(false),
-    Compile / packageBin      := assembly.value
+    Compile / packageBin      := Def.uncached(assembly.value)
   )
 
 // Make the shaded version of AHC available downstream
@@ -294,7 +295,7 @@ def addShadedDeps(deps: Seq[xml.Node], node: xml.Node): xml.Node = {
       } else {
         elem.child.map(addShadedDeps(deps, _))
       }
-      xml.Elem(elem.prefix, elem.label, elem.attributes, elem.scope, false, child: _*)
+      xml.Elem(elem.prefix, elem.label, elem.attributes, elem.scope, false, child *)
     case _ =>
       node
   }
@@ -383,7 +384,8 @@ lazy val `integration-tests` = project
   .settings(commonSettings)
   .settings(publish / skip := true)
   .settings(
-    Test / fork := true,
+    Test / fork        := true,
+    evictionErrorLevel := Level.Warn,
     concurrentRestrictions += Tags.limitAll(1), // only one integration test at a time
     Test / testOptions := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
     libraryDependencies ++= backendServerTestDependencies ++ testDependencies,
@@ -427,21 +429,14 @@ lazy val root = project
   .settings(commonSettings)
   .settings(publish / skip := true)
   .settings(crossScalaVersions := Seq(scala213))
-  .aggregate(
-    `shaded`,
-    `play-ws-standalone`,
-    `play-ws-standalone-json`,
-    `play-ws-standalone-xml`,
-    `play-ahc-ws-standalone`,
-    `integration-tests`,
-    bench
+  .settings(
+    addCommandAlias(
+      "validateCode",
+      List(
+        "headerCheckAll",
+        "scalafmtSbtCheck",
+        "scalafmtCheckAll",
+      ).mkString(";")
+    )
   )
-
-addCommandAlias(
-  "validateCode",
-  List(
-    "headerCheckAll",
-    "scalafmtSbtCheck",
-    "scalafmtCheckAll",
-  ).mkString(";")
-)
+  .autoAggregate
