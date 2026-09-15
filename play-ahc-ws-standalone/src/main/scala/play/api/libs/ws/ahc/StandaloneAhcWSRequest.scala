@@ -21,7 +21,6 @@ import play.shaded.ahc.org.asynchttpclient.proxy.{ ProxyServer => AHCProxyServer
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils
 
 import scala.jdk.CollectionConverters._
-import scala.collection.immutable.TreeMap
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 
@@ -33,7 +32,7 @@ case class StandaloneAhcWSRequest(
     url: String,
     method: String = "GET",
     body: WSBody = EmptyBody,
-    headers: Map[String, Seq[String]] = TreeMap()(CaseInsensitiveOrdered),
+    headers: Map[String, Seq[String]] = CaseInsensitiveOrdered.empty[Seq[String]],
     queryString: Map[String, Seq[String]] = Map.empty,
     cookies: Seq[WSCookie] = Seq.empty,
     calc: Option[WSSignatureCalculator] = None,
@@ -81,7 +80,7 @@ case class StandaloneAhcWSRequest(
   }
 
   override def withHttpHeaders(hdrs: (String, String)*): Self = {
-    val emptyMap   = TreeMap[String, Seq[String]]()(CaseInsensitiveOrdered)
+    val emptyMap   = CaseInsensitiveOrdered.empty[Seq[String]]
     val newHeaders = buildHeaders(emptyMap, hdrs: _*)
     copy(headers = newHeaders)
   }

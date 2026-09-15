@@ -22,7 +22,6 @@ import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse }
 import play.shaded.ahc.org.asynchttpclient._
 import java.util.function.{ Function => JFunction }
 
-import scala.collection.immutable.TreeMap
 import scala.jdk.FunctionConverters._
 import scala.concurrent.Await
 import scala.concurrent.Future
@@ -58,7 +57,7 @@ class StandaloneAhcWSClient @Inject() (asyncHttpClient: AsyncHttpClient)(implici
       url = url,
       method = "GET",
       body = EmptyBody,
-      headers = TreeMap()(CaseInsensitiveOrdered),
+      headers = CaseInsensitiveOrdered.empty[Seq[String]],
       queryString = Map.empty,
       cookies = Seq.empty,
       calc = None,

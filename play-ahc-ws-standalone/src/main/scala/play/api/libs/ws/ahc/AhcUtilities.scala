@@ -19,7 +19,7 @@ trait AhcUtilities {
     headers.names().asScala.foreach { name =>
       mutableMap.put(name, headers.getAll(name).asScala.toSeq)
     }
-    TreeMap[String, Seq[String]]()(CaseInsensitiveOrdered) ++ mutableMap
+    CaseInsensitiveOrdered.empty[Seq[String]] ++ mutableMap
   }
 
 }
