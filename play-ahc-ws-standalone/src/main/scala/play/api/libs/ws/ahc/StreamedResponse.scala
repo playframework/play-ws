@@ -11,9 +11,6 @@ import play.api.libs.ws.StandaloneWSResponse
 import play.api.libs.ws.WSCookie
 import play.shaded.ahc.org.asynchttpclient.HttpResponseBodyPart
 
-import scala.collection.immutable.TreeMap
-import scala.collection.mutable
-
 /**
  * A streamed response containing a response header and a streamable body.
  *
@@ -75,14 +72,14 @@ class StreamedResponse(
   override def underlying[T]: T = publisher.asInstanceOf[T]
 
   override lazy val headers: Map[String, scala.collection.Seq[String]] = {
-    val mutableMap = mutable.TreeMap[String, scala.collection.Seq[String]]()(CaseInsensitiveOrdered)
+    val mutableMap = CaseInsensitiveOrdered.emptyMutable[scala.collection.Seq[String]]
     origHeaders.keys.foreach { name =>
       mutableMap.updateWith(name) {
         case Some(value) => Some(value ++ origHeaders.getOrElse(name, Seq.empty))
         case None        => Some(origHeaders.getOrElse(name, Seq.empty))
       }
     }
-    TreeMap[String, scala.collection.Seq[String]]()(CaseInsensitiveOrdered) ++ mutableMap
+    CaseInsensitiveOrdered.empty[scala.collection.Seq[String]] ++ mutableMap
   }
 
   /**

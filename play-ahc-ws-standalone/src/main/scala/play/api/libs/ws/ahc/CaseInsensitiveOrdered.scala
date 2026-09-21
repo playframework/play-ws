@@ -11,6 +11,18 @@ package play.api.libs.ws.ahc
  * at the content of the strings.
  */
 private[ahc] object CaseInsensitiveOrdered extends Ordering[String] {
+  // Keeping the Ordering implicit here works with the different TreeMap context-parameter
+  // layouts seen by Scala 2.13/3.3 and Scala 3.9+.
+  def empty[V]: scala.collection.immutable.TreeMap[String, V] = {
+    implicit val ordering: Ordering[String] = this
+    scala.collection.immutable.TreeMap.empty[String, V]
+  }
+
+  def emptyMutable[V]: scala.collection.mutable.TreeMap[String, V] = {
+    implicit val ordering: Ordering[String] = this
+    scala.collection.mutable.TreeMap.empty[String, V]
+  }
+
   def compare(x: String, y: String): Int = {
     val xl = x.length
     val yl = y.length

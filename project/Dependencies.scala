@@ -5,9 +5,21 @@ import sbt._
 
 object Dependencies {
 
-  // Should be sync with GA (.github/workflows/build-test.yml)
-  val scala213 = "2.13.18"
-  val scala3   = "3.3.8"
+  val scala213Version   = "2.13.18"
+  val scala33LTSVersion = "3.3.8"
+  val scala39LTSVersion = "3.9.0"
+  val scala3NextVersion = "3.10.0-RC2"
+
+  val publishedScalaVersions = Seq(scala213Version, scala33LTSVersion)
+
+  private val scalaVersionAliases = Map(
+    "2.13.x" -> scala213Version,
+    "3.3.x"  -> scala33LTSVersion,
+    "3.9.x"  -> scala39LTSVersion,
+    "3.next" -> scala3NextVersion,
+  )
+
+  def resolveScalaVersion(version: String): String = scalaVersionAliases.getOrElse(version, version)
 
   val logback = Seq("ch.qos.logback" % "logback-core" % "1.6.3")
 
@@ -26,7 +38,7 @@ object Dependencies {
 
   val junitInterface = Seq("com.github.sbt" % "junit-interface" % "0.13.3")
 
-  val playJson = Seq("org.playframework" %% "play-json" % "3.1.0-M10")
+  val playJson = Seq("org.playframework" %% "play-json" % "3.1.0-M10+89-827e146f-SNAPSHOT")
 
   val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "2.0.19")
 
@@ -38,7 +50,7 @@ object Dependencies {
 
   val oauth = Seq("oauth.signpost" % "signpost-core" % "2.1.1")
 
-  val cachecontrol = Seq("org.playframework" %% "cachecontrol" % "3.1.0-M2")
+  val cachecontrol = Seq("org.playframework" %% "cachecontrol" % "3.1.0-M3+2-5a8b88cf-SNAPSHOT")
 
   val nettyVersion    = "4.1.138.Final" // Keep in sync with the netty version netty-reactive-streams uses (see below)
   val asyncHttpClient = Seq(

@@ -8,6 +8,8 @@ import play.ws.AutomaticModuleName
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.MergeStrategy
 
+ThisBuild / resolvers += Resolver.sonatypeCentralSnapshots
+
 //---------------------------------------------------------------
 // Shading and Project Settings
 //---------------------------------------------------------------
@@ -43,7 +45,7 @@ val scalacOpts = Def.setting[Seq[String]] {
   )
 
   if (sv == "3") {
-    common
+    common ++ (if (scalaVersion.value.startsWith("3.3.")) Seq("-Yfuture-lazy-vals") else Seq.empty)
   } else {
     common ++ Seq("-Ywarn-unused:imports", "-Xlint:nullary-unit", "-Xlint", "-Ywarn-dead-code")
   }
@@ -83,8 +85,8 @@ lazy val commonSettings = Def.settings(
   licenses := Seq("Apache-2.0" -> uri("http://opensource.org/licenses/Apache-2.0")),
   // To make use of Pekko snapshots uncomment following resolver:
   // resolvers += Resolver.ApacheMavenSnapshotsRepo,
-  scalaVersion       := scala213,
-  crossScalaVersions := Seq(scala213, scala3),
+  scalaVersion       := resolveScalaVersion(sys.props.getOrElse("scala.version", scala213Version)),
+  crossScalaVersions := publishedScalaVersions,
   scalacOptions ++= scalacOpts.value,
   Compile / doc / scalacOptions ++= Seq(
     "-Xfatal-warnings",
@@ -104,8 +106,8 @@ lazy val commonSettings = Def.settings(
 )
 
 lazy val shadedCommonSettings = Seq(
-  // scalaVersion := scala213,
-  // crossScalaVersions := Seq(scala213),
+  // scalaVersion := scala213Version,
+  // crossScalaVersions := Seq(scala213Version),
   // No need to cross publish the shaded libraries
   crossPaths       := false,
   autoScalaLibrary := false,
@@ -421,7 +423,7 @@ lazy val root = project
   )
   .settings(commonSettings)
   .settings(publish / skip := true)
-  .settings(crossScalaVersions := Seq(scala213))
+  .settings(crossScalaVersions := Seq(scala213Version))
   .settings(
     addCommandAlias(
       "validateCode",
