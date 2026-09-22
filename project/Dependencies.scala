@@ -52,7 +52,7 @@ object Dependencies {
 
   val cachecontrol = Seq("org.playframework" %% "cachecontrol" % "3.1.0-M3+2-5a8b88cf-SNAPSHOT")
 
-  val nettyVersion    = "4.1.138.Final" // Keep in sync with the netty version netty-reactive-streams uses (see below)
+  val nettyVersion    = "4.2.18.Final" // Keep in sync with the netty version netty-reactive-streams uses (see below)
   val asyncHttpClient = Seq(
     ("org.asynchttpclient" % "async-http-client" % "2.16.1") // 2.12.x comes with outdated netty-reactive-streams and netty, so we ...
       .exclude("com.typesafe.netty", "netty-reactive-streams") // ... exclude netty-reactive-streams and ...
