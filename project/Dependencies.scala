@@ -40,7 +40,7 @@ object Dependencies {
 
   val playJson = Seq("org.playframework" %% "play-json" % "3.1.0-M10+89-827e146f-SNAPSHOT")
 
-  val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "2.0.19")
+  val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "2.0.20")
 
   val jakartaInject = Seq("jakarta.inject" % "jakarta.inject-api" % "2.0.1")
 
@@ -57,7 +57,7 @@ object Dependencies {
     ("org.asynchttpclient" % "async-http-client" % "2.16.1") // 2.12.x comes with outdated netty-reactive-streams and netty, so we ...
       .exclude("com.typesafe.netty", "netty-reactive-streams") // ... exclude netty-reactive-streams and ...
       .excludeAll(ExclusionRule("io.netty")), // ... also exclude all netty dependencies and pull in ...
-    "com.typesafe.netty" % "netty-reactive-streams" % "2.0.19", // ... a new netty-reactive-streams (ahc v3 will drop it btw) ...
+    "com.typesafe.netty" % "netty-reactive-streams" % "2.0.20", // ... a new netty-reactive-streams (ahc v3 will drop it btw) ...
     "io.netty" % "netty-codec-http" % nettyVersion, // ... and the (up-to-date) netty artifacts async-http-client needs.
     "io.netty" % "netty-codec-socks"   % nettyVersion, // Same.
     "io.netty" % "netty-handler-proxy" % nettyVersion, // Same.
