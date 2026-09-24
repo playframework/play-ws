@@ -21,7 +21,7 @@ object Dependencies {
 
   def resolveScalaVersion(version: String): String = scalaVersionAliases.getOrElse(version, version)
 
-  val logback = Seq("ch.qos.logback" % "logback-core" % "1.6.3")
+  val logback = Seq("ch.qos.logback" % "logback-core" % "1.6.4")
 
   val assertj = Seq("org.assertj" % "assertj-core" % "3.27.7")
 
