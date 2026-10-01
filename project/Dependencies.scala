@@ -21,7 +21,7 @@ object Dependencies {
 
   def resolveScalaVersion(version: String): String = scalaVersionAliases.getOrElse(version, version)
 
-  val logback = Seq("ch.qos.logback" % "logback-core" % "1.6.4")
+  val logback = Seq("ch.qos.logback" % "logback-core" % "1.6.5")
 
   val assertj = Seq("org.assertj" % "assertj-core" % "3.27.7")
 
@@ -71,7 +71,7 @@ object Dependencies {
   val pekkoStreams = Seq("org.apache.pekko" %% "pekko-stream" % pekkoVersion)
 
   val backendServerTestDependencies = Seq(
-    "org.playframework" %% "play-netty-server" % "3.0.11",
+    "org.playframework" %% "play-netty-server" % "3.0.12",
     // Following dependencies are pulled in by play-netty-server, we just make sure
     // now that we use the same pekko version here like pekko-stream above.
     // This is because when upgrading the pekko version in Play and play-ws here we usually release
