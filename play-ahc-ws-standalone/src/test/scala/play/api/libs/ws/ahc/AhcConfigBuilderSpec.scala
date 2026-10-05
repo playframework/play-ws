@@ -195,6 +195,18 @@ class AhcConfigBuilderSpec extends Specification {
           asyncConfig.isUseInsecureTrustManager must beFalse
         }
 
+        "should keep SSL debug tracing and hostname verification" in {
+          val underlyingConfig = parseSSLConfig("play.ws.ssl.debug.keymanager=true")
+          val sslConfig        = SSLConfigFactory.parse(underlyingConfig)
+          val wsConfig         = defaultWsConfig.copy(ssl = sslConfig)
+          val config           = defaultConfig.copy(wsClientConfig = wsConfig)
+          val asyncConfig      = new AhcConfigBuilder(config).build()
+          val sslEngine        = asyncConfig.getSslEngineFactory.newSslEngine(asyncConfig, "localhost", 443)
+
+          sslEngine.getClass.getName must contain("TracingSSLEngine")
+          sslEngine.getSSLParameters.getEndpointIdentificationAlgorithm must_== "HTTPS"
+        }
+
         "should disable the hostname verifier if loose.acceptAnyCertificate is enabled" in {
           val underlyingConfig = parseSSLConfig("play.ws.ssl.loose.acceptAnyCertificate=true")
           val sslConfig        = SSLConfigFactory.parse(underlyingConfig)
