@@ -46,6 +46,7 @@ import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.concurrent.Promise
 import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
 import scala.util.control.NonFatal
 
 class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
@@ -175,56 +176,56 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
 
   "The AHC 3 upgrade" should {
 
-    "use HTTP/1.1 over HTTPS by default even when the server offers h2" in {
+    "use HTTP/1.1 over HTTPS by default, without offering ALPN, even when the server offers h2" in {
       val server = new AlpnProtocolTestServer()
       try {
         withClient(trustedTlsConfig(server, http2Enabled = false)) { client =>
           val response = Await.result(client.url(server.url()).get(), defaultTimeout)
-          (response.body[String] must beEqualTo("http/1.1")).and(
-            server.negotiatedProtocol() must beEqualTo("http/1.1")
-          )
+          (response.body[String] must beEqualTo("http/1.1"))
+            .and(server.negotiatedProtocol() must beEqualTo("http/1.1"))
+            .and(server.lastHandshake().offeredProtocols() must beNull)
         }
       } finally {
         server.close()
       }
     }
 
-    "not advertise h2 over HTTPS merely because AHC HTTP/2 is enabled" in {
+    "negotiate h2 over HTTPS through ALPN when HTTP/2 is enabled" in {
       val server = new AlpnProtocolTestServer()
       try {
         withClient(trustedTlsConfig(server, http2Enabled = true)) { client =>
           val response = Await.result(client.url(server.url()).get(), defaultTimeout)
-          (response.body[String] must beEqualTo("http/1.1")).and(
-            server.negotiatedProtocol() must beEqualTo("http/1.1")
-          )
+          (response.body[String] must beEqualTo("h2"))
+            .and(server.negotiatedProtocol() must beEqualTo("h2"))
+            .and(server.lastHandshake().offeredProtocols().asScala must beEqualTo(Seq("h2", "http/1.1")))
         }
       } finally {
         server.close()
       }
     }
 
-    "use HTTP/1.1 on the loose TLS path even when the server offers h2" in {
+    "use HTTP/1.1 on the loose TLS path by default, without offering ALPN, even when the server offers h2" in {
       val server = new AlpnProtocolTestServer()
       try {
         withClient(looseTlsConfig(http2Enabled = false)) { client =>
           val response = Await.result(client.url(server.url()).get(), defaultTimeout)
-          (response.body[String] must beEqualTo("http/1.1")).and(
-            server.negotiatedProtocol() must beEqualTo("http/1.1")
-          )
+          (response.body[String] must beEqualTo("http/1.1"))
+            .and(server.negotiatedProtocol() must beEqualTo("http/1.1"))
+            .and(server.lastHandshake().offeredProtocols() must beNull)
         }
       } finally {
         server.close()
       }
     }
 
-    "not advertise h2 on the loose TLS path merely because AHC HTTP/2 is enabled" in {
+    "negotiate h2 on the loose TLS path when HTTP/2 is enabled" in {
       val server = new AlpnProtocolTestServer()
       try {
         withClient(looseTlsConfig(http2Enabled = true)) { client =>
           val response = Await.result(client.url(server.url()).get(), defaultTimeout)
-          (response.body[String] must beEqualTo("http/1.1")).and(
-            server.negotiatedProtocol() must beEqualTo("http/1.1")
-          )
+          (response.body[String] must beEqualTo("h2"))
+            .and(server.negotiatedProtocol() must beEqualTo("h2"))
+            .and(server.lastHandshake().offeredProtocols().asScala must beEqualTo(Seq("h2", "http/1.1")))
         }
       } finally {
         server.close()

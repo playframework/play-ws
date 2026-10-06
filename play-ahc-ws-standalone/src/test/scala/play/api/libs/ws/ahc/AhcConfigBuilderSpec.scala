@@ -416,6 +416,44 @@ class AhcConfigBuilderSpec extends Specification {
             .and(sslEngine.getEnabledCipherSuites.toSeq must_== Seq("TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"))
         }
 
+        "offer HTTP/2 through ALPN only when it is enabled and allowed for the connection" in {
+          val sslConfigs = Seq(
+            SSLConfigSettings(),
+            SSLConfigFactory.parse(parseSSLConfig("play.ws.ssl.loose.acceptAnyCertificate=true")),
+            SSLConfigFactory.parse(parseSSLConfig("play.ws.ssl.default=true")),
+            SSLConfigFactory.parse(parseSSLConfig("play.ws.ssl.debug.ssl=true"))
+          )
+          val results = for {
+            sslConfig    <- sslConfigs
+            http2Enabled <- Seq(false, true)
+          } yield {
+            val config =
+              defaultConfig.copy(wsClientConfig = defaultWsConfig.copy(ssl = sslConfig), http2Enabled = http2Enabled)
+            val asyncConfig = new AhcConfigBuilder(config).build()
+            val factory     = asyncConfig.getSslEngineFactory
+            factory.init(asyncConfig)
+            def offered(http2Allowed: Boolean) =
+              factory
+                .newSslEngine(asyncConfig, "localhost", 443, http2Allowed)
+                .getSSLParameters
+                .getApplicationProtocols
+                .toSeq
+            if (http2Enabled) (offered(true) must_== Seq("h2", "http/1.1")).and(offered(false) must_== Seq("http/1.1"))
+            else (offered(true) must beEmpty).and(offered(false) must beEmpty)
+          }
+          results.reduce(_ and _)
+        }
+
+        "keep hostname verification when a debug-traced engine offers HTTP/2" in {
+          val sslConfig = SSLConfigFactory.parse(parseSSLConfig("play.ws.ssl.debug.ssl=true"))
+          val config = defaultConfig.copy(wsClientConfig = defaultWsConfig.copy(ssl = sslConfig), http2Enabled = true)
+          val asyncConfig = new AhcConfigBuilder(config).build()
+          val parameters  = newSslEngine(asyncConfig).getSSLParameters
+
+          (parameters.getEndpointIdentificationAlgorithm must_== "HTTPS")
+            .and(parameters.getApplicationProtocols.toSeq must_== Seq("h2", "http/1.1"))
+        }
+
         "use an SslContext set through modifyUnderlying only on the loose path" in {
           val userContext = SslContextBuilder.forClient().protocols("TLSv1.2").build()
           val loose       = SSLConfigFactory.parse(parseSSLConfig("play.ws.ssl.loose.acceptAnyCertificate=true"))
@@ -444,6 +482,16 @@ class AhcConfigBuilderSpec extends Specification {
           )
 
           logger.getLoggingEvents.asScala.map(_.getLevel) must_== Seq(Level.WARN)
+        }
+
+        "let an SslContext used on the loose path decide ALPN itself" in {
+          val loose       = SSLConfigFactory.parse(parseSSLConfig("play.ws.ssl.loose.acceptAnyCertificate=true"))
+          val config      = defaultConfig.copy(wsClientConfig = defaultWsConfig.copy(ssl = loose), http2Enabled = true)
+          val asyncConfig = new AhcConfigBuilder(config)
+            .modifyUnderlying(_.setSslContext(SslContextBuilder.forClient().build()))
+            .build()
+
+          newSslEngine(asyncConfig).getSSLParameters.getApplicationProtocols must beEmpty
         }
 
         "fail to build when no configured protocol is enabled in the SSL context" in {

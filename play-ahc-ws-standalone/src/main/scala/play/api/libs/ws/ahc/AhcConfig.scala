@@ -38,8 +38,9 @@ import scala.concurrent.duration._
  * @param disableUrlEncoding Whether the raw URL should be used.
  * @param keepAlive keeps thread pool active, replaces allowPoolingConnection and allowSslConnectionPool
  * @param useLaxCookieEncoder whether to use LAX(no cookie name/value verification) or STRICT (verifies cookie name/value) cookie decoder
- * @param http2Enabled Whether HTTP/2 is allowed by AHC. Play WS does not yet offer HTTP/2 over HTTPS;
- *                     cleartext HTTP/2 also requires enabling AHC's http2CleartextEnabled setting.
+ * @param http2Enabled Whether to use HTTP/2 when the server supports it. HTTPS connections then offer h2 through ALPN
+ *                     and fall back to HTTP/1.1; cleartext HTTP/2 also requires enabling AHC's
+ *                     http2CleartextEnabled setting.
  * @param http2InitialWindowSize The HTTP/2 initial per-stream flow-control window in bytes. None uses the AHC default.
  * @param http2MaxConcurrentStreams The maximum number of concurrent HTTP/2 streams per connection. None uses the AHC default.
  * @param maxDecompressedResponseSize The maximum decompressed size of one response in bytes. None uses the AHC defaults.
