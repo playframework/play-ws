@@ -56,7 +56,7 @@ object Dependencies {
 
   // Keep in sync with the Netty version tested by the AHC version above. Netty
   // is bundled into Play WS's shaded AHC jar, so applications cannot override it.
-  val nettyVersion   = "4.2.18.Final"
+  val nettyVersion   = "4.2.19.Final"
   val nettyOverrides = Seq(
     "netty-buffer",
     "netty-codec-base",
