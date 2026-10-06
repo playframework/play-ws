@@ -7,6 +7,7 @@ package play.api.libs.ws.ahc;
 import play.shaded.ahc.io.netty.bootstrap.ServerBootstrap;
 import play.shaded.ahc.io.netty.buffer.ByteBuf;
 import play.shaded.ahc.io.netty.channel.Channel;
+import play.shaded.ahc.io.netty.channel.ChannelFuture;
 import play.shaded.ahc.io.netty.channel.ChannelHandlerContext;
 import play.shaded.ahc.io.netty.channel.ChannelInitializer;
 import play.shaded.ahc.io.netty.channel.MultiThreadIoEventLoopGroup;
@@ -28,15 +29,18 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /** A cleartext HTTP/2 server for exercising Play WS streaming over a single parent connection. */
 final class Http2StreamingTestServer implements AutoCloseable {
     private static final int FRAME_SIZE = 16 * 1024;
+    /** 256 KiB: tests that suspend this response use a smaller stream window, so its last frame stays unsent. */
     private static final int SUSPENDED_FRAME_COUNT = 16;
     private static final int SIBLING_FRAME_COUNT = 64;
 
     private final AtomicInteger connectionCount = new AtomicInteger();
     private final CountDownLatch suspendedResponseQueued = new CountDownLatch(1);
+    private final AtomicReference<ChannelFuture> suspendedResponseLastWrite = new AtomicReference<>();
     private final MultiThreadIoEventLoopGroup serverGroup =
         new MultiThreadIoEventLoopGroup(1, NioIoHandler.newFactory());
     private final ChannelGroup childChannels =
@@ -59,7 +63,7 @@ final class Http2StreamingTestServer implements AutoCloseable {
                                 @Override
                                 protected void initChannel(Http2StreamChannel streamChannel) {
                                     childChannels.add(streamChannel);
-                                    streamChannel.pipeline().addLast(new StreamingHandler(suspendedResponseQueued));
+                                    streamChannel.pipeline().addLast(new StreamingHandler(suspendedResponseQueued, suspendedResponseLastWrite));
                                 }
                             }));
                     }
@@ -86,6 +90,15 @@ final class Http2StreamingTestServer implements AutoCloseable {
         return suspendedResponseQueued.await(timeout, unit);
     }
 
+    /**
+     * Whether the last frame of the suspended response is still waiting to be written, as HTTP/2 flow control keeps it
+     * while the client does not return the stream's credit. False once that write has succeeded or failed.
+     */
+    boolean suspendedResponseStillPending() {
+        ChannelFuture lastWrite = suspendedResponseLastWrite.get();
+        return lastWrite != null && !lastWrite.isDone();
+    }
+
     @Override
     public void close() {
         childChannels.close().awaitUninterruptibly();
@@ -95,9 +108,12 @@ final class Http2StreamingTestServer implements AutoCloseable {
 
     private static final class StreamingHandler extends SimpleChannelInboundHandler<Object> {
         private final CountDownLatch suspendedResponseQueued;
+        private final AtomicReference<ChannelFuture> suspendedResponseLastWrite;
 
-        private StreamingHandler(CountDownLatch suspendedResponseQueued) {
+        private StreamingHandler(
+            CountDownLatch suspendedResponseQueued, AtomicReference<ChannelFuture> suspendedResponseLastWrite) {
             this.suspendedResponseQueued = suspendedResponseQueued;
+            this.suspendedResponseLastWrite = suspendedResponseLastWrite;
         }
 
         @Override
@@ -117,7 +133,10 @@ final class Http2StreamingTestServer implements AutoCloseable {
                 ByteBuf content = context.alloc().buffer(FRAME_SIZE).writeZero(FRAME_SIZE);
                 boolean last = frame == frameCount - 1;
                 if (last) {
-                    context.writeAndFlush(new DefaultHttp2DataFrame(content, true));
+                    ChannelFuture lastWrite = context.writeAndFlush(new DefaultHttp2DataFrame(content, true));
+                    if (suspendedResponse) {
+                        suspendedResponseLastWrite.set(lastWrite);
+                    }
                 } else {
                     context.write(new DefaultHttp2DataFrame(content, false));
                 }

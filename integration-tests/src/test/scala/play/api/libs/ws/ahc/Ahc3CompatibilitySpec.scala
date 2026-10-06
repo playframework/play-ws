@@ -407,13 +407,15 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
     }
 
     "keep a demanded HTTP/2 stream moving while a sibling is suspended" in {
-      val server    = new Http2StreamingTestServer()
+      val server = new Http2StreamingTestServer()
+      // A stream window above the connection window (65,535 bytes) lets the suspended stream alone use up the
+      // connection's credit. AHC returns connection credit while a response is suspended; its own tests verify that.
       val ahcConfig = new AhcConfigBuilder(AhcWSClientConfigFactory.forConfig())
         .modifyUnderlying { builder =>
           builder
             .setHttp2Enabled(true)
             .setHttp2CleartextEnabled(true)
-            .setHttp2InitialWindowSize(32 * 1024)
+            .setHttp2InitialWindowSize(128 * 1024)
             .setMaxConnectionsPerHost(1)
         }
         .build()
@@ -427,12 +429,13 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
           sibling.bodyAsSource.runFold(0L)((total, chunk) => total + chunk.length),
           10.seconds
         )
-
+        // Checked before cancelling, which may release the suspended stream's credit.
+        val heldBack = server.suspendedResponseStillPending()
         suspended.bodyAsSource.runWith(Sink.cancelled)
 
-        (received must beEqualTo(server.siblingResponseBytes())).and(
-          server.connectionCount().toLong must beEqualTo(1L)
-        )
+        (received must beEqualTo(server.siblingResponseBytes())).toResult
+          .and((server.connectionCount().toLong must beEqualTo(1L)).toResult)
+          .and((heldBack must beTrue.setMessage("the suspended response was not held back")).toResult)
       } finally {
         client.close()
         server.close()
