@@ -7,6 +7,7 @@ package play.api.libs.ws.ahc
 import java.net.URI
 import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
@@ -19,6 +20,8 @@ import org.reactivestreams.Subscription
 import play.shaded.ahc.io.netty.buffer.ByteBuf
 import play.shaded.ahc.io.netty.buffer.Unpooled
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
+import play.shaded.ahc.io.netty.util.concurrent.EventExecutor
+import play.shaded.ahc.io.netty.util.internal.ThreadExecutorMap
 import play.shaded.ahc.org.asynchttpclient.AsyncHandler
 import play.shaded.ahc.org.asynchttpclient.AsyncHandler.State
 import play.shaded.ahc.org.asynchttpclient.HttpResponseBodyPart
@@ -120,9 +123,12 @@ private final class ResponseBodyPublisher(control: ResponseBodyControl) extends 
   private val cancelled                    = new AtomicBoolean()
   private val terminated                   = new AtomicBoolean()
   private val stateLock                    = new AnyRef
+  private val resumeCheckPending           = new AtomicBoolean()
   @volatile private var failure: Throwable = _
 
-  // AHC 3 creates the control and starts the response body on the channel event loop.
+  // AHC 3 creates the control and starts the response body on the channel event loop. ThreadExecutorMap is internal
+  // to Netty, but Play WS shades a fixed Netty version.
+  private val eventLoop: EventExecutor = ThreadExecutorMap.currentExecutor()
   control.suspend()
 
   override def subscribe(nextSubscriber: Subscriber[? >: HttpResponseBodyPart]): Unit = {
@@ -218,13 +224,49 @@ private final class ResponseBodyPublisher(control: ResponseBodyControl) extends 
             } else if (terminated.get() && queue.isEmpty) {
               signalComplete(currentSubscriber)
             } else if (requested.get() > 0 && queue.isEmpty) {
-              control.resume()
+              resumeReads()
             }
           }
         }
       }
 
       missed = work.addAndGet(-missed)
+    }
+  }
+
+  /**
+   * Resumes transport reads for unmet demand, from the channel event loop whenever that loop is known.
+   *
+   * AHC 3.0.14 applies a control call made on the event loop inline, but queues a call made on another thread and
+   * applies it later without checking again. A drain() on a subscriber thread can find the queue empty while the loop
+   * is still decoding a read. A resume() queued then only runs after the loop has buffered that read's parts, when
+   * the demand may already be met, and lets one more socket read through with no demand left. For a compressed body,
+   * that read can inflate to tens of MiB.
+   *
+   * So a drain() outside the loop schedules a single drain() on it instead, which resumes inline only if demand is
+   * still unmet. AHC delivers body parts, which offer() buffers, only on that loop, and running the check as a drain()
+   * pass keeps another thread from delivering the last parts between the check and resume(). Without a known loop, for
+   * example when the publisher was not created on a Netty event loop, resume directly.
+   *
+   * This indirection can be dropped once a future AHC release defines the order in which control calls from different
+   * threads take effect, or offers a resume that is evaluated on the event loop.
+   */
+  private def resumeReads(): Unit = {
+    if (eventLoop == null || eventLoop.inEventLoop()) {
+      control.resume()
+    } else if (resumeCheckPending.compareAndSet(false, true)) {
+      try {
+        eventLoop.execute(new Runnable {
+          override def run(): Unit = {
+            // Clear the flag before draining, so that unmet demand found by a concurrent drain() can schedule another
+            // check. Clearing it afterwards could drop that check and leave reads suspended.
+            resumeCheckPending.set(false)
+            drain()
+          }
+        })
+      } catch {
+        case _: RejectedExecutionException => () // The event loop is shutting down, so there is nothing to resume.
+      }
     }
   }
 
