@@ -40,6 +40,15 @@ import scala.concurrent.duration._
  * @param disableUrlEncoding Whether the raw URL should be used.
  * @param keepAlive keeps thread pool active, replaces allowPoolingConnection and allowSslConnectionPool
  * @param useLaxCookieEncoder whether to use LAX(no cookie name/value verification) or STRICT (verifies cookie name/value) cookie decoder
+ * @param http2Enabled Whether HTTP/2 is allowed by AHC. Play WS does not yet offer HTTP/2 over HTTPS;
+ *                     cleartext HTTP/2 also requires enabling AHC's http2CleartextEnabled setting.
+ * @param http2InitialWindowSize The HTTP/2 initial per-stream flow-control window in bytes. None uses the AHC default.
+ * @param http2MaxConcurrentStreams The maximum number of concurrent HTTP/2 streams per connection. None uses the AHC default.
+ * @param maxDecompressedResponseSize The maximum decompressed size of one response in bytes. None uses the AHC defaults.
+ * @param shutdownQuietPeriod The quiet period used when shutting down AHC's event loop.
+ * @param shutdownTimeout The maximum time allowed when shutting down AHC's event loop.
+ * @note For compatibility with Play WS 3.0, positional pattern matching exposes only the original 12 fields even
+ *       though this case class's product contains all 18 fields. Access the additional settings by name.
  */
 case class AhcWSClientConfig(
     wsClientConfig: WSClientConfig = WSClientConfig(),
@@ -53,8 +62,160 @@ case class AhcWSClientConfig(
     disableUrlEncoding: Boolean = false,
     keepAlive: Boolean = true,
     useLaxCookieEncoder: Boolean = false,
-    useCookieStore: Boolean = false
-)
+    useCookieStore: Boolean = false,
+    http2Enabled: Boolean = false,
+    http2InitialWindowSize: Option[Int] = None,
+    http2MaxConcurrentStreams: Option[Int] = None,
+    maxDecompressedResponseSize: Option[Long] = None,
+    shutdownQuietPeriod: FiniteDuration = Duration.Zero,
+    shutdownTimeout: FiniteDuration = Duration.Zero
+) extends AhcWSClientConfigExtractorResult {
+
+  // Retain the Play WS 3.0 constructor for compiled callers. Settings added since then use their defaults.
+  def this(
+      wsClientConfig: WSClientConfig,
+      maxConnectionsPerHost: Int,
+      maxConnectionsTotal: Int,
+      maxConnectionLifetime: Duration,
+      idleConnectionInPoolTimeout: Duration,
+      connectionPoolCleanerPeriod: Duration,
+      maxNumberOfRedirects: Int,
+      maxRequestRetry: Int,
+      disableUrlEncoding: Boolean,
+      keepAlive: Boolean,
+      useLaxCookieEncoder: Boolean,
+      useCookieStore: Boolean
+  ) = this(
+    wsClientConfig,
+    maxConnectionsPerHost,
+    maxConnectionsTotal,
+    maxConnectionLifetime,
+    idleConnectionInPoolTimeout,
+    connectionPoolCleanerPeriod,
+    maxNumberOfRedirects,
+    maxRequestRetry,
+    disableUrlEncoding,
+    keepAlive,
+    useLaxCookieEncoder,
+    useCookieStore,
+    http2Enabled = false,
+    http2InitialWindowSize = None,
+    http2MaxConcurrentStreams = None,
+    maxDecompressedResponseSize = None,
+    shutdownQuietPeriod = Duration.Zero,
+    shutdownTimeout = Duration.Zero
+  )
+
+  def copy(
+      wsClientConfig: WSClientConfig = this.wsClientConfig,
+      maxConnectionsPerHost: Int = this.maxConnectionsPerHost,
+      maxConnectionsTotal: Int = this.maxConnectionsTotal,
+      maxConnectionLifetime: Duration = this.maxConnectionLifetime,
+      idleConnectionInPoolTimeout: Duration = this.idleConnectionInPoolTimeout,
+      connectionPoolCleanerPeriod: Duration = this.connectionPoolCleanerPeriod,
+      maxNumberOfRedirects: Int = this.maxNumberOfRedirects,
+      maxRequestRetry: Int = this.maxRequestRetry,
+      disableUrlEncoding: Boolean = this.disableUrlEncoding,
+      keepAlive: Boolean = this.keepAlive,
+      useLaxCookieEncoder: Boolean = this.useLaxCookieEncoder,
+      useCookieStore: Boolean = this.useCookieStore,
+      http2Enabled: Boolean = this.http2Enabled,
+      http2InitialWindowSize: Option[Int] = this.http2InitialWindowSize,
+      http2MaxConcurrentStreams: Option[Int] = this.http2MaxConcurrentStreams,
+      maxDecompressedResponseSize: Option[Long] = this.maxDecompressedResponseSize,
+      shutdownQuietPeriod: FiniteDuration = this.shutdownQuietPeriod,
+      shutdownTimeout: FiniteDuration = this.shutdownTimeout
+  ): AhcWSClientConfig =
+    new AhcWSClientConfig(
+      wsClientConfig,
+      maxConnectionsPerHost,
+      maxConnectionsTotal,
+      maxConnectionLifetime,
+      idleConnectionInPoolTimeout,
+      connectionPoolCleanerPeriod,
+      maxNumberOfRedirects,
+      maxRequestRetry,
+      disableUrlEncoding,
+      keepAlive,
+      useLaxCookieEncoder,
+      useCookieStore,
+      http2Enabled,
+      http2InitialWindowSize,
+      http2MaxConcurrentStreams,
+      maxDecompressedResponseSize,
+      shutdownQuietPeriod,
+      shutdownTimeout
+    )
+
+  // Retain the Play WS 3.0 copy signature and preserve settings added since then.
+  def copy(
+      wsClientConfig: WSClientConfig,
+      maxConnectionsPerHost: Int,
+      maxConnectionsTotal: Int,
+      maxConnectionLifetime: Duration,
+      idleConnectionInPoolTimeout: Duration,
+      connectionPoolCleanerPeriod: Duration,
+      maxNumberOfRedirects: Int,
+      maxRequestRetry: Int,
+      disableUrlEncoding: Boolean,
+      keepAlive: Boolean,
+      useLaxCookieEncoder: Boolean,
+      useCookieStore: Boolean
+  ): AhcWSClientConfig =
+    new AhcWSClientConfig(
+      wsClientConfig,
+      maxConnectionsPerHost,
+      maxConnectionsTotal,
+      maxConnectionLifetime,
+      idleConnectionInPoolTimeout,
+      connectionPoolCleanerPeriod,
+      maxNumberOfRedirects,
+      maxRequestRetry,
+      disableUrlEncoding,
+      keepAlive,
+      useLaxCookieEncoder,
+      useCookieStore,
+      http2Enabled,
+      http2InitialWindowSize,
+      http2MaxConcurrentStreams,
+      maxDecompressedResponseSize,
+      shutdownQuietPeriod,
+      shutdownTimeout
+    )
+}
+
+object AhcWSClientConfig extends AhcWSClientConfigExtractor {
+
+  // Retain the Play WS 3.0 companion apply signature for compiled callers.
+  def apply(
+      wsClientConfig: WSClientConfig,
+      maxConnectionsPerHost: Int,
+      maxConnectionsTotal: Int,
+      maxConnectionLifetime: Duration,
+      idleConnectionInPoolTimeout: Duration,
+      connectionPoolCleanerPeriod: Duration,
+      maxNumberOfRedirects: Int,
+      maxRequestRetry: Int,
+      disableUrlEncoding: Boolean,
+      keepAlive: Boolean,
+      useLaxCookieEncoder: Boolean,
+      useCookieStore: Boolean
+  ): AhcWSClientConfig =
+    new AhcWSClientConfig(
+      wsClientConfig,
+      maxConnectionsPerHost,
+      maxConnectionsTotal,
+      maxConnectionLifetime,
+      idleConnectionInPoolTimeout,
+      connectionPoolCleanerPeriod,
+      maxNumberOfRedirects,
+      maxRequestRetry,
+      disableUrlEncoding,
+      keepAlive,
+      useLaxCookieEncoder,
+      useCookieStore
+    )
+}
 
 /**
  * Factory for creating AhcWSClientConfig, for use from Java.
@@ -104,6 +265,70 @@ class AhcWSClientConfigParser @Inject() (
       }
     }
 
+    def getOptionalInt(key: String): Option[Int] = {
+      try {
+        Some(configuration.getInt(key))
+      } catch {
+        case _: ConfigException.Null => None
+      }
+    }
+
+    def getOptionalBytes(key: String): Option[Long] = {
+      try {
+        Some(configuration.getMemorySize(key).toBytes)
+      } catch {
+        case _: ConfigException.Null         => None
+        case cause: IllegalArgumentException =>
+          throw new ConfigException.BadValue(
+            configuration.getValue(key).origin(),
+            key,
+            "Memory size must be greater than or equal to 0 bytes",
+            cause
+          )
+      }
+    }
+
+    def getOptionalPositiveIntBytes(key: String): Option[Int] = {
+      getOptionalBytes(key).map { bytes =>
+        if (bytes <= 0 || bytes > Int.MaxValue) {
+          throw new ConfigException.BadValue(key, s"Must be between 1 byte and ${Int.MaxValue} bytes")
+        }
+        bytes.toInt
+      }
+    }
+
+    def getOptionalHttp2MaxConcurrentStreams(key: String): Option[Int] = {
+      getOptionalInt(key).map { maximum =>
+        if (maximum != -1 && maximum <= 0) {
+          throw new ConfigException.BadValue(key, "Must be -1 or greater than 0")
+        }
+        maximum
+      }
+    }
+
+    def getFiniteDuration(key: String): FiniteDuration = {
+      try {
+        FiniteDuration(configuration.getDuration(key).toMillis, MILLISECONDS)
+      } catch {
+        case _: ArithmeticException => throw new ConfigException.BadValue(key, "Duration is too large")
+      }
+    }
+
+    def validateShutdownDurations(quietPeriod: FiniteDuration, timeout: FiniteDuration): Unit = {
+      if (quietPeriod < Duration.Zero) {
+        throw new ConfigException.BadValue("play.ws.ahc.shutdownQuietPeriod", "Must be greater than or equal to 0")
+      }
+      if (timeout < Duration.Zero) {
+        throw new ConfigException.BadValue("play.ws.ahc.shutdownTimeout", "Must be greater than or equal to 0")
+      }
+      if (timeout < quietPeriod) {
+        throw new ConfigException.BadValue(
+          "play.ws.ahc.shutdownTimeout",
+          "Must be greater than or equal to play.ws.ahc.shutdownQuietPeriod"
+        )
+      }
+    }
+
     val maximumConnectionsPerHost   = configuration.getInt("play.ws.ahc.maxConnectionsPerHost")
     val maximumConnectionsTotal     = configuration.getInt("play.ws.ahc.maxConnectionsTotal")
     val maxConnectionLifetime       = getDuration("play.ws.ahc.maxConnectionLifetime", Duration.Inf)
@@ -115,6 +340,13 @@ class AhcWSClientConfigParser @Inject() (
     val keepAlive                   = configuration.getBoolean("play.ws.ahc.keepAlive")
     val useLaxCookieEncoder         = configuration.getBoolean("play.ws.ahc.useLaxCookieEncoder")
     val useCookieStore              = configuration.getBoolean("play.ws.ahc.useCookieStore")
+    val http2Enabled                = configuration.getBoolean("play.ws.ahc.http2Enabled")
+    val http2InitialWindowSize      = getOptionalPositiveIntBytes("play.ws.ahc.http2InitialWindowSize")
+    val http2MaxConcurrentStreams   = getOptionalHttp2MaxConcurrentStreams("play.ws.ahc.http2MaxConcurrentStreams")
+    val maxDecompressedResponseSize = getOptionalBytes("play.ws.ahc.maxDecompressedResponseSize")
+    val shutdownQuietPeriod         = getFiniteDuration("play.ws.ahc.shutdownQuietPeriod")
+    val shutdownTimeout             = getFiniteDuration("play.ws.ahc.shutdownTimeout")
+    validateShutdownDurations(shutdownQuietPeriod, shutdownTimeout)
 
     AhcWSClientConfig(
       wsClientConfig = wsClientConfig,
@@ -128,7 +360,13 @@ class AhcWSClientConfigParser @Inject() (
       disableUrlEncoding = disableUrlEncoding,
       keepAlive = keepAlive,
       useLaxCookieEncoder = useLaxCookieEncoder,
-      useCookieStore = useCookieStore
+      useCookieStore = useCookieStore,
+      http2Enabled = http2Enabled,
+      http2InitialWindowSize = http2InitialWindowSize,
+      http2MaxConcurrentStreams = http2MaxConcurrentStreams,
+      maxDecompressedResponseSize = maxDecompressedResponseSize,
+      shutdownQuietPeriod = shutdownQuietPeriod,
+      shutdownTimeout = shutdownTimeout
     )
   }
 }
@@ -196,6 +434,22 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
   def configureWS(ahcConfig: AhcWSClientConfig): Unit = {
     val config = ahcConfig.wsClientConfig
 
+    require(ahcConfig.http2InitialWindowSize.forall(_ > 0), "http2InitialWindowSize must be greater than 0")
+    require(
+      ahcConfig.http2MaxConcurrentStreams.forall(maximum => maximum == -1 || maximum > 0),
+      "http2MaxConcurrentStreams must be -1 or greater than 0"
+    )
+    require(
+      ahcConfig.maxDecompressedResponseSize.forall(_ >= 0),
+      "maxDecompressedResponseSize must be greater than or equal to 0"
+    )
+    require(ahcConfig.shutdownQuietPeriod >= Duration.Zero, "shutdownQuietPeriod must be greater than or equal to 0")
+    require(ahcConfig.shutdownTimeout >= Duration.Zero, "shutdownTimeout must be greater than or equal to 0")
+    require(
+      ahcConfig.shutdownTimeout >= ahcConfig.shutdownQuietPeriod,
+      "shutdownTimeout must be greater than or equal to shutdownQuietPeriod"
+    )
+
     def toJavaDuration(duration: Duration): JDuration = {
       if (duration.isFinite) JDuration.ofMillis(duration.toMillis)
       else JDuration.ofMillis(-1)
@@ -213,6 +467,13 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
 
     builder.setMaxConnectionsPerHost(ahcConfig.maxConnectionsPerHost)
     builder.setMaxConnections(ahcConfig.maxConnectionsTotal)
+    builder.setHttp2Enabled(ahcConfig.http2Enabled)
+    ahcConfig.http2InitialWindowSize.foreach(builder.setHttp2InitialWindowSize)
+    ahcConfig.http2MaxConcurrentStreams.foreach(builder.setHttp2MaxConcurrentStreams)
+    ahcConfig.maxDecompressedResponseSize.foreach { maximum =>
+      builder.setMaxDecompressedResponseSize(maximum)
+      builder.setHttp2MaxDecompressedResponseSize(maximum)
+    }
     builder.setConnectionTtl(toJavaDuration(ahcConfig.maxConnectionLifetime))
     builder.setPooledConnectionIdleTimeout(toJavaDuration(ahcConfig.idleConnectionInPoolTimeout))
     builder.setConnectionPoolCleanerPeriod(toJavaDuration(ahcConfig.connectionPoolCleanerPeriod))
@@ -220,15 +481,8 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
     builder.setMaxRequestRetry(ahcConfig.maxRequestRetry)
     builder.setDisableUrlEncodingForBoundRequests(ahcConfig.disableUrlEncoding)
     builder.setKeepAlive(ahcConfig.keepAlive)
-    // forcing shutdown of the AHC event loop because otherwise the test suite fails with a
-    // OutOfMemoryException: cannot create new native thread. This is because when executing
-    // tests in parallel there can be many threads pool that are left around because AHC is
-    // shutting them down gracefully.
-    // The proper solution is to make these parameters configurable, so that they can be set
-    // to 0 when running tests, and keep sensible defaults otherwise. AHC defaults are
-    // shutdownQuiet=2000 (milliseconds) and shutdownTimeout=15000 (milliseconds).
-    builder.setShutdownQuietPeriod(JDuration.ZERO)
-    builder.setShutdownTimeout(JDuration.ZERO)
+    builder.setShutdownQuietPeriod(toJavaDuration(ahcConfig.shutdownQuietPeriod))
+    builder.setShutdownTimeout(toJavaDuration(ahcConfig.shutdownTimeout))
     builder.setUseLaxCookieEncoder(ahcConfig.useLaxCookieEncoder)
 
     if (!ahcConfig.useCookieStore) {

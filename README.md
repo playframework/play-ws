@@ -57,7 +57,13 @@ Specifically, shading AsyncHttpClient means that its Netty version does not conf
 
 Play WS 3.1 uses shaded AsyncHttpClient 3.0.14.
 
+`AhcWSClientConfig` retains its Play WS 3.0 constructor, companion `apply`, `copy`, and 12-field extractor. New AHC 3 settings are available through their named accessors and `copy` parameters but are intentionally not added to the extractor. Code using the generated `tupled` or `curried` helpers, or treating the companion as a `Function12`, must be updated for the expanded configuration.
+
 Play WS adapts `Source`, `File`, and input-stream-supplier request bodies to a one-shot streamed body. A redirect or retry that would replay one now fails explicitly instead of attempting a second subscription; a supplier is not automatically called again. In-memory bodies can be replayed. This differs from native AHC `File` and some native `InputStream` bodies, which have their own replay support.
+
+Set `play.ws.ahc.maxDecompressedResponseSize` to apply one decompressed-response limit to both HTTP/1.1 and HTTP/2. AHC's defaults apply when it is unset. This limits decoded bytes per response, not total client heap use. AHC decodes any `Content-Encoding` a server sends, even when Play WS did not request compression. Setting the limit to zero disables decompression-bomb protection and is not recommended for untrusted responses.
+
+`play.ws.ahc.shutdownQuietPeriod` and `play.ws.ahc.shutdownTimeout` control AHC event-loop shutdown. Both must be non-negative, and the timeout must be at least as long as the quiet period. Both default to zero to preserve Play WS's existing immediate-shutdown behavior.
 
 ### Shaded AHC Defaults 
 

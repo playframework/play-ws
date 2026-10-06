@@ -54,6 +54,7 @@ class AhcConfigBuilderSpec extends Specification {
         actual.getConnectTimeout must_== java.time.Duration.ofMillis(defaultWsConfig.connectionTimeout.toMillis)
         actual.isFollowRedirect must_== defaultWsConfig.followRedirects
         actual.getCookieStore must_== null
+        actual.isHttp2Enabled must beFalse
 
         actual.getEnabledProtocols.toSeq must not contain Protocols.deprecatedProtocols
       }
@@ -137,6 +138,77 @@ class AhcConfigBuilderSpec extends Specification {
         val builder = new AhcConfigBuilder(config)
         val actual  = builder.build()
         actual.getMaxConnections must_== 6
+      }
+
+      "allow configuring HTTP/2" in {
+        val config = defaultConfig.copy(
+          http2Enabled = true,
+          http2InitialWindowSize = Some(65535),
+          http2MaxConcurrentStreams = Some(32)
+        )
+        val actual = new AhcConfigBuilder(config).build()
+
+        actual.isHttp2Enabled must beTrue
+        actual.getHttp2InitialWindowSize must_== 65535
+        actual.getHttp2MaxConcurrentStreams must_== 32
+      }
+
+      "preserve AHC defaults for unset optional settings" in {
+        val actual = new AhcConfigBuilder(defaultConfig).build()
+
+        actual.getHttp2InitialWindowSize must_== 16777216
+        actual.getHttp2MaxConcurrentStreams must_== -1
+        actual.getMaxDecompressedResponseSize must_== 268435456L
+        actual.getHttp2MaxDecompressedResponseSize must_== 268435456L
+      }
+
+      "reject invalid programmatic HTTP/2 limits" in {
+        (new AhcConfigBuilder(defaultConfig.copy(http2InitialWindowSize = Some(0))).build() must
+          throwA[IllegalArgumentException]).and(
+          new AhcConfigBuilder(defaultConfig.copy(http2MaxConcurrentStreams = Some(0))).build() must
+            throwA[IllegalArgumentException]
+        )
+      }
+
+      "allow limiting decompressed responses for both HTTP versions" in {
+        val config = defaultConfig.copy(maxDecompressedResponseSize = Some(1024L))
+        val actual = new AhcConfigBuilder(config).build()
+
+        actual.getMaxDecompressedResponseSize must_== 1024L
+        actual.getHttp2MaxDecompressedResponseSize must_== 1024L
+      }
+
+      "allow disabling decompressed response limits explicitly" in {
+        val actual = new AhcConfigBuilder(defaultConfig.copy(maxDecompressedResponseSize = Some(0L))).build()
+
+        actual.getMaxDecompressedResponseSize must_== 0L
+        actual.getHttp2MaxDecompressedResponseSize must_== 0L
+      }
+
+      "reject a negative programmatic decompressed response limit" in {
+        new AhcConfigBuilder(defaultConfig.copy(maxDecompressedResponseSize = Some(-1L))).build() must
+          throwA[IllegalArgumentException]
+      }
+
+      "allow configuring event loop shutdown timing" in {
+        val config = defaultConfig.copy(shutdownQuietPeriod = 25.millis, shutdownTimeout = 3.seconds)
+        val actual = new AhcConfigBuilder(config).build()
+
+        actual.getShutdownQuietPeriod must_== java.time.Duration.ofMillis(25)
+        actual.getShutdownTimeout must_== java.time.Duration.ofSeconds(3)
+      }
+
+      "reject invalid programmatic event loop shutdown timing" in {
+        (new AhcConfigBuilder(defaultConfig.copy(shutdownQuietPeriod = -1.millis)).build() must
+          throwA[IllegalArgumentException])
+          .and(
+            new AhcConfigBuilder(defaultConfig.copy(shutdownTimeout = -1.millis)).build() must
+              throwA[IllegalArgumentException]
+          )
+          .and(
+            new AhcConfigBuilder(defaultConfig.copy(shutdownQuietPeriod = 1.second)).build() must
+              throwA[IllegalArgumentException]
+          )
       }
 
       "allow setting ahc maxNumberOfRedirects" in {

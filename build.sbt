@@ -72,6 +72,11 @@ lazy val mimaSettings = Seq(
     ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.DefaultStreamedAsyncHandler.onStream"),
     // AHC 3 removed OAuthSignatureCalculator. Play WS retains OAuth through the surviving SignatureCalculator API.
     ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.libs.oauth.OAuth#OAuthCalculator.getCalculator"),
+    // AhcWSClientConfig has additional AHC 3 settings. Its former constructor, apply and copy signatures remain.
+    // Only generated Function12 helpers and the companion's Function12 parent change with the case class arity.
+    ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.ahc.AhcWSClientConfig$"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.tupled"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.AhcWSClientConfig.curried"),
   )
 )
 
@@ -330,6 +335,10 @@ lazy val `play-ahc-ws-standalone` = project
     commonSettings ++ shadedAhcSettings ++ shadedOAuthSettings ++ Seq(
       Test / fork        := true,
       Test / testOptions := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
+      Compile / unmanagedSourceDirectories += {
+        val versionDirectory = if (scalaBinaryVersion.value == "3") "scala-3" else "scala-2"
+        (Compile / sourceDirectory).value / versionDirectory
+      },
       libraryDependencies ++= standaloneAhcWSDependencies,
       // This will not work if you do a publishLocal, because that uses ivy...
       pomPostProcess := { (node: xml.Node) =>
