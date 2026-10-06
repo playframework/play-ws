@@ -37,9 +37,9 @@ class AhcConfigBuilderSpec extends Specification {
         .build()
       ahcConfig.isCompressionEnforced must beFalse
       ahcConfig.isFollowRedirect must beFalse
-      ahcConfig.getConnectTimeout must_== 120000
-      ahcConfig.getRequestTimeout must_== 120000
-      ahcConfig.getReadTimeout must_== 120000
+      ahcConfig.getConnectTimeout must_== java.time.Duration.ofMinutes(2)
+      ahcConfig.getRequestTimeout must_== java.time.Duration.ofMinutes(2)
+      ahcConfig.getReadTimeout must_== java.time.Duration.ofMinutes(2)
     }
 
     "with basic options" should {
@@ -49,11 +49,14 @@ class AhcConfigBuilderSpec extends Specification {
         val builder = new AhcConfigBuilder(config)
         val actual  = builder.build()
 
-        actual.getReadTimeout must_== defaultWsConfig.idleTimeout.toMillis
-        actual.getRequestTimeout must_== defaultWsConfig.requestTimeout.toMillis
-        actual.getConnectTimeout must_== defaultWsConfig.connectionTimeout.toMillis
+        actual.getReadTimeout must_== java.time.Duration.ofMillis(defaultWsConfig.idleTimeout.toMillis)
+        actual.getRequestTimeout must_== java.time.Duration.ofMillis(defaultWsConfig.requestTimeout.toMillis)
+        actual.getConnectTimeout must_== java.time.Duration.ofMillis(defaultWsConfig.connectionTimeout.toMillis)
         actual.isFollowRedirect must_== defaultWsConfig.followRedirects
         actual.getCookieStore must_== null
+        actual.isHttp2Enabled must beFalse
+        actual.isRefuseSchemeDowngradeOnRedirect must beFalse
+        actual.isRefuseCrossOriginBodyOnRedirect must beFalse
 
         actual.getEnabledProtocols.toSeq must not contain Protocols.deprecatedProtocols
       }
@@ -64,7 +67,7 @@ class AhcConfigBuilderSpec extends Specification {
         val builder  = new AhcConfigBuilder(config)
 
         val actual = builder.build()
-        actual.getReadTimeout must_== 42L
+        actual.getReadTimeout must_== java.time.Duration.ofMillis(42)
       }
 
       "use an explicit request timeout" in {
@@ -73,7 +76,7 @@ class AhcConfigBuilderSpec extends Specification {
         val builder  = new AhcConfigBuilder(config)
 
         val actual = builder.build()
-        actual.getRequestTimeout must_== 47L
+        actual.getRequestTimeout must_== java.time.Duration.ofMillis(47)
       }
 
       "use an explicit connection timeout" in {
@@ -82,7 +85,7 @@ class AhcConfigBuilderSpec extends Specification {
         val builder  = new AhcConfigBuilder(config)
 
         val actual = builder.build()
-        actual.getConnectTimeout must_== 99L
+        actual.getConnectTimeout must_== java.time.Duration.ofMillis(99)
       }
 
       "use an explicit followRedirects option" in {
@@ -139,6 +142,118 @@ class AhcConfigBuilderSpec extends Specification {
         actual.getMaxConnections must_== 6
       }
 
+      "allow configuring HTTP/2" in {
+        val config = defaultConfig.copy(
+          http2Enabled = true,
+          http2InitialWindowSize = Some(65535),
+          http2MaxConcurrentStreams = Some(32)
+        )
+        val actual = new AhcConfigBuilder(config).build()
+
+        actual.isHttp2Enabled must beTrue
+        actual.getHttp2InitialWindowSize must_== 65535
+        actual.getHttp2MaxConcurrentStreams must_== 32
+      }
+
+      "allow both redirect refusals to be enabled or disabled explicitly" in {
+        val enabled = new AhcConfigBuilder(
+          defaultConfig.copy(
+            refuseSchemeDowngradeOnRedirect = Some(true),
+            refuseCrossOriginBodyOnRedirect = Some(true)
+          )
+        ).build()
+        val disabled = new AhcConfigBuilder(
+          defaultConfig.copy(
+            refuseSchemeDowngradeOnRedirect = Some(false),
+            refuseCrossOriginBodyOnRedirect = Some(false)
+          )
+        ).build()
+
+        (enabled.isRefuseSchemeDowngradeOnRedirect must beTrue)
+          .and(
+            enabled.isRefuseCrossOriginBodyOnRedirect must beTrue
+          )
+          .and(
+            disabled.isRefuseSchemeDowngradeOnRedirect must beFalse
+          )
+          .and(
+            disabled.isRefuseCrossOriginBodyOnRedirect must beFalse
+          )
+      }
+
+      "let modifyUnderlying override redirect-refusal settings" in {
+        val actual = new AhcConfigBuilder(
+          defaultConfig.copy(
+            refuseSchemeDowngradeOnRedirect = Some(true),
+            refuseCrossOriginBodyOnRedirect = Some(true)
+          )
+        ).modifyUnderlying { builder =>
+          builder.setRefuseSchemeDowngradeOnRedirect(false).setRefuseCrossOriginBodyOnRedirect(false)
+        }.build()
+
+        (actual.isRefuseSchemeDowngradeOnRedirect must beFalse).and(
+          actual.isRefuseCrossOriginBodyOnRedirect must beFalse
+        )
+      }
+
+      "preserve AHC defaults for unset optional settings" in {
+        val actual = new AhcConfigBuilder(defaultConfig).build()
+
+        actual.getHttp2InitialWindowSize must_== 16777216
+        actual.getHttp2MaxConcurrentStreams must_== -1
+        actual.getMaxDecompressedResponseSize must_== 268435456L
+        actual.getHttp2MaxDecompressedResponseSize must_== 268435456L
+      }
+
+      "reject invalid programmatic HTTP/2 limits" in {
+        (new AhcConfigBuilder(defaultConfig.copy(http2InitialWindowSize = Some(0))).build() must
+          throwA[IllegalArgumentException]).and(
+          new AhcConfigBuilder(defaultConfig.copy(http2MaxConcurrentStreams = Some(0))).build() must
+            throwA[IllegalArgumentException]
+        )
+      }
+
+      "allow limiting decompressed responses for both HTTP versions" in {
+        val config = defaultConfig.copy(maxDecompressedResponseSize = Some(1024L))
+        val actual = new AhcConfigBuilder(config).build()
+
+        actual.getMaxDecompressedResponseSize must_== 1024L
+        actual.getHttp2MaxDecompressedResponseSize must_== 1024L
+      }
+
+      "allow disabling decompressed response limits explicitly" in {
+        val actual = new AhcConfigBuilder(defaultConfig.copy(maxDecompressedResponseSize = Some(0L))).build()
+
+        actual.getMaxDecompressedResponseSize must_== 0L
+        actual.getHttp2MaxDecompressedResponseSize must_== 0L
+      }
+
+      "reject a negative programmatic decompressed response limit" in {
+        new AhcConfigBuilder(defaultConfig.copy(maxDecompressedResponseSize = Some(-1L))).build() must
+          throwA[IllegalArgumentException]
+      }
+
+      "allow configuring event loop shutdown timing" in {
+        val config = defaultConfig.copy(shutdownQuietPeriod = 25.millis, shutdownTimeout = 3.seconds)
+        val actual = new AhcConfigBuilder(config).build()
+
+        actual.getShutdownQuietPeriod must_== java.time.Duration.ofMillis(25)
+        actual.getShutdownTimeout must_== java.time.Duration.ofSeconds(3)
+      }
+
+      "reject invalid programmatic event loop shutdown timing" in {
+        (new AhcConfigBuilder(defaultConfig.copy(shutdownQuietPeriod = -1.millis)).build() must
+          throwA[IllegalArgumentException])
+          .and(
+            new AhcConfigBuilder(defaultConfig.copy(shutdownTimeout = -1.millis)).build() must
+              throwA[IllegalArgumentException]
+          )
+          .and(
+            new AhcConfigBuilder(defaultConfig.copy(shutdownQuietPeriod = 1.second)).build() must
+              throwA[IllegalArgumentException]
+          )
+      }
+
       "allow setting ahc maxNumberOfRedirects" in {
         val config  = defaultConfig.copy(maxNumberOfRedirects = 0)
         val builder = new AhcConfigBuilder(config)
@@ -158,6 +273,23 @@ class AhcConfigBuilderSpec extends Specification {
         val builder = new AhcConfigBuilder(config)
         val actual  = builder.build()
         actual.isDisableUrlEncodingForBoundRequests must_== true
+      }
+
+      "allow setting ahc pool and cookie options" in {
+        val config = defaultConfig.copy(
+          maxConnectionLifetime = 3.minutes,
+          idleConnectionInPoolTimeout = 4.seconds,
+          connectionPoolCleanerPeriod = 5.seconds,
+          useLaxCookieEncoder = true,
+          useCookieStore = true
+        )
+        val actual = new AhcConfigBuilder(config).build()
+
+        actual.getConnectionTtl must_== java.time.Duration.ofMinutes(3)
+        actual.getPooledConnectionIdleTimeout must_== java.time.Duration.ofSeconds(4)
+        actual.getConnectionPoolCleanerPeriod must_== java.time.Duration.ofSeconds(5)
+        actual.isUseLaxCookieEncoder must beTrue
+        actual.getCookieStore must not(beNull)
       }
     }
 

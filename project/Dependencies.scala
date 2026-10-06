@@ -52,19 +52,27 @@ object Dependencies {
 
   val cachecontrol = Seq("org.playframework" %% "cachecontrol" % "3.1.0-M3+2-5a8b88cf-SNAPSHOT")
 
-  val nettyVersion    = "4.1.138.Final" // Keep in sync with the netty version netty-reactive-streams uses (see below)
-  val asyncHttpClient = Seq(
-    ("org.asynchttpclient" % "async-http-client" % "2.16.1") // 2.12.x comes with outdated netty-reactive-streams and netty, so we ...
-      .exclude("com.typesafe.netty", "netty-reactive-streams") // ... exclude netty-reactive-streams and ...
-      .excludeAll(ExclusionRule("io.netty")), // ... also exclude all netty dependencies and pull in ...
-    "com.typesafe.netty" % "netty-reactive-streams" % "2.0.20", // ... a new netty-reactive-streams (ahc v3 will drop it btw) ...
-    "io.netty" % "netty-codec-http" % nettyVersion, // ... and the (up-to-date) netty artifacts async-http-client needs.
-    "io.netty" % "netty-codec-socks"   % nettyVersion, // Same.
-    "io.netty" % "netty-handler-proxy" % nettyVersion, // Same.
-    "io.netty" % "netty-handler"       % nettyVersion, // Same.
-    "io.netty" % "netty-buffer"        % nettyVersion, // Almost same - needed by async-http-client-netty-utils.
+  val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "3.0.14")
 
-  )
+  // Keep in sync with the Netty version tested by the AHC version above. Netty
+  // is bundled into Play WS's shaded AHC jar, so applications cannot override it.
+  val nettyVersion   = "4.2.18.Final"
+  val nettyOverrides = Seq(
+    "netty-buffer",
+    "netty-codec-base",
+    "netty-codec-compression",
+    "netty-codec-dns",
+    "netty-codec-http",
+    "netty-codec-http2",
+    "netty-codec-socks",
+    "netty-common",
+    "netty-handler",
+    "netty-handler-proxy",
+    "netty-resolver",
+    "netty-resolver-dns",
+    "netty-transport",
+    "netty-transport-native-unix-common"
+  ).map("io.netty" % _ % nettyVersion)
 
   val pekkoVersion = "2.0.0-M4"
 
@@ -84,12 +92,19 @@ object Dependencies {
 
   val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.4")
 
+  val reactiveStreamsTck = Seq("org.reactivestreams" % "reactive-streams-tck" % "1.0.4" % Test)
+
+  // AHC 2 is an OAuth compatibility reference for tests only.
+  // Production AHC 3 and its Netty classes come from the separate shaded jar.
+  val asyncHttpClient2Test = Seq("org.asynchttpclient" % "async-http-client" % "2.16.1" % Test)
+
   val testDependencies =
     (mockito ++ specsBuild ++ junitInterface ++ assertj ++ awaitility ++ slf4jtest ++ logback).map(_ % Test)
 
   val standaloneApiWSDependencies = jakartaInject ++ sslConfigCore ++ pekkoStreams ++ testDependencies
 
-  val standaloneAhcWSDependencies = cachecontrol ++ slf4jApi ++ reactiveStreams ++ testDependencies
+  val standaloneAhcWSDependencies =
+    cachecontrol ++ slf4jApi ++ reactiveStreams ++ reactiveStreamsTck ++ asyncHttpClient2Test ++ testDependencies
 
   val standaloneAhcWSJsonDependencies = playJson ++ testDependencies
 

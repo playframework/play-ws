@@ -4,6 +4,7 @@
 
 package play.api.libs.ws.ahc
 
+import com.typesafe.config.ConfigException
 import com.typesafe.config.ConfigFactory
 import org.specs2.mutable._
 import play.api.libs.ws.WSClientConfig
@@ -35,10 +36,21 @@ class AhcWSClientConfigParserSpec extends Specification {
       s1.maxConnectionsTotal must_== s2.maxConnectionsTotal
       s1.maxConnectionLifetime must_== s2.maxConnectionLifetime
       s1.idleConnectionInPoolTimeout must_== s2.idleConnectionInPoolTimeout
+      s1.connectionPoolCleanerPeriod must_== s2.connectionPoolCleanerPeriod
       s1.maxNumberOfRedirects must_== s2.maxNumberOfRedirects
       s1.maxRequestRetry must_== s2.maxRequestRetry
       s1.disableUrlEncoding must_== s2.disableUrlEncoding
       s1.keepAlive must_== s2.keepAlive
+      s1.useLaxCookieEncoder must_== s2.useLaxCookieEncoder
+      s1.useCookieStore must_== s2.useCookieStore
+      s1.http2Enabled must_== s2.http2Enabled
+      s1.http2InitialWindowSize must_== s2.http2InitialWindowSize
+      s1.http2MaxConcurrentStreams must_== s2.http2MaxConcurrentStreams
+      s1.maxDecompressedResponseSize must_== s2.maxDecompressedResponseSize
+      s1.shutdownQuietPeriod must_== s2.shutdownQuietPeriod
+      s1.shutdownTimeout must_== s2.shutdownTimeout
+      s1.refuseSchemeDowngradeOnRedirect must_== s2.refuseSchemeDowngradeOnRedirect
+      s1.refuseCrossOriginBodyOnRedirect must_== s2.refuseCrossOriginBodyOnRedirect
     }
 
     "parse ws ahc section" in {
@@ -52,6 +64,16 @@ class AhcWSClientConfigParserSpec extends Specification {
                                |play.ws.ahc.maxRequestRetry = 99
                                |play.ws.ahc.disableUrlEncoding = true
                                |play.ws.ahc.keepAlive = false
+                               |play.ws.ahc.useLaxCookieEncoder = true
+                               |play.ws.ahc.useCookieStore = true
+                               |play.ws.ahc.http2Enabled = true
+                               |play.ws.ahc.http2InitialWindowSize = 64 KiB
+                               |play.ws.ahc.http2MaxConcurrentStreams = 32
+                               |play.ws.ahc.maxDecompressedResponseSize = 10 MiB
+                               |play.ws.ahc.shutdownQuietPeriod = 25 milliseconds
+                               |play.ws.ahc.shutdownTimeout = 3 seconds
+                               |play.ws.ahc.refuseSchemeDowngradeOnRedirect = true
+                               |play.ws.ahc.refuseCrossOriginBodyOnRedirect = false
         """.stripMargin)
 
       actual.maxConnectionsPerHost must_== 3
@@ -63,6 +85,69 @@ class AhcWSClientConfigParserSpec extends Specification {
       actual.maxRequestRetry must_== 99
       actual.disableUrlEncoding must beTrue
       actual.keepAlive must beFalse
+      actual.useLaxCookieEncoder must beTrue
+      actual.useCookieStore must beTrue
+      actual.http2Enabled must beTrue
+      actual.http2InitialWindowSize must beSome(64 * 1024)
+      actual.http2MaxConcurrentStreams must beSome(32)
+      actual.maxDecompressedResponseSize must beSome(10L * 1024 * 1024)
+      actual.shutdownQuietPeriod must_== 25.millis
+      actual.shutdownTimeout must_== 3.seconds
+      actual.refuseSchemeDowngradeOnRedirect must beSome(true)
+      actual.refuseCrossOriginBodyOnRedirect must beSome(false)
+    }
+
+    "reject an infinite shutdown duration" in {
+      parseThis("play.ws.ahc.shutdownTimeout = Inf") must throwA[ConfigException.BadValue]
+    }
+
+    "parse a bare zero shutdown duration" in {
+      val actual = parseThis("""
+                               |play.ws.ahc.shutdownQuietPeriod = 0
+                               |play.ws.ahc.shutdownTimeout = 0
+        """.stripMargin)
+
+      actual.shutdownQuietPeriod must_== Duration.Zero
+      actual.shutdownTimeout must_== Duration.Zero
+    }
+
+    "reject invalid shutdown timing" in {
+      (parseThis("play.ws.ahc.shutdownQuietPeriod = -1 second") must throwA[ConfigException.BadValue])
+        .and(
+          parseThis("play.ws.ahc.shutdownTimeout = -1 second") must throwA[ConfigException.BadValue]
+        )
+        .and(
+          parseThis("play.ws.ahc.shutdownQuietPeriod = 1 second") must throwA[ConfigException.BadValue]
+        )
+    }
+
+    "accept the AHC sentinel for HTTP/2 max concurrent streams" in {
+      parseThis("play.ws.ahc.http2MaxConcurrentStreams = -1").http2MaxConcurrentStreams must beSome(-1)
+    }
+
+    "reject invalid HTTP/2 limits" in {
+      (parseThis("play.ws.ahc.http2InitialWindowSize = 0") must throwA[ConfigException.BadValue])
+        .and(
+          parseThis("play.ws.ahc.http2InitialWindowSize = 3 GiB") must throwA[ConfigException.BadValue]
+        )
+        .and(
+          parseThis("play.ws.ahc.http2MaxConcurrentStreams = 0") must throwA[ConfigException.BadValue]
+        )
+        .and(
+          parseThis("play.ws.ahc.http2MaxConcurrentStreams = -2") must throwA[ConfigException.BadValue]
+        )
+    }
+
+    "identify a negative decompressed response limit as a bad configuration value" in {
+      val key   = "play.ws.ahc.maxDecompressedResponseSize"
+      val error = try {
+        parseThis(s"$key = -1")
+        throw new AssertionError("Expected the negative response limit to be rejected")
+      } catch {
+        case expected: ConfigException.BadValue => expected
+      }
+
+      error.getMessage must contain(key)
     }
 
     "with keepAlive" should {

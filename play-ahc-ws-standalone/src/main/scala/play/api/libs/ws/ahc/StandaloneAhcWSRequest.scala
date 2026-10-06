@@ -8,12 +8,14 @@ import java.io.UnsupportedEncodingException
 import java.net.URI
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
+import java.time.{ Duration => JDuration }
 
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Sink
 import play.api.libs.ws.StandaloneWSRequest
 import play.api.libs.ws._
 import play.shaded.ahc.io.netty.buffer.Unpooled
+import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
 import play.shaded.ahc.org.asynchttpclient._
@@ -315,9 +317,9 @@ case class StandaloneAhcWSRequest(
     proxyServer.foreach(p => builder.setProxyServer(createProxy(p)))
     requestTimeout.foreach {
       case d if d == Duration.Inf =>
-        builder.setRequestTimeout(-1)
+        builder.setRequestTimeout(JDuration.ofMillis(-1))
       case d =>
-        builder.setRequestTimeout(d.toMillis.toInt)
+        builder.setRequestTimeout(JDuration.ofMillis(d.toMillis))
     }
 
     val (builderWithBody, updatedHeaders) = body match {
@@ -378,18 +380,24 @@ case class StandaloneAhcWSRequest(
 
         (
           builder.setBody(
-            source.map(bs => Unpooled.wrappedBuffer(bs.toByteBuffer)).runWith(Sink.asPublisher(false)),
-            contentLength.getOrElse(-1L)
+            new ReactiveStreamsBodyGenerator(
+              source.map(bs => Unpooled.wrappedBuffer(bs.toByteBuffer)).runWith(Sink.asPublisher(false)),
+              contentLength.getOrElse(-1L)
+            )
           ),
           filteredHeaders
         )
     }
 
-    // headers
+    // Normalize headers only for the final AHC request so filters continue to
+    // observe the values supplied through the Play WS API.
+    val finalHeaders = new DefaultHttpHeaders()
     for {
       header <- updatedHeaders
       value  <- header._2
-    } builder.addHeader(header._1, value)
+    } finalHeaders.add(header._1, value)
+    AhcWSUtils.normalizeRequestContentType(finalHeaders)
+    builderWithBody.setHeaders(finalHeaders)
 
     // Set the signature calculator.
     calc.map {

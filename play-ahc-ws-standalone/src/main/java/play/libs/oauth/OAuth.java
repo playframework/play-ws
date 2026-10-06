@@ -9,7 +9,8 @@ import play.shaded.oauth.oauth.signpost.OAuthProvider;
 import play.shaded.oauth.oauth.signpost.basic.DefaultOAuthConsumer;
 import play.shaded.oauth.oauth.signpost.basic.DefaultOAuthProvider;
 import play.shaded.oauth.oauth.signpost.exception.OAuthException;
-import play.shaded.ahc.org.asynchttpclient.oauth.OAuthSignatureCalculator;
+import play.api.libs.oauth.SignpostSignatureCalculator;
+import play.shaded.ahc.org.asynchttpclient.SignatureCalculator;
 import play.libs.ws.WSSignatureCalculator;
 
 public class OAuth {
@@ -136,15 +137,13 @@ public class OAuth {
      */
     public static class OAuthCalculator implements WSSignatureCalculator {
 
-        private OAuthSignatureCalculator calculator;
+        private final SignpostSignatureCalculator calculator;
 
         public OAuthCalculator(ConsumerKey consumerKey, RequestToken token) {
-            play.shaded.ahc.org.asynchttpclient.oauth.ConsumerKey ahcConsumerKey = new play.shaded.ahc.org.asynchttpclient.oauth.ConsumerKey(consumerKey.key, consumerKey.secret);
-            play.shaded.ahc.org.asynchttpclient.oauth.RequestToken ahcRequestToken = new play.shaded.ahc.org.asynchttpclient.oauth.RequestToken(token.token, token.secret);
-            calculator = new OAuthSignatureCalculator(ahcConsumerKey, ahcRequestToken);
+            calculator = new SignpostSignatureCalculator(consumerKey.key, consumerKey.secret, token.token, token.secret);
         }
 
-        public OAuthSignatureCalculator getCalculator() {
+        public SignatureCalculator getCalculator() {
             return calculator;
         }
     }

@@ -9,8 +9,8 @@ import java.util.function.Predicate
 import java.time.ZonedDateTime
 
 import org.slf4j.LoggerFactory
+import play.api.libs.ws.ahc.DefaultStreamedAsyncHandler
 import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
-import play.shaded.ahc.org.asynchttpclient.handler.StreamedAsyncHandler
 import play.shaded.ahc.org.asynchttpclient.{ Response => AHCResponse, _ }
 
 import scala.concurrent.Await
@@ -53,9 +53,9 @@ class CachingAsyncHttpClient(underlying: AsyncHttpClient, ahcHttpCache: AhcHttpC
       case asyncCompletionHandler: AsyncCompletionHandler[T] =>
         execute(request, asyncCompletionHandler, null)(ahcHttpCache.executionContext)
 
-      case streamedHandler: StreamedAsyncHandler[T] =>
-        // Streamed requests don't go through the cache
-        underlying.executeRequest(request, streamedHandler)
+      case streamedHandler: DefaultStreamedAsyncHandler[?] =>
+        // Streamed requests don't go through the cache.
+        underlying.executeRequest(request, streamedHandler.asInstanceOf[AsyncHandler[T]])
 
       case other =>
         throw new IllegalStateException(s"Unknown handler type ${other.getClass.getName}")

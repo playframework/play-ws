@@ -49,9 +49,42 @@ libraryDependencies += "com.typesafe.play" %% "play-ws-standalone-json" % playWs
 
 Play WS uses shaded versions of AsyncHttpClient and OAuth Signpost, repackaged under the `play.shaded.ahc` and `play.shaded.oauth` package names, respectively.  Shading AsyncHttpClient means that the version of Netty used behind AsyncHttpClient is completely independent of the application and Play as a whole.
 
-Specifically, shading AsyncHttpClient means that there are no version conflicts introduced between Netty 4.0 and Netty 4.1 using Play WS.
+Specifically, shading AsyncHttpClient means that its Netty version does not conflict with the Netty version used by the application.
 
 > **NOTE**: If you are developing play-ws and publishing `shaded-asynchttpclient` and `shaded-oauth` using `sbt publishLocal`, you need to be aware that updating `~/.ivy2/local` does not overwrite `~/.ivy2/cache` and so you will not see your updated shaded code until you remove it from cache.  See http://eed3si9n.com/field-test for more details.  This bug has been filed as https://github.com/sbt/sbt/issues/2687.
+
+### AHC 3 migration notes
+
+Play WS 3.1 uses shaded AsyncHttpClient 3.0.14. Most Play WS request, response, streaming, and OAuth entry points remain available, but redirect, cookie, and streamed-body behavior is not identical to the AHC 2-backed releases. Code that uses shaded AHC types directly through an `underlying` escape hatch must be updated for AHC 3. A client supplied directly as an `AsyncHttpClient` also uses that client's own defaults rather than all of Play WS's configuration defaults.
+
+There are two additional compatibility changes for APIs that exposed AHC 2 implementation details:
+
+* `play.api.libs.ws.ahc.DefaultStreamedAsyncHandler` no longer extends AHC 2's removed `StreamedAsyncHandler`, and its `onStream` method is gone. Use `StandaloneWSRequest.stream()` and consume `StandaloneWSResponse.bodyAsSource`; custom AHC handlers must use AHC 3's response-body callbacks.
+* `play.libs.oauth.OAuth.OAuthCalculator.getCalculator()` now returns AHC's `SignatureCalculator` interface because AHC 3 removed the concrete `OAuthSignatureCalculator` type. OAuth 1 request signing through Play WS remains supported.
+
+`AhcWSClientConfig` retains its Play WS 3.0 constructor, companion `apply`, `copy`, and 12-field extractor. New AHC 3 settings are available through their named accessors and `copy` parameters but are intentionally not added to the extractor. Code using the generated `tupled` or `curried` helpers, or treating the companion as a `Function12`, must be updated for the expanded configuration.
+
+Play WS adapts `Source`, `File`, and input-stream-supplier request bodies to a one-shot streamed body. A redirect or retry that would replay one now fails explicitly instead of attempting a second subscription; a supplier is not automatically called again. In-memory bodies can be replayed. This differs from native AHC `File` and some native `InputStream` bodies, which have their own replay support.
+
+AHC 3.0.14 preserves the method and body of non-`POST` requests across 301 and 302 redirects; the legacy rewrite to a bodyless `GET` now applies only to `POST`. A 303 still switches to a bodyless `GET`, except that `HEAD` and `OPTIONS` keep their method, while 307 and 308 preserve method and body. This can turn a former bodyless-`GET` success into an explicit replay failure for a one-shot Play WS request body. `QUERY` follows the same non-`POST` rule.
+
+Cookie handling also differs from the AHC 2-based Play WS. Cookies added through the Play WS cookie API (`addCookies`, `withCookies`) now follow same-origin redirects, whereas AHC 2 dropped them on every redirect; cross-origin redirects still strip them. A raw `Cookie` header is now merged with API and cookie-store cookies on the initial request and on every redirect, and a raw pair wins over an API cookie of the same name. AHC 2 instead let API cookies replace the raw header on the initial request, sent only the raw header on redirects, and, with a cookie store, replaced the raw header with the stored cookies for the URL. Several raw `Cookie` headers are now folded into one. With the opt-in `play.ws.ahc.useCookieStore = true`, redirects and authentication retries re-encode the raw header: pairs can be reordered, valueless or unbalanced-quote pairs are dropped, and a value that AHC's strict encoder rejects fails the redirect or retry even though the initial request was sent. Prefer valid cookie syntax and the Play WS cookie API; `useLaxCookieEncoder = true` changes validation more broadly and is not a general safety workaround. The cookie store remains disabled by default.
+
+Connections authenticated with NTLM, SPNEGO or Kerberos, or through a proxy login that applies to the whole connection, are now pooled per principal, so AHC no longer reuses them for requests made with other credentials.
+
+AHC 3.0.14 also offers two opt-in redirect refusals. Set `play.ws.ahc.refuseSchemeDowngradeOnRedirect = true` to reject an HTTPS-to-HTTP hop, or `play.ws.ahc.refuseCrossOriginBodyOnRedirect = true` to reject a hop that would resend a request body to another origin. Without the latter, AHC follows such a redirect and resends the body. A hop that only moves the same host from `http` to `https`, keeping the port or using both schemes' default ports, is not refused as cross-origin. These settings are separate from credential stripping: AHC removes credentials such as `Authorization` and caller cookies from cross-origin redirects regardless, while the refusals decide whether the request body or an insecure hop is allowed at all. Both Play WS settings are unset by default, preserving AHC's defaults and its shaded system-property settings. A refused redirect does not contact the target; the failed request exposes AHC's shaded `play.shaded.ahc.org.asynchttpclient.handler.RedirectRefusedException` in its failure chain. If the origin replies before an upload finishes, an earlier write failure may surface instead. Neither setting silently converts a body-bearing request into an empty one.
+
+Play WS defaults `play.ws.ahc.http2Enabled` to `false` to preserve HTTP/1.1 behavior. Its standard configured SSL engine factory does not offer HTTP/2 through ALPN, so setting this option to `true` alone does **not** enable HTTP/2 for HTTPS requests. A separately supplied AHC client may use a different TLS factory and defaults. Cleartext HTTP/2 (h2c) can be enabled explicitly with both `http2Enabled = true` and AHC's `http2CleartextEnabled` through `AhcConfigBuilder.modifyUnderlying`. For actual HTTP/2 connections, `http2InitialWindowSize` limits the bytes a server can send to one suspended stream, while `http2MaxConcurrentStreams` limits the contributing streams per connection. These limits count bytes received on the wire: with automatic decompression, a compressed response can inflate into far more decoded body data than its window (see `maxDecompressedResponseSize` below). Play WS requires `http2InitialWindowSize` to be greater than zero because a zero initial window can prevent a response stream from making initial progress.
+
+The AHC defaults are a 16 MiB per-stream window and no client-side concurrent-stream cap (`http2MaxConcurrentStreams = -1` leaves the limit server-controlled). Play WS also defaults its connection limits to unlimited, so there is no hard client-side aggregate buffering bound when HTTP/2 is enabled. A rough upper estimate for received data queued by suspended HTTP/2 responses is `connections × effective concurrent streams × http2InitialWindowSize`, excluding network and decoder overhead; decoded data from compressed responses can be much larger. A finite aggregate policy needs limits on all three factors, but connection caps also apply to HTTP/1.1 hosts: with AHC's default zero wait for a free connection, requests exceeding a cap fail immediately. Do not apply a low `maxConnectionsPerHost` merely as an HTTP/2 memory setting without assessing HTTP/1.1 concurrency.
+
+Set `play.ws.ahc.maxDecompressedResponseSize` to apply one decompressed-response limit to both HTTP/1.1 and HTTP/2. AHC's defaults apply when it is unset. This limits decoded bytes per response, not total client heap use: each socket read of a compressed body (up to 64 KiB) is inflated in full before downstream demand is checked, so a highly compressible response can queue many MiB of body parts beyond demand, roughly 64 KiB times the compression ratio per read. AHC 2 behaves the same way. AHC inflates any `Content-Encoding` a server sends, even when Play WS did not request compression, so assess memory use for clients that stream responses from untrusted servers. Setting the limit to zero disables decompression-bomb protection and is not recommended for untrusted responses.
+
+`play.ws.ahc.shutdownQuietPeriod` and `play.ws.ahc.shutdownTimeout` control AHC event-loop shutdown. Both must be non-negative, and the timeout must be at least as long as the quiet period. Both default to zero to preserve Play WS's existing immediate-shutdown behavior.
+
+AHC 3 no longer needs `netty-reactive-streams`; Play WS still uses Reactive Streams interfaces to connect AHC response callbacks to Pekko Streams. The old AHC 2.16.1 dependency in this repository is test-only, for differential OAuth signatures, and is not part of the published Play WS client.
+
+The AHC 3.0.14 release includes fixes for [GHSA-v2j5-22fr-j62r](https://github.com/AsyncHttpClient/async-http-client/security/advisories/GHSA-v2j5-22fr-j62r), [GHSA-qjr7-w8pj-pmv9](https://github.com/AsyncHttpClient/async-http-client/security/advisories/GHSA-qjr7-w8pj-pmv9), [GHSA-x8v2-478q-2hvg](https://github.com/AsyncHttpClient/async-http-client/security/advisories/GHSA-x8v2-478q-2hvg), [GHSA-p2jm-6hj6-9rjg](https://github.com/AsyncHttpClient/async-http-client/security/advisories/GHSA-p2jm-6hj6-9rjg), and [GHSA-2jwh-9rmr-j4xf](https://github.com/AsyncHttpClient/async-http-client/security/advisories/GHSA-2jwh-9rmr-j4xf). Whether an older Play WS application is affected by each one depends on its configuration and requests.
 
 ### Shaded AHC Defaults 
 
@@ -334,11 +367,12 @@ You can also create the standalone client directly from an AsyncHttpClient insta
 object ScalaClient {
   def main(args: Array[String]): Unit = {
     // Use 
+    import java.time.Duration
     import play.shaded.ahc.org.asynchttpclient._
     val asyncHttpClientConfig = new DefaultAsyncHttpClientConfig.Builder()
       .setMaxRequestRetry(0)
-      .setShutdownQuietPeriod(0)
-      .setShutdownTimeout(0).build
+      .setShutdownQuietPeriod(Duration.ZERO)
+      .setShutdownTimeout(Duration.ZERO).build
     val asyncHttpClient = new DefaultAsyncHttpClient(asyncHttpClientConfig)
     val wsClient = new StandaloneAhcWSClient(asyncHttpClient)
     /// ...
@@ -410,6 +444,8 @@ public class JavaClient implements DefaultBodyReadables {
 Likewise, you can provide the AsyncHttpClient client explicitly from configuration:
 
 ```java
+import java.time.Duration;
+
 public class JavaClient implements DefaultBodyReadables {
      public static void main(String[] args) { 
         // ...
@@ -417,8 +453,8 @@ public class JavaClient implements DefaultBodyReadables {
         AsyncHttpClientConfig asyncHttpClientConfig =
             new DefaultAsyncHttpClientConfig.Builder()
                 .setMaxRequestRetry(0)
-                .setShutdownQuietPeriod(0)
-                .setShutdownTimeout(0)
+                .setShutdownQuietPeriod(Duration.ZERO)
+                .setShutdownTimeout(Duration.ZERO)
                 .build();
         AsyncHttpClient asyncHttpClient = new DefaultAsyncHttpClient(asyncHttpClientConfig);
     
