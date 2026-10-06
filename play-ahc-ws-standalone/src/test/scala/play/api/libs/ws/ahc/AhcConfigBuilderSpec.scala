@@ -37,9 +37,9 @@ class AhcConfigBuilderSpec extends Specification {
         .build()
       ahcConfig.isCompressionEnforced must beFalse
       ahcConfig.isFollowRedirect must beFalse
-      ahcConfig.getConnectTimeout must_== 120000
-      ahcConfig.getRequestTimeout must_== 120000
-      ahcConfig.getReadTimeout must_== 120000
+      ahcConfig.getConnectTimeout must_== java.time.Duration.ofMinutes(2)
+      ahcConfig.getRequestTimeout must_== java.time.Duration.ofMinutes(2)
+      ahcConfig.getReadTimeout must_== java.time.Duration.ofMinutes(2)
     }
 
     "with basic options" should {
@@ -49,9 +49,9 @@ class AhcConfigBuilderSpec extends Specification {
         val builder = new AhcConfigBuilder(config)
         val actual  = builder.build()
 
-        actual.getReadTimeout must_== defaultWsConfig.idleTimeout.toMillis
-        actual.getRequestTimeout must_== defaultWsConfig.requestTimeout.toMillis
-        actual.getConnectTimeout must_== defaultWsConfig.connectionTimeout.toMillis
+        actual.getReadTimeout must_== java.time.Duration.ofMillis(defaultWsConfig.idleTimeout.toMillis)
+        actual.getRequestTimeout must_== java.time.Duration.ofMillis(defaultWsConfig.requestTimeout.toMillis)
+        actual.getConnectTimeout must_== java.time.Duration.ofMillis(defaultWsConfig.connectionTimeout.toMillis)
         actual.isFollowRedirect must_== defaultWsConfig.followRedirects
         actual.getCookieStore must_== null
 
@@ -64,7 +64,7 @@ class AhcConfigBuilderSpec extends Specification {
         val builder  = new AhcConfigBuilder(config)
 
         val actual = builder.build()
-        actual.getReadTimeout must_== 42L
+        actual.getReadTimeout must_== java.time.Duration.ofMillis(42)
       }
 
       "use an explicit request timeout" in {
@@ -73,7 +73,7 @@ class AhcConfigBuilderSpec extends Specification {
         val builder  = new AhcConfigBuilder(config)
 
         val actual = builder.build()
-        actual.getRequestTimeout must_== 47L
+        actual.getRequestTimeout must_== java.time.Duration.ofMillis(47)
       }
 
       "use an explicit connection timeout" in {
@@ -82,7 +82,7 @@ class AhcConfigBuilderSpec extends Specification {
         val builder  = new AhcConfigBuilder(config)
 
         val actual = builder.build()
-        actual.getConnectTimeout must_== 99L
+        actual.getConnectTimeout must_== java.time.Duration.ofMillis(99)
       }
 
       "use an explicit followRedirects option" in {
@@ -158,6 +158,23 @@ class AhcConfigBuilderSpec extends Specification {
         val builder = new AhcConfigBuilder(config)
         val actual  = builder.build()
         actual.isDisableUrlEncodingForBoundRequests must_== true
+      }
+
+      "allow setting ahc pool and cookie options" in {
+        val config = defaultConfig.copy(
+          maxConnectionLifetime = 3.minutes,
+          idleConnectionInPoolTimeout = 4.seconds,
+          connectionPoolCleanerPeriod = 5.seconds,
+          useLaxCookieEncoder = true,
+          useCookieStore = true
+        )
+        val actual = new AhcConfigBuilder(config).build()
+
+        actual.getConnectionTtl must_== java.time.Duration.ofMinutes(3)
+        actual.getPooledConnectionIdleTimeout must_== java.time.Duration.ofSeconds(4)
+        actual.getConnectionPoolCleanerPeriod must_== java.time.Duration.ofSeconds(5)
+        actual.isUseLaxCookieEncoder must beTrue
+        actual.getCookieStore must not(beNull)
       }
     }
 

@@ -67,6 +67,11 @@ lazy val mimaSettings = Seq(
     // Add HTTP QUERY method support (RFC 10008)
     ProblemFilters.exclude[ReversedMissingMethodProblem]("play.api.libs.ws.StandaloneWSRequest.query"),
     ProblemFilters.exclude[ReversedMissingMethodProblem]("play.libs.ws.StandaloneWSRequest.query"),
+    // AHC 3 removed StreamedAsyncHandler. Play WS now implements streaming using AHC's response body control.
+    ProblemFilters.exclude[MissingTypesProblem]("play.api.libs.ws.ahc.DefaultStreamedAsyncHandler"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("play.api.libs.ws.ahc.DefaultStreamedAsyncHandler.onStream"),
+    // AHC 3 removed OAuthSignatureCalculator. Play WS retains OAuth through the surviving SignatureCalculator API.
+    ProblemFilters.exclude[IncompatibleResultTypeProblem]("play.libs.oauth.OAuth#OAuthCalculator.getCalculator"),
   )
 )
 
@@ -176,6 +181,7 @@ lazy val `shaded-asynchttpclient` = project
   .settings(shadeAssemblySettings)
   .settings(
     libraryDependencies ++= asyncHttpClient,
+    dependencyOverrides ++= nettyOverrides,
     name                             := "shaded-asynchttpclient",
     assembly / logLevel              := Level.Error,
     assembly / assemblyMergeStrategy := {
@@ -183,6 +189,9 @@ lazy val `shaded-asynchttpclient` = project
       val mergeStrategy: String => MergeStrategy = {
         case NettyPropertiesPath =>
           MergeStrategy.first
+
+        case moduleInfo if moduleInfo.endsWith("module-info.class") =>
+          MergeStrategy.discard
 
         case ahcProperties if ahcProperties.endsWith("ahc-default.properties") =>
           ahcMerge
@@ -198,13 +207,13 @@ lazy val `shaded-asynchttpclient` = project
       ShadeRule.rename("org.asynchttpclient.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.rename("io.netty.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.rename("javassist.**" -> "play.shaded.ahc.@0").inAll,
-      ShadeRule // asynchttpclient 2.x depends on netty-reactive-streams 2.x (v3 drops it, see async-http-client#1843 + #1819)
-        .rename("com.typesafe.netty.**" -> "play.shaded.ahc.@0")
-        .inAll,
       ShadeRule.rename("javax.activation.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.rename("com.sun.activation.**" -> "play.shaded.ahc.@0").inAll,
       ShadeRule.zap("org.reactivestreams.**").inAll,
-      ShadeRule.zap("org.slf4j.**").inAll
+      ShadeRule.zap("org.slf4j.**").inAll,
+      // Annotation descriptors remain on shaded AHC classes, but their library classes are not runtime dependencies.
+      ShadeRule.zap("org.jetbrains.annotations.**").inAll,
+      ShadeRule.zap("org.intellij.lang.annotations.**").inAll
     ),
     // https://stackoverflow.com/questions/24807875/how-to-remove-projectdependencies-from-pom
     // Remove dependencies from the POM because we have a FAT jar here.
@@ -213,7 +222,25 @@ lazy val `shaded-asynchttpclient` = project
     // ivyLoggingLevel := UpdateLogging.Full,
     // logLevel := Level.Debug,
     assembly / assemblyOption := (assembly / assemblyOption).value.withIncludeBin(false).withIncludeScala(false),
-    Compile / packageBin      := Def.uncached(assembly.value)
+    Compile / packageBin      := Def.uncached {
+      val assembled = assembly.value
+      val archive   = new java.util.jar.JarFile(fileConverter.value.toPath(assembled).toFile)
+      try {
+        val entries  = archive.entries()
+        val unshaded = List.newBuilder[String]
+        while (entries.hasMoreElements) {
+          val name = entries.nextElement().getName
+          if (name.endsWith(".class") && !name.startsWith("play/shaded/")) {
+            unshaded += name
+          }
+        }
+        val misplaced = unshaded.result()
+        require(misplaced.isEmpty, "Unshaded classes in the AHC assembly: " + misplaced.mkString(", "))
+      } finally {
+        archive.close()
+      }
+      assembled
+    }
   )
 
 //---------------------------------------------------------------

@@ -35,10 +35,13 @@ class AhcWSClientConfigParserSpec extends Specification {
       s1.maxConnectionsTotal must_== s2.maxConnectionsTotal
       s1.maxConnectionLifetime must_== s2.maxConnectionLifetime
       s1.idleConnectionInPoolTimeout must_== s2.idleConnectionInPoolTimeout
+      s1.connectionPoolCleanerPeriod must_== s2.connectionPoolCleanerPeriod
       s1.maxNumberOfRedirects must_== s2.maxNumberOfRedirects
       s1.maxRequestRetry must_== s2.maxRequestRetry
       s1.disableUrlEncoding must_== s2.disableUrlEncoding
       s1.keepAlive must_== s2.keepAlive
+      s1.useLaxCookieEncoder must_== s2.useLaxCookieEncoder
+      s1.useCookieStore must_== s2.useCookieStore
     }
 
     "parse ws ahc section" in {
@@ -52,6 +55,8 @@ class AhcWSClientConfigParserSpec extends Specification {
                                |play.ws.ahc.maxRequestRetry = 99
                                |play.ws.ahc.disableUrlEncoding = true
                                |play.ws.ahc.keepAlive = false
+                               |play.ws.ahc.useLaxCookieEncoder = true
+                               |play.ws.ahc.useCookieStore = true
         """.stripMargin)
 
       actual.maxConnectionsPerHost must_== 3
@@ -63,6 +68,8 @@ class AhcWSClientConfigParserSpec extends Specification {
       actual.maxRequestRetry must_== 99
       actual.disableUrlEncoding must beTrue
       actual.keepAlive must beFalse
+      actual.useLaxCookieEncoder must beTrue
+      actual.useCookieStore must beTrue
     }
 
     "with keepAlive" should {

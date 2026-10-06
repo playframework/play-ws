@@ -4,6 +4,8 @@
 
 package play.api.libs.ws.ahc
 
+import java.time.{ Duration => JDuration }
+
 import jakarta.inject.Inject
 import jakarta.inject.Provider
 import jakarta.inject.Singleton
@@ -194,15 +196,15 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
   def configureWS(ahcConfig: AhcWSClientConfig): Unit = {
     val config = ahcConfig.wsClientConfig
 
-    def toMillis(duration: Duration): Int = {
-      if (duration.isFinite) duration.toMillis.toInt
-      else -1
+    def toJavaDuration(duration: Duration): JDuration = {
+      if (duration.isFinite) JDuration.ofMillis(duration.toMillis)
+      else JDuration.ofMillis(-1)
     }
 
     builder
-      .setConnectTimeout(toMillis(config.connectionTimeout))
-      .setReadTimeout(toMillis(config.idleTimeout))
-      .setRequestTimeout(toMillis(config.requestTimeout))
+      .setConnectTimeout(toJavaDuration(config.connectionTimeout))
+      .setReadTimeout(toJavaDuration(config.idleTimeout))
+      .setRequestTimeout(toJavaDuration(config.requestTimeout))
       .setFollowRedirect(config.followRedirects)
       .setUseProxyProperties(config.useProxyProperties)
       .setCompressionEnforced(config.compressionEnabled)
@@ -211,9 +213,9 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
 
     builder.setMaxConnectionsPerHost(ahcConfig.maxConnectionsPerHost)
     builder.setMaxConnections(ahcConfig.maxConnectionsTotal)
-    builder.setConnectionTtl(toMillis(ahcConfig.maxConnectionLifetime))
-    builder.setPooledConnectionIdleTimeout(toMillis(ahcConfig.idleConnectionInPoolTimeout))
-    builder.setConnectionPoolCleanerPeriod(toMillis(ahcConfig.connectionPoolCleanerPeriod))
+    builder.setConnectionTtl(toJavaDuration(ahcConfig.maxConnectionLifetime))
+    builder.setPooledConnectionIdleTimeout(toJavaDuration(ahcConfig.idleConnectionInPoolTimeout))
+    builder.setConnectionPoolCleanerPeriod(toJavaDuration(ahcConfig.connectionPoolCleanerPeriod))
     builder.setMaxRedirects(ahcConfig.maxNumberOfRedirects)
     builder.setMaxRequestRetry(ahcConfig.maxRequestRetry)
     builder.setDisableUrlEncodingForBoundRequests(ahcConfig.disableUrlEncoding)
@@ -225,8 +227,8 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
     // The proper solution is to make these parameters configurable, so that they can be set
     // to 0 when running tests, and keep sensible defaults otherwise. AHC defaults are
     // shutdownQuiet=2000 (milliseconds) and shutdownTimeout=15000 (milliseconds).
-    builder.setShutdownQuietPeriod(0)
-    builder.setShutdownTimeout(0)
+    builder.setShutdownQuietPeriod(JDuration.ZERO)
+    builder.setShutdownTimeout(JDuration.ZERO)
     builder.setUseLaxCookieEncoder(ahcConfig.useLaxCookieEncoder)
 
     if (!ahcConfig.useCookieStore) {

@@ -8,6 +8,7 @@ import java.io.UnsupportedEncodingException
 import java.net.URI
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
+import java.time.{ Duration => JDuration }
 
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Sink
@@ -193,7 +194,13 @@ case class StandaloneAhcWSRequest(
     if (headers.contains(HttpHeaders.Names.CONTENT_TYPE)) {
       copy(body = wsBody)
     } else {
-      copy(body = wsBody).addHttpHeaders(HttpHeaders.Names.CONTENT_TYPE -> contentType)
+      val effectiveContentType =
+        if (
+          contentType.regionMatches(true, 0, "text/", 0, 5) &&
+          HttpUtils.extractContentTypeCharsetAttribute(contentType) == null
+        ) s"$contentType; charset=${StandardCharsets.UTF_8.name()}"
+        else contentType
+      copy(body = wsBody).addHttpHeaders(HttpHeaders.Names.CONTENT_TYPE -> effectiveContentType)
     }
   }
 
@@ -315,9 +322,9 @@ case class StandaloneAhcWSRequest(
     proxyServer.foreach(p => builder.setProxyServer(createProxy(p)))
     requestTimeout.foreach {
       case d if d == Duration.Inf =>
-        builder.setRequestTimeout(-1)
+        builder.setRequestTimeout(JDuration.ofMillis(-1))
       case d =>
-        builder.setRequestTimeout(d.toMillis.toInt)
+        builder.setRequestTimeout(JDuration.ofMillis(d.toMillis))
     }
 
     val (builderWithBody, updatedHeaders) = body match {
@@ -378,8 +385,10 @@ case class StandaloneAhcWSRequest(
 
         (
           builder.setBody(
-            source.map(bs => Unpooled.wrappedBuffer(bs.toByteBuffer)).runWith(Sink.asPublisher(false)),
-            contentLength.getOrElse(-1L)
+            new ReactiveStreamsBodyGenerator(
+              source.map(bs => Unpooled.wrappedBuffer(bs.toByteBuffer)).runWith(Sink.asPublisher(false)),
+              contentLength.getOrElse(-1L)
+            )
           ),
           filteredHeaders
         )
@@ -389,7 +398,16 @@ case class StandaloneAhcWSRequest(
     for {
       header <- updatedHeaders
       value  <- header._2
-    } builder.addHeader(header._1, value)
+    } {
+      val effectiveValue =
+        if (
+          header._1.equalsIgnoreCase(HttpHeaders.Names.CONTENT_TYPE) &&
+          value.regionMatches(true, 0, "text/", 0, 5) &&
+          HttpUtils.extractContentTypeCharsetAttribute(value) == null
+        ) s"$value; charset=${StandardCharsets.UTF_8.name()}"
+        else value
+      builder.addHeader(header._1, effectiveValue)
+    }
 
     // Set the signature calculator.
     calc.map {

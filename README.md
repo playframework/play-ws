@@ -49,9 +49,13 @@ libraryDependencies += "com.typesafe.play" %% "play-ws-standalone-json" % playWs
 
 Play WS uses shaded versions of AsyncHttpClient and OAuth Signpost, repackaged under the `play.shaded.ahc` and `play.shaded.oauth` package names, respectively.  Shading AsyncHttpClient means that the version of Netty used behind AsyncHttpClient is completely independent of the application and Play as a whole.
 
-Specifically, shading AsyncHttpClient means that there are no version conflicts introduced between Netty 4.0 and Netty 4.1 using Play WS.
+Specifically, shading AsyncHttpClient means that its Netty version does not conflict with the Netty version used by the application.
 
 > **NOTE**: If you are developing play-ws and publishing `shaded-asynchttpclient` and `shaded-oauth` using `sbt publishLocal`, you need to be aware that updating `~/.ivy2/local` does not overwrite `~/.ivy2/cache` and so you will not see your updated shaded code until you remove it from cache.  See http://eed3si9n.com/field-test for more details.  This bug has been filed as https://github.com/sbt/sbt/issues/2687.
+
+### AHC 3 migration notes
+
+Play WS 3.1 uses shaded AsyncHttpClient 3.0.14.
 
 ### Shaded AHC Defaults 
 
@@ -334,11 +338,12 @@ You can also create the standalone client directly from an AsyncHttpClient insta
 object ScalaClient {
   def main(args: Array[String]): Unit = {
     // Use 
+    import java.time.Duration
     import play.shaded.ahc.org.asynchttpclient._
     val asyncHttpClientConfig = new DefaultAsyncHttpClientConfig.Builder()
       .setMaxRequestRetry(0)
-      .setShutdownQuietPeriod(0)
-      .setShutdownTimeout(0).build
+      .setShutdownQuietPeriod(Duration.ZERO)
+      .setShutdownTimeout(Duration.ZERO).build
     val asyncHttpClient = new DefaultAsyncHttpClient(asyncHttpClientConfig)
     val wsClient = new StandaloneAhcWSClient(asyncHttpClient)
     /// ...
@@ -410,6 +415,8 @@ public class JavaClient implements DefaultBodyReadables {
 Likewise, you can provide the AsyncHttpClient client explicitly from configuration:
 
 ```java
+import java.time.Duration;
+
 public class JavaClient implements DefaultBodyReadables {
      public static void main(String[] args) { 
         // ...
@@ -417,8 +424,8 @@ public class JavaClient implements DefaultBodyReadables {
         AsyncHttpClientConfig asyncHttpClientConfig =
             new DefaultAsyncHttpClientConfig.Builder()
                 .setMaxRequestRetry(0)
-                .setShutdownQuietPeriod(0)
-                .setShutdownTimeout(0)
+                .setShutdownQuietPeriod(Duration.ZERO)
+                .setShutdownTimeout(Duration.ZERO)
                 .build();
         AsyncHttpClient asyncHttpClient = new DefaultAsyncHttpClient(asyncHttpClientConfig);
     

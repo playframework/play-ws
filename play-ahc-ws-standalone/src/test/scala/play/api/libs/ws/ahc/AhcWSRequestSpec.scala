@@ -595,7 +595,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
         .withRequestTimeout(1000.millis)
         .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
-      (req.getRequestTimeout must be).equalTo(1000)
+      (req.getRequestTimeout must be).equalTo(java.time.Duration.ofMillis(1000))
     }
 
     "infinite timeout" in withClient { client =>
@@ -604,7 +604,7 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
         .withRequestTimeout(Duration.Inf)
         .asInstanceOf[StandaloneAhcWSRequest]
         .buildRequest()
-      (req.getRequestTimeout must be).equalTo(-1)
+      (req.getRequestTimeout must be).equalTo(java.time.Duration.ofMillis(-1))
     }
 
     "no negative timeout" in withClient { client =>

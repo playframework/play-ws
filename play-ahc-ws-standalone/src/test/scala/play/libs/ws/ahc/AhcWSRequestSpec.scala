@@ -194,22 +194,24 @@ class AhcWSRequestSpec extends Specification with DefaultBodyReadables with Defa
     "setRequestTimeout(java.time.Duration)" should {
 
       "support setting a request timeout to a duration" in {
-        requestWithTimeout(Duration.ofSeconds(1)) must beEqualTo(1000)
+        requestWithTimeout(Duration.ofSeconds(1)) must beEqualTo(Duration.ofSeconds(1))
       }
 
       "support setting a request timeout duration to infinite using -1" in {
-        requestWithTimeout(Duration.ofMillis(-1)) must beEqualTo(-1)
+        requestWithTimeout(Duration.ofMillis(-1)) must beEqualTo(Duration.ofMillis(-1))
       }
 
       "support setting a request timeout duration to infinite using any negative duration" in {
-        requestWithTimeout(Duration.ofMillis(-2)) must beEqualTo(-1)
-        requestWithTimeout(Duration.ofMillis(-15)) must beEqualTo(-1)
-        requestWithTimeout(Duration.ofSeconds(-1)) must beEqualTo(-1)
-        requestWithTimeout(Duration.ofMillis(java.lang.Integer.MIN_VALUE)) must beEqualTo(-1)
+        requestWithTimeout(Duration.ofMillis(-2)) must beEqualTo(Duration.ofMillis(-1))
+        requestWithTimeout(Duration.ofMillis(-15)) must beEqualTo(Duration.ofMillis(-1))
+        requestWithTimeout(Duration.ofSeconds(-1)) must beEqualTo(Duration.ofMillis(-1))
+        requestWithTimeout(Duration.ofMillis(java.lang.Integer.MIN_VALUE)) must beEqualTo(Duration.ofMillis(-1))
       }
 
-      "support setting a request timeout duration to Long.MAX_VALUE as infinite" in {
-        requestWithTimeout(Duration.ofMillis(java.lang.Long.MAX_VALUE)) must beEqualTo(-1)
+      "support setting a request timeout duration to Long.MAX_VALUE" in {
+        requestWithTimeout(Duration.ofMillis(java.lang.Long.MAX_VALUE)) must beEqualTo(
+          Duration.ofMillis(java.lang.Long.MAX_VALUE)
+        )
       }
 
       "not support setting a request timeout to null" in {
