@@ -16,6 +16,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 
+import com.typesafe.config.ConfigFactory
 import org.apache.pekko.Done
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.Sink
@@ -63,6 +64,23 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
   private val digestRealm          = "play-ws-rfc7616"
   private val digestNonce          = "0123456789abcdef"
   private val DigestParameter      = """([A-Za-z][A-Za-z0-9_-]*)=(?:\"([^\"]*)\"|([^,\s]+))""".r
+
+  private def looseTlsConfig(http2Enabled: Boolean): AhcWSClientConfig = {
+    val config = ConfigFactory
+      .parseString("play.ws.ssl.loose.acceptAnyCertificate = true")
+      .withFallback(ConfigFactory.defaultReference())
+    AhcWSClientConfigFactory.forConfig(config).copy(http2Enabled = http2Enabled)
+  }
+
+  private def trustedTlsConfig(server: AlpnProtocolTestServer, http2Enabled: Boolean): AhcWSClientConfig = {
+    val storePath = server.trustStorePath()
+    val config    = ConfigFactory
+      .parseString(
+        s"""play.ws.ssl.trustManager.stores = [{ type = "PKCS12", path = "$storePath", password = "changeit" }]"""
+      )
+      .withFallback(ConfigFactory.defaultReference())
+    AhcWSClientConfigFactory.forConfig(config).copy(http2Enabled = http2Enabled)
+  }
 
   override def routes(components: BuiltInComponents): PartialFunction[RequestHeader, Handler] = {
     case GET(p"/compatibility/gated-stream") =>
@@ -130,6 +148,62 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
   }
 
   "The AHC 3 upgrade" should {
+
+    "use HTTP/1.1 over HTTPS by default even when the server offers h2" in {
+      val server = new AlpnProtocolTestServer()
+      try {
+        withClient(trustedTlsConfig(server, http2Enabled = false)) { client =>
+          val response = Await.result(client.url(server.url()).get(), defaultTimeout)
+          (response.body[String] must beEqualTo("http/1.1")).and(
+            server.negotiatedProtocol() must beEqualTo("http/1.1")
+          )
+        }
+      } finally {
+        server.close()
+      }
+    }
+
+    "not advertise h2 over HTTPS merely because AHC HTTP/2 is enabled" in {
+      val server = new AlpnProtocolTestServer()
+      try {
+        withClient(trustedTlsConfig(server, http2Enabled = true)) { client =>
+          val response = Await.result(client.url(server.url()).get(), defaultTimeout)
+          (response.body[String] must beEqualTo("http/1.1")).and(
+            server.negotiatedProtocol() must beEqualTo("http/1.1")
+          )
+        }
+      } finally {
+        server.close()
+      }
+    }
+
+    "use HTTP/1.1 on the loose TLS path even when the server offers h2" in {
+      val server = new AlpnProtocolTestServer()
+      try {
+        withClient(looseTlsConfig(http2Enabled = false)) { client =>
+          val response = Await.result(client.url(server.url()).get(), defaultTimeout)
+          (response.body[String] must beEqualTo("http/1.1")).and(
+            server.negotiatedProtocol() must beEqualTo("http/1.1")
+          )
+        }
+      } finally {
+        server.close()
+      }
+    }
+
+    "not advertise h2 on the loose TLS path merely because AHC HTTP/2 is enabled" in {
+      val server = new AlpnProtocolTestServer()
+      try {
+        withClient(looseTlsConfig(http2Enabled = true)) { client =>
+          val response = Await.result(client.url(server.url()).get(), defaultTimeout)
+          (response.body[String] must beEqualTo("http/1.1")).and(
+            server.negotiatedProtocol() must beEqualTo("http/1.1")
+          )
+        }
+      } finally {
+        server.close()
+      }
+    }
 
     "keep response streaming incremental" in withClient() { client =>
       val response = Await.result(
