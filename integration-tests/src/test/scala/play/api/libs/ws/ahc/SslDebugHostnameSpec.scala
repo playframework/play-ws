@@ -33,7 +33,18 @@ class SslDebugHostnameSpec(implicit val executionEnv: ExecutionEnv)
   private val debugOptions =
     Seq(None, Some("all"), Some("keymanager"), Some("ssl"), Some("sslctx"), Some("trustmanager"))
 
-  private def clientConfig(server: WrongHostTlsTestServer, debugOption: Option[String], withClientKey: Boolean) = {
+  /** Every debug option, each with and without HTTP/2, which makes the client offer h2 through ALPN. */
+  private val variants = for {
+    option       <- debugOptions
+    http2Enabled <- Seq(false, true)
+  } yield (option, http2Enabled)
+
+  private def clientConfig(
+      server: WrongHostTlsTestServer,
+      debugOption: Option[String],
+      withClientKey: Boolean,
+      http2Enabled: Boolean
+  ) = {
     val debugSetting = debugOption.map(name => s"play.ws.ssl.debug.$name = true").getOrElse("")
     val keySetting   =
       if (withClientKey)
@@ -48,17 +59,17 @@ class SslDebugHostnameSpec(implicit val executionEnv: ExecutionEnv)
            |$debugSetting""".stripMargin
       )
       .withFallback(ConfigFactory.defaultReference())
-    AhcWSClientConfigFactory.forConfig(config)
+    AhcWSClientConfigFactory.forConfig(config).copy(http2Enabled = http2Enabled)
   }
 
   /** Fails unless the request failed because the certificate did not match the requested host. */
-  private def rejectedForHostname(debugOption: Option[String], result: Try[?]) = {
+  private def rejectedForHostname(variant: String, result: Try[?]) = {
     val causes = Iterator.iterate(result.failed.toOption.orNull)(_.getCause).takeWhile(_ != null).toList
     val reason = causes.map(cause => s"${cause.getClass.getName}: ${cause.getMessage}").mkString(" <- ")
-    (result.isFailure must beTrue.setMessage(s"debug=$debugOption: wrong-host request was accepted"))
+    (result.isFailure must beTrue.setMessage(s"debug=$variant: wrong-host request was accepted"))
       .and(
         causes.exists(cause => Option(cause.getMessage).exists(_.contains("subject alternative"))) must beTrue
-          .setMessage(s"debug=$debugOption: not rejected for the hostname: $reason")
+          .setMessage(s"debug=$variant: not rejected for the hostname: $reason")
       )
   }
 
@@ -66,12 +77,12 @@ class SslDebugHostnameSpec(implicit val executionEnv: ExecutionEnv)
     "retain hostname verification for a trusted certificate" in {
       val server = new WrongHostTlsTestServer()
       try {
-        debugOptions
-          .map { option =>
-            withClient(clientConfig(server, option, withClientKey = false)) { client =>
+        variants
+          .map { case (option, http2Enabled) =>
+            withClient(clientConfig(server, option, withClientKey = false, http2Enabled)) { client =>
               val accepted = Await.result(client.url(server.matchingUrl()).get(), 5.seconds)
               val rejected = Try(Await.result(client.url(server.wrongHostUrl()).get(), 5.seconds))
-              (accepted.status must_== 200).and(rejectedForHostname(option, rejected))
+              (accepted.status must_== 200).and(rejectedForHostname(s"$option, http2Enabled=$http2Enabled", rejected))
             }
           }
           .reduce(_ and _)
@@ -83,14 +94,14 @@ class SslDebugHostnameSpec(implicit val executionEnv: ExecutionEnv)
     "keep presenting the configured client certificate and verifying the hostname" in {
       val server = new WrongHostTlsTestServer(true)
       try {
-        debugOptions
-          .map { option =>
-            withClient(clientConfig(server, option, withClientKey = true)) { client =>
+        variants
+          .map { case (option, http2Enabled) =>
+            withClient(clientConfig(server, option, withClientKey = true, http2Enabled)) { client =>
               val accepted = Await.result(client.url(server.matchingUrl()).get(), 5.seconds)
               val rejected = Try(Await.result(client.url(server.wrongHostUrl()).get(), 5.seconds))
               (accepted.status must_== 200)
                 .and(accepted.body[String] must_== "client=CN=play-ws-test-client")
-                .and(rejectedForHostname(option, rejected))
+                .and(rejectedForHostname(s"$option, http2Enabled=$http2Enabled", rejected))
             }
           }
           .reduce(_ and _)

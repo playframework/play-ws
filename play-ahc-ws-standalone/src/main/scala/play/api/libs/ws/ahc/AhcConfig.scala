@@ -18,9 +18,7 @@ import com.typesafe.sslconfig.ssl._
 import org.slf4j.LoggerFactory
 import play.api.libs.ws.WSClientConfig
 import play.api.libs.ws.WSConfigParser
-import play.shaded.ahc.io.netty.handler.ssl.SslContextBuilder
 import play.shaded.ahc.io.netty.handler.ssl.util.InsecureTrustManagerFactory
-import play.shaded.ahc.org.asynchttpclient.netty.ssl.JsseSslEngineFactory
 import play.shaded.ahc.org.asynchttpclient.AsyncHttpClientConfig
 import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClientConfig
 
@@ -40,8 +38,9 @@ import scala.concurrent.duration._
  * @param disableUrlEncoding Whether the raw URL should be used.
  * @param keepAlive keeps thread pool active, replaces allowPoolingConnection and allowSslConnectionPool
  * @param useLaxCookieEncoder whether to use LAX(no cookie name/value verification) or STRICT (verifies cookie name/value) cookie decoder
- * @param http2Enabled Whether HTTP/2 is allowed by AHC. Play WS does not yet offer HTTP/2 over HTTPS;
- *                     cleartext HTTP/2 also requires enabling AHC's http2CleartextEnabled setting.
+ * @param http2Enabled Whether to use HTTP/2 when the server supports it. HTTPS connections then offer h2 through ALPN
+ *                     and fall back to HTTP/1.1; cleartext HTTP/2 also requires enabling AHC's
+ *                     http2CleartextEnabled setting.
  * @param http2InitialWindowSize The HTTP/2 initial per-stream flow-control window in bytes. None uses the AHC default.
  * @param http2MaxConcurrentStreams The maximum number of concurrent HTTP/2 streams per connection. None uses the AHC default.
  * @param maxDecompressedResponseSize The maximum decompressed size of one response in bytes. None uses the AHC defaults.
@@ -551,7 +550,11 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
   def configureSSL(sslConfig: SSLConfigSettings): Unit = {
 
     // context!
-    val sslContext = if (sslConfig.default) {
+    val sslContext = if (sslConfig.loose.acceptAnyCertificate) {
+      // Accepts any certificate for any host, but still presents the configured client certificates.
+      // Never use this in production.
+      buildLooseSSLContext(sslConfig)
+    } else if (sslConfig.default) {
       logger.info("buildSSLContext: play.ws.ssl.default is true, using default SSLContext")
       SSLContext.getDefault
     } else {
@@ -562,27 +565,46 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
     }
 
     // protocols!
-    val defaultParams    = sslContext.getDefaultSSLParameters
-    val defaultProtocols = defaultParams.getProtocols
-    val protocols        = configureProtocols(defaultProtocols, sslConfig)
-    defaultParams.setProtocols(protocols)
+    val defaultParams      = sslContext.getDefaultSSLParameters
+    val defaultProtocols   = defaultParams.getProtocols
+    val protocols          = configureProtocols(defaultProtocols, sslConfig)
+    val requestedProtocols = sslConfig.enabledProtocols.getOrElse(Protocols.recommendedProtocols.toSeq)
+    require(
+      protocols.nonEmpty,
+      s"None of the TLS protocols ${requestedProtocols.mkString("[", ", ", "]")} is enabled in the SSL context. " +
+        s"Enabled protocols: ${defaultProtocols.mkString("[", ", ", "]")}"
+    )
     builder.setEnabledProtocols(protocols)
 
     // ciphers!
-    val defaultCiphers = defaultParams.getCipherSuites
-    val cipherSuites   = configureCipherSuites(defaultCiphers, sslConfig)
-    defaultParams.setCipherSuites(cipherSuites)
+    val defaultCiphers        = defaultParams.getCipherSuites
+    val cipherSuites          = configureCipherSuites(defaultCiphers, sslConfig)
+    val requestedCipherSuites = sslConfig.enabledCipherSuites.getOrElse(Nil)
+    require(
+      cipherSuites.nonEmpty,
+      s"None of the cipher suites ${requestedCipherSuites.mkString("[", ", ", "]")} is enabled in the SSL context"
+    )
     builder.setEnabledCipherSuites(cipherSuites)
 
     builder.setUseInsecureTrustManager(sslConfig.loose.acceptAnyCertificate)
+    builder.setSslEngineFactory(
+      new ConfiguredSslEngineFactory(sslContext, loose = sslConfig.loose.acceptAnyCertificate)
+    )
+  }
 
-    // If you wan't to accept any certificate you also want to use a loose netty based loose SslContext
-    // Never use this in production.
-    if (sslConfig.loose.acceptAnyCertificate) {
-      builder.setSslContext(SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).build())
-    } else {
-      builder.setSslEngineFactory(new JsseSslEngineFactory(sslContext))
-    }
+  private def buildLooseSSLContext(sslConfig: SSLConfigSettings): SSLContext = {
+    val contextBuilder = new ConfigSSLContextBuilder(
+      loggerFactory,
+      sslConfig,
+      buildKeyManagerFactory(sslConfig),
+      buildTrustManagerFactory(sslConfig)
+    )
+    val keyManagers =
+      if (sslConfig.keyManagerConfig.keyStoreConfigs.nonEmpty)
+        Seq(contextBuilder.buildCompositeKeyManager(sslConfig.keyManagerConfig, sslConfig.debug))
+      else Nil
+    val trustManagers = InsecureTrustManagerFactory.INSTANCE.getTrustManagers.toSeq
+    contextBuilder.buildSSLContext(sslConfig.protocol, keyManagers, trustManagers, sslConfig.secureRandom)
   }
 
   def buildKeyManagerFactory(ssl: SSLConfigSettings): KeyManagerFactoryWrapper = {

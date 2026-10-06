@@ -46,6 +46,7 @@ import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.concurrent.Promise
 import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
 import scala.util.control.NonFatal
 
 class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
@@ -175,56 +176,56 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
 
   "The AHC 3 upgrade" should {
 
-    "use HTTP/1.1 over HTTPS by default even when the server offers h2" in {
+    "use HTTP/1.1 over HTTPS by default, without offering ALPN, even when the server offers h2" in {
       val server = new AlpnProtocolTestServer()
       try {
         withClient(trustedTlsConfig(server, http2Enabled = false)) { client =>
           val response = Await.result(client.url(server.url()).get(), defaultTimeout)
-          (response.body[String] must beEqualTo("http/1.1")).and(
-            server.negotiatedProtocol() must beEqualTo("http/1.1")
-          )
+          (response.body[String] must beEqualTo("http/1.1"))
+            .and(server.negotiatedProtocol() must beEqualTo("http/1.1"))
+            .and(server.lastHandshake().offeredProtocols() must beNull)
         }
       } finally {
         server.close()
       }
     }
 
-    "not advertise h2 over HTTPS merely because AHC HTTP/2 is enabled" in {
+    "negotiate h2 over HTTPS through ALPN when HTTP/2 is enabled" in {
       val server = new AlpnProtocolTestServer()
       try {
         withClient(trustedTlsConfig(server, http2Enabled = true)) { client =>
           val response = Await.result(client.url(server.url()).get(), defaultTimeout)
-          (response.body[String] must beEqualTo("http/1.1")).and(
-            server.negotiatedProtocol() must beEqualTo("http/1.1")
-          )
+          (response.body[String] must beEqualTo("h2"))
+            .and(server.negotiatedProtocol() must beEqualTo("h2"))
+            .and(server.lastHandshake().offeredProtocols().asScala must beEqualTo(Seq("h2", "http/1.1")))
         }
       } finally {
         server.close()
       }
     }
 
-    "use HTTP/1.1 on the loose TLS path even when the server offers h2" in {
+    "use HTTP/1.1 on the loose TLS path by default, without offering ALPN, even when the server offers h2" in {
       val server = new AlpnProtocolTestServer()
       try {
         withClient(looseTlsConfig(http2Enabled = false)) { client =>
           val response = Await.result(client.url(server.url()).get(), defaultTimeout)
-          (response.body[String] must beEqualTo("http/1.1")).and(
-            server.negotiatedProtocol() must beEqualTo("http/1.1")
-          )
+          (response.body[String] must beEqualTo("http/1.1"))
+            .and(server.negotiatedProtocol() must beEqualTo("http/1.1"))
+            .and(server.lastHandshake().offeredProtocols() must beNull)
         }
       } finally {
         server.close()
       }
     }
 
-    "not advertise h2 on the loose TLS path merely because AHC HTTP/2 is enabled" in {
+    "negotiate h2 on the loose TLS path when HTTP/2 is enabled" in {
       val server = new AlpnProtocolTestServer()
       try {
         withClient(looseTlsConfig(http2Enabled = true)) { client =>
           val response = Await.result(client.url(server.url()).get(), defaultTimeout)
-          (response.body[String] must beEqualTo("http/1.1")).and(
-            server.negotiatedProtocol() must beEqualTo("http/1.1")
-          )
+          (response.body[String] must beEqualTo("h2"))
+            .and(server.negotiatedProtocol() must beEqualTo("h2"))
+            .and(server.lastHandshake().offeredProtocols().asScala must beEqualTo(Seq("h2", "http/1.1")))
         }
       } finally {
         server.close()
@@ -407,13 +408,15 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
     }
 
     "keep a demanded HTTP/2 stream moving while a sibling is suspended" in {
-      val server    = new Http2StreamingTestServer()
+      val server = new Http2StreamingTestServer()
+      // A stream window above the connection window (65,535 bytes) lets the suspended stream alone use up the
+      // connection's credit. AHC returns connection credit while a response is suspended; its own tests verify that.
       val ahcConfig = new AhcConfigBuilder(AhcWSClientConfigFactory.forConfig())
         .modifyUnderlying { builder =>
           builder
             .setHttp2Enabled(true)
             .setHttp2CleartextEnabled(true)
-            .setHttp2InitialWindowSize(32 * 1024)
+            .setHttp2InitialWindowSize(128 * 1024)
             .setMaxConnectionsPerHost(1)
         }
         .build()
@@ -427,12 +430,13 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
           sibling.bodyAsSource.runFold(0L)((total, chunk) => total + chunk.length),
           10.seconds
         )
-
+        // Checked before cancelling, which may release the suspended stream's credit.
+        val heldBack = server.suspendedResponseStillPending()
         suspended.bodyAsSource.runWith(Sink.cancelled)
 
-        (received must beEqualTo(server.siblingResponseBytes())).and(
-          server.connectionCount().toLong must beEqualTo(1L)
-        )
+        (received must beEqualTo(server.siblingResponseBytes())).toResult
+          .and((server.connectionCount().toLong must beEqualTo(1L)).toResult)
+          .and((heldBack must beTrue.setMessage("the suspended response was not held back")).toResult)
       } finally {
         client.close()
         server.close()
