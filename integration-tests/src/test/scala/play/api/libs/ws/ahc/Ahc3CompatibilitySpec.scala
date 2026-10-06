@@ -10,6 +10,8 @@ import java.io.InputStream
 import java.net.ServerSocket
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import java.security.MessageDigest
+import java.util.Locale
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
@@ -29,6 +31,7 @@ import play.api.libs.oauth.RequestToken
 import play.api.libs.ws.DefaultBodyReadables
 import play.api.libs.ws.DefaultBodyWritables
 import play.api.libs.ws.StandaloneWSRequest
+import play.api.libs.ws.WSAuthScheme
 import play.api.libs.ws.WSClientConfig
 import play.api.mvc.Handler
 import play.api.mvc.RequestHeader
@@ -55,6 +58,11 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
   private val cancellationObserved = Promise[Done]()
   private val largeChunk           = ByteString(new Array[Byte](16 * 1024))
   private val largeChunkCount      = 512L
+  private val digestUsername       = "digest-user"
+  private val digestPassword       = "digest-password"
+  private val digestRealm          = "play-ws-rfc7616"
+  private val digestNonce          = "0123456789abcdef"
+  private val DigestParameter      = """([A-Za-z][A-Za-z0-9_-]*)=(?:\"([^\"]*)\"|([^,\s]+))""".r
 
   override def routes(components: BuiltInComponents): PartialFunction[RequestHeader, Handler] = {
     case GET(p"/compatibility/gated-stream") =>
@@ -100,6 +108,19 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
     case GET(p"/compatibility/oauth") =>
       components.defaultActionBuilder { request =>
         Results.Ok(request.headers.get("Authorization").getOrElse(""))
+      }
+
+    case GET(p"/compatibility/digest") =>
+      components.defaultActionBuilder { request =>
+        request.headers.get("Authorization") match {
+          case Some(authorization) if validSha256DigestAuthorization(authorization) =>
+            Results.Ok("authenticated")
+          case _ =>
+            Results.Unauthorized.withHeaders(
+              "WWW-Authenticate" ->
+                s"""Digest realm="$digestRealm", nonce="$digestNonce", algorithm=SHA-256, qop="auth""""
+            )
+        }
       }
 
     case GET(p"/compatibility/delayed") =>
@@ -303,6 +324,18 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
       authorization must startWith("OAuth ")
     }
 
+    "support RFC 7616 SHA-256 Digest authentication" in withClient() { client =>
+      val response = Await.result(
+        client
+          .url(s"http://localhost:$testServerPort/compatibility/digest")
+          .withAuth(digestUsername, digestPassword, WSAuthScheme.DIGEST)
+          .get(),
+        defaultTimeout
+      )
+
+      (response.status, response.body[String]) must beEqualTo((200, "authenticated"))
+    }
+
     "keep a per-request infinite timeout" in {
       val config = AhcWSClientConfigFactory
         .forConfig()
@@ -352,6 +385,58 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
       .flatten
       .flatMap(current => Option(current.getMessage))
       .toSeq
+  }
+
+  private def validSha256DigestAuthorization(authorization: String): Boolean = {
+    if (!authorization.startsWith("Digest ")) {
+      false
+    } else {
+      val parameters = DigestParameter
+        .findAllMatchIn(authorization.substring("Digest ".length))
+        .map { matched =>
+          val value = Option(matched.group(2)).getOrElse(matched.group(3))
+          matched.group(1).toLowerCase(Locale.ROOT) -> value
+        }
+        .toMap
+
+      val expectedUri = "/compatibility/digest"
+      (for {
+        username    <- parameters.get("username")
+        realm       <- parameters.get("realm")
+        nonce       <- parameters.get("nonce")
+        uri         <- parameters.get("uri")
+        algorithm   <- parameters.get("algorithm")
+        qop         <- parameters.get("qop")
+        nonceCount  <- parameters.get("nc")
+        clientNonce <- parameters.get("cnonce")
+        response    <- parameters.get("response")
+      } yield {
+        val ha1              = sha256(s"$digestUsername:$digestRealm:$digestPassword")
+        val ha2              = sha256(s"GET:$expectedUri")
+        val expectedResponse = sha256(s"$ha1:$digestNonce:$nonceCount:$clientNonce:auth:$ha2")
+
+        username == digestUsername &&
+        realm == digestRealm &&
+        nonce == digestNonce &&
+        uri == expectedUri &&
+        algorithm.equalsIgnoreCase("SHA-256") &&
+        qop.equalsIgnoreCase("auth") &&
+        nonceCount.matches("(?i)[0-9a-f]{8}") &&
+        clientNonce.nonEmpty &&
+        response.equalsIgnoreCase(expectedResponse)
+      }).getOrElse(false)
+    }
+  }
+
+  private def sha256(value: String): String = {
+    val bytes = MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.ISO_8859_1))
+    val hex   = new StringBuilder(bytes.length * 2)
+    bytes.foreach { byte =>
+      val unsigned = byte & 0xff
+      hex.append(Character.forDigit(unsigned >>> 4, 16))
+      hex.append(Character.forDigit(unsigned & 0x0f, 16))
+    }
+    hex.result()
   }
 
   private def consumeHttpRequest(input: InputStream): Unit = {

@@ -94,13 +94,17 @@ object Dependencies {
 
   val reactiveStreamsTck = Seq("org.reactivestreams" % "reactive-streams-tck" % "1.0.4" % Test)
 
+  // AHC 2 is an OAuth compatibility reference for tests only.
+  // Production AHC 3 and its Netty classes come from the separate shaded jar.
+  val asyncHttpClient2Test = Seq("org.asynchttpclient" % "async-http-client" % "2.16.1" % Test)
+
   val testDependencies =
     (mockito ++ specsBuild ++ junitInterface ++ assertj ++ awaitility ++ slf4jtest ++ logback).map(_ % Test)
 
   val standaloneApiWSDependencies = jakartaInject ++ sslConfigCore ++ pekkoStreams ++ testDependencies
 
   val standaloneAhcWSDependencies =
-    cachecontrol ++ slf4jApi ++ reactiveStreams ++ reactiveStreamsTck ++ testDependencies
+    cachecontrol ++ slf4jApi ++ reactiveStreams ++ reactiveStreamsTck ++ asyncHttpClient2Test ++ testDependencies
 
   val standaloneAhcWSJsonDependencies = playJson ++ testDependencies
 
