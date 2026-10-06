@@ -4,6 +4,8 @@
 
 package play.api.libs.ws.ahc
 
+import javax.net.ssl.SSLContext
+
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import com.typesafe.sslconfig.ssl.Protocols
@@ -11,10 +13,15 @@ import com.typesafe.sslconfig.ssl.SSLConfigFactory
 import com.typesafe.sslconfig.ssl.SSLConfigSettings
 import org.specs2.mutable.Specification
 import play.api.libs.ws.WSClientConfig
+import play.shaded.ahc.io.netty.handler.ssl.SslContextBuilder
+import play.shaded.ahc.org.asynchttpclient.AsyncHttpClientConfig
 import play.shaded.ahc.org.asynchttpclient.proxy.ProxyServerSelector
 import play.shaded.ahc.org.asynchttpclient.util.ProxyUtils
+import uk.org.lidalia.slf4jext.Level
+import uk.org.lidalia.slf4jtest.TestLoggerFactory
 
 import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
 
 /**
  */
@@ -295,6 +302,13 @@ class AhcConfigBuilderSpec extends Specification {
 
     "with SSL options" should {
 
+      /** Creates an engine the way AHC does: it initializes the factory with the final configuration first. */
+      def newSslEngine(asyncConfig: AsyncHttpClientConfig) = {
+        val factory = asyncConfig.getSslEngineFactory
+        factory.init(asyncConfig)
+        factory.newSslEngine(asyncConfig, "localhost", 443)
+      }
+
       // The ConfigSSLContextBuilder does most of the work here, but there are a couple of things outside of the
       // SSL context proper...
 
@@ -333,7 +347,7 @@ class AhcConfigBuilderSpec extends Specification {
           val wsConfig         = defaultWsConfig.copy(ssl = sslConfig)
           val config           = defaultConfig.copy(wsClientConfig = wsConfig)
           val asyncConfig      = new AhcConfigBuilder(config).build()
-          val sslEngine        = asyncConfig.getSslEngineFactory.newSslEngine(asyncConfig, "localhost", 443)
+          val sslEngine        = newSslEngine(asyncConfig)
 
           sslEngine.getClass.getName must contain("TracingSSLEngine")
           sslEngine.getSSLParameters.getEndpointIdentificationAlgorithm must_== "HTTPS"
@@ -348,6 +362,84 @@ class AhcConfigBuilderSpec extends Specification {
 
           val asyncConfig = builder.build()
           asyncConfig.isUseInsecureTrustManager must beTrue
+        }
+
+        "should verify the hostname with every TLS context" in {
+          val default = SSLConfigFactory.parse(parseSSLConfig("play.ws.ssl.default=true"))
+          Seq(SSLConfigSettings(), default)
+            .map { sslConfig =>
+              val config      = defaultConfig.copy(wsClientConfig = defaultWsConfig.copy(ssl = sslConfig))
+              val asyncConfig = new AhcConfigBuilder(config).build()
+              newSslEngine(asyncConfig).getSSLParameters.getEndpointIdentificationAlgorithm must_== "HTTPS"
+            }
+            .reduce(_ and _)
+        }
+
+        "should not verify the hostname if AHC's endpoint identification is disabled" in {
+          val asyncConfig = new AhcConfigBuilder(defaultConfig)
+            .modifyUnderlying(_.setDisableHttpsEndpointIdentificationAlgorithm(true))
+            .build()
+          newSslEngine(asyncConfig).getSSLParameters.getEndpointIdentificationAlgorithm must beNull
+        }
+      }
+
+      "with engines" should {
+
+        "apply the configured protocols and cipher suites" in {
+          val underlyingConfig = parseSSLConfig(
+            """play.ws.ssl.enabledProtocols=["TLSv1.2"]
+              |play.ws.ssl.enabledCipherSuites=["TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"]""".stripMargin
+          )
+          val sslConfig = SSLConfigFactory.parse(underlyingConfig)
+          val config    = defaultConfig.copy(wsClientConfig = defaultWsConfig.copy(ssl = sslConfig))
+          val sslEngine = newSslEngine(new AhcConfigBuilder(config).build())
+
+          (sslEngine.getEnabledProtocols.toSeq must_== Seq("TLSv1.2"))
+            .and(sslEngine.getEnabledCipherSuites.toSeq must_== Seq("TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"))
+        }
+
+        "apply protocols and cipher suites changed through modifyUnderlying" in {
+          val asyncConfig = new AhcConfigBuilder(defaultConfig)
+            .modifyUnderlying(
+              _.setEnabledProtocols(Array("TLSv1.2"))
+                .setEnabledCipherSuites(Array("TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"))
+            )
+            .build()
+          val sslEngine = newSslEngine(asyncConfig)
+
+          (sslEngine.getEnabledProtocols.toSeq must_== Seq("TLSv1.2"))
+            .and(sslEngine.getEnabledCipherSuites.toSeq must_== Seq("TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"))
+        }
+
+        "warn when an SslContext set through modifyUnderlying is ignored" in {
+          val logger      = new TestLoggerFactory(Level.OFF).getLogger("ignored-ssl-context")
+          val asyncConfig = new AhcConfigBuilder(defaultConfig)
+            .modifyUnderlying(_.setSslContext(SslContextBuilder.forClient().build()))
+            .build()
+          new ConfiguredSslEngineFactory(SSLContext.getDefault, logger).init(asyncConfig)
+          new ConfiguredSslEngineFactory(SSLContext.getDefault, logger)
+            .init(new AhcConfigBuilder(defaultConfig).build())
+
+          logger.getLoggingEvents.asScala.map(_.getLevel) must_== Seq(Level.WARN)
+        }
+
+        "fail to build when no configured protocol is enabled in the SSL context" in {
+          val sslConfig = SSLConfigFactory.parse(parseSSLConfig("""play.ws.ssl.enabledProtocols=["TLSv0"]"""))
+          val config    = defaultConfig.copy(wsClientConfig = defaultWsConfig.copy(ssl = sslConfig))
+
+          new AhcConfigBuilder(config).build() must throwAn[IllegalArgumentException](
+            "None of the TLS protocols \\[TLSv0\\] is enabled in the SSL context.*"
+          )
+        }
+
+        "fail to build when no configured cipher suite is enabled in the SSL context" in {
+          val sslConfig =
+            SSLConfigFactory.parse(parseSSLConfig("""play.ws.ssl.enabledCipherSuites=["NO_SUCH_SUITE"]"""))
+          val config = defaultConfig.copy(wsClientConfig = defaultWsConfig.copy(ssl = sslConfig))
+
+          new AhcConfigBuilder(config).build() must throwAn[IllegalArgumentException](
+            "None of the cipher suites \\[NO_SUCH_SUITE\\] is enabled in the SSL context.*"
+          )
         }
       }
 

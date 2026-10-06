@@ -20,7 +20,6 @@ import play.api.libs.ws.WSClientConfig
 import play.api.libs.ws.WSConfigParser
 import play.shaded.ahc.io.netty.handler.ssl.SslContextBuilder
 import play.shaded.ahc.io.netty.handler.ssl.util.InsecureTrustManagerFactory
-import play.shaded.ahc.org.asynchttpclient.netty.ssl.JsseSslEngineFactory
 import play.shaded.ahc.org.asynchttpclient.AsyncHttpClientConfig
 import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClientConfig
 
@@ -565,13 +564,11 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
     val defaultParams    = sslContext.getDefaultSSLParameters
     val defaultProtocols = defaultParams.getProtocols
     val protocols        = configureProtocols(defaultProtocols, sslConfig)
-    defaultParams.setProtocols(protocols)
     builder.setEnabledProtocols(protocols)
 
     // ciphers!
     val defaultCiphers = defaultParams.getCipherSuites
     val cipherSuites   = configureCipherSuites(defaultCiphers, sslConfig)
-    defaultParams.setCipherSuites(cipherSuites)
     builder.setEnabledCipherSuites(cipherSuites)
 
     builder.setUseInsecureTrustManager(sslConfig.loose.acceptAnyCertificate)
@@ -581,7 +578,18 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
     if (sslConfig.loose.acceptAnyCertificate) {
       builder.setSslContext(SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).build())
     } else {
-      builder.setSslEngineFactory(new JsseSslEngineFactory(sslContext))
+      val requestedProtocols = sslConfig.enabledProtocols.getOrElse(Protocols.recommendedProtocols.toSeq)
+      require(
+        protocols.nonEmpty,
+        s"None of the TLS protocols ${requestedProtocols.mkString("[", ", ", "]")} is enabled in the SSL context. " +
+          s"Enabled protocols: ${defaultProtocols.mkString("[", ", ", "]")}"
+      )
+      val requestedCipherSuites = sslConfig.enabledCipherSuites.getOrElse(Nil)
+      require(
+        cipherSuites.nonEmpty,
+        s"None of the cipher suites ${requestedCipherSuites.mkString("[", ", ", "]")} is enabled in the SSL context"
+      )
+      builder.setSslEngineFactory(new ConfiguredSslEngineFactory(sslContext))
     }
   }
 
