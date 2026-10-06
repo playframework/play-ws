@@ -30,6 +30,7 @@ import play.api.mvc.Handler
 import play.api.mvc.RequestHeader
 import play.api.mvc.Results
 import play.api.routing.sird._
+import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClient
 
 import scala.concurrent.Await
 import scala.concurrent.Future
@@ -47,6 +48,8 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
 
   private val streamedTail         = Promise[ByteString]()
   private val cancellationObserved = Promise[Done]()
+  private val largeChunk           = ByteString(new Array[Byte](16 * 1024))
+  private val largeChunkCount      = 512L
 
   override def routes(components: BuiltInComponents): PartialFunction[RequestHeader, Handler] = {
     case GET(p"/compatibility/gated-stream") =>
@@ -63,6 +66,11 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
             NotUsed
           }
         Results.Ok.chunked(body)
+      }
+
+    case GET(p"/compatibility/large-stream") =>
+      components.defaultActionBuilder {
+        Results.Ok.chunked(Source.repeat(largeChunk).take(largeChunkCount))
       }
 
     case POST(p"/compatibility/echo") =>
@@ -118,6 +126,71 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
       Await.result(queue.pull(), defaultTimeout) must beSome(ByteString("first"))
       queue.cancel()
       Await.result(cancellationObserved.future, defaultTimeout) must beEqualTo(Done)
+    }
+
+    "stop HTTP/1.1 transport reads while there is no downstream demand" in {
+      val server = new BackpressureTestServer()
+      try {
+        withClient() { client =>
+          val response  = Await.result(client.url(server.url()).stream(), defaultTimeout)
+          val stalledAt = server.awaitWriteStall(5000, 300)
+
+          response.bodyAsSource.runWith(Sink.cancelled)
+
+          // Allow for platform socket-buffer differences, but require a stall far below the 64 MiB response.
+          (stalledAt must beLessThan(1024L * 1024L)).and(
+            server.bytesWritten() must beLessThan(server.totalBytes())
+          )
+        }
+      } finally {
+        server.close()
+      }
+    }
+
+    "stream a multi-megabyte response" in withClient() { client =>
+      val response = Await.result(
+        client.url(s"http://localhost:$testServerPort/compatibility/large-stream").stream(),
+        defaultTimeout
+      )
+      val received = Await.result(
+        response.bodyAsSource.runFold(0L)((total, chunk) => total + chunk.length),
+        30.seconds
+      )
+
+      received must beEqualTo(largeChunk.length.toLong * largeChunkCount)
+    }
+
+    "keep a demanded HTTP/2 stream moving while a sibling is suspended" in {
+      val server    = new Http2StreamingTestServer()
+      val ahcConfig = new AhcConfigBuilder(AhcWSClientConfigFactory.forConfig())
+        .modifyUnderlying { builder =>
+          builder
+            .setHttp2Enabled(true)
+            .setHttp2CleartextEnabled(true)
+            .setHttp2InitialWindowSize(32 * 1024)
+            .setMaxConnectionsPerHost(1)
+        }
+        .build()
+      val client = new StandaloneAhcWSClient(new DefaultAsyncHttpClient(ahcConfig))
+
+      try {
+        val suspended = Await.result(client.url(server.url("/suspended")).stream(), defaultTimeout)
+        server.awaitSuspendedResponseQueued(5, TimeUnit.SECONDS) must beTrue
+        val sibling  = Await.result(client.url(server.url("/sibling")).stream(), defaultTimeout)
+        val received = Await.result(
+          sibling.bodyAsSource.runFold(0L)((total, chunk) => total + chunk.length),
+          10.seconds
+        )
+
+        suspended.bodyAsSource.runWith(Sink.cancelled)
+
+        (received must beEqualTo(server.siblingResponseBytes())).and(
+          server.connectionCount().toLong must beEqualTo(1L)
+        )
+      } finally {
+        client.close()
+        server.close()
+      }
     }
 
     "keep Source, File, and InputStream request bodies" in withClient() { client =>

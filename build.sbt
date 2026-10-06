@@ -408,6 +408,11 @@ lazy val `integration-tests` = project
   .settings(
     Test / fork        := true,
     evictionErrorLevel := Level.Warn,
+    Test / javaOptions ++= Seq(
+      "-Dio.netty.leakDetection.level=paranoid",
+      // The shaded Netty inside AHC reads its own relocated property
+      "-Dplay.shaded.ahc.io.netty.leakDetection.level=paranoid",
+    ),
     concurrentRestrictions += Tags.limitAll(1), // only one integration test at a time
     Test / testOptions := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
     libraryDependencies ++= backendServerTestDependencies ++ testDependencies,

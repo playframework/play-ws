@@ -92,12 +92,15 @@ object Dependencies {
 
   val reactiveStreams = Seq("org.reactivestreams" % "reactive-streams" % "1.0.4")
 
+  val reactiveStreamsTck = Seq("org.reactivestreams" % "reactive-streams-tck" % "1.0.4" % Test)
+
   val testDependencies =
     (mockito ++ specsBuild ++ junitInterface ++ assertj ++ awaitility ++ slf4jtest ++ logback).map(_ % Test)
 
   val standaloneApiWSDependencies = jakartaInject ++ sslConfigCore ++ pekkoStreams ++ testDependencies
 
-  val standaloneAhcWSDependencies = cachecontrol ++ slf4jApi ++ reactiveStreams ++ testDependencies
+  val standaloneAhcWSDependencies =
+    cachecontrol ++ slf4jApi ++ reactiveStreams ++ reactiveStreamsTck ++ testDependencies
 
   val standaloneAhcWSJsonDependencies = playJson ++ testDependencies
 

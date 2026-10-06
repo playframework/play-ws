@@ -7,6 +7,7 @@ package play.api.libs.ws.ahc
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.matcher.FutureMatchers
 import org.specs2.mutable.Specification
+import org.apache.pekko.util.ByteString
 import play.NettyServerProvider
 import play.api.BuiltInComponents
 import play.api.libs.ws._
@@ -80,8 +81,12 @@ class AhcWSRequestFilterSpec(implicit val executionEnv: ExecutionEnv)
         })
         .withMethod("GET")
         .stream()
-        .map { response =>
-          response.body[String] must contain("some string")
+        .flatMap { response =>
+          response.bodyAsSource
+            .runFold(ByteString.empty)(_ ++ _)
+            .map { body =>
+              body.utf8String must contain("some string")
+            }(system.dispatcher)
         }
         .await(retries = 0, timeout = defaultTimeout)
     }
