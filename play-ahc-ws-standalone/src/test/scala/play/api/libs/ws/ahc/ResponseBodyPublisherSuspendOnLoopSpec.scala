@@ -163,21 +163,23 @@ object ResponseBodyPublisherSuspendOnLoopSpec {
     def shutdown(): Unit = Seq(loop, other, timer, helper).foreach(_.shutdownNow())
   }
 
-  /** Models AHC 3.0.14 `NettyResponseBodyControl`: inline on the event loop, queued to it otherwise. */
+  /** Models AHC's `NettyResponseBodyControl`, including `execute`: inline on the event loop, queued to it otherwise. */
   final class LoopControl(rig: Rig) extends ResponseBodyControl {
     @volatile var active    = true
     @volatile var suspended = false
     @volatile var cancelled = false
 
-    private def execute(task: => Unit): Unit =
+    private def onLoopOrQueue(task: => Unit): Unit =
       if (rig.inEventLoop) task else rig.loop.execute(() => task)
+
+    override def execute(task: Runnable): Unit = onLoopOrQueue(task.run())
 
     override def suspend(): Unit = {
       if (!rig.inEventLoop) rig.recordOffLoopSuspend(Thread.currentThread().getName)
-      execute(if (active) suspended = true)
+      onLoopOrQueue(if (active) suspended = true)
     }
-    override def resume(): Unit = execute(if (active && suspended) suspended = false)
-    override def cancel(): Unit = execute(if (active) { deactivate(); cancelled = true })
+    override def resume(): Unit = onLoopOrQueue(if (active && suspended) suspended = false)
+    override def cancel(): Unit = onLoopOrQueue(if (active) { deactivate(); cancelled = true })
     def deactivate(): Unit      = { active = false; suspended = false }
   }
 
