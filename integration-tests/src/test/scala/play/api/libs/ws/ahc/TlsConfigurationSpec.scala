@@ -43,6 +43,10 @@ class TlsConfigurationSpec(implicit val executionEnv: ExecutionEnv)
     s"""play.ws.ssl.trustManager.stores = [{ type = "PKCS12", path = "${server
         .trustStorePath()}", password = "changeit" }]"""
 
+  private def clientKey(server: AlpnProtocolTestServer) =
+    s"""play.ws.ssl.keyManager.stores = [{ type = "PKCS12", path = "${server
+        .clientKeyStorePath()}", password = "changeit" }]"""
+
   private val loose = "play.ws.ssl.loose.acceptAnyCertificate = true"
 
   private def get(client: StandaloneAhcWSClient, url: String): String =
@@ -60,7 +64,7 @@ class TlsConfigurationSpec(implicit val executionEnv: ExecutionEnv)
   "Play WS TLS configuration" should {
 
     "negotiate only the configured TLS protocols" in withServer(new AlpnProtocolTestServer()) { server =>
-      Seq(trusting(server))
+      Seq(trusting(server), loose)
         .map { trust =>
           withClient(clientConfig(trust, "play.ws.ssl.enabledProtocols = [TLSv1.2]")) { client =>
             (get(client, server.url()) must_== "http/1.1")
@@ -71,7 +75,7 @@ class TlsConfigurationSpec(implicit val executionEnv: ExecutionEnv)
     }
 
     "negotiate only the configured cipher suites" in withServer(new AlpnProtocolTestServer()) { server =>
-      Seq(trusting(server))
+      Seq(trusting(server), loose)
         .map { trust =>
           withClient(clientConfig(trust, "play.ws.ssl.enabledCipherSuites = [TLS_AES_128_GCM_SHA256]")) { client =>
             (get(client, server.url()) must_== "http/1.1")
@@ -111,6 +115,19 @@ class TlsConfigurationSpec(implicit val executionEnv: ExecutionEnv)
       }
 
       (tlsVersionWith(loose) must_== "TLSv1.2").and(tlsVersionWith(trusting(server)) must_== "TLSv1.3")
+    }
+
+    "present the configured client certificate, also on the loose path" in withServer(
+      new AlpnProtocolTestServer(null, true, true)
+    ) { server =>
+      Seq(trusting(server), loose)
+        .map { trust =>
+          withClient(clientConfig(trust, clientKey(server))) { client =>
+            (get(client, server.url()) must_== "http/1.1")
+              .and(server.lastHandshake().clientCertificate() must_== "CN=play-ws-test-client")
+          }
+        }
+        .reduce(_ and _)
     }
 
     "reject a certificate for another host unless the loose path accepts any certificate" in withServer(

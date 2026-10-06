@@ -362,6 +362,7 @@ class AhcConfigBuilderSpec extends Specification {
 
           val asyncConfig = builder.build()
           asyncConfig.isUseInsecureTrustManager must beTrue
+          newSslEngine(asyncConfig).getSSLParameters.getEndpointIdentificationAlgorithm must beNull
         }
 
         "should verify the hostname with every TLS context" in {
@@ -391,11 +392,15 @@ class AhcConfigBuilderSpec extends Specification {
               |play.ws.ssl.enabledCipherSuites=["TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"]""".stripMargin
           )
           val sslConfig = SSLConfigFactory.parse(underlyingConfig)
-          val config    = defaultConfig.copy(wsClientConfig = defaultWsConfig.copy(ssl = sslConfig))
-          val sslEngine = newSslEngine(new AhcConfigBuilder(config).build())
-
-          (sslEngine.getEnabledProtocols.toSeq must_== Seq("TLSv1.2"))
-            .and(sslEngine.getEnabledCipherSuites.toSeq must_== Seq("TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"))
+          val loose     = sslConfig.withLoose(sslConfig.loose.withAcceptAnyCertificate(true))
+          Seq(sslConfig, loose)
+            .map { ssl =>
+              val config    = defaultConfig.copy(wsClientConfig = defaultWsConfig.copy(ssl = ssl))
+              val sslEngine = newSslEngine(new AhcConfigBuilder(config).build())
+              (sslEngine.getEnabledProtocols.toSeq must_== Seq("TLSv1.2"))
+                .and(sslEngine.getEnabledCipherSuites.toSeq must_== Seq("TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"))
+            }
+            .reduce(_ and _)
         }
 
         "apply protocols and cipher suites changed through modifyUnderlying" in {
@@ -411,14 +416,32 @@ class AhcConfigBuilderSpec extends Specification {
             .and(sslEngine.getEnabledCipherSuites.toSeq must_== Seq("TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"))
         }
 
+        "use an SslContext set through modifyUnderlying only on the loose path" in {
+          val userContext = SslContextBuilder.forClient().protocols("TLSv1.2").build()
+          val loose       = SSLConfigFactory.parse(parseSSLConfig("play.ws.ssl.loose.acceptAnyCertificate=true"))
+          def engine(sslConfig: SSLConfigSettings) =
+            newSslEngine(
+              new AhcConfigBuilder(defaultConfig.copy(wsClientConfig = defaultWsConfig.copy(ssl = sslConfig)))
+                .modifyUnderlying(_.setSslContext(userContext))
+                .build()
+            )
+          val normal = engine(SSLConfigSettings())
+
+          (engine(loose).getEnabledProtocols.toSeq must_== Seq("TLSv1.2"))
+            .and(normal.getEnabledProtocols.toSeq must contain("TLSv1.3"))
+            .and(normal.getSSLParameters.getEndpointIdentificationAlgorithm must_== "HTTPS")
+        }
+
         "warn when an SslContext set through modifyUnderlying is ignored" in {
           val logger      = new TestLoggerFactory(Level.OFF).getLogger("ignored-ssl-context")
           val asyncConfig = new AhcConfigBuilder(defaultConfig)
             .modifyUnderlying(_.setSslContext(SslContextBuilder.forClient().build()))
             .build()
-          new ConfiguredSslEngineFactory(SSLContext.getDefault, logger).init(asyncConfig)
-          new ConfiguredSslEngineFactory(SSLContext.getDefault, logger)
-            .init(new AhcConfigBuilder(defaultConfig).build())
+          new ConfiguredSslEngineFactory(SSLContext.getDefault, loose = false, logger).init(asyncConfig)
+          new ConfiguredSslEngineFactory(SSLContext.getDefault, loose = true, logger).init(asyncConfig)
+          new ConfiguredSslEngineFactory(SSLContext.getDefault, loose = false, logger).init(
+            new AhcConfigBuilder(defaultConfig).build()
+          )
 
           logger.getLoggingEvents.asScala.map(_.getLevel) must_== Seq(Level.WARN)
         }

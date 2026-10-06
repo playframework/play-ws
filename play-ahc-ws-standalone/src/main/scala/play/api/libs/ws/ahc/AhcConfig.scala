@@ -18,7 +18,6 @@ import com.typesafe.sslconfig.ssl._
 import org.slf4j.LoggerFactory
 import play.api.libs.ws.WSClientConfig
 import play.api.libs.ws.WSConfigParser
-import play.shaded.ahc.io.netty.handler.ssl.SslContextBuilder
 import play.shaded.ahc.io.netty.handler.ssl.util.InsecureTrustManagerFactory
 import play.shaded.ahc.org.asynchttpclient.AsyncHttpClientConfig
 import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClientConfig
@@ -550,7 +549,11 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
   def configureSSL(sslConfig: SSLConfigSettings): Unit = {
 
     // context!
-    val sslContext = if (sslConfig.default) {
+    val sslContext = if (sslConfig.loose.acceptAnyCertificate) {
+      // Accepts any certificate for any host, but still presents the configured client certificates.
+      // Never use this in production.
+      buildLooseSSLContext(sslConfig)
+    } else if (sslConfig.default) {
       logger.info("buildSSLContext: play.ws.ssl.default is true, using default SSLContext")
       SSLContext.getDefault
     } else {
@@ -561,36 +564,46 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
     }
 
     // protocols!
-    val defaultParams    = sslContext.getDefaultSSLParameters
-    val defaultProtocols = defaultParams.getProtocols
-    val protocols        = configureProtocols(defaultProtocols, sslConfig)
+    val defaultParams      = sslContext.getDefaultSSLParameters
+    val defaultProtocols   = defaultParams.getProtocols
+    val protocols          = configureProtocols(defaultProtocols, sslConfig)
+    val requestedProtocols = sslConfig.enabledProtocols.getOrElse(Protocols.recommendedProtocols.toSeq)
+    require(
+      protocols.nonEmpty,
+      s"None of the TLS protocols ${requestedProtocols.mkString("[", ", ", "]")} is enabled in the SSL context. " +
+        s"Enabled protocols: ${defaultProtocols.mkString("[", ", ", "]")}"
+    )
     builder.setEnabledProtocols(protocols)
 
     // ciphers!
-    val defaultCiphers = defaultParams.getCipherSuites
-    val cipherSuites   = configureCipherSuites(defaultCiphers, sslConfig)
+    val defaultCiphers        = defaultParams.getCipherSuites
+    val cipherSuites          = configureCipherSuites(defaultCiphers, sslConfig)
+    val requestedCipherSuites = sslConfig.enabledCipherSuites.getOrElse(Nil)
+    require(
+      cipherSuites.nonEmpty,
+      s"None of the cipher suites ${requestedCipherSuites.mkString("[", ", ", "]")} is enabled in the SSL context"
+    )
     builder.setEnabledCipherSuites(cipherSuites)
 
     builder.setUseInsecureTrustManager(sslConfig.loose.acceptAnyCertificate)
+    builder.setSslEngineFactory(
+      new ConfiguredSslEngineFactory(sslContext, loose = sslConfig.loose.acceptAnyCertificate)
+    )
+  }
 
-    // If you wan't to accept any certificate you also want to use a loose netty based loose SslContext
-    // Never use this in production.
-    if (sslConfig.loose.acceptAnyCertificate) {
-      builder.setSslContext(SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).build())
-    } else {
-      val requestedProtocols = sslConfig.enabledProtocols.getOrElse(Protocols.recommendedProtocols.toSeq)
-      require(
-        protocols.nonEmpty,
-        s"None of the TLS protocols ${requestedProtocols.mkString("[", ", ", "]")} is enabled in the SSL context. " +
-          s"Enabled protocols: ${defaultProtocols.mkString("[", ", ", "]")}"
-      )
-      val requestedCipherSuites = sslConfig.enabledCipherSuites.getOrElse(Nil)
-      require(
-        cipherSuites.nonEmpty,
-        s"None of the cipher suites ${requestedCipherSuites.mkString("[", ", ", "]")} is enabled in the SSL context"
-      )
-      builder.setSslEngineFactory(new ConfiguredSslEngineFactory(sslContext))
-    }
+  private def buildLooseSSLContext(sslConfig: SSLConfigSettings): SSLContext = {
+    val contextBuilder = new ConfigSSLContextBuilder(
+      loggerFactory,
+      sslConfig,
+      buildKeyManagerFactory(sslConfig),
+      buildTrustManagerFactory(sslConfig)
+    )
+    val keyManagers =
+      if (sslConfig.keyManagerConfig.keyStoreConfigs.nonEmpty)
+        Seq(contextBuilder.buildCompositeKeyManager(sslConfig.keyManagerConfig, sslConfig.debug))
+      else Nil
+    val trustManagers = InsecureTrustManagerFactory.INSTANCE.getTrustManagers.toSeq
+    contextBuilder.buildSSLContext(sslConfig.protocol, keyManagers, trustManagers, sslConfig.secureRandom)
   }
 
   def buildKeyManagerFactory(ssl: SSLConfigSettings): KeyManagerFactoryWrapper = {
