@@ -55,11 +55,22 @@ Specifically, shading AsyncHttpClient means that its Netty version does not conf
 
 ### AHC 3 migration notes
 
-Play WS 3.1 uses shaded AsyncHttpClient 3.0.14.
+Play WS 3.1 uses shaded AsyncHttpClient 3.0.14. Most Play WS request, response, streaming, and OAuth entry points remain available, but redirect, cookie, and streamed-body behavior is not identical to the AHC 2-backed releases. Code that uses shaded AHC types directly through an `underlying` escape hatch must be updated for AHC 3. A client supplied directly as an `AsyncHttpClient` also uses that client's own defaults rather than all of Play WS's configuration defaults.
+
+There are two additional compatibility changes for APIs that exposed AHC 2 implementation details:
+
+* `play.api.libs.ws.ahc.DefaultStreamedAsyncHandler` no longer extends AHC 2's removed `StreamedAsyncHandler`, and its `onStream` method is gone. Use `StandaloneWSRequest.stream()` and consume `StandaloneWSResponse.bodyAsSource`; custom AHC handlers must use AHC 3's response-body callbacks.
+* `play.libs.oauth.OAuth.OAuthCalculator.getCalculator()` now returns AHC's `SignatureCalculator` interface because AHC 3 removed the concrete `OAuthSignatureCalculator` type. OAuth 1 request signing through Play WS remains supported.
 
 `AhcWSClientConfig` retains its Play WS 3.0 constructor, companion `apply`, `copy`, and 12-field extractor. New AHC 3 settings are available through their named accessors and `copy` parameters but are intentionally not added to the extractor. Code using the generated `tupled` or `curried` helpers, or treating the companion as a `Function12`, must be updated for the expanded configuration.
 
 Play WS adapts `Source`, `File`, and input-stream-supplier request bodies to a one-shot streamed body. A redirect or retry that would replay one now fails explicitly instead of attempting a second subscription; a supplier is not automatically called again. In-memory bodies can be replayed. This differs from native AHC `File` and some native `InputStream` bodies, which have their own replay support.
+
+AHC 3.0.14 preserves the method and body of non-`POST` requests across 301 and 302 redirects; the legacy rewrite to a bodyless `GET` now applies only to `POST`. A 303 still switches to a bodyless `GET`, except that `HEAD` and `OPTIONS` keep their method, while 307 and 308 preserve method and body. This can turn a former bodyless-`GET` success into an explicit replay failure for a one-shot Play WS request body. `QUERY` follows the same non-`POST` rule.
+
+Cookie handling also differs from the AHC 2-based Play WS. Cookies added through the Play WS cookie API (`addCookies`, `withCookies`) now follow same-origin redirects, whereas AHC 2 dropped them on every redirect; cross-origin redirects still strip them. A raw `Cookie` header is now merged with API and cookie-store cookies on the initial request and on every redirect, and a raw pair wins over an API cookie of the same name. AHC 2 instead let API cookies replace the raw header on the initial request, sent only the raw header on redirects, and, with a cookie store, replaced the raw header with the stored cookies for the URL. Several raw `Cookie` headers are now folded into one. The cookie store remains disabled by default.
+
+Connections authenticated with NTLM, SPNEGO or Kerberos, or through a proxy login that applies to the whole connection, are now pooled per principal, so AHC no longer reuses them for requests made with other credentials.
 
 AHC 3.0.14 also offers two opt-in redirect refusals. Set `play.ws.ahc.refuseSchemeDowngradeOnRedirect = true` to reject an HTTPS-to-HTTP hop, or `play.ws.ahc.refuseCrossOriginBodyOnRedirect = true` to reject a hop that would resend a request body to another origin. Without the latter, AHC follows such a redirect and resends the body. A hop that only moves the same host from `http` to `https`, keeping the port or using both schemes' default ports, is not refused as cross-origin. These settings are separate from credential stripping: AHC removes credentials such as `Authorization` and caller cookies from cross-origin redirects regardless, while the refusals decide whether the request body or an insecure hop is allowed at all. Both Play WS settings are unset by default, preserving AHC's defaults and its shaded system-property settings. A refused redirect does not contact the target; the failed request exposes AHC's shaded `play.shaded.ahc.org.asynchttpclient.handler.RedirectRefusedException` in its failure chain. If the origin replies before an upload finishes, an earlier write failure may surface instead. Neither setting silently converts a body-bearing request into an empty one.
 
@@ -70,6 +81,10 @@ The AHC defaults are a 16 MiB per-stream window and no client-side concurrent-st
 Set `play.ws.ahc.maxDecompressedResponseSize` to apply one decompressed-response limit to both HTTP/1.1 and HTTP/2. AHC's defaults apply when it is unset. This limits decoded bytes per response, not total client heap use. AHC decodes any `Content-Encoding` a server sends, even when Play WS did not request compression. Setting the limit to zero disables decompression-bomb protection and is not recommended for untrusted responses.
 
 `play.ws.ahc.shutdownQuietPeriod` and `play.ws.ahc.shutdownTimeout` control AHC event-loop shutdown. Both must be non-negative, and the timeout must be at least as long as the quiet period. Both default to zero to preserve Play WS's existing immediate-shutdown behavior.
+
+AHC 3 no longer needs `netty-reactive-streams`; Play WS still uses Reactive Streams interfaces to connect AHC response callbacks to Pekko Streams. The old AHC 2.16.1 dependency in this repository is test-only, for differential OAuth signatures, and is not part of the published Play WS client.
+
+The AHC 3.0.14 release includes fixes for [GHSA-v2j5-22fr-j62r](https://github.com/AsyncHttpClient/async-http-client/security/advisories/GHSA-v2j5-22fr-j62r), [GHSA-qjr7-w8pj-pmv9](https://github.com/AsyncHttpClient/async-http-client/security/advisories/GHSA-qjr7-w8pj-pmv9), [GHSA-x8v2-478q-2hvg](https://github.com/AsyncHttpClient/async-http-client/security/advisories/GHSA-x8v2-478q-2hvg), [GHSA-p2jm-6hj6-9rjg](https://github.com/AsyncHttpClient/async-http-client/security/advisories/GHSA-p2jm-6hj6-9rjg), and [GHSA-2jwh-9rmr-j4xf](https://github.com/AsyncHttpClient/async-http-client/security/advisories/GHSA-2jwh-9rmr-j4xf). Whether an older Play WS application is affected by each one depends on its configuration and requests.
 
 ### Shaded AHC Defaults 
 
