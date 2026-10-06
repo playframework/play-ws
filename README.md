@@ -57,6 +57,8 @@ Specifically, shading AsyncHttpClient means that its Netty version does not conf
 
 Play WS 3.1 uses shaded AsyncHttpClient 3.0.14.
 
+Play WS adapts `Source`, `File`, and input-stream-supplier request bodies to a one-shot streamed body. A redirect or retry that would replay one now fails explicitly instead of attempting a second subscription; a supplier is not automatically called again. In-memory bodies can be replayed. This differs from native AHC `File` and some native `InputStream` bodies, which have their own replay support.
+
 ### Shaded AHC Defaults 
 
 Because Play WS shades AsyncHttpClient, the default settings are also shaded and so do not adhere to the AHC documentation.  This means that the settings in `ahc-default.properties` and the AsyncHttpClient system properties are prepended with `play.shaded.ahc`, for example the `usePooledMemory` setting in the shaded version of AsyncHttpClient is defined like this:

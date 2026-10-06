@@ -5,9 +5,13 @@
 package play.api.libs.ws.ahc
 
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.InputStream
+import java.net.ServerSocket
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 
 import org.apache.pekko.Done
@@ -36,6 +40,7 @@ import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.concurrent.Promise
 import scala.concurrent.duration._
+import scala.util.control.NonFatal
 
 class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
     extends Specification
@@ -80,6 +85,11 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
           .orElse(request.body.asRaw.flatMap(_.asBytes()))
           .getOrElse(ByteString.empty)
         Results.Ok(bytes)
+      }
+
+    case POST(p"/compatibility/replay-stream") =>
+      components.defaultActionBuilder {
+        Results.Redirect("/compatibility/echo", 307)
       }
 
     case POST(p"/compatibility/content-type") =>
@@ -223,6 +233,62 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
         .and(post(supplier) must beEqualTo("input-stream-body"))
     }
 
+    "fail a streamed request-body redirect with a clear replay error" in {
+      val baseConfig = AhcWSClientConfigFactory.forConfig()
+      val config     = baseConfig.copy(
+        wsClientConfig = baseConfig.wsClientConfig.copy(followRedirects = true)
+      )
+
+      withClient(config) { client =>
+        val failure = captureFailure {
+          Await.result(
+            client
+              .url(s"http://localhost:$testServerPort/compatibility/replay-stream")
+              .post(Source.single(ByteString("streamed-body"))),
+            defaultTimeout
+          )
+        }
+
+        causeMessages(failure) must contain("A streamed request body cannot be replayed")
+      }
+    }
+
+    "fail a streamed request-body retry with a clear replay error" in {
+      val server         = new ServerSocket(0)
+      val serverExecutor = Executors.newSingleThreadExecutor()
+      val firstAttempt   = serverExecutor.submit(new Runnable {
+        override def run(): Unit = {
+          val socket = server.accept()
+          try {
+            socket.setSoTimeout(TimeUnit.SECONDS.toMillis(5).toInt)
+            consumeHttpRequest(socket.getInputStream)
+          } finally {
+            socket.close()
+          }
+        }
+      })
+
+      try {
+        val config = AhcWSClientConfigFactory.forConfig().copy(maxRequestRetry = 1)
+        withClient(config) { client =>
+          val failure = captureFailure {
+            Await.result(
+              client
+                .url(s"http://127.0.0.1:${server.getLocalPort}/retry-stream")
+                .post(Source.single(ByteString("streamed-body"))),
+              defaultTimeout
+            )
+          }
+
+          firstAttempt.get(5, TimeUnit.SECONDS)
+          causeMessages(failure) must contain("A streamed request body cannot be replayed")
+        }
+      } finally {
+        server.close()
+        serverExecutor.shutdownNow()
+      }
+    }
+
     "keep OAuth 1 request signing" in withClient() { client =>
       val calculator    = OAuthCalculator(ConsumerKey("consumer", "secret"), RequestToken("token", "token-secret"))
       val authorization = Await.result(
@@ -268,5 +334,75 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
         explicitContentType must beEqualTo("application/json")
       )
     }
+  }
+
+  private def captureFailure(block: => Any): Throwable = {
+    try {
+      block
+      throw new AssertionError("Expected the request to fail")
+    } catch {
+      case NonFatal(failure) => failure
+    }
+  }
+
+  private def causeMessages(failure: Throwable): Seq[String] = {
+    Iterator
+      .iterate(Option(failure))(_.flatMap(current => Option(current.getCause)))
+      .takeWhile(_.nonEmpty)
+      .flatten
+      .flatMap(current => Option(current.getMessage))
+      .toSeq
+  }
+
+  private def consumeHttpRequest(input: InputStream): Unit = {
+    val headers = Iterator.continually(readAsciiLine(input)).takeWhile(_.nonEmpty).toSeq
+    headers.collectFirst {
+      case header if header.toLowerCase.startsWith("content-length:") =>
+        header.substring(header.indexOf(':') + 1).trim.toLong
+    } match {
+      case Some(contentLength)                                                      => readFully(input, contentLength)
+      case None if headers.exists(_.equalsIgnoreCase("transfer-encoding: chunked")) =>
+        var complete = false
+        while (!complete) {
+          val size = Integer.parseInt(readAsciiLine(input).takeWhile(_ != ';'), 16)
+          if (size == 0) {
+            Iterator.continually(readAsciiLine(input)).takeWhile(_.nonEmpty).foreach(_ => ())
+            complete = true
+          } else {
+            readFully(input, size)
+            readAsciiLine(input)
+          }
+        }
+      case None => ()
+    }
+  }
+
+  private def readFully(input: InputStream, length: Long): Unit = {
+    var remaining = length
+    val buffer    = new Array[Byte](8192)
+    while (remaining > 0) {
+      val read = input.read(buffer, 0, Math.min(buffer.length.toLong, remaining).toInt)
+      if (read < 0) {
+        throw new IllegalStateException("Request ended before its declared body length")
+      }
+      remaining -= read
+    }
+  }
+
+  private def readAsciiLine(input: InputStream): String = {
+    val line     = new ByteArrayOutputStream
+    var previous = -1
+    var current  = input.read()
+    while (current >= 0 && !(previous == '\r' && current == '\n')) {
+      if (previous >= 0) {
+        line.write(previous)
+      }
+      previous = current
+      current = input.read()
+    }
+    if (current < 0) {
+      throw new IllegalStateException("Request ended before the HTTP line was complete")
+    }
+    new String(line.toByteArray, StandardCharsets.US_ASCII)
   }
 }

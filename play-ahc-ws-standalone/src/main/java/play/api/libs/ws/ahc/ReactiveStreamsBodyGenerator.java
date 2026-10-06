@@ -4,6 +4,7 @@
 
 package play.api.libs.ws.ahc;
 
+import org.apache.pekko.annotation.InternalApi;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -19,12 +20,14 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Internal bridge from a Reactive Streams request body to AHC 3's feedable body API.
  */
+@InternalApi
 public final class ReactiveStreamsBodyGenerator implements FeedableBodyGenerator {
 
     private final Publisher<ByteBuf> publisher;
     private final long contentLength;
     private final AtomicReference<ReactiveStreamsBody> activeBody = new AtomicReference<>();
     private volatile FeedListener listener;
+    private boolean bodyCreated;
 
     public ReactiveStreamsBodyGenerator(Publisher<ByteBuf> publisher, long contentLength) {
         this.publisher = Objects.requireNonNull(publisher, "publisher");
@@ -32,10 +35,25 @@ public final class ReactiveStreamsBodyGenerator implements FeedableBodyGenerator
     }
 
     @Override
-    public Body createBody() {
+    public synchronized Body createBody() {
+        if (bodyCreated) {
+            ReactiveStreamsBody previousBody = activeBody.getAndSet(null);
+            if (previousBody != null) {
+                previousBody.close();
+            }
+            throw new IllegalStateException("A streamed request body cannot be replayed");
+        }
+
+        bodyCreated = true;
         ReactiveStreamsBody body = new ReactiveStreamsBody(contentLength, this::signalContent);
         activeBody.set(body);
-        publisher.subscribe(body);
+        try {
+            publisher.subscribe(body);
+        } catch (RuntimeException | Error failure) {
+            activeBody.compareAndSet(body, null);
+            body.close();
+            throw failure;
+        }
         return body;
     }
 
@@ -103,6 +121,7 @@ public final class ReactiveStreamsBodyGenerator implements FeedableBodyGenerator
         public void onNext(ByteBuf buffer) {
             Objects.requireNonNull(buffer, "buffer");
             Throwable protocolFailure = null;
+            Subscription cancelSubscription = null;
             synchronized (this) {
                 if (closed) {
                     buffer.release();
@@ -112,9 +131,14 @@ public final class ReactiveStreamsBodyGenerator implements FeedableBodyGenerator
                     buffer.release();
                     protocolFailure = new IllegalStateException("Request body publisher produced without demand");
                     failure = protocolFailure;
+                    completed = true;
+                    cancelSubscription = subscription;
                 } else {
                     current = buffer;
                 }
+            }
+            if (cancelSubscription != null) {
+                cancelSubscription.cancel();
             }
             contentSignal.accept(protocolFailure);
         }
