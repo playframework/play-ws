@@ -116,6 +116,7 @@ case class CacheableResponse(
   }
 
   @throws(classOf[IOException])
+  // This is a heap-backed view; no retained pooled-buffer ownership is transferred.
   override def getResponseBodyAsByteBuf: play.shaded.ahc.io.netty.buffer.ByteBuf =
     play.shaded.ahc.io.netty.buffer.Unpooled.wrappedBuffer(getResponseBodyAsBytes)
 
@@ -294,6 +295,7 @@ class CacheableHttpResponseBodyPart(chunk: Array[Byte], last: Boolean) extends H
 
   override def getBodyByteBuffer: ByteBuffer = ByteBuffer.wrap(chunk)
 
+  // This is a heap-backed view; no retained pooled-buffer ownership is transferred.
   override def getBodyByteBuf: play.shaded.ahc.io.netty.buffer.ByteBuf =
     play.shaded.ahc.io.netty.buffer.Unpooled.wrappedBuffer(chunk)
 

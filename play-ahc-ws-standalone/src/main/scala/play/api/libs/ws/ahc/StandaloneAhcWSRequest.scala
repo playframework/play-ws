@@ -15,6 +15,7 @@ import org.apache.pekko.stream.scaladsl.Sink
 import play.api.libs.ws.StandaloneWSRequest
 import play.api.libs.ws._
 import play.shaded.ahc.io.netty.buffer.Unpooled
+import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
 import play.shaded.ahc.org.asynchttpclient._
@@ -194,13 +195,7 @@ case class StandaloneAhcWSRequest(
     if (headers.contains(HttpHeaders.Names.CONTENT_TYPE)) {
       copy(body = wsBody)
     } else {
-      val effectiveContentType =
-        if (
-          contentType.regionMatches(true, 0, "text/", 0, 5) &&
-          HttpUtils.extractContentTypeCharsetAttribute(contentType) == null
-        ) s"$contentType; charset=${StandardCharsets.UTF_8.name()}"
-        else contentType
-      copy(body = wsBody).addHttpHeaders(HttpHeaders.Names.CONTENT_TYPE -> effectiveContentType)
+      copy(body = wsBody).addHttpHeaders(HttpHeaders.Names.CONTENT_TYPE -> contentType)
     }
   }
 
@@ -394,20 +389,15 @@ case class StandaloneAhcWSRequest(
         )
     }
 
-    // headers
+    // Normalize headers only for the final AHC request so filters continue to
+    // observe the values supplied through the Play WS API.
+    val finalHeaders = new DefaultHttpHeaders()
     for {
       header <- updatedHeaders
       value  <- header._2
-    } {
-      val effectiveValue =
-        if (
-          header._1.equalsIgnoreCase(HttpHeaders.Names.CONTENT_TYPE) &&
-          value.regionMatches(true, 0, "text/", 0, 5) &&
-          HttpUtils.extractContentTypeCharsetAttribute(value) == null
-        ) s"$value; charset=${StandardCharsets.UTF_8.name()}"
-        else value
-      builder.addHeader(header._1, effectiveValue)
-    }
+    } finalHeaders.add(header._1, value)
+    AhcWSUtils.normalizeRequestContentType(finalHeaders)
+    builderWithBody.setHeaders(finalHeaders)
 
     // Set the signature calculator.
     calc.map {

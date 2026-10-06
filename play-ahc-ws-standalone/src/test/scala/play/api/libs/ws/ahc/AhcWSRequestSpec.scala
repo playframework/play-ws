@@ -280,6 +280,21 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
       }
     }
 
+    "normalize a body Content-Type only in the final AHC request" in {
+      withClient { client =>
+        val request = client
+          .url("http://playframework.com/")
+          .withBody("body")
+          .asInstanceOf[StandaloneAhcWSRequest]
+
+        (request.contentType must beSome("text/plain")).and {
+          request.buildRequest().getHeaders.get(HttpHeaderNames.CONTENT_TYPE) must beEqualTo(
+            "text/plain; charset=UTF-8"
+          )
+        }
+      }
+    }
+
     "treat headers as case insensitive" in {
       withClient { client =>
         val req: AHCRequest = client

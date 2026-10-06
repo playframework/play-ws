@@ -9,6 +9,8 @@ import java.net.URI
 import org.playframework.cachecontrol.HttpDate._
 import org.playframework.cachecontrol._
 import org.specs2.mutable.Specification
+import play.shaded.ahc.org.asynchttpclient.AsyncHandler
+import play.shaded.ahc.org.asynchttpclient.AsyncHttpClient
 import play.shaded.ahc.io.netty.handler.codec.http.DefaultHttpHeaders
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
 import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClientConfig
@@ -16,6 +18,24 @@ import play.shaded.ahc.org.asynchttpclient.Request
 import play.shaded.ahc.org.asynchttpclient.RequestBuilder
 
 class AhcWSCacheSpec extends Specification {
+
+  "CachingAsyncHttpClient" should {
+    "reject unknown async handler types" in {
+      val handler = new AsyncHandler[Unit] {
+        override def onStatusReceived(status: play.shaded.ahc.org.asynchttpclient.HttpResponseStatus) =
+          AsyncHandler.State.CONTINUE
+        override def onHeadersReceived(headers: HttpHeaders) = AsyncHandler.State.CONTINUE
+        override def onBodyPartReceived(part: play.shaded.ahc.org.asynchttpclient.HttpResponseBodyPart) =
+          AsyncHandler.State.CONTINUE
+        override def onThrowable(throwable: Throwable): Unit = ()
+        override def onCompleted(): Unit                     = ()
+      }
+      val client = new CachingAsyncHttpClient(null.asInstanceOf[AsyncHttpClient], null)
+
+      client.executeRequest(generateRequest("http://localhost/")(_.clear()), handler) must
+        throwA[IllegalStateException]("Unknown handler type")
+    }
+  }
 
   "freshness heuristics flag" should {
 

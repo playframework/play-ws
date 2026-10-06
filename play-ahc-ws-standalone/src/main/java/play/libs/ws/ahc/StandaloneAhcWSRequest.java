@@ -10,6 +10,7 @@ import org.apache.pekko.stream.javadsl.Sink;
 import org.apache.pekko.stream.javadsl.Source;
 import org.apache.pekko.util.ByteString;
 import org.reactivestreams.Publisher;
+import play.api.libs.ws.ahc.AhcWSUtils;
 import play.api.libs.ws.ahc.FormUrlEncodedParser;
 import play.api.libs.ws.ahc.ReactiveStreamsBodyGenerator;
 import play.libs.oauth.OAuth;
@@ -446,11 +447,6 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
                 contentType = bodyWritable.contentType();
             }
 
-            if (contentType.regionMatches(true, 0, "text/", 0, 5)
-                    && HttpUtils.extractContentTypeCharsetAttribute(contentType) == null) {
-                contentType = contentType + "; charset=" + StandardCharsets.UTF_8.name();
-            }
-
             // Always replace the content type header to make sure exactly one exists
             possiblyModifiedHeaders.set(CONTENT_TYPE.toString(), singletonList(contentType));
 
@@ -500,6 +496,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
             }
         });
 
+        AhcWSUtils.normalizeRequestContentType(possiblyModifiedHeaders);
         builder.setHeaders(possiblyModifiedHeaders);
 
         if (this.timeout.isNegative()) {
