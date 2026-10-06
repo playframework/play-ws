@@ -49,6 +49,8 @@ class AhcWSClientConfigParserSpec extends Specification {
       s1.maxDecompressedResponseSize must_== s2.maxDecompressedResponseSize
       s1.shutdownQuietPeriod must_== s2.shutdownQuietPeriod
       s1.shutdownTimeout must_== s2.shutdownTimeout
+      s1.refuseSchemeDowngradeOnRedirect must_== s2.refuseSchemeDowngradeOnRedirect
+      s1.refuseCrossOriginBodyOnRedirect must_== s2.refuseCrossOriginBodyOnRedirect
     }
 
     "parse ws ahc section" in {
@@ -70,6 +72,8 @@ class AhcWSClientConfigParserSpec extends Specification {
                                |play.ws.ahc.maxDecompressedResponseSize = 10 MiB
                                |play.ws.ahc.shutdownQuietPeriod = 25 milliseconds
                                |play.ws.ahc.shutdownTimeout = 3 seconds
+                               |play.ws.ahc.refuseSchemeDowngradeOnRedirect = true
+                               |play.ws.ahc.refuseCrossOriginBodyOnRedirect = false
         """.stripMargin)
 
       actual.maxConnectionsPerHost must_== 3
@@ -89,6 +93,8 @@ class AhcWSClientConfigParserSpec extends Specification {
       actual.maxDecompressedResponseSize must beSome(10L * 1024 * 1024)
       actual.shutdownQuietPeriod must_== 25.millis
       actual.shutdownTimeout must_== 3.seconds
+      actual.refuseSchemeDowngradeOnRedirect must beSome(true)
+      actual.refuseCrossOriginBodyOnRedirect must beSome(false)
     }
 
     "reject an infinite shutdown duration" in {

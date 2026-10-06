@@ -39,7 +39,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static play.shaded.ahc.io.netty.handler.codec.http.HttpResponseStatus.OK;
+import static play.shaded.ahc.io.netty.handler.codec.http.HttpResponseStatus.TEMPORARY_REDIRECT;
 import static play.shaded.ahc.io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+import static play.shaded.ahc.io.netty.handler.codec.http.HttpHeaderNames.LOCATION;
 
 /** Offers both h2 and HTTP/1.1 so the Play WS client's actual TLS protocol choice is observable. */
 final class AlpnProtocolTestServer implements AutoCloseable {
@@ -51,9 +53,15 @@ final class AlpnProtocolTestServer implements AutoCloseable {
     private final ChannelGroup clients =
         new DefaultChannelGroup("play-ws-alpn-protocol-test", GlobalEventExecutor.INSTANCE);
     private final AtomicReference<String> negotiatedProtocol = new AtomicReference<>();
+    private final String redirectLocation;
     private final Channel serverChannel;
 
     AlpnProtocolTestServer() throws Exception {
+        this(null);
+    }
+
+    AlpnProtocolTestServer(String redirectLocation) throws Exception {
+        this.redirectLocation = redirectLocation;
         certificate = new SelfSignedCertificate("localhost");
         trustStorePath = Files.createTempFile("play-ws-alpn-trust-", ".p12");
         KeyStore trustStore = KeyStore.getInstance("PKCS12");
@@ -97,9 +105,15 @@ final class AlpnProtocolTestServer implements AutoCloseable {
                                     .addLast(new SimpleChannelInboundHandler<FullHttpRequest>() {
                                         @Override
                                         protected void channelRead0(ChannelHandlerContext context, FullHttpRequest request) {
-                                            var content = Unpooled.copiedBuffer(protocol, StandardCharsets.UTF_8);
-                                            var response = new DefaultFullHttpResponse(HTTP_1_1, OK, content);
+                                            var content = redirectLocation == null
+                                                ? Unpooled.copiedBuffer(protocol, StandardCharsets.UTF_8)
+                                                : Unpooled.EMPTY_BUFFER;
+                                            var response = new DefaultFullHttpResponse(HTTP_1_1,
+                                                redirectLocation == null ? OK : TEMPORARY_REDIRECT, content);
                                             HttpUtil.setContentLength(response, content.readableBytes());
+                                            if (redirectLocation != null) {
+                                                response.headers().set(LOCATION, redirectLocation);
+                                            }
                                             context.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
                                         }
                                     });

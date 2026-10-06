@@ -14,6 +14,7 @@ import java.security.MessageDigest
 import java.util.Locale
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
 
 import com.typesafe.config.ConfigFactory
@@ -39,6 +40,7 @@ import play.api.mvc.RequestHeader
 import play.api.mvc.Results
 import play.api.routing.sird._
 import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClient
+import play.shaded.ahc.org.asynchttpclient.handler.RedirectRefusedException
 
 import scala.concurrent.Await
 import scala.concurrent.Future
@@ -55,15 +57,17 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
 
   sequential
 
-  private val streamedTail         = Promise[ByteString]()
-  private val cancellationObserved = Promise[Done]()
-  private val largeChunk           = ByteString(new Array[Byte](16 * 1024))
-  private val largeChunkCount      = 512L
-  private val digestUsername       = "digest-user"
-  private val digestPassword       = "digest-password"
-  private val digestRealm          = "play-ws-rfc7616"
-  private val digestNonce          = "0123456789abcdef"
-  private val DigestParameter      = """([A-Za-z][A-Za-z0-9_-]*)=(?:\"([^\"]*)\"|([^,\s]+))""".r
+  private val streamedTail          = Promise[ByteString]()
+  private val cancellationObserved  = Promise[Done]()
+  private val crossOriginTargetHits = new AtomicInteger()
+  private val downgradeTargetHits   = new AtomicInteger()
+  private val largeChunk            = ByteString(new Array[Byte](16 * 1024))
+  private val largeChunkCount       = 512L
+  private val digestUsername        = "digest-user"
+  private val digestPassword        = "digest-password"
+  private val digestRealm           = "play-ws-rfc7616"
+  private val digestNonce           = "0123456789abcdef"
+  private val DigestParameter       = """([A-Za-z][A-Za-z0-9_-]*)=(?:\"([^\"]*)\"|([^,\s]+))""".r
 
   private def looseTlsConfig(http2Enabled: Boolean): AhcWSClientConfig = {
     val config = ConfigFactory
@@ -121,6 +125,28 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
     case POST(p"/compatibility/content-type") =>
       components.defaultActionBuilder { request =>
         Results.Ok(request.headers.get("Content-Type").getOrElse(""))
+      }
+
+    case POST(p"/compatibility/cross-origin-redirect") =>
+      components.defaultActionBuilder {
+        Results.Redirect(s"http://127.0.0.1:$testServerPort/compatibility/cross-origin-target", 307)
+      }
+
+    case POST(p"/compatibility/same-origin-redirect") =>
+      components.defaultActionBuilder {
+        Results.Redirect("/compatibility/echo", 307)
+      }
+
+    case POST(p"/compatibility/cross-origin-target") =>
+      components.defaultActionBuilder { request =>
+        crossOriginTargetHits.incrementAndGet()
+        Results.Ok(request.body.asText.getOrElse(""))
+      }
+
+    case GET(p"/compatibility/downgrade-target") =>
+      components.defaultActionBuilder {
+        downgradeTargetHits.incrementAndGet()
+        Results.Ok("downgraded")
       }
 
     case GET(p"/compatibility/oauth") =>
@@ -199,6 +225,121 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
           (response.body[String] must beEqualTo("http/1.1")).and(
             server.negotiatedProtocol() must beEqualTo("http/1.1")
           )
+        }
+      } finally {
+        server.close()
+      }
+    }
+
+    "retain cross-origin body replay when the refusal is unset" in {
+      val before = crossOriginTargetHits.get()
+      val base   = AhcWSClientConfigFactory.forConfig()
+      val config = base.copy(wsClientConfig = base.wsClientConfig.copy(followRedirects = true))
+
+      withClient(config) { client =>
+        val response = Await.result(
+          client.url(s"http://localhost:$testServerPort/compatibility/cross-origin-redirect").post("request-body"),
+          defaultTimeout
+        )
+        (response.body[String] must beEqualTo("request-body")).and(
+          crossOriginTargetHits.get() must beEqualTo(before + 1)
+        )
+      }
+    }
+
+    "refuse cross-origin request-body replay before contacting the target when enabled" in {
+      val before = crossOriginTargetHits.get()
+      val base   = AhcWSClientConfigFactory.forConfig()
+      val config = base.copy(
+        wsClientConfig = base.wsClientConfig.copy(followRedirects = true),
+        refuseCrossOriginBodyOnRedirect = Some(true)
+      )
+
+      withClient(config) { client =>
+        val failure = captureFailure {
+          Await.result(
+            client.url(s"http://localhost:$testServerPort/compatibility/cross-origin-redirect").post("request-body"),
+            defaultTimeout
+          )
+        }
+        (redirectRefusal(failure).map(_.getReason) must beSome(RedirectRefusedException.Reason.CROSS_ORIGIN_BODY))
+          .and(crossOriginTargetHits.get() must beEqualTo(before))
+      }
+    }
+
+    "allow same-origin request-body replay when both refusals are enabled" in {
+      val base   = AhcWSClientConfigFactory.forConfig()
+      val config = base.copy(
+        wsClientConfig = base.wsClientConfig.copy(followRedirects = true),
+        refuseCrossOriginBodyOnRedirect = Some(true),
+        refuseSchemeDowngradeOnRedirect = Some(true)
+      )
+
+      withClient(config) { client =>
+        val response = Await.result(
+          client.url(s"http://localhost:$testServerPort/compatibility/same-origin-redirect").post("request-body"),
+          defaultTimeout
+        )
+        response.body[String] must beEqualTo("request-body")
+      }
+    }
+
+    "surface cross-origin body refusals through the Java client API" in {
+      val before = crossOriginTargetHits.get()
+      val base   = AhcWSClientConfigFactory.forConfig()
+      val config = base.copy(
+        wsClientConfig = base.wsClientConfig.copy(followRedirects = true),
+        refuseCrossOriginBodyOnRedirect = Some(true)
+      )
+      val ahcClient  = new DefaultAsyncHttpClient(new AhcConfigBuilder(config).build())
+      val javaClient = new play.libs.ws.ahc.StandaloneAhcWSClient(ahcClient, materializer)
+      try {
+        val failure = captureFailure {
+          javaClient
+            .url(s"http://localhost:$testServerPort/compatibility/cross-origin-redirect")
+            .post(new play.libs.ws.InMemoryBodyWritable(ByteString("request-body"), "text/plain"))
+            .toCompletableFuture
+            .get(defaultTimeout.toMillis, TimeUnit.MILLISECONDS)
+        }
+        (redirectRefusal(failure).map(_.getReason) must beSome(RedirectRefusedException.Reason.CROSS_ORIGIN_BODY))
+          .and(crossOriginTargetHits.get() must beEqualTo(before))
+      } finally {
+        javaClient.close()
+      }
+    }
+
+    "retain HTTPS-to-HTTP redirects when the refusal is unset" in {
+      val before = downgradeTargetHits.get()
+      val server = new AlpnProtocolTestServer(s"http://localhost:$testServerPort/compatibility/downgrade-target")
+      try {
+        val base   = trustedTlsConfig(server, http2Enabled = false)
+        val config = base.copy(wsClientConfig = base.wsClientConfig.copy(followRedirects = true))
+        withClient(config) { client =>
+          val response = Await.result(client.url(server.url()).get(), defaultTimeout)
+          (response.body[String] must beEqualTo("downgraded")).and(
+            downgradeTargetHits.get() must beEqualTo(before + 1)
+          )
+        }
+      } finally {
+        server.close()
+      }
+    }
+
+    "refuse HTTPS-to-HTTP redirects before contacting the target when enabled" in {
+      val before = downgradeTargetHits.get()
+      val server = new AlpnProtocolTestServer(s"http://localhost:$testServerPort/compatibility/downgrade-target")
+      try {
+        val base   = trustedTlsConfig(server, http2Enabled = false)
+        val config = base.copy(
+          wsClientConfig = base.wsClientConfig.copy(followRedirects = true),
+          refuseSchemeDowngradeOnRedirect = Some(true)
+        )
+        withClient(config) { client =>
+          val failure = captureFailure {
+            Await.result(client.url(server.url()).get(), defaultTimeout)
+          }
+          (redirectRefusal(failure).map(_.getReason) must beSome(RedirectRefusedException.Reason.SCHEME_DOWNGRADE))
+            .and(downgradeTargetHits.get() must beEqualTo(before))
         }
       } finally {
         server.close()
@@ -459,6 +600,14 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
       .flatten
       .flatMap(current => Option(current.getMessage))
       .toSeq
+  }
+
+  private def redirectRefusal(failure: Throwable): Option[RedirectRefusedException] = {
+    Iterator
+      .iterate(Option(failure))(_.flatMap(current => Option(current.getCause)))
+      .takeWhile(_.nonEmpty)
+      .flatten
+      .collectFirst { case refusal: RedirectRefusedException => refusal }
   }
 
   private def validSha256DigestAuthorization(authorization: String): Boolean = {

@@ -47,8 +47,11 @@ import scala.concurrent.duration._
  * @param maxDecompressedResponseSize The maximum decompressed size of one response in bytes. None uses the AHC defaults.
  * @param shutdownQuietPeriod The quiet period used when shutting down AHC's event loop.
  * @param shutdownTimeout The maximum time allowed when shutting down AHC's event loop.
+ * @param refuseSchemeDowngradeOnRedirect Whether to refuse an HTTPS-to-HTTP redirect. None uses the AHC default.
+ * @param refuseCrossOriginBodyOnRedirect Whether to refuse a redirect that would replay a body across origins.
+ *                                        None uses the AHC default.
  * @note For compatibility with Play WS 3.0, positional pattern matching exposes only the original 12 fields even
- *       though this case class's product contains all 18 fields. Access the additional settings by name.
+ *       though this case class's product contains all 20 fields. Access the additional settings by name.
  */
 case class AhcWSClientConfig(
     wsClientConfig: WSClientConfig = WSClientConfig(),
@@ -68,7 +71,9 @@ case class AhcWSClientConfig(
     http2MaxConcurrentStreams: Option[Int] = None,
     maxDecompressedResponseSize: Option[Long] = None,
     shutdownQuietPeriod: FiniteDuration = Duration.Zero,
-    shutdownTimeout: FiniteDuration = Duration.Zero
+    shutdownTimeout: FiniteDuration = Duration.Zero,
+    refuseSchemeDowngradeOnRedirect: Option[Boolean] = None,
+    refuseCrossOriginBodyOnRedirect: Option[Boolean] = None
 ) extends AhcWSClientConfigExtractorResult {
 
   // Retain the Play WS 3.0 constructor for compiled callers. Settings added since then use their defaults.
@@ -103,7 +108,9 @@ case class AhcWSClientConfig(
     http2MaxConcurrentStreams = None,
     maxDecompressedResponseSize = None,
     shutdownQuietPeriod = Duration.Zero,
-    shutdownTimeout = Duration.Zero
+    shutdownTimeout = Duration.Zero,
+    refuseSchemeDowngradeOnRedirect = None,
+    refuseCrossOriginBodyOnRedirect = None
   )
 
   def copy(
@@ -124,7 +131,9 @@ case class AhcWSClientConfig(
       http2MaxConcurrentStreams: Option[Int] = this.http2MaxConcurrentStreams,
       maxDecompressedResponseSize: Option[Long] = this.maxDecompressedResponseSize,
       shutdownQuietPeriod: FiniteDuration = this.shutdownQuietPeriod,
-      shutdownTimeout: FiniteDuration = this.shutdownTimeout
+      shutdownTimeout: FiniteDuration = this.shutdownTimeout,
+      refuseSchemeDowngradeOnRedirect: Option[Boolean] = this.refuseSchemeDowngradeOnRedirect,
+      refuseCrossOriginBodyOnRedirect: Option[Boolean] = this.refuseCrossOriginBodyOnRedirect
   ): AhcWSClientConfig =
     new AhcWSClientConfig(
       wsClientConfig,
@@ -144,7 +153,9 @@ case class AhcWSClientConfig(
       http2MaxConcurrentStreams,
       maxDecompressedResponseSize,
       shutdownQuietPeriod,
-      shutdownTimeout
+      shutdownTimeout,
+      refuseSchemeDowngradeOnRedirect,
+      refuseCrossOriginBodyOnRedirect
     )
 
   // Retain the Play WS 3.0 copy signature and preserve settings added since then.
@@ -180,7 +191,9 @@ case class AhcWSClientConfig(
       http2MaxConcurrentStreams,
       maxDecompressedResponseSize,
       shutdownQuietPeriod,
-      shutdownTimeout
+      shutdownTimeout,
+      refuseSchemeDowngradeOnRedirect,
+      refuseCrossOriginBodyOnRedirect
     )
 }
 
@@ -273,6 +286,14 @@ class AhcWSClientConfigParser @Inject() (
       }
     }
 
+    def getOptionalBoolean(key: String): Option[Boolean] = {
+      try {
+        Some(configuration.getBoolean(key))
+      } catch {
+        case _: ConfigException.Null => None
+      }
+    }
+
     def getOptionalBytes(key: String): Option[Long] = {
       try {
         Some(configuration.getMemorySize(key).toBytes)
@@ -329,23 +350,25 @@ class AhcWSClientConfigParser @Inject() (
       }
     }
 
-    val maximumConnectionsPerHost   = configuration.getInt("play.ws.ahc.maxConnectionsPerHost")
-    val maximumConnectionsTotal     = configuration.getInt("play.ws.ahc.maxConnectionsTotal")
-    val maxConnectionLifetime       = getDuration("play.ws.ahc.maxConnectionLifetime", Duration.Inf)
-    val idleConnectionInPoolTimeout = getDuration("play.ws.ahc.idleConnectionInPoolTimeout", 1.minute)
-    val connectionPoolCleanerPeriod = getDuration("play.ws.ahc.connectionPoolCleanerPeriod", 1.second)
-    val maximumNumberOfRedirects    = configuration.getInt("play.ws.ahc.maxNumberOfRedirects")
-    val maxRequestRetry             = configuration.getInt("play.ws.ahc.maxRequestRetry")
-    val disableUrlEncoding          = configuration.getBoolean("play.ws.ahc.disableUrlEncoding")
-    val keepAlive                   = configuration.getBoolean("play.ws.ahc.keepAlive")
-    val useLaxCookieEncoder         = configuration.getBoolean("play.ws.ahc.useLaxCookieEncoder")
-    val useCookieStore              = configuration.getBoolean("play.ws.ahc.useCookieStore")
-    val http2Enabled                = configuration.getBoolean("play.ws.ahc.http2Enabled")
-    val http2InitialWindowSize      = getOptionalPositiveIntBytes("play.ws.ahc.http2InitialWindowSize")
-    val http2MaxConcurrentStreams   = getOptionalHttp2MaxConcurrentStreams("play.ws.ahc.http2MaxConcurrentStreams")
-    val maxDecompressedResponseSize = getOptionalBytes("play.ws.ahc.maxDecompressedResponseSize")
-    val shutdownQuietPeriod         = getFiniteDuration("play.ws.ahc.shutdownQuietPeriod")
-    val shutdownTimeout             = getFiniteDuration("play.ws.ahc.shutdownTimeout")
+    val maximumConnectionsPerHost       = configuration.getInt("play.ws.ahc.maxConnectionsPerHost")
+    val maximumConnectionsTotal         = configuration.getInt("play.ws.ahc.maxConnectionsTotal")
+    val maxConnectionLifetime           = getDuration("play.ws.ahc.maxConnectionLifetime", Duration.Inf)
+    val idleConnectionInPoolTimeout     = getDuration("play.ws.ahc.idleConnectionInPoolTimeout", 1.minute)
+    val connectionPoolCleanerPeriod     = getDuration("play.ws.ahc.connectionPoolCleanerPeriod", 1.second)
+    val maximumNumberOfRedirects        = configuration.getInt("play.ws.ahc.maxNumberOfRedirects")
+    val maxRequestRetry                 = configuration.getInt("play.ws.ahc.maxRequestRetry")
+    val disableUrlEncoding              = configuration.getBoolean("play.ws.ahc.disableUrlEncoding")
+    val keepAlive                       = configuration.getBoolean("play.ws.ahc.keepAlive")
+    val useLaxCookieEncoder             = configuration.getBoolean("play.ws.ahc.useLaxCookieEncoder")
+    val useCookieStore                  = configuration.getBoolean("play.ws.ahc.useCookieStore")
+    val http2Enabled                    = configuration.getBoolean("play.ws.ahc.http2Enabled")
+    val http2InitialWindowSize          = getOptionalPositiveIntBytes("play.ws.ahc.http2InitialWindowSize")
+    val http2MaxConcurrentStreams       = getOptionalHttp2MaxConcurrentStreams("play.ws.ahc.http2MaxConcurrentStreams")
+    val maxDecompressedResponseSize     = getOptionalBytes("play.ws.ahc.maxDecompressedResponseSize")
+    val shutdownQuietPeriod             = getFiniteDuration("play.ws.ahc.shutdownQuietPeriod")
+    val shutdownTimeout                 = getFiniteDuration("play.ws.ahc.shutdownTimeout")
+    val refuseSchemeDowngradeOnRedirect = getOptionalBoolean("play.ws.ahc.refuseSchemeDowngradeOnRedirect")
+    val refuseCrossOriginBodyOnRedirect = getOptionalBoolean("play.ws.ahc.refuseCrossOriginBodyOnRedirect")
     validateShutdownDurations(shutdownQuietPeriod, shutdownTimeout)
 
     AhcWSClientConfig(
@@ -366,7 +389,9 @@ class AhcWSClientConfigParser @Inject() (
       http2MaxConcurrentStreams = http2MaxConcurrentStreams,
       maxDecompressedResponseSize = maxDecompressedResponseSize,
       shutdownQuietPeriod = shutdownQuietPeriod,
-      shutdownTimeout = shutdownTimeout
+      shutdownTimeout = shutdownTimeout,
+      refuseSchemeDowngradeOnRedirect = refuseSchemeDowngradeOnRedirect,
+      refuseCrossOriginBodyOnRedirect = refuseCrossOriginBodyOnRedirect
     )
   }
 }
@@ -483,6 +508,8 @@ class AhcConfigBuilder(ahcConfig: AhcWSClientConfig = AhcWSClientConfig()) {
     builder.setKeepAlive(ahcConfig.keepAlive)
     builder.setShutdownQuietPeriod(toJavaDuration(ahcConfig.shutdownQuietPeriod))
     builder.setShutdownTimeout(toJavaDuration(ahcConfig.shutdownTimeout))
+    ahcConfig.refuseSchemeDowngradeOnRedirect.foreach(builder.setRefuseSchemeDowngradeOnRedirect)
+    ahcConfig.refuseCrossOriginBodyOnRedirect.foreach(builder.setRefuseCrossOriginBodyOnRedirect)
     builder.setUseLaxCookieEncoder(ahcConfig.useLaxCookieEncoder)
 
     if (!ahcConfig.useCookieStore) {

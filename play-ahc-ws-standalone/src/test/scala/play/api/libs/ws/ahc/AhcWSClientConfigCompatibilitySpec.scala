@@ -36,6 +36,8 @@ class AhcWSClientConfigCompatibilitySpec extends Specification {
       actual.maxDecompressedResponseSize must beNone
       actual.shutdownQuietPeriod must_== Duration.Zero
       actual.shutdownTimeout must_== Duration.Zero
+      actual.refuseSchemeDowngradeOnRedirect must beNone
+      actual.refuseCrossOriginBodyOnRedirect must beNone
     }
 
     "retain the Play WS 3.0 companion apply" in {
@@ -65,7 +67,9 @@ class AhcWSClientConfigCompatibilitySpec extends Specification {
         http2MaxConcurrentStreams = Some(16),
         maxDecompressedResponseSize = Some(1024L),
         shutdownQuietPeriod = 1.second,
-        shutdownTimeout = 2.seconds
+        shutdownTimeout = 2.seconds,
+        refuseSchemeDowngradeOnRedirect = Some(true),
+        refuseCrossOriginBodyOnRedirect = Some(false)
       )
       val actual = original.copy(
         wsClientConfig,
@@ -89,6 +93,8 @@ class AhcWSClientConfigCompatibilitySpec extends Specification {
       actual.maxDecompressedResponseSize must beSome(1024L)
       actual.shutdownQuietPeriod must_== 1.second
       actual.shutdownTimeout must_== 2.seconds
+      actual.refuseSchemeDowngradeOnRedirect must beSome(true)
+      actual.refuseCrossOriginBodyOnRedirect must beSome(false)
     }
 
     "retain the Play WS 3.0 twelve-field extractor" in {

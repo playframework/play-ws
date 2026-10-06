@@ -55,6 +55,8 @@ class AhcConfigBuilderSpec extends Specification {
         actual.isFollowRedirect must_== defaultWsConfig.followRedirects
         actual.getCookieStore must_== null
         actual.isHttp2Enabled must beFalse
+        actual.isRefuseSchemeDowngradeOnRedirect must beFalse
+        actual.isRefuseCrossOriginBodyOnRedirect must beFalse
 
         actual.getEnabledProtocols.toSeq must not contain Protocols.deprecatedProtocols
       }
@@ -151,6 +153,47 @@ class AhcConfigBuilderSpec extends Specification {
         actual.isHttp2Enabled must beTrue
         actual.getHttp2InitialWindowSize must_== 65535
         actual.getHttp2MaxConcurrentStreams must_== 32
+      }
+
+      "allow both redirect refusals to be enabled or disabled explicitly" in {
+        val enabled = new AhcConfigBuilder(
+          defaultConfig.copy(
+            refuseSchemeDowngradeOnRedirect = Some(true),
+            refuseCrossOriginBodyOnRedirect = Some(true)
+          )
+        ).build()
+        val disabled = new AhcConfigBuilder(
+          defaultConfig.copy(
+            refuseSchemeDowngradeOnRedirect = Some(false),
+            refuseCrossOriginBodyOnRedirect = Some(false)
+          )
+        ).build()
+
+        (enabled.isRefuseSchemeDowngradeOnRedirect must beTrue)
+          .and(
+            enabled.isRefuseCrossOriginBodyOnRedirect must beTrue
+          )
+          .and(
+            disabled.isRefuseSchemeDowngradeOnRedirect must beFalse
+          )
+          .and(
+            disabled.isRefuseCrossOriginBodyOnRedirect must beFalse
+          )
+      }
+
+      "let modifyUnderlying override redirect-refusal settings" in {
+        val actual = new AhcConfigBuilder(
+          defaultConfig.copy(
+            refuseSchemeDowngradeOnRedirect = Some(true),
+            refuseCrossOriginBodyOnRedirect = Some(true)
+          )
+        ).modifyUnderlying { builder =>
+          builder.setRefuseSchemeDowngradeOnRedirect(false).setRefuseCrossOriginBodyOnRedirect(false)
+        }.build()
+
+        (actual.isRefuseSchemeDowngradeOnRedirect must beFalse).and(
+          actual.isRefuseCrossOriginBodyOnRedirect must beFalse
+        )
       }
 
       "preserve AHC defaults for unset optional settings" in {
