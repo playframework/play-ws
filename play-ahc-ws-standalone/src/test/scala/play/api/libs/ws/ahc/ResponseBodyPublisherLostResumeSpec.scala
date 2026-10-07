@@ -87,8 +87,8 @@ class ResponseBodyPublisherLostResumeSpec extends Specification {
 }
 
 /**
- * Models AHC 3.0.14 `NettyResponseBodyControl`: a call runs inline when made on the channel event loop and is
- * queued to the event loop otherwise; `suspended` is the applied state (suspended + autoRead(false)).
+ * Models AHC's `NettyResponseBodyControl`: a call, including `execute`, runs inline when made on the channel event loop
+ * and is queued to the event loop otherwise; `suspended` is the applied state (suspended + autoRead(false)).
  */
 final class EventLoopResponseBodyControl extends ResponseBodyControl {
   private val loopThread             = new AtomicReference[Thread]()
@@ -114,28 +114,30 @@ final class EventLoopResponseBodyControl extends ResponseBodyControl {
   /** Waits until every task queued so far (and any queued by them) has run. */
   def quiesce(): Unit = { onLoop(()); onLoop(()) }
 
-  private def execute(task: () => Unit): Unit =
+  private def onLoopOrQueue(task: () => Unit): Unit =
     if (inEventLoop) task()
     else
       try loop.execute(new Runnable { def run(): Unit = task() })
       catch { case _: java.util.concurrent.RejectedExecutionException => () } // as AHC: loop is gone
 
+  override def execute(task: Runnable): Unit = onLoopOrQueue(() => task.run())
+
   override def suspend(): Unit = {
     val inline = inEventLoop
-    execute { () =>
+    onLoopOrQueue { () =>
       if (active && !suspended) suspended = true
       if (inline) onInlineSuspend(inlineSuspends.incrementAndGet())
     }
   }
 
-  override def resume(): Unit = execute { () =>
+  override def resume(): Unit = onLoopOrQueue { () =>
     if (active && suspended) {
       suspended = false
       onResumed()
     }
   }
 
-  override def cancel(): Unit = execute { () =>
+  override def cancel(): Unit = onLoopOrQueue { () =>
     if (active) {
       active = false
       suspended = false
