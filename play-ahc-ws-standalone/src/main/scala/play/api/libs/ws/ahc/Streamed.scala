@@ -159,8 +159,9 @@ private final class ResponseBodyPublisher(control: ResponseBodyControl) extends 
       }
     }
     if (accepted) {
-      // AHC delivers body parts on the channel event loop. Suspending from drain() instead could queue an off-loop
-      // command after a newer inline resume and leave a demanded response stalled.
+      // AHC delivers body parts on the channel event loop, so suspending here takes effect before the next part. A
+      // suspend from drain() on another thread would only take effect later, after further parts. AHC 3.0.15 skips a
+      // queued suspend once a newer resume has overtaken it, so that could no longer stall a demanded response.
       control.suspend()
       drain()
     }

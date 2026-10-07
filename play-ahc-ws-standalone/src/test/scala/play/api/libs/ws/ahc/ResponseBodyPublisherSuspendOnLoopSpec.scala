@@ -21,10 +21,11 @@ import play.shaded.ahc.org.asynchttpclient.ResponseBodyControl
 import scala.jdk.CollectionConverters._
 
 /**
- * The lost-resume fix relies on `ResponseBodyPublisher` calling `ResponseBodyControl.suspend()` only on the channel
- * event loop: AHC applies a call made on the loop inline and queues a call made elsewhere, so an off-loop suspend could
- * take effect after a newer inline resume and stall the stream. Each step below runs to completion, including the loop
- * tasks it queues, before the next one starts, so these checks do not depend on thread timing.
+ * `ResponseBodyPublisher` calls `ResponseBodyControl.suspend()` only on the channel event loop, so that each suspension
+ * takes effect before the next body part. AHC applies a call made on the loop inline and queues a call made elsewhere.
+ * Before AHC 3.0.15, an off-loop suspend could also take effect after a newer inline resume and stall the stream; AHC
+ * 3.0.15 skips such a suspend. Each step below runs to completion, including the loop tasks it queues, before the next
+ * one starts, so these checks do not depend on thread timing.
  */
 class ResponseBodyPublisherSuspendOnLoopSpec extends Specification {
   import ResponseBodyPublisherSuspendOnLoopSpec._
@@ -163,7 +164,10 @@ object ResponseBodyPublisherSuspendOnLoopSpec {
     def shutdown(): Unit = Seq(loop, other, timer, helper).foreach(_.shutdownNow())
   }
 
-  /** Models AHC's `NettyResponseBodyControl`, including `execute`: inline on the event loop, queued to it otherwise. */
+  /**
+   * Models AHC's `NettyResponseBodyControl`, including `execute`: inline on the event loop, queued to it otherwise. It
+   * leaves out AHC 3.0.15's rule for skipping a queued suspend, which only matters for off-loop suspends.
+   */
   final class LoopControl(rig: Rig) extends ResponseBodyControl {
     @volatile var active    = true
     @volatile var suspended = false
