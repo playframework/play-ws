@@ -54,12 +54,13 @@ class StreamedGzipBufferingSpec(implicit val executionEnv: ExecutionEnv)
   }
 
   "A streamed gzip response" should {
-    "not read past the demanded socket read when demand arrives from another thread" in {
+    "not deliver past the demanded part when demand arrives from another thread" in {
       val client = new DefaultAsyncHttpClient(new AhcConfigBuilder(AhcWSClientConfigFactory.forConfig()).build())
       try {
-        // The first read, which also carries the headers, inflates to about 2 MiB; one more read to tens of MiB.
+        // AHC delivers no further HTTP/1.1 body part while the stream is suspended, so only the demanded part arrives.
+        // Before AHC 3.0.15, the first read, which also carries the headers, was delivered in full, about 2 MiB.
         val bufferedBeyondDemand = (1 to 3).map(_ => bufferedAfterEarlyDemand(client))
-        bufferedBeyondDemand must contain(beLessThan(10L * 1024 * 1024)).forall
+        bufferedBeyondDemand must contain(be_==(0L)).forall
       } finally {
         client.close()
       }
