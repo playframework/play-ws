@@ -46,10 +46,23 @@ class StreamedGzipBufferingSpec(implicit val executionEnv: ExecutionEnv)
     ByteString(bytes.toByteArray)
   }
 
+  // Small enough to inflate into a single body part.
+  private val gzippedText: ByteString = {
+    val bytes = new ByteArrayOutputStream()
+    val gzip  = new GZIPOutputStream(bytes)
+    gzip.write(("the body ends here\n" * 100).getBytes("US-ASCII"))
+    gzip.close()
+    ByteString(bytes.toByteArray)
+  }
+
   override def routes(components: BuiltInComponents): PartialFunction[RequestHeader, Handler] = {
     case GET(p"/gzip-zeros") =>
       components.defaultActionBuilder {
         Results.Ok(gzippedZeros).as("application/octet-stream").withHeaders("Content-Encoding" -> "gzip")
+      }
+    case GET(p"/gzip-text") =>
+      components.defaultActionBuilder {
+        Results.Ok(gzippedText).as("text/plain").withHeaders("Content-Encoding" -> "gzip")
       }
   }
 
@@ -61,6 +74,35 @@ class StreamedGzipBufferingSpec(implicit val executionEnv: ExecutionEnv)
         // Before AHC 3.0.15, the first read, which also carries the headers, was delivered in full, about 2 MiB.
         val bufferedBeyondDemand = (1 to 3).map(_ => bufferedAfterEarlyDemand(client))
         bufferedBeyondDemand must contain(be_==(0L)).forall
+      } finally {
+        client.close()
+      }
+    }
+
+    "complete once the subscriber has received exactly the parts it requested" in {
+      val client = new DefaultAsyncHttpClient(new AhcConfigBuilder(AhcWSClientConfigFactory.forConfig()).build())
+      try {
+        val parts      = new AtomicLong()
+        val completed  = new CountDownLatch(1)
+        val failure    = new AtomicReference[Throwable]()
+        val subscriber = new Subscriber[HttpResponseBodyPart] {
+          override def onSubscribe(s: Subscription): Unit       = s.request(1)
+          override def onNext(part: HttpResponseBodyPart): Unit = parts.incrementAndGet()
+          override def onError(t: Throwable): Unit              = failure.set(t)
+          override def onComplete(): Unit                       = completed.countDown()
+        }
+        // The publisher suspends the response after the part and has no demand left to resume it, so the response can
+        // only complete if AHC delivers the end of a fully inflated body while it is suspended.
+        val subscribe: java.util.function.Function[StreamedState, StreamedState] = { state =>
+          state.publisher.subscribe(subscriber)
+          state
+        }
+        val handler = new DefaultStreamedAsyncHandler[StreamedState](subscribe, Promise(), Promise())
+        client.prepareGet(s"http://localhost:$testServerPort/gzip-text").execute(handler)
+
+        completed.await(5, TimeUnit.SECONDS) must beTrue
+        failure.get() must beNull
+        parts.get() must_== 1L
       } finally {
         client.close()
       }
