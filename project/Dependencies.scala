@@ -6,7 +6,7 @@ import sbt._
 object Dependencies {
 
   val scala213Version   = "2.13.18"
-  val scala33LTSVersion = "3.3.8"
+  val scala33LTSVersion = "3.3.9"
   val scala39LTSVersion = "3.9.0"
   val scala3NextVersion = "3.10.0-RC3"
 
@@ -38,7 +38,7 @@ object Dependencies {
 
   val junitInterface = Seq("com.github.sbt" % "junit-interface" % "0.13.3")
 
-  val playJson = Seq("org.playframework" %% "play-json" % "3.1.0-M10+108-69160600-SNAPSHOT")
+  val playJson = Seq("org.playframework" %% "play-json" % "3.1.0-M10+120-a3cbc9e1-SNAPSHOT")
 
   val slf4jApi = Seq("org.slf4j" % "slf4j-api" % "2.0.20")
 

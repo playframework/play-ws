@@ -7,7 +7,7 @@ package play.libs.ws.ahc;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import com.typesafe.config.ConfigFactory;
 import org.junit.Test;
 import play.libs.ws.*;
