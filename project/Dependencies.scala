@@ -74,7 +74,7 @@ object Dependencies {
     "netty-transport-native-unix-common"
   ).map("io.netty" % _ % nettyVersion)
 
-  val pekkoVersion = "2.0.0-M4"
+  val pekkoVersion = "2.0.0"
 
   val pekkoStreams = Seq("org.apache.pekko" %% "pekko-stream" % pekkoVersion)
 
