@@ -4,7 +4,7 @@
 
 package play.libs.ws
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 
 object DefaultObjectMapper {
   def instance(): ObjectMapper = play.api.libs.json.jackson.JacksonJson.get.mapper()

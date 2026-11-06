@@ -4,10 +4,10 @@
 
 package play.libs.ws;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
 
 /**
  *
@@ -25,7 +25,7 @@ public interface JsonBodyReadables {
             // Jackson will automatically detect the correct encoding according to the rules in RFC-4627
             try {
                 return objectMapper.readTree(response.getBody());
-            } catch(IOException e) {
+            } catch(JacksonException e) {
                 throw new RuntimeException("Error parsing JSON from WS response wsBody", e);
             }
         });
