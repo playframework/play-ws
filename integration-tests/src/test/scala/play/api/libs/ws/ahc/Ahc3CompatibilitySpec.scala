@@ -16,6 +16,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
+import java.util.zip.GZIPOutputStream
 
 import com.typesafe.config.ConfigFactory
 import org.apache.pekko.Done
@@ -39,6 +40,7 @@ import play.api.mvc.Handler
 import play.api.mvc.RequestHeader
 import play.api.mvc.Results
 import play.api.routing.sird._
+import play.shaded.ahc.io.netty.handler.codec.compression.DecompressionException
 import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClient
 import play.shaded.ahc.org.asynchttpclient.handler.RedirectRefusedException
 
@@ -69,6 +71,14 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
   private val digestRealm           = "play-ws-rfc7616"
   private val digestNonce           = "0123456789abcdef"
   private val DigestParameter       = """([A-Za-z][A-Za-z0-9_-]*)=(?:\"([^\"]*)\"|([^,\s]+))""".r
+  private val gzippedText           = "a body that ends in its gzip trailer\n" * 1000
+  private val gzipped               = {
+    val bytes = new ByteArrayOutputStream()
+    val gzip  = new GZIPOutputStream(bytes)
+    gzip.write(gzippedText.getBytes(StandardCharsets.US_ASCII))
+    gzip.close()
+    ByteString(bytes.toByteArray)
+  }
 
   private def looseTlsConfig(http2Enabled: Boolean): AhcWSClientConfig = {
     val config = ConfigFactory
@@ -102,6 +112,17 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
             NotUsed
           }
         Results.Ok.chunked(body)
+      }
+
+    case GET(p"/compatibility/gzip") =>
+      components.defaultActionBuilder {
+        Results.Ok(gzipped).as("text/plain").withHeaders("Content-Encoding" -> "gzip")
+      }
+
+    case GET(p"/compatibility/cut-off-gzip") =>
+      components.defaultActionBuilder {
+        // Without the last bytes of the trailer, so the gzip stream never ends.
+        Results.Ok(gzipped.dropRight(3)).as("text/plain").withHeaders("Content-Encoding" -> "gzip")
       }
 
     case GET(p"/compatibility/large-stream") =>
@@ -407,6 +428,29 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
       received must beEqualTo(largeChunk.length.toLong * largeChunkCount)
     }
 
+    "fail a response whose gzip body is cut off" in withClient() { client =>
+      val whole = Await.result(client.url(s"http://localhost:$testServerPort/compatibility/gzip").get(), defaultTimeout)
+      val failure = captureFailure {
+        Await.result(client.url(s"http://localhost:$testServerPort/compatibility/cut-off-gzip").get(), defaultTimeout)
+      }
+
+      (whole.body[String] must beEqualTo(gzippedText)).and(
+        decompressionFailure(failure).map(_.getMessage) must beSome("Truncated gzip stream")
+      )
+    }
+
+    "fail a streamed response whose gzip body is cut off" in withClient() { client =>
+      val response = Await.result(
+        client.url(s"http://localhost:$testServerPort/compatibility/cut-off-gzip").stream(),
+        defaultTimeout
+      )
+      val failure = captureFailure {
+        Await.result(response.bodyAsSource.runFold(ByteString.empty)(_ ++ _), defaultTimeout)
+      }
+
+      decompressionFailure(failure).map(_.getMessage) must beSome("Truncated gzip stream")
+    }
+
     "keep a demanded HTTP/2 stream moving while a sibling is suspended" in {
       val server = new Http2StreamingTestServer()
       // A stream window above the connection window (65,535 bytes) lets the suspended stream alone use up the
@@ -604,6 +648,14 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
       .flatten
       .flatMap(current => Option(current.getMessage))
       .toSeq
+  }
+
+  private def decompressionFailure(failure: Throwable): Option[DecompressionException] = {
+    Iterator
+      .iterate(Option(failure))(_.flatMap(current => Option(current.getCause)))
+      .takeWhile(_.nonEmpty)
+      .flatten
+      .collectFirst { case decompression: DecompressionException => decompression }
   }
 
   private def redirectRefusal(failure: Throwable): Option[RedirectRefusedException] = {
