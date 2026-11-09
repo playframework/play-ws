@@ -88,6 +88,16 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
         case _ =>
           Results.NotFound
       }
+    case GET(p"/cookie-echo-redirect") =>
+      components.defaultActionBuilder {
+        Results
+          .Redirect(url = "/cookie-echo", status = MOVED_PERMANENTLY)
+          .withCookies(Cookie(name = "flash", value = "redirect-cookie"))
+      }
+    case GET(p"/cookie-echo") =>
+      components.defaultActionBuilder { req =>
+        Results.Ok(req.headers.getAll("Cookie").mkString("\n"))
+      }
     case p"/redirect/${status}" =>
       components.defaultActionBuilder {
         Results.Redirect("/index", status.toInt)
@@ -307,6 +317,21 @@ class AhcWSClientSpec(implicit val executionEnv: ExecutionEnv)
             defaultTimeout
           )
           result must beEqualTo(s"Cookie value => redirect-cookie")
+        }
+      }
+
+      "keep a raw Cookie header as written when following a redirect with a cookie store" in {
+        withClientFollowingRedirect(AhcWSClientConfigFactory.forConfig().copy(useCookieStore = true)) { client =>
+          val result = Await.result(
+            client
+              .url(s"http://localhost:$testServerPort/cookie-echo-redirect")
+              .addHttpHeaders("Cookie" -> "z=1; flash=stale; a=2; flag")
+              .get()
+              .map(res => res.body[String]),
+            defaultTimeout
+          )
+          // Only the pair that the redirect replaced is taken out; the stored cookie is sent instead.
+          result must beEqualTo("z=1; a=2; flag; flash=redirect-cookie")
         }
       }
 
