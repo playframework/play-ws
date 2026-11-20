@@ -52,7 +52,7 @@ object Dependencies {
 
   val cachecontrol = Seq("org.playframework" %% "cachecontrol" % "3.1.0-M3+2-5a8b88cf-SNAPSHOT")
 
-  val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "3.0.14")
+  val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "3.0.15")
 
   // Keep in sync with the Netty version tested by the AHC version above. Netty
   // is bundled into Play WS's shaded AHC jar, so applications cannot override it.

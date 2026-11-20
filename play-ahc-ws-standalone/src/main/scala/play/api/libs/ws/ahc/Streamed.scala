@@ -7,7 +7,6 @@ package play.api.libs.ws.ahc
 import java.net.URI
 import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
@@ -20,8 +19,6 @@ import org.reactivestreams.Subscription
 import play.shaded.ahc.io.netty.buffer.ByteBuf
 import play.shaded.ahc.io.netty.buffer.Unpooled
 import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders
-import play.shaded.ahc.io.netty.util.concurrent.EventExecutor
-import play.shaded.ahc.io.netty.util.internal.ThreadExecutorMap
 import play.shaded.ahc.org.asynchttpclient.AsyncHandler
 import play.shaded.ahc.org.asynchttpclient.AsyncHandler.State
 import play.shaded.ahc.org.asynchttpclient.HttpResponseBodyPart
@@ -126,9 +123,8 @@ private final class ResponseBodyPublisher(control: ResponseBodyControl) extends 
   private val resumeCheckPending           = new AtomicBoolean()
   @volatile private var failure: Throwable = _
 
-  // AHC 3 creates the control and starts the response body on the channel event loop. ThreadExecutorMap is internal
-  // to Netty, but Play WS shades a fixed Netty version.
-  private val eventLoop: EventExecutor = ThreadExecutorMap.currentExecutor()
+  // AHC creates this publisher from onResponseBodyStart on the channel event loop, so this suspension takes effect
+  // before the first body part.
   control.suspend()
 
   override def subscribe(nextSubscriber: Subscriber[? >: HttpResponseBodyPart]): Unit = {
@@ -163,8 +159,9 @@ private final class ResponseBodyPublisher(control: ResponseBodyControl) extends 
       }
     }
     if (accepted) {
-      // AHC delivers body parts on that event loop. Suspending from drain() instead could queue an off-loop
-      // command after a newer inline resume and leave a demanded response stalled.
+      // AHC delivers body parts on the channel event loop, so suspending here takes effect before the next part. A
+      // suspend from drain() on another thread would only take effect later, after further parts. AHC 3.0.15 skips a
+      // queued suspend once a newer resume has overtaken it, so that could no longer stall a demanded response.
       control.suspend()
       drain()
     }
@@ -235,38 +232,31 @@ private final class ResponseBodyPublisher(control: ResponseBodyControl) extends 
   }
 
   /**
-   * Resumes transport reads for unmet demand, from the channel event loop whenever that loop is known.
+   * Resumes transport reads for unmet demand, deciding on the thread that delivers the body parts.
    *
-   * AHC 3.0.14 applies a control call made on the event loop inline, but queues a call made on another thread and
-   * applies it later without checking again. A drain() on a subscriber thread can find the queue empty while the loop
-   * is still decoding a read. A resume() queued then only runs after the loop has buffered that read's parts, when
-   * the demand may already be met, and lets one more socket read through with no demand left. For a compressed body,
-   * that read can inflate to tens of MiB.
+   * A resume() called from another thread only takes effect later, on the AHC event loop. A drain() on a subscriber
+   * thread can find the queue empty while the loop is still decoding a read; a resume() queued then would run after
+   * the loop has buffered that read's parts, when the demand may already be met, and let one more socket read through
+   * with no demand left. For a compressed body, that read can inflate to tens of MiB.
    *
-   * So a drain() outside the loop schedules a single drain() on it instead, which resumes inline only if demand is
-   * still unmet. AHC delivers body parts, which offer() buffers, only on that loop, and running the check as a drain()
-   * pass keeps another thread from delivering the last parts between the check and resume(). Without a known loop, for
-   * example when the publisher was not created on a Netty event loop, resume directly.
-   *
-   * This indirection can be dropped once a future AHC release defines the order in which control calls from different
-   * threads take effect, or offers a resume that is evaluated on the event loop.
+   * So the decision runs through ResponseBodyControl.execute, which runs a task in sequence with the body callbacks.
+   * When the task runs on the thread that called resumeReads(), that is, inline on the event loop or with a control
+   * that applies calls synchronously, it resumes directly: this drain() already decided on the current state. When it
+   * runs on the event loop after being queued from another thread, it runs a drain() pass there instead, which resumes
+   * inline only if demand is still unmet. Running the check as a drain() pass keeps another thread from delivering the
+   * last parts between the check and resume(). At most one such pass is pending at a time.
    */
   private def resumeReads(): Unit = {
-    if (eventLoop == null || eventLoop.inEventLoop()) {
-      control.resume()
-    } else if (resumeCheckPending.compareAndSet(false, true)) {
-      try {
-        eventLoop.execute(new Runnable {
-          override def run(): Unit = {
-            // Clear the flag before draining, so that unmet demand found by a concurrent drain() can schedule another
-            // check. Clearing it afterwards could drop that check and leave reads suspended.
-            resumeCheckPending.set(false)
-            drain()
-          }
-        })
-      } catch {
-        case _: RejectedExecutionException => () // The event loop is shutting down, so there is nothing to resume.
-      }
+    val caller = Thread.currentThread()
+    if (resumeCheckPending.compareAndSet(false, true)) {
+      control.execute(new Runnable {
+        override def run(): Unit = {
+          // Clear the flag first, so that unmet demand found by a concurrent drain() can schedule another check.
+          // Clearing it afterwards could drop that check and leave reads suspended.
+          resumeCheckPending.set(false)
+          if (Thread.currentThread() eq caller) control.resume() else drain()
+        }
+      })
     }
   }
 
