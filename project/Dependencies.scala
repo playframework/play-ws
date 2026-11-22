@@ -50,7 +50,7 @@ object Dependencies {
 
   val oauth = Seq("oauth.signpost" % "signpost-core" % "2.1.1")
 
-  val cachecontrol = Seq("org.playframework" %% "cachecontrol" % "3.1.0-M3+2-5a8b88cf-SNAPSHOT")
+  val cachecontrol = Seq("org.playframework" %% "cachecontrol" % "3.1.0-M3+22-f1a44d90-SNAPSHOT")
 
   val asyncHttpClient = Seq("org.asynchttpclient" % "async-http-client" % "3.0.14")
 
