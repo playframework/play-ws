@@ -105,6 +105,11 @@ lazy val commonSettings = Def.settings(
   ),
   Compile / javacOptions ++= javacSettings,
   Test / javacOptions ++= javacSettings,
+  // On CI, specs2 waits five times as long in await and awaitFor. Only specs2 gets this: an option given after
+  // `testOnly --` goes to every test framework, and JUnit reads it as a test name filter.
+  Test / testOptions ++= {
+    if (insideCI.value) Seq(Tests.Argument(TestFrameworks.Specs2, "timefactor", "5")) else Nil
+  },
   exportJars    := false,
   headerLicense := {
     Some(
@@ -333,8 +338,8 @@ lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
   .settings(
     commonSettings ++ shadedAhcSettings ++ shadedOAuthSettings ++ Seq(
-      Test / fork        := true,
-      Test / testOptions := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
+      Test / fork := true,
+      Test / testOptions += Tests.Argument(TestFrameworks.JUnit, "-a", "-v"),
       Compile / unmanagedSourceDirectories += {
         val versionDirectory = if (scalaBinaryVersion.value == "3") "scala-3" else "scala-2"
         (Compile / sourceDirectory).value / versionDirectory
@@ -376,8 +381,8 @@ lazy val `play-ws-standalone-json` = project
   .settings(commonSettings)
   .settings(mimaSettings)
   .settings(
-    Test / fork        := true,
-    Test / testOptions := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
+    Test / fork := true,
+    Test / testOptions += Tests.Argument(TestFrameworks.JUnit, "-a", "-v"),
     libraryDependencies ++= standaloneAhcWSJsonDependencies
   )
   .settings(AutomaticModuleName.settings("play.ws.standalone.json"))
@@ -395,8 +400,8 @@ lazy val `play-ws-standalone-xml` = project
   .settings(commonSettings)
   .settings(mimaSettings)
   .settings(
-    Test / fork        := true,
-    Test / testOptions := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
+    Test / fork := true,
+    Test / testOptions += Tests.Argument(TestFrameworks.JUnit, "-a", "-v"),
     libraryDependencies ++= standaloneAhcWSXMLDependencies
   )
   .settings(AutomaticModuleName.settings("play.ws.standalone.xml"))
@@ -423,7 +428,7 @@ lazy val `integration-tests` = project
       "-Dplay.shaded.ahc.io.netty.leakDetection.level=paranoid",
     ),
     concurrentRestrictions += Tags.limitAll(1), // only one integration test at a time
-    Test / testOptions := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
+    Test / testOptions += Tests.Argument(TestFrameworks.JUnit, "-a", "-v"),
     libraryDependencies ++= backendServerTestDependencies ++ testDependencies,
   )
   .settings(shadedAhcSettings)
