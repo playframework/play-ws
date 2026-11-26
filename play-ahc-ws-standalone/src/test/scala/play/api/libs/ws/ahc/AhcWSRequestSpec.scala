@@ -657,14 +657,14 @@ class AhcWSRequestSpec extends Specification with AfterAll with DefaultBodyReada
     val req: AHCRequest = client
       .url("http://playframework.com/")
       .withBody(Map("param1" -> Seq("value1")))
-      .withHttpHeaders("Content-Length" -> "9001") // add a meaningless content length here...
+      .withHttpHeaders("Content-Length" -> "13") // the length of param1=value1
       .asInstanceOf[StandaloneAhcWSRequest]
       .buildRequest()
 
     (new String(req.getByteData, "UTF-8")) must be_==("param1=value1") // should result in byte data.
 
     val headers = req.getHeaders
-    headers.get("Content-Length") must_== "9001"
+    headers.get("Content-Length") must_== "13"
   }
 
   "Remove a user defined content length header if we are parsing body explicitly when signed" in withClient { client =>

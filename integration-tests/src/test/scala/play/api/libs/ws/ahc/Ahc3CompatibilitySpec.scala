@@ -12,10 +12,12 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.security.MessageDigest
 import java.util.Locale
+import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
+import java.util.zip.GZIPOutputStream
 
 import com.typesafe.config.ConfigFactory
 import org.apache.pekko.Done
@@ -39,6 +41,7 @@ import play.api.mvc.Handler
 import play.api.mvc.RequestHeader
 import play.api.mvc.Results
 import play.api.routing.sird._
+import play.shaded.ahc.io.netty.handler.codec.compression.DecompressionException
 import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClient
 import play.shaded.ahc.org.asynchttpclient.handler.RedirectRefusedException
 
@@ -69,6 +72,14 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
   private val digestRealm           = "play-ws-rfc7616"
   private val digestNonce           = "0123456789abcdef"
   private val DigestParameter       = """([A-Za-z][A-Za-z0-9_-]*)=(?:\"([^\"]*)\"|([^,\s]+))""".r
+  private val gzippedText           = "a body that ends in its gzip trailer\n" * 1000
+  private val gzipped               = {
+    val bytes = new ByteArrayOutputStream()
+    val gzip  = new GZIPOutputStream(bytes)
+    gzip.write(gzippedText.getBytes(StandardCharsets.US_ASCII))
+    gzip.close()
+    ByteString(bytes.toByteArray)
+  }
 
   private def looseTlsConfig(http2Enabled: Boolean): AhcWSClientConfig = {
     val config = ConfigFactory
@@ -102,6 +113,17 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
             NotUsed
           }
         Results.Ok.chunked(body)
+      }
+
+    case GET(p"/compatibility/gzip") =>
+      components.defaultActionBuilder {
+        Results.Ok(gzipped).as("text/plain").withHeaders("Content-Encoding" -> "gzip")
+      }
+
+    case GET(p"/compatibility/cut-off-gzip") =>
+      components.defaultActionBuilder {
+        // Without the last bytes of the trailer, so the gzip stream never ends.
+        Results.Ok(gzipped.dropRight(3)).as("text/plain").withHeaders("Content-Encoding" -> "gzip")
       }
 
     case GET(p"/compatibility/large-stream") =>
@@ -407,6 +429,29 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
       received must beEqualTo(largeChunk.length.toLong * largeChunkCount)
     }
 
+    "fail a response whose gzip body is cut off" in withClient() { client =>
+      val whole = Await.result(client.url(s"http://localhost:$testServerPort/compatibility/gzip").get(), defaultTimeout)
+      val failure = captureFailure {
+        Await.result(client.url(s"http://localhost:$testServerPort/compatibility/cut-off-gzip").get(), defaultTimeout)
+      }
+
+      (whole.body[String] must beEqualTo(gzippedText)).and(
+        decompressionFailure(failure).map(_.getMessage) must beSome("Truncated gzip stream")
+      )
+    }
+
+    "fail a streamed response whose gzip body is cut off" in withClient() { client =>
+      val response = Await.result(
+        client.url(s"http://localhost:$testServerPort/compatibility/cut-off-gzip").stream(),
+        defaultTimeout
+      )
+      val failure = captureFailure {
+        Await.result(response.bodyAsSource.runFold(ByteString.empty)(_ ++ _), defaultTimeout)
+      }
+
+      decompressionFailure(failure).map(_.getMessage) must beSome("Truncated gzip stream")
+    }
+
     "keep a demanded HTTP/2 stream moving while a sibling is suspended" in {
       val server = new Http2StreamingTestServer()
       // A stream window above the connection window (65,535 bytes) lets the suspended stream alone use up the
@@ -471,6 +516,84 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
       (sourceResult must beEqualTo("source-body"))
         .and(fileResult must beEqualTo("file-body"))
         .and(post(supplier) must beEqualTo("input-stream-body"))
+    }
+
+    "cut a streamed request body off at its Content-Length header" in {
+      val server         = new ServerSocket(0)
+      val serverExecutor = Executors.newSingleThreadExecutor()
+      val received       = serverExecutor.submit(new Callable[(String, String)] {
+        override def call(): (String, String) = {
+          val socket = server.accept()
+          try {
+            socket.setSoTimeout(TimeUnit.SECONDS.toMillis(5).toInt)
+            val input  = socket.getInputStream
+            val output = socket.getOutputStream
+            val body   = readHttpRequestBody(input)
+            output.write("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n".getBytes(StandardCharsets.US_ASCII))
+            output.flush()
+            // Bytes past the declared body would be read as the start of this request.
+            val nextRequestLine = readAsciiLine(input)
+            Iterator.continually(readAsciiLine(input)).takeWhile(_.nonEmpty).foreach(_ => ())
+            output.write("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n".getBytes(StandardCharsets.US_ASCII))
+            output.flush()
+            (body, nextRequestLine)
+          } finally {
+            socket.close()
+          }
+        }
+      })
+
+      try {
+        withClient() { client =>
+          val url    = s"http://127.0.0.1:${server.getLocalPort}"
+          val upload = Await.result(
+            client
+              .url(s"$url/upload")
+              .withHttpHeaders("Content-Length" -> "4")
+              .post(Source(List(ByteString("body"), ByteString("-past-its-length")))),
+            defaultTimeout
+          )
+          val next = Await.result(client.url(s"$url/next").get(), defaultTimeout)
+
+          val (body, nextRequestLine) = received.get(5, TimeUnit.SECONDS)
+          (upload.status must beEqualTo(200))
+            .and(next.status must beEqualTo(200))
+            .and(body must beEqualTo("body"))
+            .and(nextRequestLine must beEqualTo("GET /next HTTP/1.1"))
+        }
+      } finally {
+        server.close()
+        serverExecutor.shutdownNow()
+      }
+    }
+
+    "fail a streamed request body that ends before its Content-Length header" in withClient() { client =>
+      val failure = captureFailure {
+        Await.result(
+          client
+            .url(s"http://localhost:$testServerPort/compatibility/echo")
+            .withHttpHeaders("Content-Length" -> "10")
+            .post(Source.single(ByteString("body"))),
+          defaultTimeout
+        )
+      }
+
+      causeMessages(failure) must contain("Request body ended after 4 of the 10 bytes of its Content-Length")
+    }
+
+    "fail an in-memory request body whose Content-Length header does not match it before sending it" in withClient() {
+      client =>
+        val failure = captureFailure {
+          Await.result(
+            client
+              .url(s"http://localhost:$testServerPort/compatibility/echo")
+              .withHttpHeaders("Content-Length" -> "3")
+              .post("body"),
+            defaultTimeout
+          )
+        }
+
+        causeMessages(failure) must contain("Content-Length header 3 does not match the body's length 4")
     }
 
     "fail a streamed request-body redirect with a clear replay error" in {
@@ -606,6 +729,14 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
       .toSeq
   }
 
+  private def decompressionFailure(failure: Throwable): Option[DecompressionException] = {
+    Iterator
+      .iterate(Option(failure))(_.flatMap(current => Option(current.getCause)))
+      .takeWhile(_.nonEmpty)
+      .flatten
+      .collectFirst { case decompression: DecompressionException => decompression }
+  }
+
   private def redirectRefusal(failure: Throwable): Option[RedirectRefusedException] = {
     Iterator
       .iterate(Option(failure))(_.flatMap(current => Option(current.getCause)))
@@ -687,6 +818,26 @@ class Ahc3CompatibilitySpec(implicit val executionEnv: ExecutionEnv)
         }
       case None => ()
     }
+  }
+
+  private def readHttpRequestBody(input: InputStream): String = {
+    val headers       = Iterator.continually(readAsciiLine(input)).takeWhile(_.nonEmpty).toSeq
+    val contentLength = headers
+      .collectFirst {
+        case header if header.toLowerCase(Locale.ROOT).startsWith("content-length:") =>
+          header.substring(header.indexOf(':') + 1).trim.toInt
+      }
+      .getOrElse(0)
+    val body = new Array[Byte](contentLength)
+    var read = 0
+    while (read < contentLength) {
+      val count = input.read(body, read, contentLength - read)
+      if (count < 0) {
+        throw new IllegalStateException("Request ended before its declared body length")
+      }
+      read += count
+    }
+    new String(body, StandardCharsets.US_ASCII)
   }
 
   private def readFully(input: InputStream, length: Long): Unit = {

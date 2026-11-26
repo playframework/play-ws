@@ -168,7 +168,7 @@ object ResponseBodyPublisherOffLoopResumeSpec {
     }
   }
 
-  /** Models AHC 3.0.14 `NettyResponseBodyControl`: inline on the event loop, queued to it otherwise. */
+  /** Models AHC's `NettyResponseBodyControl`, including `execute`: inline on the event loop, queued to it otherwise. */
   final class LoopControl(loop: EventExecutor) extends ResponseBodyControl {
     @volatile var active    = true
     @volatile var suspended = false
@@ -177,15 +177,17 @@ object ResponseBodyPublisherOffLoopResumeSpec {
 
     def offLoopResumes: List[String] = offLoop.asScala.toList
 
-    private def execute(task: => Unit): Unit =
+    private def onLoopOrQueue(task: => Unit): Unit =
       if (loop.inEventLoop()) task else loop.execute(new Runnable { def run(): Unit = task })
 
-    override def suspend(): Unit = execute(if (active) suspended = true)
+    override def execute(task: Runnable): Unit = onLoopOrQueue(task.run())
+
+    override def suspend(): Unit = onLoopOrQueue(if (active) suspended = true)
     override def resume(): Unit  = {
       resumeCalls.incrementAndGet()
       if (!loop.inEventLoop()) offLoop.add(Thread.currentThread().getName)
-      execute(if (active && suspended) suspended = false)
+      onLoopOrQueue(if (active && suspended) suspended = false)
     }
-    override def cancel(): Unit = execute(if (active) { active = false; suspended = false })
+    override def cancel(): Unit = onLoopOrQueue(if (active) { active = false; suspended = false })
   }
 }
