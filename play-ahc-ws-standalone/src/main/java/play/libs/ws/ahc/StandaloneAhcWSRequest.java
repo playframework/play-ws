@@ -426,6 +426,19 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
     }
 
     Request buildRequest() {
+        return buildRequest(true);
+    }
+
+    /**
+     * The request without its streamed body, for {@link AhcCurlRequestLogger}: building it with the body would
+     * materialize the stream. It has no signature calculator either, as that would be asked to sign a request
+     * without its body.
+     */
+    Request buildRequestWithoutBody() {
+        return buildRequest(false);
+    }
+
+    private Request buildRequest(boolean withBody) {
         final boolean validate = true;
         final HttpHeaders possiblyModifiedHeaders = new DefaultHttpHeaders(validate);
         this.headers.forEach(possiblyModifiedHeaders::add);
@@ -440,7 +453,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
         builder.setUrl(url);
         builder.setQueryParams(queryParameters);
 
-        getBody().ifPresent(bodyWritable -> {
+        (withBody ? getBody() : Optional.<BodyWritable>empty()).ifPresent(bodyWritable -> {
             // Detect and maybe add content type
             String contentType = possiblyModifiedHeaders.get(CONTENT_TYPE.toString());
             if (contentType == null) {
@@ -511,7 +524,7 @@ public class StandaloneAhcWSRequest implements StandaloneWSRequest {
 
         this.getAuth().ifPresent(auth -> builder.setRealm(auth(auth.getUsername(), auth.getPassword(), auth.getScheme())));
 
-        if (this.calculator != null) {
+        if (withBody && this.calculator != null) {
             if (this.calculator instanceof OAuth.OAuthCalculator) {
                 SignatureCalculator calc = ((OAuth.OAuthCalculator) this.calculator).getCalculator();
                 builder.setSignatureCalculator(calc);

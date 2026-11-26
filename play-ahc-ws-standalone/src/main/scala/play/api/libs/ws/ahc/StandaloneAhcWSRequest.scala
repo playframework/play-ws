@@ -282,6 +282,13 @@ case class StandaloneAhcWSRequest(
   }
 
   /**
+   * The request without its streamed body, for [[CurlFormat]]: building it with the body would materialize the
+   * stream. It has no signature calculator either, as that would be asked to sign a request without its body.
+   */
+  private[ahc] def buildRequestWithoutBody(): play.shaded.ahc.org.asynchttpclient.Request =
+    copy(body = EmptyBody, calc = None).buildRequest()
+
+  /**
    * Creates and returns an AHC request, running all operations on it.
    */
   def buildRequest(): play.shaded.ahc.org.asynchttpclient.Request = {
