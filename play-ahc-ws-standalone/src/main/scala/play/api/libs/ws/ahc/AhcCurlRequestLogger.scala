@@ -5,15 +5,19 @@
 package play.api.libs.ws.ahc
 
 import java.nio.charset.StandardCharsets
-import java.util.Base64
 
 import org.slf4j.LoggerFactory
 import play.api.libs.ws._
+import play.shaded.ahc.org.asynchttpclient.Realm.AuthScheme
 import play.shaded.ahc.org.asynchttpclient.util.HttpUtils
 import play.api.libs.ws.EmptyBody
 
 /**
  * Logs StandaloneWSRequest and pulls information into Curl format to an SLF4J logger.
+ *
+ * Warning: the command is logged at INFO, without redaction. It can contain passwords, `Authorization` and
+ * `Proxy-Authorization` headers, session cookies, credentials and other secrets in the URL, and in-memory request
+ * bodies. Use it only for controlled debugging, and do not enable it for traffic that carries secrets.
  *
  * @param logger an SLF4J logger
  *
@@ -43,6 +47,11 @@ object AhcCurlRequestLogger {
 
 trait CurlFormat {
   def toCurl(request: StandaloneAhcWSRequest): String = {
+    // pull out some underlying values from the request. This creates a new Request, without a streamed body, so
+    // that the stream is left to the request itself.
+    val streamed         = request.body.isInstanceOf[SourceBody]
+    val asyncHttpRequest = if (streamed) request.buildRequestWithoutBody() else request.buildRequest()
+
     val b = new StringBuilder("curl \\\n")
 
     // verbose, since it's a fair bet this is for debugging
@@ -53,19 +62,16 @@ trait CurlFormat {
     b.append(s"  --request ${request.method}")
     b.append(" \\\n")
 
-    // authentication
-    request.auth match {
-      case Some((userName, password, WSAuthScheme.BASIC)) =>
-        val encodedPassword =
-          Base64.getUrlEncoder.encodeToString(s"$userName:$password".getBytes(StandardCharsets.US_ASCII))
-        b.append(s"""  --header 'Authorization: Basic ${quote(encodedPassword)}'""")
-        b.append(" \\\n")
-      case _ => ()
+    // authentication: the header AHC sends for Basic. Other schemes don't send the password as it is.
+    Option(asyncHttpRequest.getRealm).filter(_.getScheme == AuthScheme.BASIC).foreach { realm =>
+      b.append(s"""  --header 'Authorization: ${quote(realm.getBasicAuthHeader)}'""")
+      b.append(" \\\n")
     }
 
-    // headers
+    // headers, without the length of a body that the command leaves out, so that the server doesn't wait for it
     request.headers.foreach { case (k, values) =>
-      values.foreach { v =>
+      val bodyLength = k.equalsIgnoreCase("Content-Length") || k.equalsIgnoreCase("Transfer-Encoding")
+      if (!streamed || !bodyLength) values.foreach { v =>
         b.append(s"  --header '${quote(k)}: ${quote(v)}'")
         b.append(" \\\n")
       }
@@ -73,7 +79,7 @@ trait CurlFormat {
 
     // cookies
     request.cookies.foreach { cookie =>
-      b.append(s"""  --cookie '${cookie.name}=${cookie.value}'""")
+      b.append(s"""  --cookie '${quote(cookie.name)}=${quote(cookie.value)}'""")
       b.append(" \\\n")
     }
 
@@ -85,15 +91,11 @@ trait CurlFormat {
         // XXX Need to escape any quotes within the body of the string.
         b.append(s"  --data '${quote(bodyString)}'")
         b.append(" \\\n")
-      case EmptyBody => // Do nothing.
-      case other     =>
-        throw new UnsupportedOperationException("Unsupported body type " + other.getClass)
+      case EmptyBody     => // Do nothing.
+      case SourceBody(_) => // A stream can be read only once, so the request reads it, not this.
     }
 
-    // pull out some underlying values from the request.  This creates a new Request
-    // but should be harmless.
-    val asyncHttpRequest = request.buildRequest()
-    val proxyServer      = asyncHttpRequest.getProxyServer
+    val proxyServer = asyncHttpRequest.getProxyServer
     if (proxyServer != null) {
       b.append(s"  --proxy ${proxyServer.getHost}:${proxyServer.getPort}")
       b.append(" \\\n")
@@ -101,6 +103,10 @@ trait CurlFormat {
 
     // url
     b.append(s"  '${quote(asyncHttpRequest.getUrl)}'")
+
+    if (streamed) {
+      b.append("\n# The streamed request body is not shown.")
+    }
 
     val curlOptions = b.toString()
     curlOptions
